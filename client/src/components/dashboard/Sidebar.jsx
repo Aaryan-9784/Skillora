@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, FolderKanban, CheckSquare,
   Users, CreditCard, Sparkles, Settings, Zap,
-  ChevronRight, Bot,
+  ChevronRight, Bot, LogOut,
 } from "lucide-react";
 import useAuthStore from "../../store/authStore";
 import { getInitials } from "../../utils/helpers";
@@ -33,6 +33,12 @@ const NAV_SECTIONS = [
     items: [
       { to: "/skills", icon: Sparkles, label: "Skills" },
       { to: "/ai",     icon: Bot,      label: "AI Assistant", glow: true },
+    ],
+  },
+  {
+    label: "ACCOUNT",
+    items: [
+      { to: "/settings", icon: Settings, label: "Settings" },
     ],
   },
 ];
@@ -222,106 +228,142 @@ const SectionLabel = ({ label, collapsed, first }) => (
 );
 
 // ─────────────────────────────────────────────────────────
-// USER CARD (bottom)
+// USER CARD (bottom) — profile clickable → settings, logout button
 // ─────────────────────────────────────────────────────────
-const UserCard = ({ user, collapsed, onLogout }) => (
-  <AnimatePresence>
-    {!collapsed && (
-      <motion.button
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 8 }}
-        transition={{ duration: 0.2 }}
-        onClick={onLogout}
-        className="w-full flex items-center gap-2.5 p-2.5 rounded-xl text-left
-                   transition-all duration-200 group"
-        style={{
-          background: "rgba(255,255,255,0.04)",
-          border: "1px solid rgba(255,255,255,0.07)",
-        }}
-        onMouseEnter={e => {
-          e.currentTarget.style.background = "rgba(255,255,255,0.07)";
-          e.currentTarget.style.border = "1px solid rgba(99,91,255,0.25)";
-          e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.25)";
-        }}
-        onMouseLeave={e => {
-          e.currentTarget.style.background = "rgba(255,255,255,0.04)";
-          e.currentTarget.style.border = "1px solid rgba(255,255,255,0.07)";
-          e.currentTarget.style.boxShadow = "none";
-        }}
-      >
-        {/* Avatar with gradient ring */}
-        <div className="relative shrink-0">
-          <div
-            className="w-8 h-8 rounded-xl flex items-center justify-center
-                       text-xs font-bold text-white"
-            style={{
-              background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)",
-              boxShadow: "0 0 12px rgba(99,91,255,0.45)",
+const UserCard = ({ user, collapsed, onToggle, onLogout, onSettings }) => (
+  <div className="space-y-1">
+    <AnimatePresence>
+      {!collapsed ? (
+        <motion.div
+          key="expanded"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 8 }}
+          transition={{ duration: 0.2 }}
+          className="rounded-xl overflow-hidden"
+          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
+        >
+          {/* ── Clickable profile area → Settings ── */}
+          <button
+            onClick={onSettings}
+            className="w-full flex items-center gap-2.5 p-2.5 transition-all duration-150 group"
+            onMouseEnter={e => {
+              e.currentTarget.style.background = "rgba(99,91,255,0.08)";
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = "transparent";
             }}
           >
-            {getInitials(user?.name)}
-          </div>
-          {/* Online dot */}
-          <span
-            className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2"
-            style={{
-              background: "#22C55E",
-              borderColor: "#0A1120",
-              boxShadow: "0 0 6px rgba(34,197,94,0.8)",
-            }}
-          />
-        </div>
+            {/* Avatar */}
+            <div className="relative shrink-0">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold text-white"
+                style={{
+                  background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)",
+                  boxShadow: "0 0 14px rgba(99,91,255,0.5)",
+                }}>
+                {getInitials(user?.name)}
+              </div>
+              {/* Online dot */}
+              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2"
+                style={{ background: "#22C55E", borderColor: "#0A1120", boxShadow: "0 0 6px rgba(34,197,94,0.8)" }} />
+            </div>
 
-        {/* Name + plan */}
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold truncate" style={{ color: "#F9FAFB" }}>
-            {user?.name}
-          </p>
-          <div className="flex items-center gap-1 mt-0.5">
-            <span
-              className="text-[9px] font-semibold px-1.5 py-px rounded-full capitalize"
-              style={{
-                background: "rgba(99,91,255,0.18)",
-                color: "#A78BFA",
-                border: "1px solid rgba(99,91,255,0.25)",
+            {/* Name + plan */}
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-xs font-semibold truncate" style={{ color: "#F9FAFB" }}>
+                {user?.name}
+              </p>
+              <span className="text-[9px] font-semibold px-1.5 py-px rounded-full capitalize"
+                style={{
+                  background: "rgba(99,91,255,0.18)",
+                  color: "#A78BFA",
+                  border: "1px solid rgba(99,91,255,0.25)",
+                }}>
+                {user?.plan || "free"}
+              </span>
+            </div>
+
+            {/* Arrow hint */}
+            <ChevronRight size={12} className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+              style={{ color: "#635BFF" }} />
+          </button>
+
+          {/* ── Logout button ── */}
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+            <button
+              onClick={onLogout}
+              className="w-full flex items-center justify-center gap-2 py-2.5 text-xs font-semibold transition-all duration-150 rounded-b-xl"
+              style={{ color: "#6B7280" }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = "rgba(239,68,68,0.1)";
+                e.currentTarget.style.color = "#EF4444";
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.color = "#6B7280";
               }}
             >
-              {user?.plan || "free"}
-            </span>
+              <LogOut size={13} strokeWidth={2} />
+              Sign out
+            </button>
           </div>
-        </div>
-      </motion.button>
-    )}
+        </motion.div>
+      ) : (
+        /* ── Collapsed mode ── */
+        <motion.div key="collapsed" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          className="flex flex-col items-center gap-0.5">
+          {/* Avatar → Settings */}
+          <Tooltip label="Settings" show>
+            <button onClick={onSettings} className="w-full flex justify-center py-1.5">
+              <div className="relative w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold text-white"
+                style={{ background: "linear-gradient(135deg, #635BFF, #8B5CF6)", boxShadow: "0 0 10px rgba(99,91,255,0.4)" }}>
+                {getInitials(user?.name)}
+                <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border-2"
+                  style={{ background: "#22C55E", borderColor: "#0A1120" }} />
+              </div>
+            </button>
+          </Tooltip>
+          {/* Logout */}
+          <Tooltip label="Sign out" show>
+            <button onClick={onLogout}
+              className="w-full flex justify-center py-1.5 transition-colors duration-150"
+              style={{ color: "#4B5563" }}
+              onMouseEnter={e => e.currentTarget.style.color = "#EF4444"}
+              onMouseLeave={e => e.currentTarget.style.color = "#4B5563"}>
+              <LogOut size={14} strokeWidth={1.8} />
+            </button>
+          </Tooltip>
+        </motion.div>
+      )}
+    </AnimatePresence>
 
-    {/* Collapsed avatar */}
-    {collapsed && (
-      <Tooltip label={user?.name || "Profile"} show>
-        <motion.button
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onLogout}
-          className="w-full flex justify-center py-2"
+    {/* ── Collapse toggle — always outside the profile card ── */}
+    <Tooltip label={collapsed ? "Expand sidebar" : ""} show={collapsed}>
+      <motion.button
+        whileHover={{ scale: 1.015 }}
+        whileTap={{ scale: 0.97 }}
+        onClick={onToggle}
+        className={`flex items-center w-full rounded-xl transition-colors duration-200 select-none hover:bg-white/5
+          ${collapsed ? "justify-center px-0 py-[11px]" : "gap-2 px-3 py-2"}`}
+      >
+        <motion.span
+          animate={{ rotate: collapsed ? 0 : 180 }}
+          transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+          className="shrink-0"
         >
-          <div
-            className="relative w-8 h-8 rounded-xl flex items-center justify-center
-                       text-xs font-bold text-white"
-            style={{
-              background: "linear-gradient(135deg, #635BFF, #8B5CF6)",
-              boxShadow: "0 0 10px rgba(99,91,255,0.4)",
-            }}
-          >
-            {getInitials(user?.name)}
-            <span
-              className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border-2"
-              style={{ background: "#22C55E", borderColor: "#0A1120" }}
-            />
-          </div>
-        </motion.button>
-      </Tooltip>
-    )}
-  </AnimatePresence>
+          <ChevronRight size={15} strokeWidth={1.8} style={{ color: "#4B5563" }} />
+        </motion.span>
+        <AnimatePresence>
+          {!collapsed && (
+            <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="text-xs font-medium whitespace-nowrap" style={{ color: "#6B7280" }}>
+              Collapse
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </motion.button>
+    </Tooltip>
+  </div>
 );
 
 // ─────────────────────────────────────────────────────────
@@ -454,88 +496,19 @@ const Sidebar = ({ collapsed, onToggle }) => {
       {/* ════════════════════════════════════════
           BOTTOM
       ════════════════════════════════════════ */}
-      <div className="shrink-0 px-2 pb-3 space-y-1">
+      <div className="shrink-0 px-2 pb-3">
         {/* Divider */}
-        <div
-          className="mb-2 mx-1 h-px"
-          style={{
-            background:
-              "linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent)",
-          }}
+        <div className="mb-2 mx-1 h-px"
+          style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent)" }} />
+
+        {/* Merged user card with collapse + settings + logout */}
+        <UserCard
+          user={user}
+          collapsed={collapsed}
+          onToggle={onToggle}
+          onLogout={handleLogout}
+          onSettings={() => navigate("/settings")}
         />
-
-        {/* Settings */}
-        <Tooltip label="Settings" show={collapsed}>
-          <NavLink to="/settings">
-            {({ isActive }) => (
-              <motion.div
-                whileHover={{ scale: 1.015 }}
-                whileTap={{ scale: 0.97 }}
-                className={`flex items-center w-full rounded-xl transition-colors duration-200 select-none cursor-pointer
-                  ${collapsed ? "justify-center px-0 py-[11px]" : "gap-3 px-3 py-[9px]"}
-                  ${isActive ? "bg-white/8" : "hover:bg-white/5"}`}
-              >
-                <Settings
-                  size={16}
-                  strokeWidth={1.8}
-                  className="shrink-0 transition-transform duration-300 hover:rotate-45"
-                  style={{ color: isActive ? "#A78BFA" : "#6B7280" }}
-                />
-                <AnimatePresence>
-                  {!collapsed && (
-                    <motion.span
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="text-sm font-medium whitespace-nowrap"
-                      style={{ color: isActive ? "#F5F3FF" : "#9CA3AF" }}
-                    >
-                      Settings
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            )}
-          </NavLink>
-        </Tooltip>
-
-        {/* Collapse toggle */}
-        <Tooltip label={collapsed ? "Expand sidebar" : ""} show={collapsed}>
-          <motion.button
-            whileHover={{ scale: 1.015 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={onToggle}
-            className={`flex items-center w-full rounded-xl transition-colors duration-200 select-none
-              hover:bg-white/5
-              ${collapsed ? "justify-center px-0 py-[11px]" : "gap-3 px-3 py-[9px]"}`}
-          >
-            <motion.span
-              animate={{ rotate: collapsed ? 0 : 180 }}
-              transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-              className="shrink-0"
-            >
-              <ChevronRight size={16} strokeWidth={1.8} style={{ color: "#4B5563" }} />
-            </motion.span>
-            <AnimatePresence>
-              {!collapsed && (
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="text-sm font-medium whitespace-nowrap"
-                  style={{ color: "#6B7280" }}
-                >
-                  Collapse
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </motion.button>
-        </Tooltip>
-
-        {/* User card */}
-        <div className="mt-1">
-          <UserCard user={user} collapsed={collapsed} onLogout={handleLogout} />
-        </div>
       </div>
     </motion.aside>
   );

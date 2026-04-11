@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, Bell, ChevronDown, LogOut,
-  Settings, User, Command, Plus, Zap, FolderKanban,
+  Settings, Command, Plus, Zap, FolderKanban,
   CheckSquare, Users, CreditCard, Sparkles, ArrowRight,
   Clock, FolderPlus, ListPlus, UserPlus, FileText,
 } from "lucide-react";
@@ -243,9 +243,7 @@ const Navbar = ({ onCommandPalette }) => {
   ];
 
   const PROFILE_ITEMS = [
-    { icon: User,     label: "Profile",  action: () => navigate("/settings?tab=profile") },
     { icon: Settings, label: "Settings", action: () => navigate("/settings") },
-    { icon: Zap,      label: "Billing",  action: () => navigate("/settings?tab=billing") },
   ];
 
   return (
