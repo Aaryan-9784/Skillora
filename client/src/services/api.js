@@ -4,7 +4,7 @@ import tokenStore from "./tokenStore";
 
 const api = axios.create({
   baseURL:         import.meta.env.VITE_API_URL || "/api",
-  withCredentials: true, // always send cookies (refresh token)
+  withCredentials: true,
   timeout:         15000,
 });
 
@@ -12,37 +12,56 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = tokenStore.get();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+    if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
   },
   (error) => Promise.reject(error)
 );
 
 // ── Response: silent token refresh on 401 ────────────────
-let isRefreshing  = false;
-let failedQueue   = [];
+let isRefreshing = false;
+let failedQueue  = [];
 
 const processQueue = (error, token = null) => {
   failedQueue.forEach((p) => (error ? p.reject(error) : p.resolve(token)));
   failedQueue = [];
 };
 
+// Prevent duplicate "session expired" redirects/toasts
+let sessionExpiredHandled = false;
+
+const handleSessionExpired = () => {
+  if (sessionExpiredHandled) return;
+  sessionExpiredHandled = true;
+
+  tokenStore.clear();
+  // Fixed ID ensures only one toast ever shows, no matter how many
+  // concurrent requests fail at the same time
+  toast.error("Session expired. Please sign in again.", { id: "session-expired" });
+
+  setTimeout(() => {
+    if (!window.location.pathname.startsWith("/login")) {
+      window.location.href = "/login";
+    }
+  }, 300);
+};
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const original = error.config;
+    const status   = error.response?.status;
 
-    // Only attempt refresh on 401, and not on the refresh endpoint itself
+    // ── Silent refresh on 401 ──────────────────────────────
     if (
-      error.response?.status === 401 &&
+      status === 401 &&
       !original._retry &&
       !original.url?.includes("/auth/refresh") &&
-      !original.url?.includes("/auth/login")
+      !original.url?.includes("/auth/login") &&
+      !original.url?.includes("/auth/register")
     ) {
       if (isRefreshing) {
-        // Queue concurrent requests while refresh is in flight
+        // Queue this request — resolve once refresh completes
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
@@ -66,24 +85,21 @@ api.interceptors.response.use(
           processQueue(null, newToken);
           return api(original);
         }
-      } catch (refreshError) {
-        processQueue(refreshError, null);
-        tokenStore.clear();
-        // Only redirect if we're not already on an auth page
-        if (!window.location.pathname.startsWith("/login")) {
-          window.location.href = "/login?session=expired";
-        }
-        return Promise.reject(refreshError);
+
+        // Refresh succeeded but no token returned — treat as expired
+        throw new Error("No token in refresh response");
+      } catch {
+        processQueue(new Error("Session expired"), null);
+        handleSessionExpired();
+        return Promise.reject(error);
       } finally {
         isRefreshing = false;
       }
     }
 
-    // Show toast for non-auth errors
-    const message = error.response?.data?.message || "Something went wrong";
-    const status  = error.response?.status;
-
+    // ── Show toast for non-auth errors only ───────────────
     if (status !== 401 && status !== 403) {
+      const message = error.response?.data?.message || "Something went wrong";
       toast.error(message);
     }
 

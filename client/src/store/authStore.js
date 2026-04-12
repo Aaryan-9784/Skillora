@@ -95,11 +95,15 @@ const useAuthStore = create((set, get) => ({
   fetchMe: async () => {
     set({ isLoading: true });
     try {
-      // This will trigger a silent refresh via the Axios interceptor
-      // if the access token is missing/expired but refresh cookie is valid
+      // If access token is missing, the interceptor will silently try
+      // to refresh via the cookie before this throws. If refresh also
+      // fails, the interceptor handles the redirect — we just clean up state.
       const { data } = await authService.getMe();
+      tokenStore.set(data.data?.accessToken ?? tokenStore.get()); // keep token in sync
       set({ user: data.data.user, isAuthenticated: true });
     } catch {
+      // Interceptor already handles redirect + toast on true expiry.
+      // Just reset local state quietly.
       tokenStore.clear();
       set({ user: null, isAuthenticated: false });
     } finally {

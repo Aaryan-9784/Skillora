@@ -34,26 +34,29 @@ const generateTokens = (user) => ({
 
 // ── Cookie helpers ────────────────────────────────────────
 
+// Parse JWT expiry string (e.g. "2h", "30d", "15m") to milliseconds
+const parseExpiry = (str = "15m") => {
+  const unit = str.slice(-1);
+  const val  = parseInt(str, 10);
+  const map  = { s: 1000, m: 60_000, h: 3_600_000, d: 86_400_000 };
+  return (map[unit] || 60_000) * val;
+};
+
 const COOKIE_OPTS = (maxAge) => ({
   httpOnly: true,
   secure:   process.env.NODE_ENV === "production",
-  // "lax" is required for OAuth — "strict" blocks cookies when the browser
-  // is redirected back from Google/GitHub (cross-site navigation)
   sameSite: "lax",
   maxAge,
 });
 
-/**
- * Write both tokens to HTTP-only cookies.
- * Access token cookie is also readable by the frontend JS for in-memory storage.
- */
 const setTokenCookies = (res, accessToken, refreshToken) => {
-  // Refresh token — long-lived, HTTP-only, never readable by JS
-  res.cookie("refreshToken", refreshToken, COOKIE_OPTS(7 * 24 * 60 * 60 * 1000));
+  // Cookie maxAge must match JWT expiry — if cookie dies before JWT the
+  // browser stops sending it and silent refresh breaks unnecessarily
+  const accessMaxAge  = parseExpiry(process.env.JWT_ACCESS_EXPIRES  || "2h");
+  const refreshMaxAge = parseExpiry(process.env.JWT_REFRESH_EXPIRES || "30d");
 
-  // Access token — short-lived, HTTP-only
-  // Frontend reads it once via /auth/me and stores in memory
-  res.cookie("accessToken", accessToken, COOKIE_OPTS(15 * 60 * 1000));
+  res.cookie("refreshToken", refreshToken, COOKIE_OPTS(refreshMaxAge));
+  res.cookie("accessToken",  accessToken,  COOKIE_OPTS(accessMaxAge));
 };
 
 const clearTokenCookies = (res) => {
