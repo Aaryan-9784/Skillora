@@ -1,17 +1,17 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
+import useClickOutside from "../../hooks/useClickOutside";
 
 const sizes = { sm: "max-w-sm", md: "max-w-lg", lg: "max-w-2xl", xl: "max-w-4xl" };
 
 const Modal = ({ isOpen, onClose, title, description, children, size = "md", footer }) => {
-  useEffect(() => {
-    const handler = (e) => e.key === "Escape" && onClose();
-    if (isOpen) document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, [isOpen, onClose]);
+  const panelRef = useRef(null);
 
-  // Lock body scroll
+  // Close on click outside the panel
+  useClickOutside(panelRef, onClose, { enabled: isOpen });
+
+  // Lock body scroll while open
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
@@ -28,11 +28,11 @@ const Modal = ({ isOpen, onClose, title, description, children, size = "md", foo
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
             className="absolute inset-0 bg-navy/50 backdrop-blur-sm"
-            onClick={onClose}
           />
 
-          {/* Panel */}
+          {/* Panel — ref attached here */}
           <motion.div
+            ref={panelRef}
             initial={{ opacity: 0, scale: 0.96, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 8 }}

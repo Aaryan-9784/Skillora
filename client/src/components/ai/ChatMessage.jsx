@@ -15,7 +15,11 @@ const ACTION_BUTTONS = [
   { icon: FileText,     label: "New Invoice",     path: "/payments", color: "#F59E0B" },
 ];
 
-const ChatMessage = ({ msg }) => {
+/**
+ * compact prop — when true (used inside the floating widget), renders
+ * slightly tighter padding and hides the action-button row to save space.
+ */
+const ChatMessage = ({ msg, compact = false }) => {
   const isUser = msg.role === "user";
   const { user }    = useAuthStore();
   const { sendMessage, messages } = useAiStore();
@@ -110,8 +114,8 @@ const ChatMessage = ({ msg }) => {
               )}
             </div>
 
-            {/* Action buttons */}
-            {!isUser && !msg.streaming && msg.content && msg.id !== "welcome" && (
+            {/* Action buttons — hidden in compact (widget) mode */}
+            {!compact && !isUser && !msg.streaming && msg.content && msg.id !== "welcome" && (
               <div className="flex items-center gap-2 px-4 pb-3.5 flex-wrap"
                 style={{ borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 10 }}>
                 {ACTION_BUTTONS.map((btn) => (

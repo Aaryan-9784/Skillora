@@ -4,6 +4,7 @@ import { Search, FolderKanban, CheckSquare, Users, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import useDebounce from "../../hooks/useDebounce";
+import useClickOutside from "../../hooks/useClickOutside";
 import Badge from "./Badge";
 
 const ICONS = { project: FolderKanban, task: CheckSquare, client: Users };
@@ -13,8 +14,12 @@ const GlobalSearch = ({ isOpen, onClose }) => {
   const [results, setResults] = useState({ projects: [], tasks: [], clients: [] });
   const [loading, setLoading] = useState(false);
   const inputRef  = useRef(null);
+  const panelRef  = useRef(null);
   const navigate  = useNavigate();
   const debounced = useDebounce(query, 300);
+
+  // Close on click outside
+  useClickOutside(panelRef, onClose, { enabled: isOpen });
 
   useEffect(() => {
     if (isOpen) { setQuery(""); setResults({ projects: [], tasks: [], clients: [] }); setTimeout(() => inputRef.current?.focus(), 50); }
@@ -57,6 +62,7 @@ const GlobalSearch = ({ isOpen, onClose }) => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96 }}
             transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+            ref={panelRef}
             className="relative w-full max-w-xl card-glass z-10 overflow-hidden"
           >
             {/* Input */}

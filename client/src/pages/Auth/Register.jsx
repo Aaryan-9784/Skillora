@@ -1,42 +1,65 @@
+/**
+ * Register — Grid-based split layout. 1.2fr left / 0.8fr right.
+ * Design: Stripe × Linear × Apple — balanced, premium, cinematic.
+ */
+
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Zap, ArrowRight, Github, Eye, EyeOff, Check, AlertCircle, CheckCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Zap, ArrowRight, Eye, EyeOff, AlertCircle, CheckCircle2,
+  User, Mail, Lock,
+} from "lucide-react";
 import useAuthStore from "../../store/authStore";
-import Button from "../../components/ui/Button";
-import Input from "../../components/ui/Input";
+import { AuthInput, OAuthButtons, BG_REGISTER } from "./_authShared";
 
+// ─────────────────────────────────────────────────────────
+// PASSWORD STRENGTH
+// ─────────────────────────────────────────────────────────
 const CHECKS = [
-  { label: "At least 8 characters", test: (p) => p.length >= 8 },
-  { label: "Contains a letter",     test: (p) => /[A-Za-z]/.test(p) },
-  { label: "Contains a number",     test: (p) => /\d/.test(p) },
+  { label: "8+ chars", test: (p) => p.length >= 8 },
+  { label: "Letter",   test: (p) => /[A-Za-z]/.test(p) },
+  { label: "Number",   test: (p) => /\d/.test(p) },
 ];
 
 const PasswordStrength = ({ password }) => {
   if (!password) return null;
-  const score = CHECKS.filter((c) => c.test(password)).length;
-  const colors = ["bg-error", "bg-warning", "bg-success"];
+  const score  = CHECKS.filter((c) => c.test(password)).length;
+  const colors = ["#EF4444", "#F59E0B", "#22C55E"];
   const labels = ["Weak", "Fair", "Strong"];
   return (
-    <div className="mt-2 space-y-2">
-      <div className="flex gap-1">
-        {[0,1,2].map((i) => (
-          <div key={i} className={`h-1 flex-1 rounded-full transition-all duration-300 ${i < score ? colors[score-1] : "bg-surface-border dark:bg-dark-border"}`} />
-        ))}
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="mt-2.5 space-y-1.5">
+      <div className="h-[2px] w-full rounded-full overflow-hidden"
+        style={{ background: "rgba(255,255,255,0.06)" }}>
+        <motion.div className="h-full rounded-full"
+          initial={{ width: 0 }}
+          animate={{ width: `${(score / 3) * 100}%` }}
+          transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+          style={{ background: colors[score - 1] || colors[0] }} />
       </div>
-      <div className="flex gap-3 flex-wrap">
-        {CHECKS.map((c) => (
-          <span key={c.label} className={`flex items-center gap-1 text-2xs transition-colors ${c.test(password) ? "text-success" : "text-ink-muted"}`}>
-            <CheckCircle size={10} />{c.label}
+      <div className="flex items-center justify-between">
+        <div className="flex gap-3">
+          {CHECKS.map((c) => (
+            <span key={c.label} className="flex items-center gap-1 text-[10px] transition-colors duration-300"
+              style={{ color: c.test(password) ? "rgba(74,222,128,0.8)" : "rgba(75,85,99,0.7)" }}>
+              <CheckCircle2 size={8} />{c.label}
+            </span>
+          ))}
+        </div>
+        {score > 0 && (
+          <span className="text-[10px] font-semibold" style={{ color: colors[score - 1] }}>
+            {labels[score - 1]}
           </span>
-        ))}
+        )}
       </div>
-    </div>
+    </motion.div>
   );
 };
 
-const PERKS = ["Free forever plan", "No credit card required", "Cancel anytime"];
-
+// ─────────────────────────────────────────────────────────
+// MAIN
+// ─────────────────────────────────────────────────────────
 const Register = () => {
   const [form, setForm]     = useState({ name: "", email: "", password: "" });
   const [showPw, setShowPw] = useState(false);
@@ -46,140 +69,334 @@ const Register = () => {
   useEffect(() => () => clearErrors?.(), []);
 
   const handleChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     const { success } = await register(form);
     if (success) navigate("/dashboard");
   };
 
-  const apiBase = import.meta.env.VITE_API_URL?.replace("/api", "") || "";
+  const apiBase   = import.meta.env.VITE_API_URL?.replace("/api", "") || "";
+  const canSubmit = form.name && form.email && form.password.length >= 8;
 
   return (
-    <div className="min-h-screen flex bg-surface-secondary dark:bg-dark-bg">
-      {/* Left panel */}
-      <div className="hidden lg:flex flex-col justify-between w-[45%] bg-navy p-12 relative overflow-hidden">
-        <div className="absolute inset-0 bg-mesh-dark opacity-60" />
-        <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-brand/20 blur-3xl" />
-        <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full bg-cyan/10 blur-3xl" />
+    /* ── Root: full-screen background ── */
+    <div className="relative min-h-screen overflow-hidden" style={{ background: "#04070F" }}>
 
-        <div className="relative z-10 flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-gradient-brand flex items-center justify-center">
-            <Zap size={18} className="text-white" />
-          </div>
-          <span className="text-xl font-bold text-white">Skillora</span>
+      {/* ── Background image — Ken Burns ── */}
+      <motion.div
+        className="absolute inset-0 z-0"
+        initial={{ scale: 1 }}
+        animate={{ scale: 1.05 }}
+        transition={{ duration: 24, ease: "linear", repeat: Infinity, repeatType: "reverse" }}
+        style={{
+          backgroundImage: `url("${BG_REGISTER}")`,
+          backgroundSize: "cover",
+          backgroundPosition: "center 30%",
+        }}
+      />
+
+      {/* ── Overlay stack ── */}
+      {/* Base tint */}
+      <div className="absolute inset-0 z-[1]" style={{ background: "rgba(4,7,18,0.50)" }} />
+      {/* Right-heavy: left bright (image shows), right dark (form focus) */}
+      <div className="absolute inset-0 z-[2]"
+        style={{ background: "linear-gradient(to left, rgba(4,7,18,0.97) 0%, rgba(4,7,18,0.80) 30%, rgba(4,7,18,0.35) 58%, rgba(4,7,18,0.05) 100%)" }} />
+      {/* Bottom vignette */}
+      <div className="absolute inset-0 z-[3]"
+        style={{ background: "linear-gradient(to top, rgba(4,7,18,0.92) 0%, transparent 42%)" }} />
+      {/* Top vignette */}
+      <div className="absolute inset-0 z-[3]"
+        style={{ background: "linear-gradient(to bottom, rgba(4,7,18,0.65) 0%, transparent 22%)" }} />
+      {/* Edge vignette */}
+      <div className="absolute inset-0 z-[3]"
+        style={{ background: "radial-gradient(ellipse 100% 100% at 50% 50%, transparent 50%, rgba(4,7,18,0.65) 100%)" }} />
+      {/* Brand glow — right side */}
+      <div className="absolute inset-0 z-[4] pointer-events-none"
+        style={{ background: "radial-gradient(ellipse 45% 55% at 88% 52%, rgba(99,91,255,0.10) 0%, transparent 70%)" }} />
+      {/* Warm accent — left */}
+      <div className="absolute inset-0 z-[4] pointer-events-none"
+        style={{ background: "radial-gradient(ellipse 55% 50% at 25% 45%, rgba(56,189,248,0.04) 0%, transparent 70%)" }} />
+
+      {/* Particles */}
+      {[
+        { top: "20%", left: "72%", s: 2,   d: 0.5 },
+        { top: "46%", left: "82%", s: 1.5, d: 1.7 },
+        { top: "66%", left: "76%", s: 2,   d: 1.1 },
+        { top: "30%", left: "88%", s: 1.5, d: 2.5 },
+      ].map((p, i) => (
+        <motion.div key={i}
+          className="absolute rounded-full pointer-events-none z-[5]"
+          style={{ top: p.top, left: p.left, width: p.s, height: p.s, background: "rgba(167,139,250,0.4)" }}
+          animate={{ y: [0, -10, 0], opacity: [0.1, 0.4, 0.1] }}
+          transition={{ duration: 5.5 + i * 0.7, repeat: Infinity, delay: p.d, ease: "easeInOut" }}
+        />
+      ))}
+
+      {/* ── GRID LAYOUT: 1.2fr left / 0.8fr right ── */}
+      <div className="relative z-10 min-h-screen
+                      grid grid-cols-1
+                      lg:grid-cols-[1fr_480px]">
+
+        {/* ════════════════════════════════════════
+            LEFT — Brand content
+        ════════════════════════════════════════ */}
+        <div className="hidden lg:flex flex-col justify-between px-16 py-14 select-none">
+
+          {/* Logo — Stripe-style wordmark */}
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55 }}
+          >
+            <span style={{
+              fontFamily: "'Sora', 'Inter', sans-serif",
+              fontSize: "26px",
+              fontWeight: 800,
+              letterSpacing: "-0.04em",
+              color: "#FFFFFF",
+              textShadow: "0 2px 16px rgba(0,0,0,0.4)",
+              lineHeight: 1,
+            }}>
+              Skillora
+            </span>
+          </motion.div>
+
+          {/* Copy */}
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.18, ease: [0.16, 1, 0.3, 1] }}
+            className="space-y-9 max-w-[480px]"
+          >
+            {/* Eyebrow */}
+            <p className="text-[10px] font-bold tracking-[0.3em] uppercase"
+              style={{ color: "rgba(129,140,248,0.6)" }}>
+              Freelancer OS
+            </p>
+
+            {/* Headline + subtext */}
+            <div className="space-y-5">
+              <h1 className="font-semibold leading-[1.12] text-white"
+                style={{
+                  fontSize: "clamp(2rem,3vw,2.75rem)",
+                  letterSpacing: "-0.025em",
+                  textShadow: "0 4px 40px rgba(0,0,0,0.5)",
+                }}>
+                The smarter way to<br />
+                <span style={{
+                  background: "linear-gradient(135deg,#818CF8 0%,#38BDF8 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}>
+                  run your freelance business.
+                </span>
+              </h1>
+              <p className="text-[14px] leading-[1.7] font-light"
+                style={{ color: "rgba(148,163,184,0.68)", maxWidth: "34ch" }}>
+                Projects, clients, invoices, and AI — unified in one
+                platform built for independent professionals.
+              </p>
+            </div>
+
+            {/* Feature stack */}
+            
+          </motion.div>
+
+          {/* Footer */}
+          <p className="text-[11px]" style={{ color: "rgba(51,65,85,0.5)" }}>
+            © 2025 Skillora. All rights reserved.
+          </p>
         </div>
 
-        <div className="relative z-10 space-y-8">
-          <div>
-            <h2 className="text-3xl font-bold text-white leading-tight">
-              Start your freelance<br />
-              <span className="text-gradient-cyan">journey today.</span>
-            </h2>
-            <p className="text-slate-400 mt-3 text-base">Everything you need to run a successful freelance business.</p>
-          </div>
-          <div className="space-y-3">
-            {PERKS.map((perk) => (
-              <div key={perk} className="flex items-center gap-3">
-                <div className="w-5 h-5 rounded-full bg-success/20 flex items-center justify-center shrink-0">
-                  <Check size={11} className="text-success" />
+        {/* ════════════════════════════════════════
+            RIGHT — Signup form
+        ════════════════════════════════════════ */}
+        <div className="flex items-center justify-center px-6 py-10 lg:px-12 lg:py-0">
+
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            className="w-full max-w-[400px]"
+          >
+            {/* Mobile logo */}
+            <div className="mb-8 lg:hidden">
+              <span style={{
+                fontFamily: "'Sora', 'Inter', sans-serif",
+                fontSize: "24px",
+                fontWeight: 800,
+                letterSpacing: "-0.04em",
+                color: "#FFFFFF",
+                lineHeight: 1,
+              }}>
+                Skillora
+              </span>
+            </div>
+
+            {/* Glass card */}
+            <div className="relative rounded-3xl overflow-hidden"
+              style={{
+                background: "linear-gradient(160deg,rgba(10,14,32,0.84) 0%,rgba(6,9,22,0.90) 100%)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                backdropFilter: "blur(40px)",
+                WebkitBackdropFilter: "blur(40px)",
+                boxShadow: [
+                  "0 0 0 1px rgba(99,91,255,0.07)",
+                  "0 28px 80px rgba(0,0,0,0.75)",
+                  "0 0 60px rgba(99,91,255,0.05)",
+                  "inset 0 1px 0 rgba(255,255,255,0.07)",
+                ].join(", "),
+                padding: "40px 36px",
+              }}>
+
+              {/* Top shimmer */}
+              <div className="absolute top-0 inset-x-0 h-px pointer-events-none"
+                style={{ background: "linear-gradient(90deg,transparent 10%,rgba(99,91,255,0.5) 40%,rgba(139,92,246,0.3) 60%,transparent 90%)" }} />
+              {/* Inner glow top-right */}
+              <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full pointer-events-none"
+                style={{ background: "radial-gradient(circle,rgba(99,91,255,0.09) 0%,transparent 70%)" }} />
+
+              <div className="relative">
+                {/* Header */}
+                <div className="mb-8">
+                  <h2 className="text-[1.6rem] font-semibold text-white mb-2 tracking-[-0.025em]">
+                    Create your account
+                  </h2>
+                  <p className="text-[13px]" style={{ color: "rgba(100,116,139,0.8)" }}>
+                    Join thousands of freelancers managing their work smarter.
+                  </p>
                 </div>
-                <span className="text-slate-300 text-sm">{perk}</span>
+
+                {/* OAuth */}
+                <OAuthButtons apiBase={apiBase} />
+
+                {/* Divider */}
+                <div className="flex items-center gap-4 my-7">
+                  <div className="flex-1 h-px"
+                    style={{ background: "linear-gradient(to right,transparent,rgba(255,255,255,0.07),transparent)" }} />
+                  <span className="text-[11px] tracking-[0.08em] shrink-0"
+                    style={{ color: "rgba(75,85,99,0.75)" }}>
+                    or continue with email
+                  </span>
+                  <div className="flex-1 h-px"
+                    style={{ background: "linear-gradient(to left,transparent,rgba(255,255,255,0.07),transparent)" }} />
+                </div>
+
+                {/* Error */}
+                <AnimatePresence>
+                  {errors?.general && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+                      className="flex items-start gap-2.5 p-3.5 mb-6 rounded-2xl"
+                      style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.18)" }}>
+                      <AlertCircle size={13} style={{ color: "#F87171", flexShrink: 0, marginTop: 1 }} />
+                      <p className="text-[13px]" style={{ color: "rgba(252,165,165,0.9)" }}>{errors.general}</p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Form */}
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <AuthInput label="Full name" icon={User} type="text" name="name"
+                    placeholder="Jane Doe" value={form.name} onChange={handleChange}
+                    error={errors?.name} required autoComplete="name" />
+
+                  <AuthInput label="Email address" icon={Mail} type="email" name="email"
+                    placeholder="you@example.com" value={form.email} onChange={handleChange}
+                    error={errors?.email} required autoComplete="email" />
+
+                  <div>
+                    <AuthInput label="Password" icon={Lock}
+                      type={showPw ? "text" : "password"} name="password"
+                      placeholder="Min. 8 characters" value={form.password}
+                      onChange={handleChange} error={errors?.password}
+                      required minLength={8} autoComplete="new-password"
+                      suffix={
+                        <button type="button" onClick={() => setShowPw((s) => !s)}
+                          style={{ color: "rgba(75,85,99,0.7)", transition: "color 0.25s" }}
+                          onMouseEnter={e => e.currentTarget.style.color = "rgba(148,163,184,0.9)"}
+                          onMouseLeave={e => e.currentTarget.style.color = "rgba(75,85,99,0.7)"}>
+                          {showPw ? <EyeOff size={13} /> : <Eye size={13} />}
+                        </button>
+                      }
+                    />
+                    <AnimatePresence>
+                      {form.password && <PasswordStrength password={form.password} />}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* CTA */}
+                  <motion.button
+                    type="submit"
+                    disabled={isLoading || !canSubmit}
+                    whileHover={canSubmit && !isLoading ? { scale: 1.01, y: -1.5 } : {}}
+                    whileTap={canSubmit && !isLoading ? { scale: 0.985 } : {}}
+                    className="relative w-full h-[52px] rounded-2xl flex items-center justify-center gap-2
+                               text-[13.5px] font-semibold text-white overflow-hidden mt-2"
+                    style={{
+                      background: canSubmit && !isLoading
+                        ? "linear-gradient(135deg,#5B54F0 0%,#7C6FF7 50%,#6366F1 100%)"
+                        : "rgba(255,255,255,0.05)",
+                      boxShadow: canSubmit && !isLoading
+                        ? "0 0 28px rgba(99,91,255,0.38), 0 10px 36px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.14)"
+                        : "none",
+                      color: canSubmit && !isLoading ? "#fff" : "rgba(75,85,99,0.55)",
+                      cursor: isLoading || !canSubmit ? "not-allowed" : "pointer",
+                      transition: "all 0.35s cubic-bezier(0.4,0,0.2,1)",
+                      letterSpacing: "0.01em",
+                    }}
+                  >
+                    {canSubmit && !isLoading && (
+                      <motion.div className="absolute inset-0 pointer-events-none"
+                        style={{
+                          background: "linear-gradient(105deg,transparent 35%,rgba(255,255,255,0.11) 50%,transparent 65%)",
+                          backgroundSize: "200% 100%",
+                        }}
+                        animate={{ backgroundPosition: ["200% 0", "-200% 0"] }}
+                        transition={{ duration: 3.5, repeat: Infinity, ease: "linear" }} />
+                    )}
+                    {isLoading ? (
+                      <><div className="w-4 h-4 border-[1.5px] border-white/25 border-t-white rounded-full animate-spin" />Creating account…</>
+                    ) : (
+                      <>Create account <ArrowRight size={14} strokeWidth={2} /></>
+                    )}
+                  </motion.button>
+                </form>
+
+                {/* Footer */}
+                <div className="mt-6 space-y-3">
+                  <p className="text-center text-[11px]" style={{ color: "rgba(55,65,81,0.85)" }}>
+                    By signing up, you agree to our{" "}
+                    <a href="#" style={{ color: "rgba(129,140,248,0.7)", transition: "color 0.2s" }}
+                      onMouseEnter={e => e.currentTarget.style.color = "rgba(129,140,248,1)"}
+                      onMouseLeave={e => e.currentTarget.style.color = "rgba(129,140,248,0.7)"}>
+                      Terms
+                    </a>{" "}and{" "}
+                    <a href="#" style={{ color: "rgba(129,140,248,0.7)", transition: "color 0.2s" }}
+                      onMouseEnter={e => e.currentTarget.style.color = "rgba(129,140,248,1)"}
+                      onMouseLeave={e => e.currentTarget.style.color = "rgba(129,140,248,0.7)"}>
+                      Privacy Policy
+                    </a>.
+                  </p>
+                  <p className="text-center text-[13px]" style={{ color: "rgba(75,85,99,0.8)" }}>
+                    Already have an account?{" "}
+                    <Link to="/login" className="font-semibold"
+                      style={{
+                        background: "linear-gradient(135deg,rgba(129,140,248,0.9),rgba(56,189,248,0.8))",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        transition: "opacity 0.2s",
+                      }}>
+                      Sign in
+                    </Link>
+                  </p>
+                </div>
               </div>
-            ))}
-          </div>
+            </div>
+          </motion.div>
         </div>
 
-        <p className="relative z-10 text-slate-500 text-xs">© 2025 Skillora. All rights reserved.</p>
-      </div>
-
-      {/* Right form panel */}
-      <div className="flex-1 flex items-center justify-center p-6">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-          className="w-full max-w-sm"
-        >
-          <div className="flex items-center gap-2 mb-8 lg:hidden">
-            <div className="w-8 h-8 rounded-xl bg-gradient-brand flex items-center justify-center">
-              <Zap size={16} className="text-white" />
-            </div>
-            <span className="text-lg font-bold text-ink dark:text-slate-100">Skillora</span>
-          </div>
-
-          <h1 className="text-2xl font-bold text-ink dark:text-slate-100 mb-1">Create your account</h1>
-          <p className="text-sm text-ink-secondary mb-7">Start managing your freelance work for free</p>
-
-          {errors?.general && (
-            <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
-              className="flex items-start gap-2.5 p-3 mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-              <AlertCircle size={15} className="text-error shrink-0 mt-0.5" />
-              <p className="text-sm text-error">{errors.general}</p>
-            </motion.div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input label="Full name" type="text" name="name" placeholder="Jane Doe"
-              value={form.name} onChange={handleChange} error={errors?.name} required size="lg" autoComplete="name" />
-            <Input label="Email address" type="email" name="email" placeholder="you@example.com"
-              value={form.email} onChange={handleChange} error={errors?.email} required size="lg" autoComplete="email" />
-            <div>
-              <Input label="Password" type={showPw ? "text" : "password"} name="password"
-                placeholder="Min. 8 characters" value={form.password} onChange={handleChange}
-                error={errors?.password} required minLength={8} size="lg" autoComplete="new-password"
-                suffix={
-                  <button type="button" onClick={() => setShowPw((s) => !s)}
-                    className="text-ink-muted hover:text-ink transition-colors">
-                    {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
-                  </button>
-                } />
-              <PasswordStrength password={form.password} />
-            </div>
-
-            <Button type="submit" className="w-full" size="lg" loading={isLoading}>
-              Create account <ArrowRight size={15} />
-            </Button>
-          </form>
-
-          <div className="relative my-5">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-surface-border dark:border-dark-border" />
-            </div>
-            <div className="relative flex justify-center">
-              <span className="px-3 text-xs text-ink-muted bg-surface-secondary dark:bg-dark-bg">or sign up with</span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <a href={`${apiBase}/api/auth/google`}
-              className="flex items-center justify-center gap-2 h-10 px-4 rounded-lg border border-surface-border dark:border-dark-border bg-white dark:bg-dark-card text-sm font-medium text-ink dark:text-slate-200 hover:border-brand/40 hover:bg-surface-secondary dark:hover:bg-dark-muted transition-all shadow-xs">
-              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-              </svg>
-              Google
-            </a>
-            <a href={`${apiBase}/api/auth/github`}
-              className="flex items-center justify-center gap-2 h-10 px-4 rounded-lg border border-surface-border dark:border-dark-border bg-white dark:bg-dark-card text-sm font-medium text-ink dark:text-slate-200 hover:border-brand/40 hover:bg-surface-secondary dark:hover:bg-dark-muted transition-all shadow-xs">
-              <Github size={16} className="shrink-0" />
-              GitHub
-            </a>
-          </div>
-
-          <p className="mt-4 text-center text-xs text-ink-muted">
-            By signing up, you agree to our{" "}
-            <a href="#" className="text-brand hover:underline">Terms</a> and{" "}
-            <a href="#" className="text-brand hover:underline">Privacy Policy</a>.
-          </p>
-          <p className="mt-4 text-center text-sm text-ink-secondary">
-            Already have an account?{" "}
-            <Link to="/login" className="text-brand font-medium hover:underline">Sign in</Link>
-          </p>
-        </motion.div>
-      </div>
+      </div>{/* /grid */}
     </div>
   );
 };
