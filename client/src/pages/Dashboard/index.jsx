@@ -155,9 +155,6 @@ const Dashboard = () => {
           </motion.button>
         </motion.div>
 
-        {/* AI Insight */}
-        <AIInsight text={insight} />
-
         {/* KPI Cards */}
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
           {isLoading ? Array.from({ length: 4 }).map((_, i) => <GlassSkeleton key={i} className="h-36" />) : (

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   User, Lock, Bell, Palette, CreditCard, LogOut,
   Check, Zap, Shield, Eye, EyeOff, Camera,
-  Smartphone, Globe, ChevronRight,
+  Smartphone, Globe, ChevronRight, ArrowLeft,
 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import useAuthStore from "../../store/authStore";
@@ -597,6 +597,23 @@ const Settings = () => {
 
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+          <motion.button
+            onClick={() => navigate(-1)}
+            whileHover={{ x: -3 }}
+            whileTap={{ scale: 0.96 }}
+            className="flex items-center gap-2 mb-4 text-sm font-medium transition-all duration-150 group"
+            style={{ color: "#6B7280" }}
+            onMouseEnter={e => e.currentTarget.style.color = "#A78BFA"}
+            onMouseLeave={e => e.currentTarget.style.color = "#6B7280"}
+          >
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-150"
+              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
+              onMouseEnter={e => { e.style && (e.style.background = "rgba(99,91,255,0.15)"); }}
+            >
+              <ArrowLeft size={14} />
+            </div>
+            Back
+          </motion.button>
           <h1 className="text-3xl font-extrabold tracking-tight"
             style={{
               background: "linear-gradient(135deg, #FFFFFF 0%, #C4B5FD 100%)",
