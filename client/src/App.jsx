@@ -7,7 +7,8 @@ import MainLayout from "./layouts/MainLayout";
 import DashboardLayout from "./layouts/DashboardLayout";
 import useAuthStore from "./store/authStore";
 
-// Auth
+// Landing
+const Landing        = lazy(() => import("./pages/Landing"));
 const Login          = lazy(() => import("./pages/Auth/Login"));
 const Register       = lazy(() => import("./pages/Auth/Register"));
 const ForgotPassword = lazy(() => import("./pages/Auth/ForgotPassword"));
@@ -31,7 +32,13 @@ const PageLoader = () => <Spinner size="lg" className="min-h-screen" />;
 
 const App = () => {
   const fetchMe = useAuthStore((s) => s.fetchMe);
-  useEffect(() => { fetchMe(); }, []);
+  useEffect(() => {
+    // Don't attempt session restore on the landing page —
+    // there's no token to restore and it causes a false "session expired" toast
+    if (window.location.pathname !== "/") {
+      fetchMe();
+    }
+  }, []);
 
   return (
     <>
@@ -78,7 +85,10 @@ const App = () => {
       />
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          {/* Public */}
+          {/* Landing — fully public, no auth required */}
+          <Route path="/" element={<Landing />} />
+
+          {/* Public auth routes */}
           <Route element={<MainLayout />}>
             <Route path="/login"                  element={<Login />} />
             <Route path="/register"               element={<Register />} />
@@ -104,8 +114,7 @@ const App = () => {
             </Route>
           </Route>
 
-          <Route path="/"  element={<Navigate to="/login" replace />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
     </>

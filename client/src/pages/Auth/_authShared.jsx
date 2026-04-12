@@ -187,7 +187,7 @@ export const GlassCard = ({ children }) => (
 export const AuthPageShell = ({ children, bgImage }) => {
   const image = bgImage || BG_LOGIN;
   return (
-  <div className="relative min-h-screen flex items-stretch overflow-hidden">
+  <div className="relative min-h-screen flex items-stretch overflow-hidden" style={{ background: "#04070F" }}>
 
     {/* Background image — slow Ken Burns */}
     <motion.div
@@ -199,6 +199,7 @@ export const AuthPageShell = ({ children, bgImage }) => {
         backgroundImage: `url("${image}")`,
         backgroundSize: "cover",
         backgroundPosition: "center 35%",
+        backgroundColor: "#0D1117", // shows instantly while image loads
       }}
     />
 

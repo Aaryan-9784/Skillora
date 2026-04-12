@@ -11,7 +11,7 @@ import toast from "react-hot-toast";
 const useAuthStore = create((set, get) => ({
   user:            null,
   isAuthenticated: false,
-  isLoading:       true,  // true on mount until fetchMe resolves
+  isLoading:       false, // don't block public pages on initial load
   errors:          {},
 
   setUser: (user) => set({ user, isAuthenticated: !!user }),

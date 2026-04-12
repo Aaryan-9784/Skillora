@@ -13,6 +13,7 @@ const ProtectedRoute = () => {
   const { isAuthenticated, isLoading } = useAuthStore();
   const location = useLocation();
 
+  // Show spinner only for protected routes while session is being restored
   if (isLoading) {
     return <Spinner size="lg" className="min-h-screen" />;
   }

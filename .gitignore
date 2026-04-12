@@ -9,7 +9,7 @@ build/
 .next/
 out/
 
-# ── Environment variables (NEVER commit these) ────────────
+# ── Environment variables (NEVER commit) ─────────────────
 .env
 .env.local
 .env.development
@@ -17,6 +17,10 @@ out/
 .env.test
 server/.env
 client/.env
+
+# ── Local video assets (large files — add your own) ──────
+client/public/videos/
+video/
 
 # ── Logs ─────────────────────────────────────────────────
 logs/
