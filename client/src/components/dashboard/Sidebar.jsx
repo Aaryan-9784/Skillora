@@ -77,95 +77,91 @@ const NavItem = ({ to, icon: Icon, label, badge, glow, collapsed }) => (
     <NavLink to={to} end={to === "/dashboard"}>
       {({ isActive }) => (
         <motion.div
-          whileHover={{ scale: collapsed ? 1 : 1.015 }}
           whileTap={{ scale: 0.97 }}
           transition={{ duration: 0.15 }}
           className={`
             relative flex items-center w-full select-none cursor-pointer
-            rounded-xl overflow-hidden transition-colors duration-200
-            ${collapsed ? "justify-center px-0 py-[11px]" : "gap-3 px-3 py-[9px]"}
+            rounded-xl overflow-hidden
+            ${collapsed ? "justify-center px-0 py-[13px]" : "gap-3 px-3 py-[10px]"}
           `}
           style={{
             background: isActive
-              ? "linear-gradient(135deg, rgba(99,91,255,0.22) 0%, rgba(139,92,246,0.10) 100%)"
+              ? "linear-gradient(135deg, rgba(99,91,255,0.18) 0%, rgba(139,92,246,0.08) 100%)"
               : "transparent",
+            transition: "background 0.18s ease, box-shadow 0.18s ease",
           }}
           onMouseEnter={e => {
-            if (!isActive) e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+            if (!isActive) {
+              e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+              e.currentTarget.style.boxShadow = "inset 0 0 0 1px rgba(255,255,255,0.06)";
+            }
           }}
           onMouseLeave={e => {
-            if (!isActive) e.currentTarget.style.background = "transparent";
+            if (!isActive) {
+              e.currentTarget.style.background = "transparent";
+              e.currentTarget.style.boxShadow = "none";
+            }
           }}
         >
-          {/* ── Active left accent bar ── */}
+          {/* Active left accent bar — spring animated */}
           {isActive && (
             <motion.span
               layoutId="nav-pill"
-              className="absolute left-0 inset-y-[6px] w-[3px] rounded-r-full"
+              className="absolute left-0 inset-y-[7px] w-[3px] rounded-r-full"
               style={{
-                background: "linear-gradient(180deg, #635BFF, #A78BFA)",
-                boxShadow: "0 0 10px rgba(99,91,255,0.8)",
+                background: "linear-gradient(180deg, #8B5CF6, #635BFF)",
+                boxShadow: "0 0 12px rgba(99,91,255,0.9)",
               }}
-              transition={{ type: "spring", stiffness: 380, damping: 30 }}
+              transition={{ type: "spring", stiffness: 420, damping: 32 }}
             />
           )}
 
-          {/* ── Active background shimmer ── */}
+          {/* Active radial shimmer */}
           {isActive && (
-            <span
-              className="absolute inset-0 rounded-xl pointer-events-none"
-              style={{
-                background:
-                  "radial-gradient(ellipse at 15% 50%, rgba(99,91,255,0.18) 0%, transparent 65%)",
-              }}
-            />
+            <span className="absolute inset-0 rounded-xl pointer-events-none"
+              style={{ background: "radial-gradient(ellipse at 10% 50%, rgba(99,91,255,0.15) 0%, transparent 70%)" }} />
           )}
 
-          {/* ── Icon ── */}
-          <motion.span
-            animate={isActive ? { y: 0 } : {}}
-            whileHover={{ y: -1 }}
-            transition={{ duration: 0.15 }}
-            className="relative shrink-0 flex items-center justify-center"
+          {/* Icon container */}
+          <span
+            className="relative shrink-0 w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-200"
             style={{
-              color: isActive
-                ? "#A78BFA"
-                : glow
-                  ? undefined
-                  : "#6B7280",
-              filter: isActive
-                ? "drop-shadow(0 0 7px rgba(167,139,250,0.9))"
-                : undefined,
+              background: isActive ? "rgba(99,91,255,0.2)" : "transparent",
+              boxShadow: isActive ? "0 0 14px rgba(99,91,255,0.35), inset 0 1px 0 rgba(255,255,255,0.1)" : "none",
             }}
           >
             <Icon
-              size={17}
+              size={16}
               strokeWidth={isActive ? 2.2 : 1.8}
-              className={
-                !isActive && glow
-                  ? "text-[#6B7280] group-hover:text-[#00D4FF] transition-colors duration-200"
-                  : ""
-              }
+              style={{
+                color: isActive ? "#A78BFA" : glow ? "#6B7280" : "#6B7280",
+                filter: isActive ? "drop-shadow(0 0 6px rgba(167,139,250,0.8))" : "none",
+                transition: "color 0.18s, filter 0.18s",
+              }}
             />
-          </motion.span>
+          </span>
 
-          {/* ── Label ── */}
+          {/* Label */}
           <AnimatePresence>
             {!collapsed && (
               <motion.span
-                initial={{ opacity: 0, x: -8 }}
+                initial={{ opacity: 0, x: -6 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -8 }}
+                exit={{ opacity: 0, x: -6 }}
                 transition={{ duration: 0.18 }}
-                className="flex-1 text-sm font-medium whitespace-nowrap truncate"
-                style={{ color: isActive ? "#F5F3FF" : "#9CA3AF" }}
+                className="flex-1 text-[13px] font-semibold whitespace-nowrap truncate"
+                style={{
+                  color: isActive ? "#EDE9FE" : "#6B7280",
+                  letterSpacing: isActive ? "-0.01em" : "0",
+                  transition: "color 0.18s",
+                }}
               >
                 {label}
               </motion.span>
             )}
           </AnimatePresence>
 
-          {/* ── Badge ── */}
+          {/* Badge */}
           {badge && !collapsed && (
             <motion.span
               initial={{ scale: 0 }}
@@ -175,7 +171,7 @@ const NavItem = ({ to, icon: Icon, label, badge, glow, collapsed }) => (
                          flex items-center justify-center text-[10px] font-bold text-white"
               style={{
                 background: "linear-gradient(135deg, #635BFF, #8B5CF6)",
-                boxShadow: "0 0 10px rgba(99,91,255,0.55)",
+                boxShadow: "0 0 10px rgba(99,91,255,0.5)",
               }}
             >
               {badge}
@@ -199,19 +195,20 @@ const SectionLabel = ({ label, collapsed, first }) => (
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.15 }}
-        className={`flex items-center gap-2 px-3 ${first ? "pt-3 pb-1.5" : "pt-5 pb-1.5"}`}
+        className={`flex items-center gap-2.5 px-3 ${first ? "pt-4 pb-2" : "pt-6 pb-2"}`}
       >
-        {/* Divider line */}
         {!first && (
-          <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.05)" }} />
+          <div className="flex-1 h-px"
+            style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent)" }} />
         )}
         <span
-          className="text-[9.5px] font-bold tracking-[0.14em] uppercase shrink-0"
-          style={{ color: "#374151" }}
+          className="text-[9px] font-bold tracking-[0.18em] uppercase shrink-0"
+          style={{ color: "rgba(99,91,255,0.45)" }}
         >
           {label}
         </span>
-        <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.05)" }} />
+        <div className="flex-1 h-px"
+          style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent)" }} />
       </motion.div>
     ) : (
       <motion.div
@@ -219,9 +216,9 @@ const SectionLabel = ({ label, collapsed, first }) => (
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className={`${first ? "pt-3" : "pt-4"} pb-1 flex justify-center`}
+        className={`${first ? "pt-3" : "pt-5"} pb-1 flex justify-center`}
       >
-        <div className="w-1 h-1 rounded-full" style={{ background: "rgba(255,255,255,0.12)" }} />
+        <div className="w-1 h-1 rounded-full" style={{ background: "rgba(99,91,255,0.3)" }} />
       </motion.div>
     )}
   </AnimatePresence>
@@ -424,36 +421,38 @@ const Sidebar = ({ collapsed, onToggle }) => {
           LOGO
       ════════════════════════════════════════ */}
       <div
-        className={`flex items-center h-[60px] shrink-0 ${
+        className={`flex items-center h-[72px] shrink-0 relative ${
           collapsed ? "justify-center px-0" : "px-4"
         }`}
       >
+        {/* Subtle bottom divider */}
+        <div className="absolute bottom-0 inset-x-3 h-px"
+          style={{ background: "linear-gradient(90deg, transparent, rgba(99,91,255,0.25), transparent)" }} />
+
         {/* Icon */}
         <motion.div
-          whileHover={{ scale: 1.06 }}
-          whileTap={{ scale: 0.95 }}
-          transition={{ duration: 0.18 }}
+          whileHover={{ scale: 1.07 }}
+          whileTap={{ scale: 0.93 }}
+          transition={{ duration: 0.18, ease: [0.16,1,0.3,1] }}
           className="relative shrink-0 cursor-pointer"
           onClick={() => navigate("/dashboard")}
         >
-          {/* Pulse glow */}
+          {/* Ambient glow behind icon */}
           <motion.div
             className="absolute inset-0 rounded-xl"
-            animate={{ opacity: [0.5, 0.9, 0.5] }}
-            transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
-            style={{
-              background: "linear-gradient(135deg, #635BFF, #00D4FF)",
-              filter: "blur(8px)",
-            }}
+            animate={{ opacity: [0.35, 0.7, 0.35] }}
+            transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
+            style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)", filter: "blur(12px)", transform: "scale(1.3)" }}
           />
+          {/* Icon box */}
           <div
-            className="relative w-9 h-9 rounded-xl flex items-center justify-center"
+            className="relative w-10 h-10 rounded-xl flex items-center justify-center"
             style={{
-              background: "linear-gradient(135deg, #635BFF 0%, #8579FF 100%)",
-              boxShadow: "0 0 18px rgba(99,91,255,0.55)",
+              background: "linear-gradient(145deg, #7C6FFF 0%, #5B52F0 100%)",
+              boxShadow: "0 0 0 1px rgba(255,255,255,0.12), 0 4px 16px rgba(99,91,255,0.5), inset 0 1px 0 rgba(255,255,255,0.22)",
             }}
           >
-            <Zap size={17} className="text-white" strokeWidth={2.5} />
+            <Zap size={18} className="text-white" strokeWidth={2.8} />
           </div>
         </motion.div>
 
@@ -461,27 +460,25 @@ const Sidebar = ({ collapsed, onToggle }) => {
         <AnimatePresence>
           {!collapsed && (
             <motion.div
-              initial={{ opacity: 0, x: -10 }}
+              initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              transition={{ duration: 0.2 }}
-              className="ml-3 overflow-hidden"
+              exit={{ opacity: 0, x: -8 }}
+              transition={{ duration: 0.22, ease: [0.16,1,0.3,1] }}
+              className="ml-3 overflow-hidden select-none"
             >
               <p
-                className="text-[15px] font-extrabold tracking-tight whitespace-nowrap"
+                className="text-[18px] font-black tracking-[-0.02em] whitespace-nowrap leading-none"
                 style={{
-                  background: "linear-gradient(135deg, #FFFFFF 0%, #C4B5FD 100%)",
+                  background: "linear-gradient(135deg, #FFFFFF 20%, #A78BFA 100%)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                 }}
               >
                 Skillora
               </p>
-              <p
-                className="text-[9.5px] font-semibold tracking-[0.18em] uppercase whitespace-nowrap"
-                style={{ color: "#635BFF" }}
-              >
-                Freelancer OS
+              <p className="text-[10px] font-semibold tracking-[0.2em] uppercase mt-1 whitespace-nowrap"
+                style={{ color: "rgba(99,91,255,0.6)", letterSpacing: "0.22em" }}>
+                workspace
               </p>
             </motion.div>
           )}
