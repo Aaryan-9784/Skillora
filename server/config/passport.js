@@ -1,25 +1,20 @@
-const passport = require("passport");
+const passport      = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const GitHubStrategy = require("passport-github2").Strategy;
-const User = require("../models/User");
+const User   = require("../models/User");
 const logger = require("../utils/logger");
 
-/**
- * Find or create a user from an OAuth profile.
- * Handles account merging when the same email already exists locally.
- */
+const SERVER_URL = process.env.SERVER_URL || "http://localhost:5000";
+
 const findOrCreateOAuthUser = async (provider, profile, email, name, avatar) => {
-  // 1. Try to find by provider + providerId
   let user = await User.findOne({ provider, providerId: profile.id });
   if (user) return user;
 
-  // 2. Try to find by email (merge with existing local account)
   if (email) {
     user = await User.findOne({ email });
     if (user) {
-      // Link OAuth to existing account
-      user.provider   = provider;
-      user.providerId = profile.id;
+      user.provider    = provider;
+      user.providerId  = profile.id;
       if (!user.avatar && avatar) user.avatar = avatar;
       user.isEmailVerified = true;
       await user.save({ validateBeforeSave: false });
@@ -27,27 +22,27 @@ const findOrCreateOAuthUser = async (provider, profile, email, name, avatar) => 
     }
   }
 
-  // 3. Create new OAuth user
   user = await User.create({
     name,
-    email: email || `${provider}_${profile.id}@skillora.app`,
+    email:    email || `${provider}_${profile.id}@skillora.app`,
     avatar,
     provider,
-    providerId: profile.id,
+    providerId:      profile.id,
     isEmailVerified: true,
   });
-
   return user;
 };
 
-// ── Google Strategy ───────────────────────────────────────
+// ── Google ────────────────────────────────────────────────
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   passport.use(
     new GoogleStrategy(
       {
         clientID:     process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL:  "/api/auth/google/callback",
+        // MUST be absolute — relative URLs cause Google to redirect to the
+        // frontend origin (localhost:5173) instead of the Express server (localhost:5000)
+        callbackURL:  `${SERVER_URL}/api/auth/google/callback`,
         scope:        ["profile", "email"],
       },
       async (accessToken, refreshToken, profile, done) => {
@@ -66,14 +61,14 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   );
 }
 
-// ── GitHub Strategy ───────────────────────────────────────
+// ── GitHub ────────────────────────────────────────────────
 if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
   passport.use(
     new GitHubStrategy(
       {
         clientID:     process.env.GITHUB_CLIENT_ID,
         clientSecret: process.env.GITHUB_CLIENT_SECRET,
-        callbackURL:  "/api/auth/github/callback",
+        callbackURL:  `${SERVER_URL}/api/auth/github/callback`,
         scope:        ["user:email"],
       },
       async (accessToken, refreshToken, profile, done) => {
@@ -92,7 +87,6 @@ if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
   );
 }
 
-// Passport does not use sessions — we handle tokens ourselves
 passport.serializeUser((user, done) => done(null, user._id));
 passport.deserializeUser(async (id, done) => {
   try {

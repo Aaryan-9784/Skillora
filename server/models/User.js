@@ -70,9 +70,9 @@ const userSchema = new Schema(
 );
 
 // ── Indexes ───────────────────────────────────────────────
-userSchema.index({ email: 1 });
+// email index is already created by unique:true on the field definition
 userSchema.index({ provider: 1, providerId: 1 });
-userSchema.index({ name: "text" });                    // full-text search
+userSchema.index({ name: "text" });
 userSchema.index({ isDeleted: 1, isActive: 1 });
 
 // ── Virtual: account locked ───────────────────────────────

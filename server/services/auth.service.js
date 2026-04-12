@@ -37,7 +37,9 @@ const generateTokens = (user) => ({
 const COOKIE_OPTS = (maxAge) => ({
   httpOnly: true,
   secure:   process.env.NODE_ENV === "production",
-  sameSite: "strict",
+  // "lax" is required for OAuth — "strict" blocks cookies when the browser
+  // is redirected back from Google/GitHub (cross-site navigation)
+  sameSite: "lax",
   maxAge,
 });
 
@@ -55,8 +57,8 @@ const setTokenCookies = (res, accessToken, refreshToken) => {
 };
 
 const clearTokenCookies = (res) => {
-  res.clearCookie("accessToken",  { httpOnly: true, sameSite: "strict" });
-  res.clearCookie("refreshToken", { httpOnly: true, sameSite: "strict" });
+  res.clearCookie("accessToken",  { httpOnly: true, sameSite: "lax" });
+  res.clearCookie("refreshToken", { httpOnly: true, sameSite: "lax" });
 };
 
 // ── Register ──────────────────────────────────────────────

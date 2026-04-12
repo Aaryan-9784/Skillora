@@ -35,12 +35,47 @@ const App = () => {
 
   return (
     <>
-      <Toaster position="top-right" toastOptions={{
-        style: { borderRadius: "10px", fontSize: "13px", fontFamily: "Inter, system-ui, sans-serif", boxShadow: "0 4px 24px rgba(0,0,0,0.1)" },
-        success: { iconTheme: { primary: "#10B981", secondary: "#fff" } },
-        error:   { iconTheme: { primary: "#EF4444", secondary: "#fff" } },
-        duration: 3500,
-      }} />
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          style: {
+            borderRadius: "12px",
+            fontSize: "13px",
+            fontFamily: "Inter, system-ui, sans-serif",
+            fontWeight: 500,
+            background: "#111827",
+            color: "#F1F5F9",
+            border: "1px solid #1E2A3B",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(99,91,255,0.08)",
+            padding: "12px 16px",
+            maxWidth: "360px",
+          },
+          success: {
+            iconTheme: { primary: "#10B981", secondary: "#111827" },
+            style: {
+              background: "#111827",
+              border: "1px solid rgba(16,185,129,0.25)",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(16,185,129,0.1)",
+            },
+          },
+          error: {
+            iconTheme: { primary: "#EF4444", secondary: "#111827" },
+            style: {
+              background: "#111827",
+              border: "1px solid rgba(239,68,68,0.25)",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(239,68,68,0.1)",
+            },
+          },
+          loading: {
+            iconTheme: { primary: "#635BFF", secondary: "#111827" },
+            style: {
+              background: "#111827",
+              border: "1px solid rgba(99,91,255,0.25)",
+            },
+          },
+          duration: 3500,
+        }}
+      />
       <Suspense fallback={<PageLoader />}>
         <Routes>
           {/* Public */}

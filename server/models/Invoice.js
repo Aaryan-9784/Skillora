@@ -50,12 +50,12 @@ const invoiceSchema = new Schema(
 );
 
 // ── Indexes ───────────────────────────────────────────────
+// invoiceNumber index is already created by unique:true on the field definition
 invoiceSchema.index({ owner: 1, status: 1 });
 invoiceSchema.index({ owner: 1, createdAt: -1 });
 invoiceSchema.index({ clientId: 1 });
 invoiceSchema.index({ projectId: 1 }, { sparse: true });
 invoiceSchema.index({ dueDate: 1 }, { sparse: true });
-invoiceSchema.index({ invoiceNumber: 1 }, { unique: true });
 
 // ── Virtual: is overdue ───────────────────────────────────
 invoiceSchema.virtual("isOverdue").get(function () {
