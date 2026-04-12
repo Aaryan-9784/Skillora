@@ -1,9 +1,32 @@
 import { motion } from "framer-motion";
-import { FolderKanban, CheckSquare, DollarSign, Sparkles, ArrowRight, Zap } from "lucide-react";
+import { FolderKanban, CheckSquare, DollarSign, ArrowRight, Zap, TrendingUp } from "lucide-react";
 import useAuthStore from "../../store/authStore";
 import useDashboardStore from "../../store/dashboardStore";
 import useAiStore from "../../store/aiStore";
 import { formatCurrency } from "../../utils/helpers";
+
+const StatPill = ({ icon: Icon, value, label, color, delay }) => (
+  <motion.div
+    initial={{ opacity: 0, scale: 0.9 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ delay, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+    className="flex items-center gap-2 px-3 py-2 rounded-xl"
+    style={{
+      background: `linear-gradient(135deg, ${color}14, ${color}06)`,
+      border: `1px solid ${color}28`,
+      boxShadow: `0 0 16px ${color}10`,
+    }}
+  >
+    <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
+      style={{ background: `${color}18`, border: `1px solid ${color}25` }}>
+      <Icon size={11} style={{ color }} strokeWidth={2} />
+    </div>
+    <div>
+      <p className="text-xs font-bold leading-none" style={{ color }}>{value}</p>
+      <p className="text-[9px] mt-0.5 leading-none" style={{ color: "#4B5563" }}>{label}</p>
+    </div>
+  </motion.div>
+);
 
 const ContextPanel = () => {
   const { user }    = useAuthStore();
@@ -19,83 +42,80 @@ const ContextPanel = () => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1, duration: 0.3 }}
-      className="relative rounded-2xl p-5 overflow-hidden"
+      transition={{ delay: 0.08, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+      className="relative rounded-2xl overflow-hidden"
       style={{
-        background: "linear-gradient(135deg, rgba(99,91,255,0.1) 0%, rgba(0,212,255,0.05) 100%)",
+        background: "linear-gradient(145deg, rgba(99,91,255,0.12) 0%, rgba(139,92,246,0.06) 50%, rgba(0,212,255,0.04) 100%)",
         border: "1px solid rgba(99,91,255,0.22)",
-        backdropFilter: "blur(12px)",
+        boxShadow: "0 0 0 1px rgba(99,91,255,0.08), 0 8px 40px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06)",
+        backdropFilter: "blur(16px)",
       }}
     >
-      {/* Top shimmer */}
+      {/* Top shimmer line */}
       <div className="absolute top-0 inset-x-0 h-px"
-        style={{ background: "linear-gradient(90deg, transparent, rgba(99,91,255,0.6), rgba(0,212,255,0.4), transparent)" }} />
+        style={{ background: "linear-gradient(90deg, transparent, rgba(99,91,255,0.7), rgba(0,212,255,0.5), transparent)" }} />
 
-      {/* Ambient glow */}
-      <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full pointer-events-none"
-        style={{ background: "radial-gradient(circle, rgba(99,91,255,0.12) 0%, transparent 70%)" }} />
+      {/* Ambient corner glow */}
+      <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full pointer-events-none"
+        style={{ background: "radial-gradient(circle, rgba(99,91,255,0.1) 0%, transparent 65%)" }} />
+      <div className="absolute -bottom-8 -left-8 w-32 h-32 rounded-full pointer-events-none"
+        style={{ background: "radial-gradient(circle, rgba(0,212,255,0.06) 0%, transparent 65%)" }} />
 
-      <div className="relative flex items-start gap-3.5">
-        {/* AI orb */}
-        <div className="relative shrink-0">
-          <motion.div
-            animate={{ opacity: [0.4, 0.8, 0.4] }}
-            transition={{ duration: 2.5, repeat: Infinity }}
-            className="absolute inset-0 rounded-xl"
-            style={{ background: "linear-gradient(135deg, #635BFF, #00D4FF)", filter: "blur(6px)" }}
-          />
-          <div className="relative w-10 h-10 rounded-xl flex items-center justify-center"
-            style={{ background: "linear-gradient(135deg, #635BFF, #8579FF)", boxShadow: "0 0 16px rgba(99,91,255,0.5)" }}>
-            <Sparkles size={16} className="text-white" strokeWidth={1.8} />
+      <div className="relative p-5">
+        {/* Header row */}
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h3 className="text-base font-bold leading-tight"
+              style={{
+                background: "linear-gradient(135deg, #FFFFFF 0%, #C4B5FD 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}>
+              Welcome back, {user?.name?.split(" ")[0]} 👋
+            </h3>
+            <p className="text-xs mt-1 leading-relaxed" style={{ color: "#6B7280" }}>
+              You have{" "}
+              <span style={{ color: "#A78BFA", fontWeight: 600 }}>{activeProjects} active project{activeProjects !== 1 ? "s" : ""}</span>
+              {" "}and{" "}
+              <span style={{ color: "#34D399", fontWeight: 600 }}>{pendingTasks} task{pendingTasks !== 1 ? "s" : ""} in progress</span>.
+            </p>
+          </div>
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full shrink-0"
+            style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)" }}>
+            <TrendingUp size={10} style={{ color: "#22C55E" }} />
+            <span className="text-[10px] font-semibold" style={{ color: "#22C55E" }}>Active</span>
           </div>
         </div>
 
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold mb-1" style={{ color: "#F9FAFB" }}>
-            Hi {user?.name?.split(" ")[0]}! Here&apos;s your workspace snapshot.
-          </p>
-          <p className="text-xs leading-relaxed mb-3" style={{ color: "#9CA3AF" }}>
-            You have{" "}
-            <span style={{ color: "#A78BFA", fontWeight: 600 }}>{activeProjects} active project{activeProjects !== 1 ? "s" : ""}</span>
-            {" "}and{" "}
-            <span style={{ color: "#22C55E", fontWeight: 600 }}>{pendingTasks} task{pendingTasks !== 1 ? "s" : ""} in progress</span>.
-            {revenue > 0 && (
-              <> Total revenue: <span style={{ color: "#00D4FF", fontWeight: 600 }}>{formatCurrency(revenue)}</span>.</>
-            )}
-          </p>
-
-          {/* Context stat pills */}
-          <div className="flex flex-wrap items-center gap-2 mb-3">
-            {[
-              { icon: FolderKanban, value: activeProjects, label: "Projects",    color: "#635BFF" },
-              { icon: CheckSquare,  value: pendingTasks,   label: "In Progress", color: "#22C55E" },
-              { icon: DollarSign,   value: formatCurrency(revenue, undefined, true), label: "Revenue", color: "#00D4FF" },
-            ].map(({ icon: Icon, value, label, color }) => (
-              <div key={label} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl"
-                style={{ background: `${color}10`, border: `1px solid ${color}22` }}>
-                <Icon size={11} style={{ color }} />
-                <span className="text-xs font-semibold" style={{ color }}>{value}</span>
-                <span className="text-[10px]" style={{ color: "#4B5563" }}>{label}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* CTA */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => sendMessage(contextPrompt)}
-            className="flex items-center gap-1.5 text-xs font-semibold transition-colors duration-150"
-            style={{ color: "#A78BFA" }}
-            onMouseEnter={e => e.currentTarget.style.color = "#C4B5FD"}
-            onMouseLeave={e => e.currentTarget.style.color = "#A78BFA"}>
-            <Zap size={11} />
-            Help me prioritize today
-            <ArrowRight size={11} />
-          </motion.button>
+        {/* Stat pills */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          <StatPill icon={FolderKanban} value={activeProjects} label="Projects"    color="#635BFF" delay={0.15} />
+          <StatPill icon={CheckSquare}  value={pendingTasks}   label="In Progress" color="#22C55E" delay={0.2}  />
+          <StatPill icon={DollarSign}   value={formatCurrency(revenue, undefined, true)} label="Revenue" color="#00D4FF" delay={0.25} />
         </div>
+
+        {/* Divider */}
+        <div className="h-px mb-4" style={{ background: "rgba(255,255,255,0.05)" }} />
+
+        {/* CTA */}
+        <motion.button
+          whileHover={{ x: 3 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={() => sendMessage(contextPrompt)}
+          className="group flex items-center gap-2 text-xs font-semibold transition-all duration-150"
+          style={{ color: "#A78BFA" }}
+          onMouseEnter={e => e.currentTarget.style.color = "#C4B5FD"}
+          onMouseLeave={e => e.currentTarget.style.color = "#A78BFA"}
+        >
+          <div className="w-6 h-6 rounded-lg flex items-center justify-center"
+            style={{ background: "rgba(99,91,255,0.18)", border: "1px solid rgba(99,91,255,0.3)" }}>
+            <Zap size={11} style={{ color: "#A78BFA" }} />
+          </div>
+          Prioritize my day
+          <ArrowRight size={12} className="transition-transform duration-150 group-hover:translate-x-1" />
+        </motion.button>
       </div>
     </motion.div>
   );

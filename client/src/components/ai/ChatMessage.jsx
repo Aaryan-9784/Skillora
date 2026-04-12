@@ -70,28 +70,28 @@ const ChatMessage = ({ msg, compact = false }) => {
       {/* ── Bubble ── */}
       <div className={`group flex flex-col gap-1.5 ${isUser ? "items-end max-w-[75%]" : "items-start max-w-[82%]"}`}>
         {isUser ? (
-          /* User bubble */
-          <div className="px-4 py-3 rounded-2xl rounded-tr-sm text-sm leading-relaxed"
-            style={{
-              background: "linear-gradient(135deg, #635BFF 0%, #8579FF 100%)",
-              boxShadow: "0 4px 20px rgba(99,91,255,0.35)",
-              color: "#FFFFFF",
-            }}>
-            {msg.content}
-          </div>
-        ) : (
-          /* AI bubble */
-          <div className="rounded-2xl rounded-tl-sm overflow-hidden w-full"
-            style={{
-              background: msg.isError
-                ? "rgba(239,68,68,0.08)"
-                : "rgba(255,255,255,0.04)",
-              border: msg.isError
-                ? "1px solid rgba(239,68,68,0.2)"
-                : "1px solid rgba(255,255,255,0.08)",
-              backdropFilter: "blur(12px)",
-              boxShadow: "0 2px 16px rgba(0,0,0,0.2)",
-            }}>
+        /* User bubble */
+        <div className="px-4 py-3 rounded-2xl rounded-tr-sm text-sm leading-relaxed"
+          style={{
+            background: "linear-gradient(135deg, #635BFF 0%, #7C6FFF 100%)",
+            boxShadow: "0 4px 20px rgba(99,91,255,0.3), inset 0 1px 0 rgba(255,255,255,0.15)",
+            color: "#FFFFFF",
+          }}>
+          {msg.content}
+        </div>
+      ) : (
+        /* AI bubble */
+        <div className="rounded-2xl rounded-tl-sm overflow-hidden w-full"
+          style={{
+            background: msg.isError
+              ? "rgba(239,68,68,0.07)"
+              : "linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)",
+            border: msg.isError
+              ? "1px solid rgba(239,68,68,0.2)"
+              : "1px solid rgba(255,255,255,0.09)",
+            backdropFilter: "blur(16px)",
+            boxShadow: "0 2px 20px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04)",
+          }}>
 
             {/* Message content */}
             <div className="px-4 py-3.5 text-sm leading-relaxed" style={{ color: "#E5E7EB" }}>

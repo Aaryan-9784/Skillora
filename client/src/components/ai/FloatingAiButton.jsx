@@ -76,16 +76,16 @@ const FloatingAiButton = () => {
 
         {/* Button */}
         <motion.button
-          whileHover={{ scale: 1.1 }}
+          whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.93 }}
           onClick={() => setOpen((o) => !o)}
           aria-label={open ? "Close AI Assistant" : "Open AI Assistant"}
           className="relative w-14 h-14 rounded-full flex items-center justify-center text-white"
           style={{
-            background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 50%, #7C3AED 100%)",
+            background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 60%, #7C3AED 100%)",
             boxShadow: open
-              ? "0 0 0 3px rgba(99,91,255,0.3), 0 8px 32px rgba(99,91,255,0.5)"
-              : "0 0 28px rgba(99,91,255,0.55), 0 4px 16px rgba(0,0,0,0.3)",
+              ? "0 0 0 3px rgba(99,91,255,0.35), 0 8px 32px rgba(99,91,255,0.55)"
+              : "0 0 32px rgba(99,91,255,0.65), 0 0 64px rgba(99,91,255,0.2), 0 4px 16px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.2)",
           }}
         >
           <AnimatePresence mode="wait">

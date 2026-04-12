@@ -47,14 +47,17 @@ const SUGGESTIONS = [
 ];
 
 const SuggestionCards = ({ onSelect }) => (
-  <div className="space-y-3">
+  <div className="space-y-4">
     {/* Section label */}
     <div className="flex items-center gap-3">
-      <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.05)" }} />
-      <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: "#374151" }}>
+      <div className="flex-1 h-px"
+        style={{ background: "linear-gradient(90deg, transparent, rgba(99,91,255,0.2))" }} />
+      <p className="text-[9.5px] font-bold tracking-[0.18em] uppercase"
+        style={{ color: "rgba(99,91,255,0.5)" }}>
         Quick Actions
       </p>
-      <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.05)" }} />
+      <div className="flex-1 h-px"
+        style={{ background: "linear-gradient(90deg, rgba(99,91,255,0.2), transparent)" }} />
     </div>
 
     {/* Cards grid */}
@@ -62,59 +65,62 @@ const SuggestionCards = ({ onSelect }) => (
       {SUGGESTIONS.map((s, i) => (
         <motion.button
           key={s.label}
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: i * 0.06, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          whileHover={{ y: -3, transition: { duration: 0.18 } }}
+          transition={{ delay: i * 0.07, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
           whileTap={{ scale: 0.97 }}
           onClick={() => onSelect(s.prompt)}
           className="relative flex flex-col items-start gap-3 p-4 rounded-2xl text-left overflow-hidden group"
           style={{
-            background: "rgba(255,255,255,0.03)",
+            background: "rgba(255,255,255,0.025)",
             border: "1px solid rgba(255,255,255,0.07)",
             backdropFilter: "blur(12px)",
+            transition: "background 0.2s ease, border 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease",
           }}
           onMouseEnter={e => {
-            e.currentTarget.style.background = `linear-gradient(135deg, ${s.from}10 0%, ${s.to}06 100%)`;
-            e.currentTarget.style.border = `1px solid ${s.from}40`;
-            e.currentTarget.style.boxShadow = `0 8px 28px rgba(0,0,0,0.25), 0 0 0 1px ${s.from}18`;
+            e.currentTarget.style.background = `linear-gradient(145deg, ${s.from}12 0%, ${s.to}06 100%)`;
+            e.currentTarget.style.border = `1px solid ${s.from}38`;
+            e.currentTarget.style.boxShadow = `0 12px 32px rgba(0,0,0,0.3), 0 0 0 1px ${s.from}15, inset 0 1px 0 rgba(255,255,255,0.05)`;
+            e.currentTarget.style.transform = "translateY(-3px)";
           }}
           onMouseLeave={e => {
-            e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+            e.currentTarget.style.background = "rgba(255,255,255,0.025)";
             e.currentTarget.style.border = "1px solid rgba(255,255,255,0.07)";
             e.currentTarget.style.boxShadow = "none";
+            e.currentTarget.style.transform = "translateY(0)";
           }}
         >
-          {/* Ambient corner glow */}
-          <div className="absolute -top-6 -right-6 w-20 h-20 rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-            style={{ background: `radial-gradient(circle, ${s.from}35 0%, transparent 70%)` }} />
+          {/* Corner glow */}
+          <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            style={{ background: `radial-gradient(circle, ${s.from}30 0%, transparent 70%)` }} />
 
-          {/* Top gradient line */}
+          {/* Top accent line */}
           <div className="absolute top-0 inset-x-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-            style={{ background: `linear-gradient(90deg, transparent, ${s.from}80, transparent)` }} />
+            style={{ background: `linear-gradient(90deg, transparent, ${s.from}90, transparent)` }} />
 
           {/* Icon */}
           <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
             style={{
-              background: `linear-gradient(135deg, ${s.from}22, ${s.to}12)`,
-              border: `1px solid ${s.from}35`,
-              boxShadow: `0 0 12px ${s.from}20`,
+              background: `linear-gradient(135deg, ${s.from}20, ${s.to}10)`,
+              border: `1px solid ${s.from}30`,
+              boxShadow: `0 0 14px ${s.from}18`,
             }}>
             <s.icon size={16} style={{ color: s.from }} strokeWidth={1.8} />
           </div>
 
           {/* Text */}
-          <div className="flex-1">
-            <p className="text-xs font-semibold leading-snug" style={{ color: "#E5E7EB" }}>{s.label}</p>
-            <p className="text-[10px] mt-0.5 leading-snug" style={{ color: "#6B7280" }}>{s.desc}</p>
+          <div className="flex-1 min-w-0">
+            <p className="text-[12px] font-semibold leading-snug" style={{ color: "#E5E7EB" }}>{s.label}</p>
+            <p className="text-[10px] mt-0.5 leading-snug" style={{ color: "#4B5563" }}>{s.desc}</p>
           </div>
 
           {/* Slash badge */}
-          <span className="text-[9px] font-mono font-semibold px-2 py-0.5 rounded-md"
+          <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-md"
             style={{
               background: `${s.from}12`,
               color: s.from,
-              border: `1px solid ${s.from}25`,
+              border: `1px solid ${s.from}22`,
+              letterSpacing: "0.02em",
             }}>
             {s.slash}
           </span>

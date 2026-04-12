@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import Sidebar from "../components/dashboard/Sidebar";
 import Navbar from "../components/dashboard/Navbar";
@@ -11,6 +11,8 @@ const DashboardLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [cmdOpen, setCmdOpen]     = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const location = useLocation();
+  const isAiPage = location.pathname.startsWith("/ai");
 
   useEffect(() => {
     const handler = (e) => {
@@ -35,7 +37,7 @@ const DashboardLayout = () => {
       </div>
       <GlobalSearch isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
       <CommandPalette isOpen={cmdOpen} onClose={() => setCmdOpen(false)} />
-      <FloatingAiButton />
+      {!isAiPage && <FloatingAiButton />}
     </div>
   );
 };

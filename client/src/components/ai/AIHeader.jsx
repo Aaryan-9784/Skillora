@@ -66,12 +66,6 @@ const AIHeader = ({ tab, onTabChange }) => {
               Skillora AI
             </h1>
             <div className="flex items-center gap-2 mt-0.5">
-              <span className="flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full"
-                style={{ background: "rgba(34,197,94,0.12)", color: "#22C55E", border: "1px solid rgba(34,197,94,0.2)" }}>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                Online
-              </span>
-              <span style={{ color: "#374151" }}>·</span>
               <span className="flex items-center gap-1 text-[10px] font-medium" style={{ color: "#635BFF" }}>
                 <Zap size={9} />
                 Gemini 1.5 Pro

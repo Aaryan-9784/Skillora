@@ -86,16 +86,18 @@ const AI = () => {
 
   return (
     <div
-      className="flex flex-col h-[calc(100vh-56px)] max-w-3xl mx-auto relative"
+      className="flex flex-col h-[calc(100vh-56px)] w-full relative"
       style={{
-        background: "radial-gradient(ellipse at 30% 0%, rgba(99,91,255,0.08) 0%, transparent 55%), radial-gradient(ellipse at 70% 100%, rgba(0,212,255,0.05) 0%, transparent 55%)",
+        background: "radial-gradient(ellipse at 25% 0%, rgba(99,91,255,0.1) 0%, transparent 50%), radial-gradient(ellipse at 75% 100%, rgba(0,212,255,0.06) 0%, transparent 50%), radial-gradient(ellipse at 50% 50%, rgba(139,92,246,0.03) 0%, transparent 70%)",
       }}
     >
-      {/* Subtle grid pattern overlay */}
-      <div className="absolute inset-0 pointer-events-none opacity-[0.015]"
+      {/* Subtle dot grid */}
+      <div className="absolute inset-0 pointer-events-none"
         style={{
-          backgroundImage: "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
+          backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)",
+          backgroundSize: "28px 28px",
+          maskImage: "radial-gradient(ellipse at center, black 30%, transparent 80%)",
+          WebkitMaskImage: "radial-gradient(ellipse at center, black 30%, transparent 80%)",
         }} />
 
       {/* ── Header ── */}
@@ -116,9 +118,10 @@ const AI = () => {
             >
               {/* Messages scroll area */}
               <div
-                className="flex-1 overflow-y-auto px-6 py-5 space-y-5"
+                className="flex-1 overflow-y-auto py-6 space-y-5"
                 style={{ scrollbarWidth: "none" }}
               >
+                <div className="max-w-4xl mx-auto px-6 space-y-5">
                 {/* Context panel — fresh chat only */}
                 {showSuggestions && (
                   <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
