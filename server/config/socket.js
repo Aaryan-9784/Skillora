@@ -59,7 +59,7 @@ const initSocket = (httpServer) => {
         sockets.delete(socket.id);
         if (sockets.size === 0) userSockets.delete(userId);
       }
-      logger.info(`Socket disconnected: ${socket.id}`);
+      logger.debug(`Socket disconnected: ${socket.id}`);
     });
 
     // Ping/pong for connection health

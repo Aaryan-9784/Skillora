@@ -36,16 +36,17 @@ const handleSessionExpired = () => {
 
   tokenStore.clear();
 
-  // Only show toast + redirect if user was actually logged in before.
-  // On a fresh page load (no token in memory), this is just a guest —
-  // no need to tell them their session expired.
-  const wasLoggedIn = !!tokenStore.get(); // already cleared above, check before clear
   const onPublicPage = ["/", "/login", "/register", "/forgot-password"].includes(window.location.pathname)
     || window.location.pathname.startsWith("/reset-password");
 
   if (!onPublicPage) {
     toast.error("Session expired. Please sign in again.", { id: "session-expired" });
-    setTimeout(() => { window.location.href = "/login"; }, 300);
+    setTimeout(() => {
+      sessionExpiredHandled = false; // reset so next login session works
+      window.location.href = "/login";
+    }, 300);
+  } else {
+    sessionExpiredHandled = false; // already on public page, reset immediately
   }
 };
 
@@ -61,7 +62,8 @@ api.interceptors.response.use(
       !original._retry &&
       !original.url?.includes("/auth/refresh") &&
       !original.url?.includes("/auth/login") &&
-      !original.url?.includes("/auth/register")
+      !original.url?.includes("/auth/register") &&
+      !original.url?.includes("/auth/me")
     ) {
       if (isRefreshing) {
         // Queue this request — resolve once refresh completes

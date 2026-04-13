@@ -11,7 +11,7 @@ import toast from "react-hot-toast";
 const useAuthStore = create((set, get) => ({
   user:            null,
   isAuthenticated: false,
-  isLoading:       false, // don't block public pages on initial load
+  isLoading:       true,  // ← TRUE: block route guards until session restore completes
   errors:          {},
 
   setUser: (user) => set({ user, isAuthenticated: !!user }),
@@ -24,6 +24,7 @@ const useAuthStore = create((set, get) => ({
     try {
       const { data } = await authService.register(userData);
       tokenStore.set(data.data.accessToken);
+      sessionStorage.setItem("sk_has_session", "1");
       set({ user: data.data.user, isAuthenticated: true });
       toast.success("Welcome to Skillora!");
       return { success: true, role: data.data.user.role };
@@ -42,6 +43,7 @@ const useAuthStore = create((set, get) => ({
     try {
       const { data } = await authService.login(credentials);
       tokenStore.set(data.data.accessToken);
+      sessionStorage.setItem("sk_has_session", "1");
       set({ user: data.data.user, isAuthenticated: true });
       toast.success(`Welcome back, ${data.data.user.name.split(" ")[0]}!`);
       return { success: true, role: data.data.user.role };
@@ -57,6 +59,7 @@ const useAuthStore = create((set, get) => ({
   // ── OAuth callback (called from OAuthCallback page) ──────
   handleOAuthToken: async (token) => {
     tokenStore.set(token);
+    sessionStorage.setItem("sk_has_session", "1");
     try {
       const { data } = await authService.getMe();
       set({ user: data.data.user, isAuthenticated: true });
@@ -75,6 +78,7 @@ const useAuthStore = create((set, get) => ({
       // Proceed even if server call fails
     } finally {
       tokenStore.clear();
+      sessionStorage.removeItem("sk_has_session");
       set({ user: null, isAuthenticated: false });
       toast.success("Signed out");
     }
@@ -86,6 +90,7 @@ const useAuthStore = create((set, get) => ({
       await authService.logoutAll();
     } finally {
       tokenStore.clear();
+      sessionStorage.removeItem("sk_has_session");
       set({ user: null, isAuthenticated: false });
       toast.success("Signed out from all devices");
     }
@@ -95,27 +100,38 @@ const useAuthStore = create((set, get) => ({
   fetchMe: async () => {
     set({ isLoading: true });
     try {
-      // On page refresh, accessToken is gone from memory.
-      // First silently refresh to get a new accessToken from the httpOnly cookie,
-      // then call /me with the fresh token.
+      // If no in-memory token AND no session flag, skip the refresh request
+      // entirely — avoids a guaranteed-to-fail 401 in the browser console
       if (!tokenStore.get()) {
+        const mayHaveSession = sessionStorage.getItem("sk_has_session") === "1";
+        if (!mayHaveSession) {
+          set({ user: null, isAuthenticated: false });
+          return;
+        }
+        // Has session flag — try to restore token from httpOnly cookie
         try {
-          const { data: refreshData } = await authService.refreshToken();
-          if (refreshData?.data?.accessToken) {
+          const { data: refreshData, status } = await authService.refreshToken();
+          if (status === 200 && refreshData?.data?.accessToken) {
             tokenStore.set(refreshData.data.accessToken);
+          } else {
+            sessionStorage.removeItem("sk_has_session");
+            set({ user: null, isAuthenticated: false });
+            return;
           }
         } catch {
-          // Refresh failed — user is not logged in, stay on public page
-          set({ user: null, isAuthenticated: false, isLoading: false });
+          sessionStorage.removeItem("sk_has_session");
+          set({ user: null, isAuthenticated: false });
           return;
         }
       }
 
       const { data } = await authService.getMe();
       tokenStore.set(data.data?.accessToken ?? tokenStore.get());
+      sessionStorage.setItem("sk_has_session", "1");
       set({ user: data.data.user, isAuthenticated: true });
     } catch {
       tokenStore.clear();
+      sessionStorage.removeItem("sk_has_session");
       set({ user: null, isAuthenticated: false });
     } finally {
       set({ isLoading: false });

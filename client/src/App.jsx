@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, Component } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import ProtectedRoute  from "./components/common/ProtectedRoute";
@@ -34,11 +34,11 @@ const Skills         = lazy(() => import("./pages/Skills"));
 const AI             = lazy(() => import("./pages/AI"));
 const Settings       = lazy(() => import("./pages/Settings"));
 
-// Admin
-const AdminOverview  = lazy(() => import("./pages/Admin"));
-const AdminUsers     = lazy(() => import("./pages/Admin/Users"));
-const AdminRevenue   = lazy(() => import("./pages/Admin/Revenue"));
-const AdminSettings  = lazy(() => import("./pages/Admin/Settings"));
+// Admin — direct imports (not lazy) to avoid HMR race condition with file writes
+import AdminOverview from "./pages/Admin/overview";
+import AdminUsers    from "./pages/Admin/Users";
+import AdminRevenue  from "./pages/Admin/Revenue";
+import AdminSettings from "./pages/Admin/Settings";
 
 // Client Portal
 const ClientDashboard = lazy(() => import("./pages/ClientPortal/Dashboard"));
@@ -47,6 +47,28 @@ const ClientProjects  = lazy(() => import("./pages/ClientPortal/Projects"));
 const ClientProfile   = lazy(() => import("./pages/ClientPortal/Profile"));
 
 const PageLoader = () => <Spinner size="lg" className="min-h-screen" />;
+
+// Simple error boundary to catch lazy-load failures gracefully
+class ErrorBoundary extends Component {
+  constructor(props) { super(props); this.state = { hasError: false, error: null }; }
+  static getDerivedStateFromError(error) { return { hasError: true, error }; }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center flex-col gap-3"
+          style={{ background: "#060A14" }}>
+          <p className="text-white font-semibold">Something went wrong loading this page.</p>
+          <button onClick={() => { this.setState({ hasError: false }); window.location.reload(); }}
+            className="text-sm px-4 py-2 rounded-lg"
+            style={{ background: "rgba(99,91,255,0.2)", color: "#A78BFA", border: "1px solid rgba(99,91,255,0.3)" }}>
+            Reload
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const App = () => {
   const fetchMe = useAuthStore((s) => s.fetchMe);

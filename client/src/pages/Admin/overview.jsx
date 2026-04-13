@@ -1,3 +1,5 @@
+// Admin Overview — written to overview.jsx to avoid editor file-lock on index.jsx
+// App.jsx imports this via: import AdminOverview from "./pages/Admin/overview"
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -25,7 +27,6 @@ const fmt = n => {
 };
 const fmtNum = n => n == null ? "—" : Number(n).toLocaleString();
 
-// ── Sparkline ──────────────────────────────────────────────────────────────
 const Spark = ({ data, color }) => (
   <ResponsiveContainer width="100%" height={36}>
     <AreaChart data={data} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
@@ -41,7 +42,6 @@ const Spark = ({ data, color }) => (
   </ResponsiveContainer>
 );
 
-// ── Tooltip ────────────────────────────────────────────────────────────────
 const ChartTip = ({ active, payload, label, money }) => {
   if (!active || !payload || !payload.length) return null;
   return (
@@ -58,16 +58,13 @@ const ChartTip = ({ active, payload, label, money }) => {
   );
 };
 
-
-// ── Glass Card ─────────────────────────────────────────────────────────────
 const GCard = ({ children, delay, className, glow }) => (
   <motion.div
     initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }}
     transition={{ delay: delay || 0, duration: 0.5, ease: [0.16,1,0.3,1] }}
     className={"relative overflow-hidden rounded-2xl " + (className || "")}
     style={{
-      background: "rgba(255,255,255,0.03)",
-      backdropFilter: "blur(16px)",
+      background: "rgba(255,255,255,0.03)", backdropFilter: "blur(16px)",
       border: "1px solid rgba(255,255,255,0.07)",
       boxShadow: glow ? ("0 0 60px " + glow + "12") : "0 0 40px rgba(99,91,255,0.05)",
     }}
@@ -80,7 +77,6 @@ const GCard = ({ children, delay, className, glow }) => (
   </motion.div>
 );
 
-// ── KPI Card ───────────────────────────────────────────────────────────────
 const KPICard = ({ icon: Icon, label, value, sub, color, trend, spark, delay }) => (
   <motion.div
     initial={{ opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }}
@@ -89,8 +85,7 @@ const KPICard = ({ icon: Icon, label, value, sub, color, trend, spark, delay }) 
     className="relative overflow-hidden rounded-2xl p-5 cursor-default group"
     style={{
       background: "linear-gradient(145deg,rgba(255,255,255,0.05) 0%,rgba(255,255,255,0.02) 100%)",
-      border: "1px solid " + color + "25",
-      backdropFilter: "blur(16px)",
+      border: "1px solid " + color + "25", backdropFilter: "blur(16px)",
     }}
   >
     <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full pointer-events-none transition-all duration-500 group-hover:scale-150 opacity-70"
@@ -121,7 +116,6 @@ const KPICard = ({ icon: Icon, label, value, sub, color, trend, spark, delay }) 
   </motion.div>
 );
 
-// ── Plan Donut ─────────────────────────────────────────────────────────────
 const PlanDonut = ({ plans }) => {
   const p = plans || {};
   const data = [
@@ -166,7 +160,6 @@ const PlanDonut = ({ plans }) => {
   );
 };
 
-// ── Activity Item ──────────────────────────────────────────────────────────
 const ActivityItem = ({ event, i }) => {
   const isJoin = event.type === "user_joined";
   const color  = isJoin ? "#38BDF8" : "#4ADE80";
@@ -200,7 +193,6 @@ const ActivityItem = ({ event, i }) => {
   );
 };
 
-// ── Quick Action ───────────────────────────────────────────────────────────
 const QAction = ({ icon: Icon, label, color, onClick, delay }) => (
   <motion.button
     initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
@@ -221,7 +213,6 @@ const QAction = ({ icon: Icon, label, color, onClick, delay }) => (
   </motion.button>
 );
 
-// ── Tab Button ─────────────────────────────────────────────────────────────
 const TabBtn = ({ label, active, onClick }) => (
   <button onClick={onClick}
     className="px-3 py-1.5 text-[12px] font-bold rounded-lg transition-all duration-200"
@@ -234,8 +225,6 @@ const TabBtn = ({ label, active, onClick }) => (
   </button>
 );
 
-
-// ── Main ───────────────────────────────────────────────────────────────────
 const AdminOverview = () => {
   const navigate = useNavigate();
   const { stats, revenue, activity, isLoading, fetchStats, fetchRevenue, fetchActivity } = useAdminStore();
@@ -257,13 +246,10 @@ const AdminOverview = () => {
   };
 
   const chartData = (revenue || []).map(r => ({
-    month:   MONTHS[(r.month || 1) - 1],
-    revenue: r.revenue || 0,
-    count:   r.count   || 0,
+    month: MONTHS[(r.month || 1) - 1], revenue: r.revenue || 0, count: r.count || 0,
   }));
-
-  const revSpark  = chartData.slice(-6).map(d => ({ v: d.revenue }));
-  const cntSpark  = chartData.slice(-6).map(d => ({ v: d.count   }));
+  const revSpark = chartData.slice(-6).map(d => ({ v: d.revenue }));
+  const cntSpark = chartData.slice(-6).map(d => ({ v: d.count   }));
 
   const kpis = [
     { icon: Users,        label: "Total Users",   value: fmtNum(stats && stats.totalUsers),    sub: "+" + fmtNum(stats && stats.newUsers) + " this month", color: "#635BFF", spark: cntSpark, delay: 0    },
@@ -281,10 +267,18 @@ const AdminOverview = () => {
     { icon: Zap,      label: "AI\nSettings",    color: "#F43F5E", fn: () => navigate("/admin/settings") },
   ];
 
+  const segData = (() => {
+    const p = (stats && stats.plans) || {};
+    return [
+      { name: "Free",    v: p.free    || 0, color: "#4B5563" },
+      { name: "Pro",     v: p.pro     || 0, color: "#818CF8" },
+      { name: "Premium", v: p.premium || 0, color: "#FBBF24" },
+    ];
+  })();
+
   return (
     <div className="min-h-screen relative overflow-hidden"
       style={{ background: "radial-gradient(ellipse 100% 55% at 65% -5%,rgba(99,91,255,0.08) 0%,transparent 52%),linear-gradient(180deg,#0B0F1A 0%,#07090F 100%)" }}>
-
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute -top-40 right-1/4 w-[700px] h-[700px] rounded-full"
           style={{ background: "radial-gradient(circle,rgba(99,91,255,0.055) 0%,transparent 60%)" }} />
@@ -293,7 +287,6 @@ const AdminOverview = () => {
       </div>
 
       <div className="relative p-6 lg:p-8 max-w-[1400px] mx-auto">
-
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: [0.16,1,0.3,1] }}
@@ -303,25 +296,19 @@ const AdminOverview = () => {
               style={{ background: "linear-gradient(135deg,#FFFFFF 25%,#A78BFA 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
               Platform Overview
             </h1>
-            <p className="text-[13px] mt-2" style={{ color: "rgba(100,116,139,0.7)" }}>
-              Real-time snapshot of your business
-            </p>
+            <p className="text-[13px] mt-2" style={{ color: "rgba(100,116,139,0.7)" }}>Real-time snapshot of your business</p>
           </div>
           <div className="flex items-center gap-2.5 flex-wrap">
             <div className="flex p-0.5 rounded-xl" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
               {[3,6,12].map(m => (
                 <button key={m} onClick={() => setPeriod(m)}
                   className="px-3 py-1.5 text-[12px] font-bold rounded-lg transition-all duration-200"
-                  style={{
-                    background: period === m ? "rgba(99,91,255,0.25)" : "transparent",
-                    color: period === m ? "#A78BFA" : "rgba(100,116,139,0.65)",
-                  }}>
+                  style={{ background: period === m ? "rgba(99,91,255,0.25)" : "transparent", color: period === m ? "#A78BFA" : "rgba(100,116,139,0.65)" }}>
                   {m}m
                 </button>
               ))}
             </div>
-            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-              onClick={handleRefresh}
+            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleRefresh}
               className="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
               style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.09)", color: "rgba(148,163,184,0.7)" }}
               onMouseEnter={e => { e.currentTarget.style.background = "rgba(99,91,255,0.12)"; e.currentTarget.style.color = "#A78BFA"; }}
@@ -342,7 +329,7 @@ const AdminOverview = () => {
           </div>
         </motion.div>
 
-        {/* KPI Grid */}
+        {/* KPIs */}
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
           {isLoading
             ? Array.from({ length: 6 }).map((_,i) => (
@@ -353,7 +340,7 @@ const AdminOverview = () => {
           }
         </div>
 
-        {/* Charts Row */}
+        {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
           <GCard delay={0.2} className="lg:col-span-2 p-5" glow="#635BFF">
             <div className="flex items-center justify-between mb-4">
@@ -362,24 +349,20 @@ const AdminOverview = () => {
                 <p className="text-[12px] mt-0.5" style={{ color: "rgba(100,116,139,0.65)" }}>Last {period} months</p>
               </div>
               <div className="flex p-0.5 rounded-xl" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
-                <TabBtn label="Revenue" active={chartTab === "revenue"} onClick={() => setChartTab("revenue")} />
+                <TabBtn label="Revenue"  active={chartTab === "revenue"}  onClick={() => setChartTab("revenue")}  />
                 <TabBtn label="Invoices" active={chartTab === "invoices"} onClick={() => setChartTab("invoices")} />
               </div>
             </div>
             <AnimatePresence mode="wait">
-              <motion.div key={chartTab} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}>
+              <motion.div key={chartTab} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
                 {isLoading
                   ? <div className="h-[220px] rounded-xl animate-pulse" style={{ background: "rgba(255,255,255,0.04)" }} />
                   : chartData.length === 0
-                  ? (
-                    <div className="h-[220px] flex flex-col items-center justify-center gap-3">
+                  ? <div className="h-[220px] flex flex-col items-center justify-center gap-3">
                       <BarChart2 size={32} style={{ color: "rgba(100,116,139,0.25)" }} />
                       <p className="text-sm" style={{ color: "rgba(100,116,139,0.45)" }}>Data will appear as your platform grows</p>
                     </div>
-                  )
-                  : (
-                    <ResponsiveContainer width="100%" height={220}>
+                  : <ResponsiveContainer width="100%" height={220}>
                       <AreaChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
                         <defs>
                           <linearGradient id="ov-rev" x1="0" y1="0" x2="0" y2="1">
@@ -396,14 +379,11 @@ const AdminOverview = () => {
                         <YAxis hide />
                         <Tooltip content={<ChartTip money={chartTab === "revenue"} />} />
                         {chartTab === "revenue"
-                          ? <Area type="monotone" dataKey="revenue" stroke="#635BFF" strokeWidth={2.5}
-                              fill="url(#ov-rev)" dot={false} activeDot={{ r: 5, fill: "#A78BFA", strokeWidth: 0 }} />
-                          : <Area type="monotone" dataKey="count" stroke="#38BDF8" strokeWidth={2.5}
-                              fill="url(#ov-inv)" dot={false} activeDot={{ r: 5, fill: "#38BDF8", strokeWidth: 0 }} />
+                          ? <Area type="monotone" dataKey="revenue" stroke="#635BFF" strokeWidth={2.5} fill="url(#ov-rev)" dot={false} activeDot={{ r: 5, fill: "#A78BFA", strokeWidth: 0 }} />
+                          : <Area type="monotone" dataKey="count"   stroke="#38BDF8" strokeWidth={2.5} fill="url(#ov-inv)" dot={false} activeDot={{ r: 5, fill: "#38BDF8", strokeWidth: 0 }} />
                         }
                       </AreaChart>
                     </ResponsiveContainer>
-                  )
                 }
               </motion.div>
             </AnimatePresence>
@@ -411,13 +391,12 @@ const AdminOverview = () => {
 
           <GCard delay={0.28} className="p-5 flex flex-col">
             <div className="flex p-0.5 rounded-xl mb-4" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
-              <TabBtn label="Plans" active={rightTab === "plans"} onClick={() => setRightTab("plans")} />
+              <TabBtn label="Plans"    active={rightTab === "plans"}    onClick={() => setRightTab("plans")}    />
               <TabBtn label="Segments" active={rightTab === "segments"} onClick={() => setRightTab("segments")} />
             </div>
             <AnimatePresence mode="wait">
               {rightTab === "plans" ? (
-                <motion.div key="plans" initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -8 }} transition={{ duration: 0.2 }} className="flex-1">
+                <motion.div key="plans" initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -8 }} transition={{ duration: 0.2 }} className="flex-1">
                   <p className="text-[13px] font-bold text-white mb-1">Plan Distribution</p>
                   <p className="text-[11px] mb-4" style={{ color: "rgba(100,116,139,0.6)" }}>{fmtNum(stats && stats.totalUsers)} total users</p>
                   {isLoading
@@ -426,33 +405,22 @@ const AdminOverview = () => {
                   }
                 </motion.div>
               ) : (
-                <motion.div key="segments" initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -8 }} transition={{ duration: 0.2 }} className="flex-1">
+                <motion.div key="segments" initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -8 }} transition={{ duration: 0.2 }} className="flex-1">
                   <p className="text-[13px] font-bold text-white mb-1">User Segments</p>
                   <p className="text-[11px] mb-4" style={{ color: "rgba(100,116,139,0.6)" }}>By subscription plan</p>
                   {isLoading
                     ? <div className="h-28 rounded-xl animate-pulse" style={{ background: "rgba(255,255,255,0.04)" }} />
-                    : (() => {
-                        const p = (stats && stats.plans) || {};
-                        const data = [
-                          { name: "Free",    v: p.free    || 0, color: "#4B5563" },
-                          { name: "Pro",     v: p.pro     || 0, color: "#818CF8" },
-                          { name: "Premium", v: p.premium || 0, color: "#FBBF24" },
-                        ];
-                        return (
-                          <ResponsiveContainer width="100%" height={120}>
-                            <BarChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-                              <CartesianGrid stroke="rgba(255,255,255,0.04)" vertical={false} />
-                              <XAxis dataKey="name" stroke="transparent" tick={{ fill: "rgba(100,116,139,0.6)", fontSize: 11 }} />
-                              <YAxis hide />
-                              <Tooltip content={<ChartTip />} cursor={{ fill: "rgba(99,91,255,0.06)" }} />
-                              <Bar dataKey="v" radius={[6,6,0,0]} maxBarSize={40}>
-                                {data.map((d,i) => <Cell key={i} fill={d.color} />)}
-                              </Bar>
-                            </BarChart>
-                          </ResponsiveContainer>
-                        );
-                      })()
+                    : <ResponsiveContainer width="100%" height={120}>
+                        <BarChart data={segData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                          <CartesianGrid stroke="rgba(255,255,255,0.04)" vertical={false} />
+                          <XAxis dataKey="name" stroke="transparent" tick={{ fill: "rgba(100,116,139,0.6)", fontSize: 11 }} />
+                          <YAxis hide />
+                          <Tooltip content={<ChartTip />} cursor={{ fill: "rgba(99,91,255,0.06)" }} />
+                          <Bar dataKey="v" radius={[6,6,0,0]} maxBarSize={40}>
+                            {segData.map((d,i) => <Cell key={i} fill={d.color} />)}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
                   }
                 </motion.div>
               )}
@@ -460,7 +428,7 @@ const AdminOverview = () => {
           </GCard>
         </div>
 
-        {/* Bottom Row */}
+        {/* Bottom */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           <GCard delay={0.34} className="lg:col-span-2 p-5">
             <div className="flex items-center justify-between mb-4">
@@ -493,9 +461,7 @@ const AdminOverview = () => {
                   <Activity size={24} style={{ color: "rgba(99,91,255,0.4)" }} />
                 </div>
                 <p className="text-sm font-semibold text-white">No activity yet</p>
-                <p className="text-xs text-center max-w-[200px]" style={{ color: "rgba(100,116,139,0.5)" }}>
-                  Data will appear as your platform grows
-                </p>
+                <p className="text-xs text-center max-w-[200px]" style={{ color: "rgba(100,116,139,0.5)" }}>Data will appear as your platform grows</p>
               </div>
             )}
             {!isLoading && activity && activity.map((e, i) => <ActivityItem key={i} event={e} i={i} />)}
@@ -506,23 +472,18 @@ const AdminOverview = () => {
             <p className="text-[12px] mb-5" style={{ color: "rgba(100,116,139,0.65)" }}>Common admin tasks</p>
             <div className="grid grid-cols-2 gap-2.5">
               {quickActions.map((a, i) => (
-                <QAction key={a.label} icon={a.icon} label={a.label} color={a.color}
-                  onClick={a.fn} delay={0.42 + i * 0.05} />
+                <QAction key={a.label} icon={a.icon} label={a.label} color={a.color} onClick={a.fn} delay={0.42 + i * 0.05} />
               ))}
             </div>
             <div className="mt-5 pt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
               <p className="text-[10px] font-black uppercase tracking-widest mb-3" style={{ color: "rgba(100,116,139,0.45)" }}>Platform Health</p>
-              {[
-                { label: "API",      color: "#4ADE80" },
-                { label: "Database", color: "#4ADE80" },
-                { label: "AI",       color: "#4ADE80" },
-              ].map(s => (
-                <div key={s.label} className="flex items-center justify-between py-1.5">
-                  <span className="text-[12px] font-medium" style={{ color: "rgba(148,163,184,0.7)" }}>{s.label}</span>
-                  <span className="flex items-center gap-1.5 text-[11px] font-bold" style={{ color: s.color }}>
+              {["API","Database","AI"].map(s => (
+                <div key={s} className="flex items-center justify-between py-1.5">
+                  <span className="text-[12px] font-medium" style={{ color: "rgba(148,163,184,0.7)" }}>{s}</span>
+                  <span className="flex items-center gap-1.5 text-[11px] font-bold" style={{ color: "#4ADE80" }}>
                     <motion.span animate={{ scale: [1,1.4,1], opacity: [1,0.5,1] }}
                       transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-                      className="w-1.5 h-1.5 rounded-full" style={{ background: s.color }} />
+                      className="w-1.5 h-1.5 rounded-full" style={{ background: "#4ADE80" }} />
                     Operational
                   </span>
                 </div>
@@ -530,7 +491,6 @@ const AdminOverview = () => {
             </div>
           </GCard>
         </div>
-
       </div>
     </div>
   );
