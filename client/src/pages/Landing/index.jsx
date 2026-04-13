@@ -55,7 +55,7 @@ const CursorGlow = () => {
     <div
       className="pointer-events-none fixed inset-0 z-0 transition-opacity duration-300"
       style={{
-        background: `radial-gradient(600px circle at ${pos.x}px ${pos.y}px, rgba(99,91,255,0.07), transparent 40%)`,
+        background: `radial-gradient(600px circle at ${pos.x}px ${pos.y}px, rgba(139,92,246,0.08), transparent 40%)`,
       }}
     />
   );
@@ -66,13 +66,16 @@ const NavLink = ({ href, children }) => (
   <a
     href={href}
     className="group relative text-[14px] font-medium transition-colors duration-300"
-    style={{ color: "rgba(148,163,184,0.8)" }}
-    onMouseEnter={e => e.currentTarget.style.color = "#fff"}
-    onMouseLeave={e => e.currentTarget.style.color = "rgba(148,163,184,0.8)"}
+    style={{
+      color: "#fff",
+      textShadow: "0 1px 8px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.7)",
+    }}
+    onMouseEnter={e => e.currentTarget.style.color = "#C084FC"}
+    onMouseLeave={e => e.currentTarget.style.color = "#fff"}
   >
     {children}
     <span className="absolute -bottom-0.5 left-0 h-px w-0 group-hover:w-full transition-all duration-300 rounded-full"
-      style={{ background: "linear-gradient(90deg,#635BFF,#00D4FF)" }} />
+      style={{ background: "linear-gradient(90deg,#3B82F6,#8B5CF6,#EC4899)" }} />
   </a>
 );
 
@@ -132,6 +135,7 @@ const Navbar = () => {
                 color: "#fff",
                 cursor: "pointer",
                 display: "block",
+                textShadow: "0 1px 10px rgba(0,0,0,0.9)",
               }}
             >
               Skillora
@@ -150,9 +154,12 @@ const Navbar = () => {
         <div className="hidden md:flex items-center justify-end gap-3">
           <Link to="/login">
             <motion.span
-              whileHover={{ color: "#fff" }}
+              whileHover={{ color: "#C084FC" }}
               className="text-[13px] font-medium cursor-pointer transition-colors duration-200"
-              style={{ color: "rgba(148,163,184,0.75)" }}
+              style={{
+                color: "#fff",
+                textShadow: "0 1px 8px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.7)",
+              }}
             >
               Sign in
             </motion.span>
@@ -160,12 +167,12 @@ const Navbar = () => {
 
           <Link to="/register">
             <motion.button
-              whileHover={{ scale: 1.04, boxShadow: "0 0 36px rgba(99,91,255,0.6)" }}
+              whileHover={{ scale: 1.04, boxShadow: "0 0 36px rgba(139,92,246,0.7)" }}
               whileTap={{ scale: 0.96 }}
               className="relative h-9 px-5 rounded-xl text-[13px] font-semibold text-white flex items-center gap-2 overflow-hidden"
               style={{
-                background: "linear-gradient(135deg,#6366F1 0%,#8B5CF6 50%,#A855F7 100%)",
-                boxShadow: "0 0 0 1px rgba(139,92,246,0.35), 0 4px 20px rgba(99,91,255,0.4), inset 0 1px 0 rgba(255,255,255,0.15)",
+                background: "linear-gradient(135deg,#3B82F6 0%,#8B5CF6 50%,#EC4899 100%)",
+                boxShadow: "0 0 0 1px rgba(139,92,246,0.35), 0 4px 20px rgba(139,92,246,0.45), inset 0 1px 0 rgba(255,255,255,0.15)",
                 letterSpacing: "0.01em",
               }}
             >
@@ -282,7 +289,7 @@ const Navbar = () => {
                   <motion.button
                     whileTap={{ scale: 0.97 }}
                     className="w-full h-11 rounded-xl text-[14px] font-semibold text-white"
-                    style={{ background: "linear-gradient(135deg,#4F46E5,#7C3AED)", boxShadow: "0 0 20px rgba(99,91,255,0.3)" }}
+                    style={{ background: "linear-gradient(135deg,#3B82F6,#8B5CF6,#EC4899)", boxShadow: "0 0 20px rgba(139,92,246,0.35)" }}
                   >
                     Get started
                   </motion.button>
@@ -307,9 +314,8 @@ const Hero = () => {
     <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 overflow-hidden">
 
       {/* ── Layer 2: Dark gradient overlay ── */}
-      <div className="absolute inset-0 z-[1]" style={{ background: "rgba(7,10,20,0.3)" }} />
       <div className="absolute inset-0 z-[2]" style={{
-        background: "linear-gradient(to bottom, rgba(7,10,20,0.3) 0%, rgba(7,10,20,0.1) 40%, rgba(7,10,20,0.7) 100%)",
+        background: "linear-gradient(to bottom, transparent 0%, transparent 60%, rgba(7,10,20,0.35) 100%)",
       }} />
 
       {/* ── Layer 3: Radial glow behind headline ── */}
@@ -335,15 +341,15 @@ const Hero = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
           className="text-[clamp(2.8rem,7vw,5.5rem)] font-bold leading-[1.04] mb-7 tracking-tight"
-          style={{ letterSpacing: "-0.04em" }}
+          style={{ letterSpacing: "-0.04em", textShadow: "0 2px 20px rgba(0,0,0,0.9)" }}
         >
-          <span style={{ color: "#fff" }}>Your freelance business,</span>
+          <span style={{ color: "#fff", textShadow: "0 2px 20px rgba(0,0,0,0.9)" }}>Your freelance business,</span>
           <br />
           <span style={{
-            background: "linear-gradient(120deg, #818CF8 0%, #C4B5FD 30%, #67E8F9 70%, #22D3EE 100%)",
+            background: "linear-gradient(135deg, #3B82F6 0%, #8B5CF6 45%, #EC4899 100%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
-            filter: "drop-shadow(0 0 40px rgba(129,140,248,0.5))",
+            filter: "drop-shadow(0 0 30px rgba(139,92,246,0.7)) drop-shadow(0 2px 4px rgba(0,0,0,0.9))",
           }}>
             finally under control.
           </span>
@@ -355,7 +361,7 @@ const Hero = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.28, ease: [0.16, 1, 0.3, 1] }}
           className="text-[clamp(1rem,2vw,1.2rem)] max-w-xl mx-auto mb-12 leading-[1.7]"
-          style={{ color: "rgba(186,200,220,0.75)" }}
+          style={{ color: "rgba(226,232,240,0.95)", textShadow: "0 1px 8px rgba(0,0,0,0.8)" }}
         >
           Clients, projects, invoices, and AI insights —
           one workspace built for how you actually work.
@@ -374,8 +380,8 @@ const Hero = () => {
               whileTap={{ scale: 0.96 }}
               className="relative h-[52px] px-8 rounded-2xl text-[14px] font-semibold text-white flex items-center gap-2.5 overflow-hidden"
               style={{
-                background: "linear-gradient(135deg, #6366F1 0%, #8B5CF6 50%, #A855F7 100%)",
-                boxShadow: "0 0 0 1px rgba(139,92,246,0.4), 0 8px 32px rgba(99,91,255,0.45), 0 2px 8px rgba(0,0,0,0.3)",
+                background: "linear-gradient(135deg, #3B82F6 0%, #8B5CF6 45%, #EC4899 100%)",
+                boxShadow: "0 0 0 1px rgba(139,92,246,0.4), 0 8px 40px rgba(99,91,255,0.55), 0 2px 8px rgba(0,0,0,0.3)",
                 letterSpacing: "0.02em",
               }}
             >
@@ -403,14 +409,14 @@ const Hero = () => {
           </Link>
 
           <motion.button
-            whileHover={{ scale: 1.04, background: "rgba(255,255,255,0.07)", borderColor: "rgba(255,255,255,0.25)" }}
+            whileHover={{ scale: 1.04, background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.22)" }}
             whileTap={{ scale: 0.96 }}
             className="h-[52px] px-7 rounded-2xl text-[14px] font-medium flex items-center gap-2.5 transition-all duration-250"
             style={{
-              background: "rgba(255,255,255,0.05)",
-              border: "1px solid rgba(255,255,255,0.14)",
-              color: "rgba(226,232,240,0.9)",
-              backdropFilter: "blur(16px)",
+              background: "rgba(255,255,255,0.0)",
+              border: "1px solid rgba(255,255,255,0.22)",
+              color: "rgba(226,232,240,0.95)",
+              backdropFilter: "blur(6px)",
               letterSpacing: "0.01em",
               boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
             }}
@@ -433,7 +439,7 @@ const Hero = () => {
         className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2"
       >
         <span className="text-[11px] font-medium tracking-[0.18em] uppercase"
-          style={{ color: "rgba(148,163,184,0.4)" }}>
+          style={{ color: "rgba(203,213,225,0.7)", textShadow: "0 1px 6px rgba(0,0,0,0.8)" }}>
           Scroll
         </span>
         <motion.div
@@ -463,7 +469,7 @@ const tabs = [
     title: "Kanban-powered project management",
     desc: "Visualize every project with drag-and-drop boards. Track progress, set deadlines, and never miss a milestone.",
     preview: [
-      { col: "To Do", items: ["Brand redesign", "API integration"], color: "#635BFF" },
+      { col: "To Do", items: ["Brand redesign", "API integration"], color: "#3B82F6" },
       { col: "In Progress", items: ["Mobile app UI", "Client onboarding"], color: "#F59E0B" },
       { col: "Done", items: ["Logo design", "Proposal sent"], color: "#10B981" },
     ],
@@ -493,10 +499,10 @@ const ProductPreview = () => {
   const tab = tabs.find((t) => t.id === active);
 
   return (
-    <section id="features" className="py-24 px-6">
+    <section id="features" className="py-24 px-6" style={{ background: "rgba(7,10,20,0.75)", backdropFilter: "blur(2px)" }}>
       <div className="max-w-6xl mx-auto">
         <FadeIn className="text-center mb-16">
-          <p className="text-[12px] font-semibold tracking-[0.2em] uppercase text-brand mb-4">Product</p>
+          <p className="text-[12px] font-semibold tracking-[0.2em] uppercase text-brand mb-4" style={{ color: "#8B5CF6" }}>Product</p>
           <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight" style={{ letterSpacing: "-0.02em" }}>
             Everything you need.<br />Nothing you don't.
           </h2>
@@ -514,8 +520,8 @@ const ProductPreview = () => {
               style={{
                 background: active === t.id ? "rgba(99,91,255,0.15)" : "rgba(255,255,255,0.04)",
                 border: active === t.id ? "1px solid rgba(99,91,255,0.4)" : "1px solid rgba(255,255,255,0.07)",
-                color: active === t.id ? "#A39AFF" : "#64748B",
-                boxShadow: active === t.id ? "0 0 20px rgba(99,91,255,0.15)" : "none",
+                color: active === t.id ? "#C084FC" : "rgba(203,213,225,0.8)",
+                boxShadow: active === t.id ? "0 0 20px rgba(139,92,246,0.2)" : "none",
               }}
             >
               <t.icon size={14} /> {t.label}
@@ -546,12 +552,12 @@ const ProductPreview = () => {
                   <tab.icon size={18} style={{ color: "#A39AFF" }} />
                 </div>
                 <h3 className="text-2xl font-bold text-white mb-4 tracking-tight">{tab.title}</h3>
-                <p className="text-slate-400 leading-relaxed mb-8">{tab.desc}</p>
+                <p className="text-slate-300 leading-relaxed mb-8">{tab.desc}</p>
                 <Link to="/register">
                   <motion.button
                     whileHover={{ x: 4 }}
                     className="flex items-center gap-2 text-[13px] font-semibold text-brand-300"
-                    style={{ color: "#A39AFF" }}
+                    style={{ color: "#C084FC" }}
                   >
                     Try it free <ChevronRight size={14} />
                   </motion.button>
@@ -607,7 +613,7 @@ const ProductPreview = () => {
                       <div key={c} className="flex items-center gap-3 px-4 py-3 rounded-xl"
                         style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
                         <div className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold text-white"
-                          style={{ background: ["#635BFF","#10B981","#00D4FF","#F59E0B"][i] }}>
+                          style={{ background: ["#3B82F6","#10B981","#8B5CF6","#F59E0B"][i] }}>
                           {c[0]}
                         </div>
                         <div>
@@ -652,15 +658,15 @@ const ProductPreview = () => {
 const values = [
   { icon: Zap, title: "Built for speed", desc: "From signup to first invoice in under 2 minutes.", color: "#F59E0B" },
   { icon: Shield, title: "Bank-grade security", desc: "JWT auth, encrypted data, and SOC2-ready infrastructure.", color: "#10B981" },
-  { icon: Brain, title: "AI-powered insights", desc: "Smart suggestions that help you earn more and work less.", color: "#635BFF" },
-  { icon: Globe, title: "Works everywhere", desc: "Desktop, tablet, mobile — pixel-perfect on every screen.", color: "#00D4FF" },
+  { icon: Brain, title: "AI-powered insights", desc: "Smart suggestions that help you earn more and work less.", color: "#8B5CF6" },
+  { icon: Globe, title: "Works everywhere", desc: "Desktop, tablet, mobile — pixel-perfect on every screen.", color: "#3B82F6" },
 ];
 
 const ValueSection = () => (
-  <section className="py-24 px-6">
+  <section className="py-24 px-6" style={{ background: "rgba(7,10,20,0.78)", backdropFilter: "blur(2px)" }}>
     <div className="max-w-6xl mx-auto">
       <FadeIn className="text-center mb-16">
-        <p className="text-[12px] font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#635BFF" }}>Why Skillora</p>
+        <p className="text-[12px] font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#8B5CF6" }}>Why Skillora</p>
         <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight" style={{ letterSpacing: "-0.02em" }}>
           Designed for how you actually work
         </h2>
@@ -682,7 +688,7 @@ const ValueSection = () => (
                 <v.icon size={18} style={{ color: v.color }} />
               </div>
               <h3 className="text-[15px] font-semibold text-white mb-2">{v.title}</h3>
-              <p className="text-[13px] text-slate-500 leading-relaxed">{v.desc}</p>
+              <p className="text-[13px] text-slate-300 leading-relaxed">{v.desc}</p>
             </motion.div>
           </FadeIn>
         ))}
@@ -704,10 +710,10 @@ const features = [
 ];
 
 const FeatureGrid = () => (
-  <section className="py-24 px-6">
+  <section className="py-24 px-6" style={{ background: "rgba(7,10,20,0.72)", backdropFilter: "blur(2px)" }}>
     <div className="max-w-6xl mx-auto">
       <FadeIn className="text-center mb-16">
-        <p className="text-[12px] font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#635BFF" }}>Features</p>
+        <p className="text-[12px] font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#8B5CF6" }}>Features</p>
         <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight" style={{ letterSpacing: "-0.02em" }}>
           One platform. Infinite possibilities.
         </h2>
@@ -725,11 +731,11 @@ const FeatureGrid = () => (
               }}
             >
               <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-4"
-                style={{ background: "rgba(99,91,255,0.12)", border: "1px solid rgba(99,91,255,0.2)" }}>
-                <f.icon size={16} style={{ color: "#A39AFF" }} />
+                style={{ background: "rgba(139,92,246,0.12)", border: "1px solid rgba(139,92,246,0.25)" }}>
+                <f.icon size={16} style={{ color: "#C084FC" }} />
               </div>
               <h3 className="text-[14px] font-semibold text-white mb-1">{f.title}</h3>
-              <p className="text-[12px] text-slate-500">{f.desc}</p>
+              <p className="text-[12px] text-slate-300">{f.desc}</p>
             </motion.div>
           </FadeIn>
         ))}
@@ -746,10 +752,10 @@ const steps = [
 ];
 
 const HowItWorks = () => (
-  <section id="how-it-works" className="py-24 px-6">
+  <section id="how-it-works" className="py-24 px-6" style={{ background: "rgba(7,10,20,0.78)", backdropFilter: "blur(2px)" }}>
     <div className="max-w-4xl mx-auto">
       <FadeIn className="text-center mb-16">
-        <p className="text-[12px] font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#635BFF" }}>How it works</p>
+        <p className="text-[12px] font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#8B5CF6" }}>How it works</p>
         <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight" style={{ letterSpacing: "-0.02em" }}>
           Up and running in minutes
         </h2>
@@ -768,15 +774,15 @@ const HowItWorks = () => (
               >
                 <div className="w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 text-lg font-bold"
                   style={{
-                    background: "linear-gradient(135deg,rgba(99,91,255,0.2),rgba(0,212,255,0.1))",
-                    border: "1px solid rgba(99,91,255,0.3)",
-                    color: "#A39AFF",
+                    background: "linear-gradient(135deg,rgba(59,130,246,0.2),rgba(236,72,153,0.1))",
+                    border: "1px solid rgba(139,92,246,0.35)",
+                    color: "#C084FC",
                   }}>
                   {s.n}
                 </div>
                 <div className="pt-3">
                   <h3 className="text-lg font-semibold text-white mb-1">{s.title}</h3>
-                  <p className="text-slate-400 text-[14px]">{s.desc}</p>
+                  <p className="text-slate-300 text-[14px]">{s.desc}</p>
                 </div>
               </motion.div>
             </FadeIn>
@@ -807,14 +813,14 @@ const plans = [
 ];
 
 const Pricing = () => (
-  <section id="pricing" className="py-24 px-6">
+  <section id="pricing" className="py-24 px-6" style={{ background: "rgba(7,10,20,0.8)", backdropFilter: "blur(2px)" }}>
     <div className="max-w-5xl mx-auto">
       <FadeIn className="text-center mb-16">
-        <p className="text-[12px] font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#635BFF" }}>Pricing</p>
+        <p className="text-[12px] font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#8B5CF6" }}>Pricing</p>
         <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight" style={{ letterSpacing: "-0.02em" }}>
           Simple, transparent pricing
         </h2>
-        <p className="text-slate-400 mt-4">Start free. Upgrade when you're ready.</p>
+        <p className="text-slate-300 mt-4">Start free. Upgrade when you're ready.</p>
       </FadeIn>
       <div className="grid md:grid-cols-3 gap-6">
         {plans.map((p, i) => (
@@ -833,21 +839,21 @@ const Pricing = () => (
             >
               {p.highlight && (
                 <div className="absolute top-4 right-4 px-2.5 py-1 rounded-full text-[11px] font-semibold"
-                  style={{ background: "rgba(99,91,255,0.2)", color: "#A39AFF", border: "1px solid rgba(99,91,255,0.3)" }}>
+                  style={{ background: "rgba(139,92,246,0.2)", color: "#C084FC", border: "1px solid rgba(139,92,246,0.35)" }}>
                   Most popular
                 </div>
               )}
               <div className="mb-6">
                 <h3 className="text-lg font-bold text-white mb-1">{p.name}</h3>
-                <p className="text-[13px] text-slate-500 mb-4">{p.desc}</p>
+                <p className="text-[13px] text-slate-300 mb-4">{p.desc}</p>
                 <div className="flex items-end gap-1">
                   <span className="text-4xl font-bold text-white">{p.price}</span>
-                  <span className="text-slate-500 mb-1">{p.period}</span>
+                  <span className="text-slate-400 mb-1">{p.period}</span>
                 </div>
               </div>
               <ul className="space-y-3 mb-8 flex-1">
                 {p.features.map((f) => (
-                  <li key={f} className="flex items-center gap-2.5 text-[13px] text-slate-300">
+                  <li key={f} className="flex items-center gap-2.5 text-[13px] text-slate-200">
                     <CheckCircle2 size={14} className="shrink-0" style={{ color: p.highlight ? "#A39AFF" : "#10B981" }} />
                     {f}
                   </li>
@@ -859,13 +865,12 @@ const Pricing = () => (
                   whileTap={{ scale: 0.98 }}
                   className="w-full h-11 rounded-xl text-[14px] font-semibold transition-all duration-200"
                   style={p.highlight ? {
-                    background: "linear-gradient(135deg,#635BFF,#8579FF)",
+                    background: "linear-gradient(135deg,#3B82F6,#8B5CF6,#EC4899)",
                     color: "#fff",
-                    boxShadow: "0 0 24px rgba(99,91,255,0.35)",
+                    boxShadow: "0 0 24px rgba(139,92,246,0.4)",
                   } : {
                     background: "rgba(255,255,255,0.06)",
-                    color: "#CBD5E1",
-                    border: "1px solid rgba(255,255,255,0.1)",
+                    color: "#CBD5E1",                    border: "1px solid rgba(255,255,255,0.1)",
                   }}
                 >
                   Get started
@@ -881,7 +886,7 @@ const Pricing = () => (
 
 // ─── Final CTA ────────────────────────────────────────────
 const FinalCTA = () => (
-  <section className="py-32 px-6 relative overflow-hidden">
+  <section className="py-32 px-6 relative overflow-hidden" style={{ background: "rgba(7,10,20,0.82)", backdropFilter: "blur(2px)" }}>
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
       <div className="w-[600px] h-[300px] rounded-full blur-3xl"
         style={{ background: "radial-gradient(ellipse, rgba(99,91,255,0.15) 0%, transparent 70%)" }} />
@@ -890,14 +895,14 @@ const FinalCTA = () => (
       <h2 className="text-4xl md:text-6xl font-bold text-white mb-6 tracking-tight" style={{ letterSpacing: "-0.03em" }}>
         Your freelance business,<br />
         <span style={{
-          background: "linear-gradient(135deg,#635BFF,#A39AFF,#00D4FF)",
+          background: "linear-gradient(135deg,#3B82F6,#8B5CF6,#EC4899)",
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",
         }}>
           elevated.
         </span>
       </h2>
-      <p className="text-slate-400 text-lg mb-10">Join 10,000+ freelancers already using Skillora.</p>
+      <p className="text-slate-300 text-lg mb-10">Join 10,000+ freelancers already using Skillora.</p>
       <Link to="/register">
         <motion.button
           whileHover={{ scale: 1.04, boxShadow: "0 0 50px rgba(99,91,255,0.5)" }}
@@ -920,11 +925,11 @@ const FooterLink = ({ href = "#", children }) => (
   <a
     href={href}
     className="group relative text-[13px] transition-colors duration-200 hover:text-white w-fit flex items-center gap-1.5"
-    style={{ color: "rgba(100,116,139,0.8)" }}
+    style={{ color: "rgba(203,213,225,0.8)" }}
   >
     {children}
     <span className="absolute -bottom-0.5 left-0 h-px w-0 group-hover:w-full transition-all duration-300"
-      style={{ background: "linear-gradient(90deg,#635BFF,#00D4FF)" }} />
+      style={{ background: "linear-gradient(90deg,#3B82F6,#8B5CF6,#EC4899)" }} />
   </a>
 );
 
@@ -939,7 +944,7 @@ const Footer = () => {
   const inView = useInView(ref, { once: true, margin: "-60px" });
 
   return (
-    <footer ref={ref} style={{ background: "transparent" }}>
+    <footer ref={ref} style={{ background: "rgba(7,10,20,0.88)", backdropFilter: "blur(2px)" }}>
       {/* Top gradient border */}
       <div className="h-px w-full" style={{
         background: "linear-gradient(90deg,transparent 0%,rgba(99,91,255,0.5) 30%,rgba(0,212,255,0.3) 60%,transparent 100%)",
@@ -956,7 +961,7 @@ const Footer = () => {
           style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
           <div>
             <p className="text-[15px] font-semibold text-white mb-1">Stay in the loop</p>
-            <p className="text-[13px]" style={{ color: "rgba(100,116,139,0.8)" }}>
+            <p className="text-[13px]" style={{ color: "rgba(203,213,225,0.8)" }}>
               Product updates, tips, and freelance insights — no spam.
             </p>
           </div>
@@ -999,7 +1004,7 @@ const Footer = () => {
                 Skillora
               </span>
             </Link>
-            <p className="text-[13px] leading-[1.7] max-w-[220px]" style={{ color: "rgba(100,116,139,0.85)" }}>
+            <p className="text-[13px] leading-[1.7] max-w-[220px]" style={{ color: "rgba(203,213,225,0.75)" }}>
               The all-in-one operating system for modern freelancers. Manage clients, projects, invoices, and growth.
             </p>
             <div className="flex items-center gap-2.5 mt-1">
@@ -1014,7 +1019,7 @@ const Footer = () => {
                   style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
                   aria-label={s.label}
                 >
-                  <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current" style={{ color: "rgba(148,163,184,0.7)" }}>
+                  <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current" style={{ color: "rgba(203,213,225,0.7)" }}>
                     <path d={s.path} />
                   </svg>
                 </motion.a>
@@ -1024,7 +1029,7 @@ const Footer = () => {
 
           {/* Product */}
           <div className="flex flex-col gap-4">
-            <p className="text-[11px] font-bold tracking-[0.18em] uppercase mb-1" style={{ color: "#635BFF" }}>Product</p>
+            <p className="text-[11px] font-bold tracking-[0.18em] uppercase mb-1" style={{ color: "#8B5CF6" }}>Product</p>
             {["Features", "Pricing", "How it works", "Changelog"].map((l) => (
               <FooterLink key={l} href={`#${l.toLowerCase().replace(/ /g, "-")}`}>{l}</FooterLink>
             ))}
@@ -1032,7 +1037,7 @@ const Footer = () => {
 
           {/* Company */}
           <div className="flex flex-col gap-4">
-            <p className="text-[11px] font-bold tracking-[0.18em] uppercase mb-1" style={{ color: "#635BFF" }}>Company</p>
+            <p className="text-[11px] font-bold tracking-[0.18em] uppercase mb-1" style={{ color: "#8B5CF6" }}>Company</p>
             {["About", "Blog", "Careers", "Press"].map((l) => (
               <FooterLink key={l}>{l}</FooterLink>
             ))}
@@ -1040,12 +1045,12 @@ const Footer = () => {
 
           {/* Legal + contact */}
           <div className="flex flex-col gap-4">
-            <p className="text-[11px] font-bold tracking-[0.18em] uppercase mb-1" style={{ color: "#635BFF" }}>Legal</p>
+            <p className="text-[11px] font-bold tracking-[0.18em] uppercase mb-1" style={{ color: "#8B5CF6" }}>Legal</p>
             {["Privacy Policy", "Terms of Service", "Cookie Policy"].map((l) => (
               <FooterLink key={l}>{l}</FooterLink>
             ))}
             <div className="mt-3 pt-4 flex flex-col gap-1.5" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-              <p className="text-[11px]" style={{ color: "rgba(100,116,139,0.55)" }}>Get in touch</p>
+              <p className="text-[11px]" style={{ color: "rgba(203,213,225,0.6)" }}>Get in touch</p>
               <FooterLink href="mailto:hello@skillora.io">hello@skillora.io</FooterLink>
             </div>
           </div>
@@ -1054,14 +1059,14 @@ const Footer = () => {
         {/* ── Bottom bar ── */}
         <div className="py-6 flex flex-col md:flex-row items-center justify-between gap-4"
           style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-          <p className="text-[12px]" style={{ color: "rgba(71,85,105,0.7)" }}>
+          <p className="text-[12px]" style={{ color: "rgba(148,163,184,0.65)" }}>
             © 2025 Skillora, Inc. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
             {["Privacy", "Terms", "Cookies"].map((l) => (
               <a key={l} href="#"
-                className="text-[12px] transition-colors duration-200 hover:text-slate-300"
-                style={{ color: "rgba(71,85,105,0.7)" }}>
+                className="text-[12px] transition-colors duration-200 hover:text-slate-200"
+                style={{ color: "rgba(148,163,184,0.65)" }}>
                 {l}
               </a>
             ))}
@@ -1087,11 +1092,10 @@ export default function LandingPage() {
           className="absolute inset-0 w-full h-full object-cover"
           style={{ filter: "blur(0.5px)" }}
         >
-          <source src="https://videos.pexels.com/video-files/3129957/3129957-uhd_2560_1440_25fps.mp4" type="video/mp4" />
-          <source src="https://videos.pexels.com/video-files/2278095/2278095-uhd_2560_1440_30fps.mp4" type="video/mp4" />
+          <source src="/videos/landing-bg.mp4" type="video/mp4" />
         </video>
         {/* Dark overlay so sections below hero remain readable */}
-        <div className="absolute inset-0" style={{ background: "rgba(7,10,20,0.82)" }} />
+        <div className="absolute inset-0" style={{ background: "rgba(7,10,20,0.28)" }} />
       </div>
 
       {/* All page content sits above the video */}

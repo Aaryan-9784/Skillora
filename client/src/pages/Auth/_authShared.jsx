@@ -97,8 +97,8 @@ export const RoleToggle = ({ value, onChange, options }) => {
         animate={{ left: `calc(${activeIdx * 50}% + 4px)`, width: "calc(50% - 4px)" }}
         transition={{ type: "spring", stiffness: 380, damping: 30 }}
         style={{
-          background: "linear-gradient(135deg,#635BFF 0%,#8B5CF6 60%,#A855F7 100%)",
-          boxShadow: "0 0 20px rgba(99,91,255,0.5), 0 4px 16px rgba(99,91,255,0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
+          background: "linear-gradient(135deg,#3B82F6 0%,#8B5CF6 60%,#EC4899 100%)",
+          boxShadow: "0 0 20px rgba(139,92,246,0.5), 0 4px 16px rgba(59,130,246,0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
         }}
       />
       {options.map((opt) => (
@@ -259,7 +259,7 @@ export const CTAButton = ({ children, disabled, isLoading, onClick, type = "subm
                text-[14px] font-semibold overflow-hidden"
     style={{
       background: !disabled && !isLoading
-        ? "linear-gradient(135deg,#6366F1 0%,#8B5CF6 50%,#A855F7 100%)"
+        ? "linear-gradient(135deg,#3B82F6 0%,#8B5CF6 50%,#EC4899 100%)"
         : "rgba(255,255,255,0.08)",
       boxShadow: !disabled && !isLoading
         ? "0 0 0 1px rgba(139,92,246,0.4),0 8px 32px rgba(99,91,255,0.45),inset 0 1px 0 rgba(255,255,255,0.18)"
