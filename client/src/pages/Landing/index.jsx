@@ -65,7 +65,7 @@ const CursorGlow = () => {
 const NavLink = ({ href, children }) => (
   <a
     href={href}
-    className="group relative text-[13px] font-medium transition-colors duration-300"
+    className="group relative text-[14px] font-medium transition-colors duration-300"
     style={{ color: "rgba(148,163,184,0.8)" }}
     onMouseEnter={e => e.currentTarget.style.color = "#fff"}
     onMouseLeave={e => e.currentTarget.style.color = "rgba(148,163,184,0.8)"}
@@ -108,7 +108,7 @@ const Navbar = () => {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-        className="fixed top-0 inset-x-0 z-40 h-16 px-5 md:px-10 grid grid-cols-3 items-center"
+        className="fixed top-0 inset-x-0 z-40 h-[72px] px-5 md:px-10 grid grid-cols-3 items-center"
         style={{
           background: scrolled ? "rgba(8,11,22,0.82)" : "transparent",
           backdropFilter: scrolled ? "blur(20px)" : "none",

@@ -1,108 +1,8 @@
-/**
- * _authShared.jsx — Luxury shared primitives for Login & Register.
- *
- * Design: Apple × Stripe × Linear — calm, premium, cinematic.
- * Layout: Full-screen bg image, RIGHT-side floating form.
- */
-
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertCircle, Github } from "lucide-react";
 
-// ─────────────────────────────────────────────────────────
-// BACKGROUND IMAGES
-// Register: premium dark workspace with warm desk lighting
-// Login:    neon dual-monitor setup (unchanged)
-// ─────────────────────────────────────────────────────────
-export const BG_LOGIN =
-  "https://images.unsplash.com/photo-1607799279861-4dd421887fb3?w=1920&q=90&auto=format&fit=crop";
-// "Dark neon workstation" — Fotis Fotopoulos, Unsplash free license
-
-export const BG_REGISTER =
-  "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1920&q=90&auto=format&fit=crop";
-// "Team working at modern desk" — Brooke Cagle, Unsplash free license
-// Warm, professional, collaborative — perfect for a signup page
-
-// Keep BG_IMAGE as alias so Login import doesn't break
-export const BG_IMAGE = BG_LOGIN;
-
-// ─────────────────────────────────────────────────────────
-// LUXURY AUTH INPUT
-// ─────────────────────────────────────────────────────────
-export const AuthInput = ({ label, icon: Icon, error, suffix, labelRight, ...props }) => {
-  const [focused, setFocused] = useState(false);
-
-  return (
-    <div className="space-y-2">
-      {(label || labelRight) && (
-        <div className="flex items-center justify-between">
-          {label && (
-            <label className="block text-[10px] font-semibold tracking-[0.18em] uppercase"
-              style={{ color: "rgba(148,163,184,0.55)" }}>
-              {label}
-            </label>
-          )}
-          {labelRight}
-        </div>
-      )}
-
-      <div className="relative flex items-center rounded-2xl transition-all duration-300"
-        style={{
-          background: focused ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.03)",
-          border: error
-            ? "1px solid rgba(239,68,68,0.4)"
-            : focused
-            ? "1px solid rgba(99,91,255,0.5)"
-            : "1px solid rgba(255,255,255,0.07)",
-          boxShadow: focused && !error
-            ? "0 0 0 4px rgba(99,91,255,0.08), 0 2px 16px rgba(0,0,0,0.12)"
-            : "none",
-          transition: "all 0.3s cubic-bezier(0.4,0,0.2,1)",
-        }}>
-
-        {focused && !error && (
-          <motion.div
-            initial={{ scaleX: 0 }} animate={{ scaleX: 1 }}
-            className="absolute top-0 inset-x-0 h-px rounded-t-2xl pointer-events-none"
-            style={{ background: "linear-gradient(90deg,transparent,rgba(99,91,255,0.6),rgba(139,92,246,0.4),transparent)" }}
-          />
-        )}
-
-        {Icon && (
-          <div className="pl-4 shrink-0">
-            <Icon size={13}
-              style={{ color: focused ? "rgba(129,140,248,0.8)" : "rgba(75,85,99,0.7)", transition: "color 0.3s" }} />
-          </div>
-        )}
-
-        <input
-          {...props}
-          onFocus={(e) => { setFocused(true); props.onFocus?.(e); }}
-          onBlur={(e)  => { setFocused(false); props.onBlur?.(e); }}
-          className="flex-1 bg-transparent px-3.5 py-3.5 text-sm outline-none"
-          style={{ color: "#F1F5F9", caretColor: "#818CF8", letterSpacing: "0.01em" }}
-        />
-
-        {suffix && <div className="pr-4 shrink-0">{suffix}</div>}
-      </div>
-
-      <AnimatePresence>
-        {error && (
-          <motion.p
-            initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
-            className="flex items-center gap-1.5 text-[11px]"
-            style={{ color: "rgba(248,113,113,0.9)" }}>
-            <AlertCircle size={10} />{error}
-          </motion.p>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-};
-
-// ─────────────────────────────────────────────────────────
-// GOOGLE ICON
-// ─────────────────────────────────────────────────────────
+// ─── Google icon ───────────────────────────────────────────────────────────
 export const GoogleIcon = () => (
   <svg className="w-[15px] h-[15px] shrink-0" viewBox="0 0 24 24">
     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -112,138 +12,276 @@ export const GoogleIcon = () => (
   </svg>
 );
 
-// ─────────────────────────────────────────────────────────
-// OAUTH BUTTONS
-// ─────────────────────────────────────────────────────────
-export const OAuthButtons = ({ apiBase, role = "freelancer" }) => (
-  <div className="grid grid-cols-2 gap-2.5">
-    {[
-      { href: `${apiBase}/api/auth/google?role=${role}`, icon: <GoogleIcon />, label: "Google",
-        hoverBg: "rgba(66,133,244,0.08)", hoverBorder: "rgba(66,133,244,0.35)" },
-      { href: `${apiBase}/api/auth/github?role=${role}`, icon: <Github size={14} />, label: "GitHub",
-        hoverBg: "rgba(255,255,255,0.06)", hoverBorder: "rgba(255,255,255,0.18)" },
-    ].map(({ href, icon, label, hoverBg, hoverBorder }) => (
-      <a key={label} href={href}
-        className="flex items-center justify-center gap-2 h-11 rounded-2xl text-[13px] font-medium"
+// ─── Premium glass input ───────────────────────────────────────────────────
+export const AuthInput = ({ label, icon: Icon, error, suffix, labelRight, ...props }) => {
+  const [focused, setFocused] = useState(false);
+  return (
+    <div className="space-y-1.5">
+      {(label || labelRight) && (
+        <div className="flex items-center justify-between">
+          {label && (
+            <label className="block text-[10px] font-bold tracking-[0.18em] uppercase"
+              style={{ color: "rgba(148,163,184,0.5)" }}>
+              {label}
+            </label>
+          )}
+          {labelRight}
+        </div>
+      )}
+      <div className="relative flex items-center rounded-2xl transition-all duration-300"
         style={{
-          background: "rgba(255,255,255,0.04)",
-          border: "1px solid rgba(255,255,255,0.08)",
-          color: "rgba(226,232,240,0.85)",
-          textDecoration: "none",
-          transition: "all 0.3s cubic-bezier(0.4,0,0.2,1)",
-          letterSpacing: "0.01em",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = hoverBg;
-          e.currentTarget.style.border = `1px solid ${hoverBorder}`;
-          e.currentTarget.style.transform = "translateY(-1px)";
-          e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,0,0,0.25)";
-          e.currentTarget.style.color = "#F1F5F9";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = "rgba(255,255,255,0.04)";
-          e.currentTarget.style.border = "1px solid rgba(255,255,255,0.08)";
-          e.currentTarget.style.transform = "none";
-          e.currentTarget.style.boxShadow = "none";
-          e.currentTarget.style.color = "rgba(226,232,240,0.85)";
+          background: focused
+            ? "rgba(255,255,255,0.05)"
+            : "rgba(255,255,255,0.025)",
+          border: error
+            ? "1px solid rgba(239,68,68,0.4)"
+            : focused
+            ? "1px solid rgba(99,91,255,0.5)"
+            : "1px solid rgba(255,255,255,0.07)",
+          backdropFilter: "blur(16px)",
+          boxShadow: focused && !error
+            ? "0 0 0 3px rgba(99,91,255,0.08), 0 2px 20px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.06)"
+            : "inset 0 1px 0 rgba(255,255,255,0.03)",
         }}>
-        {icon}{label}
-      </a>
-    ))}
+        {/* focus top glow line */}
+        <AnimatePresence>
+          {focused && !error && (
+            <motion.div initial={{ scaleX: 0, opacity: 0 }} animate={{ scaleX: 1, opacity: 1 }}
+              exit={{ scaleX: 0, opacity: 0 }} transition={{ duration: 0.25 }}
+              className="absolute top-0 inset-x-0 h-px rounded-t-2xl pointer-events-none"
+              style={{ background: "linear-gradient(90deg,transparent,rgba(99,91,255,0.7),rgba(139,92,246,0.5),transparent)" }} />
+          )}
+        </AnimatePresence>
+        {Icon && (
+          <div className="pl-4 shrink-0">
+            <Icon size={13} style={{ color: focused ? "rgba(167,139,250,0.9)" : "rgba(75,85,99,0.65)", transition: "color 0.3s" }} />
+          </div>
+        )}
+        <input {...props}
+          onFocus={e => { setFocused(true); props.onFocus?.(e); }}
+          onBlur={e  => { setFocused(false); props.onBlur?.(e); }}
+          className="flex-1 bg-transparent px-3.5 py-3.5 text-[13px] outline-none"
+          style={{ color: "#F1F5F9", caretColor: "#818CF8", letterSpacing: "0.01em" }} />
+        {suffix && <div className="pr-4 shrink-0">{suffix}</div>}
+      </div>
+      <AnimatePresence>
+        {error && (
+          <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
+            className="flex items-center gap-1.5 text-[11px]" style={{ color: "rgba(248,113,113,0.9)" }}>
+            <AlertCircle size={10} />{error}
+          </motion.p>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+// ─── Glass role toggle with sliding pill ──────────────────────────────────
+export const RoleToggle = ({ value, onChange, options }) => {
+  const activeIdx = options.findIndex(o => o.value === value);
+  return (
+    <div className="relative flex p-1 rounded-2xl mb-6"
+      style={{
+        background: "rgba(255,255,255,0.025)",
+        border: "1px solid rgba(255,255,255,0.07)",
+        backdropFilter: "blur(16px)",
+      }}>
+      {/* sliding gradient pill */}
+      <motion.div
+        className="absolute top-1 bottom-1 rounded-xl pointer-events-none"
+        animate={{ left: `calc(${activeIdx * 50}% + 4px)`, width: "calc(50% - 4px)" }}
+        transition={{ type: "spring", stiffness: 380, damping: 30 }}
+        style={{
+          background: "linear-gradient(135deg,#635BFF 0%,#8B5CF6 60%,#A855F7 100%)",
+          boxShadow: "0 0 20px rgba(99,91,255,0.5), 0 4px 16px rgba(99,91,255,0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
+        }}
+      />
+      {options.map((opt, i) => (
+        <button key={opt.value} type="button" onClick={() => onChange(opt.value)}
+          className="relative flex-1 py-2.5 rounded-xl text-[13px] font-semibold transition-colors duration-200 z-10"
+          style={{ color: value === opt.value ? "#fff" : "rgba(100,116,139,0.65)" }}>
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+};
+
+// ─── OAuth buttons (bottom placement, premium style) ──────────────────────
+export const OAuthButtons = ({ apiBase, role = "freelancer", label = "or sign in with" }) => (
+  <div className="space-y-3">
+    <div className="flex items-center gap-3">
+      <div className="flex-1 h-px" style={{ background: "linear-gradient(to right,transparent,rgba(255,255,255,0.07),transparent)" }} />
+      <span className="text-[11px] tracking-[0.06em] shrink-0" style={{ color: "rgba(75,85,99,0.6)" }}>{label}</span>
+      <div className="flex-1 h-px" style={{ background: "linear-gradient(to left,transparent,rgba(255,255,255,0.07),transparent)" }} />
+    </div>
+    <div className="grid grid-cols-2 gap-2.5">
+      {[
+        {
+          href: `${apiBase}/api/auth/google?role=${role}`,
+          icon: <GoogleIcon />,
+          label: "Google",
+          accent: "rgba(66,133,244,0.18)",
+          border: "rgba(66,133,244,0.35)",
+          glow: "rgba(66,133,244,0.2)",
+          textColor: "#93C5FD",
+        },
+        {
+          href: `${apiBase}/api/auth/github?role=${role}`,
+          icon: <Github size={15} />,
+          label: "GitHub",
+          accent: "rgba(255,255,255,0.1)",
+          border: "rgba(255,255,255,0.22)",
+          glow: "rgba(255,255,255,0.1)",
+          textColor: "#E2E8F0",
+        },
+      ].map(({ href, icon, label, accent, border, glow, textColor }) => (
+        <motion.a
+          key={label}
+          href={href}
+          whileHover={{ y: -2, scale: 1.02 }}
+          whileTap={{ scale: 0.97 }}
+          className="relative flex items-center justify-center gap-2.5 h-11 rounded-2xl text-[13px] font-semibold overflow-hidden"
+          style={{
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.09)",
+            backdropFilter: "blur(16px)",
+            color: "rgba(203,213,225,0.8)",
+            textDecoration: "none",
+            transition: "all 0.25s ease",
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.background = accent;
+            e.currentTarget.style.border = `1px solid ${border}`;
+            e.currentTarget.style.boxShadow = `0 0 20px ${glow}, inset 0 1px 0 rgba(255,255,255,0.1)`;
+            e.currentTarget.style.color = textColor;
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+            e.currentTarget.style.border = "1px solid rgba(255,255,255,0.09)";
+            e.currentTarget.style.boxShadow = "none";
+            e.currentTarget.style.color = "rgba(203,213,225,0.8)";
+          }}
+        >
+          {/* top shine */}
+          <div className="absolute inset-x-0 top-0 h-px pointer-events-none"
+            style={{ background: "linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent)" }} />
+          {icon}
+          <span>{label}</span>
+        </motion.a>
+      ))}
+    </div>
   </div>
 );
 
-// ─────────────────────────────────────────────────────────
-// LUXURY GLASS CARD
-// ─────────────────────────────────────────────────────────
-export const GlassCard = ({ children }) => (
-  <div className="relative rounded-3xl overflow-hidden"
+// ─── Cursor-following radial glow ──────────────────────────────────────────
+export const CursorGlow = () => {
+  const [pos, setPos] = useState({ x: -999, y: -999 });
+  useEffect(() => {
+    const h = e => setPos({ x: e.clientX, y: e.clientY });
+    window.addEventListener("mousemove", h);
+    return () => window.removeEventListener("mousemove", h);
+  }, []);
+  return (
+    <div className="pointer-events-none fixed inset-0 z-[3] overflow-hidden"
+      style={{
+        background: `radial-gradient(600px circle at ${pos.x}px ${pos.y}px, rgba(99,91,255,0.06) 0%, transparent 60%)`,
+        transition: "background 0.1s ease",
+      }} />
+  );
+};
+
+// ─── Animated mesh background ──────────────────────────────────────────────
+export const MeshBg = () => (
+  <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+    {/* base */}
+    <div className="absolute inset-0" style={{ background: "#04070F" }} />
+    {/* animated gradient orbs */}
+    <motion.div className="absolute rounded-full"
+      animate={{ x: [0, 60, 0], y: [0, -40, 0], scale: [1, 1.15, 1] }}
+      transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+      style={{ width: 700, height: 700, top: "-20%", left: "-15%",
+        background: "radial-gradient(circle,rgba(99,91,255,0.12) 0%,transparent 65%)" }} />
+    <motion.div className="absolute rounded-full"
+      animate={{ x: [0, -50, 0], y: [0, 60, 0], scale: [1, 1.2, 1] }}
+      transition={{ duration: 22, repeat: Infinity, ease: "easeInOut", delay: 3 }}
+      style={{ width: 600, height: 600, bottom: "-15%", right: "-10%",
+        background: "radial-gradient(circle,rgba(139,92,246,0.1) 0%,transparent 65%)" }} />
+    <motion.div className="absolute rounded-full"
+      animate={{ x: [0, 40, 0], y: [0, -30, 0] }}
+      transition={{ duration: 14, repeat: Infinity, ease: "easeInOut", delay: 6 }}
+      style={{ width: 400, height: 400, top: "30%", left: "40%",
+        background: "radial-gradient(circle,rgba(56,189,248,0.06) 0%,transparent 65%)" }} />
+    {/* noise overlay */}
+    <div className="absolute inset-0 opacity-[0.025]"
+      style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }} />
+  </div>
+);
+
+// ─── Premium glass card ────────────────────────────────────────────────────
+export const GlassCard = ({ children, className = "" }) => (
+  <div className={"relative rounded-3xl overflow-hidden " + className}
     style={{
-      background: "linear-gradient(160deg, rgba(10,14,32,0.82) 0%, rgba(6,9,22,0.88) 100%)",
+      background: "linear-gradient(145deg,rgba(255,255,255,0.028) 0%,rgba(255,255,255,0.008) 50%,rgba(255,255,255,0.015) 100%)",
       border: "1px solid rgba(255,255,255,0.08)",
-      backdropFilter: "blur(40px)",
-      WebkitBackdropFilter: "blur(40px)",
+      backdropFilter: "blur(48px)",
+      WebkitBackdropFilter: "blur(48px)",
       boxShadow: [
-        "0 0 0 1px rgba(99,91,255,0.06)",
-        "0 32px 80px rgba(0,0,0,0.75)",
-        "0 0 60px rgba(99,91,255,0.05)",
-        "inset 0 1px 0 rgba(255,255,255,0.06)",
+        "0 0 0 1px rgba(99,91,255,0.09)",
+        "0 32px 80px rgba(0,0,0,0.4)",
+        "0 0 80px rgba(99,91,255,0.05)",
+        "inset 0 1px 0 rgba(255,255,255,0.09)",
+        "inset 0 -1px 0 rgba(0,0,0,0.15)",
       ].join(", "),
       padding: "44px 40px",
     }}>
+    {/* top accent line */}
     <div className="absolute top-0 inset-x-0 h-px pointer-events-none"
-      style={{ background: "linear-gradient(90deg,transparent 10%,rgba(99,91,255,0.45) 40%,rgba(139,92,246,0.3) 60%,transparent 90%)" }} />
+      style={{ background: "linear-gradient(90deg,transparent 5%,rgba(99,91,255,0.65) 38%,rgba(56,189,248,0.35) 62%,transparent 95%)" }} />
+    {/* inner light reflection */}
+    <div className="absolute top-0 inset-x-0 h-[120px] pointer-events-none rounded-t-3xl"
+      style={{ background: "linear-gradient(180deg,rgba(255,255,255,0.04) 0%,transparent 100%)" }} />
+    {/* corner glows */}
     <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full pointer-events-none"
-      style={{ background: "radial-gradient(circle,rgba(99,91,255,0.08) 0%,transparent 70%)" }} />
-    <div className="absolute -bottom-20 -left-10 w-56 h-56 rounded-full pointer-events-none"
-      style={{ background: "radial-gradient(circle,rgba(56,189,248,0.04) 0%,transparent 70%)" }} />
+      style={{ background: "radial-gradient(circle,rgba(99,91,255,0.12) 0%,transparent 70%)" }} />
+    <div className="absolute -bottom-16 -left-10 w-52 h-52 rounded-full pointer-events-none"
+      style={{ background: "radial-gradient(circle,rgba(56,189,248,0.06) 0%,transparent 70%)" }} />
     <div className="relative">{children}</div>
   </div>
 );
 
-// ─────────────────────────────────────────────────────────
-// AUTH PAGE SHELL — luxury full-screen bg, RIGHT-form layout
-// ─────────────────────────────────────────────────────────
-export const AuthPageShell = ({ children, bgImage }) => {
-  const image = bgImage || BG_LOGIN;
-  return (
-  <div className="relative min-h-screen flex items-stretch overflow-hidden" style={{ background: "#04070F" }}>
-
-    {/* Background image — slow Ken Burns */}
-    <motion.div
-      className="absolute inset-0 z-0"
-      initial={{ scale: 1 }}
-      animate={{ scale: 1.05 }}
-      transition={{ duration: 24, ease: "linear", repeat: Infinity, repeatType: "reverse" }}
-      style={{
-        backgroundImage: `url("${image}")`,
-        backgroundSize: "cover",
-        backgroundPosition: "center 35%",
-        backgroundColor: "#0D1117", // shows instantly while image loads
-      }}
-    />
-
-    {/* Overlay stack */}
-    {/* 1. Base tint */}
-    <div className="absolute inset-0 z-[1]" style={{ background: "rgba(4,7,18,0.58)" }} />
-    {/* 2. Right-heavy gradient — left shows image, right darker for form */}
-    <div className="absolute inset-0 z-[2]"
-      style={{ background: "linear-gradient(to left, rgba(4,7,18,0.96) 0%, rgba(4,7,18,0.75) 32%, rgba(4,7,18,0.30) 62%, rgba(4,7,18,0.06) 100%)" }} />
-    {/* 3. Bottom vignette */}
-    <div className="absolute inset-0 z-[3]"
-      style={{ background: "linear-gradient(to top, rgba(4,7,18,0.90) 0%, transparent 45%)" }} />
-    {/* 4. Top vignette */}
-    <div className="absolute inset-0 z-[3]"
-      style={{ background: "linear-gradient(to bottom, rgba(4,7,18,0.60) 0%, transparent 24%)" }} />
-    {/* 5. Edge vignette */}
-    <div className="absolute inset-0 z-[3]"
-      style={{ background: "radial-gradient(ellipse 100% 100% at 50% 50%, transparent 52%, rgba(4,7,18,0.60) 100%)" }} />
-    {/* 6. Brand glow — right side behind form */}
-    <div className="absolute inset-0 z-[4] pointer-events-none"
-      style={{ background: "radial-gradient(ellipse 48% 60% at 90% 52%, rgba(99,91,255,0.11) 0%, transparent 70%)" }} />
-    {/* 7. Soft blue accent — left/center */}
-    <div className="absolute inset-0 z-[4] pointer-events-none"
-      style={{ background: "radial-gradient(ellipse 50% 45% at 30% 40%, rgba(56,189,248,0.05) 0%, transparent 70%)" }} />
-
-    {/* Subtle particles — right side only */}
-    {[
-      { top: "22%", left: "70%", s: 2,   d: 0.5 },
-      { top: "48%", left: "80%", s: 1.5, d: 1.6 },
-      { top: "68%", left: "74%", s: 2,   d: 1.0 },
-      { top: "32%", left: "87%", s: 1.5, d: 2.4 },
-    ].map((p, i) => (
-      <motion.div key={i}
-        className="absolute rounded-full pointer-events-none z-[5]"
-        style={{ top: p.top, left: p.left, width: p.s, height: p.s, background: "rgba(167,139,250,0.45)" }}
-        animate={{ y: [0, -10, 0], opacity: [0.12, 0.45, 0.12] }}
-        transition={{ duration: 5.5 + i * 0.7, repeat: Infinity, delay: p.d, ease: "easeInOut" }}
-      />
-    ))}
-
-    {/* Content */}
-    <div className="relative z-10 flex w-full min-h-screen">
-      {children}
-    </div>
-  </div>
-  );
-};
+// ─── CTA button ────────────────────────────────────────────────────────────
+export const CTAButton = ({ children, disabled, isLoading, onClick, type = "submit" }) => (
+  <motion.button type={type} disabled={disabled || isLoading}
+    whileHover={!disabled && !isLoading ? { scale: 1.025, y: -2 } : {}}
+    whileTap={!disabled && !isLoading ? { scale: 0.975 } : {}}
+    onClick={onClick}
+    className="relative w-full h-[52px] rounded-2xl flex items-center justify-center gap-2
+               text-[14px] font-semibold text-white overflow-hidden"
+    style={{
+      background: !disabled && !isLoading
+        ? "linear-gradient(135deg,#6366F1 0%,#8B5CF6 50%,#A855F7 100%)"
+        : "rgba(255,255,255,0.05)",
+      boxShadow: !disabled && !isLoading
+        ? "0 0 0 1px rgba(139,92,246,0.4),0 8px 32px rgba(99,91,255,0.45),inset 0 1px 0 rgba(255,255,255,0.18)"
+        : "none",
+      color: !disabled && !isLoading ? "#fff" : "rgba(75,85,99,0.45)",
+      cursor: disabled || isLoading ? "not-allowed" : "pointer",
+      transition: "all 0.3s ease",
+      backdropFilter: "blur(8px)",
+    }}>
+    {!disabled && !isLoading && (
+      <>
+        {/* shimmer sweep */}
+        <motion.div className="absolute inset-0 pointer-events-none"
+          style={{ background: "linear-gradient(105deg,transparent 30%,rgba(255,255,255,0.14) 50%,transparent 70%)", backgroundSize: "200% 100%" }}
+          animate={{ backgroundPosition: ["200% 0","−200% 0"] }}
+          transition={{ duration: 2.8, repeat: Infinity, ease: "linear" }} />
+        {/* top shine */}
+        <div className="absolute inset-x-0 top-0 h-px rounded-t-2xl pointer-events-none"
+          style={{ background: "linear-gradient(90deg,transparent,rgba(255,255,255,0.35),transparent)" }} />
+      </>
+    )}
+    {children}
+  </motion.button>
+);
