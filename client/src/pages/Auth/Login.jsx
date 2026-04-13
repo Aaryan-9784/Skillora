@@ -48,17 +48,17 @@ const Login = () => {
 
       {/* ── video bg ── */}
       <video autoPlay muted loop playsInline
-        className="absolute inset-0 z-0 w-full h-full object-cover opacity-55"
+        className="absolute inset-0 z-0 w-full h-full object-cover opacity-80"
         style={{ filter: "blur(0.5px)" }}>
         <source src="/videos/login-bg.mp4" type="video/mp4" />
       </video>
 
       {/* ── overlay stack ── */}
-      <div className="absolute inset-0 z-[1]" style={{ background: "rgba(4,7,18,0.55)" }} />
+      <div className="absolute inset-0 z-[1]" style={{ background: "rgba(4,7,18,0.12)" }} />
       <div className="absolute inset-0 z-[2]"
-        style={{ background: "linear-gradient(to right,rgba(4,7,18,0.05) 0%,rgba(4,7,18,0.4) 42%,rgba(4,7,18,0.95) 68%,rgba(4,7,18,1) 100%)" }} />
+        style={{ background: "linear-gradient(to right,rgba(4,7,18,0.0) 0%,rgba(4,7,18,0.1) 42%,rgba(4,7,18,0.45) 68%,rgba(4,7,18,0.6) 100%)" }} />
       <div className="absolute inset-0 z-[2]"
-        style={{ background: "linear-gradient(to top,rgba(4,7,18,0.9) 0%,transparent 40%)" }} />
+        style={{ background: "linear-gradient(to top,rgba(4,7,18,0.3) 0%,transparent 40%)" }} />
 
       {/* animated mesh orbs */}
       <motion.div className="absolute rounded-full pointer-events-none z-[1]"
@@ -170,7 +170,7 @@ const Login = () => {
                     WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
                   Welcome back
                 </h2>
-                <p className="text-[13px]" style={{ color: "rgba(100,116,139,0.7)" }}>Sign in to continue</p>
+                <p className="text-[13px]" style={{ color: "rgba(148,163,184,0.85)" }}>Sign in to continue</p>
               </motion.div>
 
               {/* role toggle */}
@@ -240,7 +240,7 @@ const Login = () => {
                       </svg>
                     )}
                   </motion.div>
-                  <span className="text-[12px]" style={{ color: "rgba(100,116,139,0.7)" }}>Remember me for 30 days</span>
+                  <span className="text-[12px]" style={{ color: "rgba(148,163,184,0.85)" }}>Remember me for 30 days</span>
                 </motion.label>
 
                 {/* CTA */}
@@ -262,11 +262,11 @@ const Login = () => {
               {/* trust */}
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.55 }}
                 className="mt-5 flex items-center justify-center gap-1.5">
-                <ShieldCheck size={11} style={{ color: "rgba(74,222,128,0.7)" }} />
-                <span className="text-[11px]" style={{ color: "rgba(75,85,99,0.6)" }}>Secure login · End-to-end encrypted</span>
+                <ShieldCheck size={11} style={{ color: "rgba(74,222,128,0.85)" }} />
+                <span className="text-[11px]" style={{ color: "rgba(148,163,184,0.75)" }}>Secure login · End-to-end encrypted</span>
               </motion.div>
 
-              <p className="mt-4 text-center text-[13px]" style={{ color: "rgba(75,85,99,0.75)" }}>
+              <p className="mt-4 text-center text-[13px]" style={{ color: "rgba(148,163,184,0.85)" }}>
                 Don't have an account?{" "}
                 <Link to="/register" className="font-semibold"
                   style={{ background: "linear-gradient(135deg,rgba(129,140,248,0.95),rgba(56,189,248,0.85))",

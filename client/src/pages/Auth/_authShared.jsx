@@ -21,7 +21,7 @@ export const AuthInput = ({ label, icon: Icon, error, suffix, labelRight, ...pro
         <div className="flex items-center justify-between">
           {label && (
             <label className="block text-[10px] font-bold tracking-[0.18em] uppercase"
-              style={{ color: "rgba(148,163,184,0.5)" }}>
+              style={{ color: "rgba(203,213,225,0.85)" }}>
               {label}
             </label>
           )}
@@ -31,17 +31,17 @@ export const AuthInput = ({ label, icon: Icon, error, suffix, labelRight, ...pro
       <div className="relative flex items-center rounded-2xl transition-all duration-300"
         style={{
           background: focused
-            ? "rgba(255,255,255,0.05)"
-            : "rgba(255,255,255,0.025)",
+            ? "rgba(255,255,255,0.12)"
+            : "rgba(255,255,255,0.08)",
           border: error
-            ? "1px solid rgba(239,68,68,0.4)"
+            ? "1px solid rgba(239,68,68,0.5)"
             : focused
-            ? "1px solid rgba(99,91,255,0.5)"
-            : "1px solid rgba(255,255,255,0.07)",
+            ? "1px solid rgba(99,91,255,0.65)"
+            : "1px solid rgba(255,255,255,0.18)",
           backdropFilter: "blur(16px)",
           boxShadow: focused && !error
-            ? "0 0 0 3px rgba(99,91,255,0.08), 0 2px 20px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.06)"
-            : "inset 0 1px 0 rgba(255,255,255,0.03)",
+            ? "0 0 0 3px rgba(99,91,255,0.12), 0 2px 20px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.1)"
+            : "inset 0 1px 0 rgba(255,255,255,0.06)",
         }}>
         {/* focus top glow line */}
         <AnimatePresence>
@@ -49,25 +49,30 @@ export const AuthInput = ({ label, icon: Icon, error, suffix, labelRight, ...pro
             <motion.div initial={{ scaleX: 0, opacity: 0 }} animate={{ scaleX: 1, opacity: 1 }}
               exit={{ scaleX: 0, opacity: 0 }} transition={{ duration: 0.25 }}
               className="absolute top-0 inset-x-0 h-px rounded-t-2xl pointer-events-none"
-              style={{ background: "linear-gradient(90deg,transparent,rgba(99,91,255,0.7),rgba(139,92,246,0.5),transparent)" }} />
+              style={{ background: "linear-gradient(90deg,transparent,rgba(99,91,255,0.8),rgba(139,92,246,0.6),transparent)" }} />
           )}
         </AnimatePresence>
         {Icon && (
           <div className="pl-4 shrink-0">
-            <Icon size={13} style={{ color: focused ? "rgba(167,139,250,0.9)" : "rgba(75,85,99,0.65)", transition: "color 0.3s" }} />
+            <Icon size={13} style={{ color: focused ? "rgba(167,139,250,1)" : "rgba(148,163,184,0.8)", transition: "color 0.3s" }} />
           </div>
         )}
         <input {...props}
           onFocus={e => { setFocused(true); props.onFocus?.(e); }}
           onBlur={e  => { setFocused(false); props.onBlur?.(e); }}
-          className="flex-1 bg-transparent px-3.5 py-3.5 text-[13px] outline-none"
-          style={{ color: "#F1F5F9", caretColor: "#818CF8", letterSpacing: "0.01em" }} />
+          className="flex-1 bg-transparent px-3.5 py-3.5 text-[13px] outline-none placeholder-shown:opacity-100"
+          style={{
+            color: "#F1F5F9",
+            caretColor: "#818CF8",
+            letterSpacing: "0.01em",
+          }}
+        />
         {suffix && <div className="pr-4 shrink-0">{suffix}</div>}
       </div>
       <AnimatePresence>
         {error && (
           <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
-            className="flex items-center gap-1.5 text-[11px]" style={{ color: "rgba(248,113,113,0.9)" }}>
+            className="flex items-center gap-1.5 text-[11px]" style={{ color: "rgba(248,113,113,0.95)" }}>
             <AlertCircle size={10} />{error}
           </motion.p>
         )}
@@ -82,8 +87,8 @@ export const RoleToggle = ({ value, onChange, options }) => {
   return (
     <div className="relative flex p-1 rounded-2xl mb-6"
       style={{
-        background: "rgba(255,255,255,0.025)",
-        border: "1px solid rgba(255,255,255,0.07)",
+        background: "rgba(255,255,255,0.08)",
+        border: "1px solid rgba(255,255,255,0.18)",
         backdropFilter: "blur(16px)",
       }}>
       {/* sliding gradient pill */}
@@ -96,10 +101,10 @@ export const RoleToggle = ({ value, onChange, options }) => {
           boxShadow: "0 0 20px rgba(99,91,255,0.5), 0 4px 16px rgba(99,91,255,0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
         }}
       />
-      {options.map((opt, i) => (
+      {options.map((opt) => (
         <button key={opt.value} type="button" onClick={() => onChange(opt.value)}
           className="relative flex-1 py-2.5 rounded-xl text-[13px] font-semibold transition-colors duration-200 z-10"
-          style={{ color: value === opt.value ? "#fff" : "rgba(100,116,139,0.65)" }}>
+          style={{ color: value === opt.value ? "#fff" : "rgba(203,213,225,0.8)" }}>
           {opt.label}
         </button>
       ))}
@@ -107,13 +112,13 @@ export const RoleToggle = ({ value, onChange, options }) => {
   );
 };
 
-// ─── OAuth buttons (bottom placement, premium style) ──────────────────────
+// ─── OAuth buttons ─────────────────────────────────────────────────────────
 export const OAuthButtons = ({ apiBase, role = "freelancer", label = "or sign in with" }) => (
   <div className="space-y-3">
     <div className="flex items-center gap-3">
-      <div className="flex-1 h-px" style={{ background: "linear-gradient(to right,transparent,rgba(255,255,255,0.07),transparent)" }} />
-      <span className="text-[11px] tracking-[0.06em] shrink-0" style={{ color: "rgba(75,85,99,0.6)" }}>{label}</span>
-      <div className="flex-1 h-px" style={{ background: "linear-gradient(to left,transparent,rgba(255,255,255,0.07),transparent)" }} />
+      <div className="flex-1 h-px" style={{ background: "linear-gradient(to right,transparent,rgba(255,255,255,0.2),transparent)" }} />
+      <span className="text-[11px] tracking-[0.06em] shrink-0" style={{ color: "rgba(203,213,225,0.7)" }}>{label}</span>
+      <div className="flex-1 h-px" style={{ background: "linear-gradient(to left,transparent,rgba(255,255,255,0.2),transparent)" }} />
     </div>
     <div className="grid grid-cols-2 gap-2.5">
       {[
@@ -121,8 +126,8 @@ export const OAuthButtons = ({ apiBase, role = "freelancer", label = "or sign in
           href: `${apiBase}/api/auth/google?role=${role}`,
           icon: <GoogleIcon />,
           label: "Google",
-          accent: "rgba(66,133,244,0.18)",
-          border: "rgba(66,133,244,0.35)",
+          accent: "rgba(66,133,244,0.22)",
+          border: "rgba(66,133,244,0.45)",
           glow: "rgba(66,133,244,0.2)",
           textColor: "#93C5FD",
         },
@@ -130,10 +135,10 @@ export const OAuthButtons = ({ apiBase, role = "freelancer", label = "or sign in
           href: `${apiBase}/api/auth/github?role=${role}`,
           icon: <Github size={15} />,
           label: "GitHub",
-          accent: "rgba(255,255,255,0.1)",
-          border: "rgba(255,255,255,0.22)",
+          accent: "rgba(255,255,255,0.14)",
+          border: "rgba(255,255,255,0.3)",
           glow: "rgba(255,255,255,0.1)",
-          textColor: "#E2E8F0",
+          textColor: "#F1F5F9",
         },
       ].map(({ href, icon, label, accent, border, glow, textColor }) => (
         <motion.a
@@ -143,29 +148,28 @@ export const OAuthButtons = ({ apiBase, role = "freelancer", label = "or sign in
           whileTap={{ scale: 0.97 }}
           className="relative flex items-center justify-center gap-2.5 h-11 rounded-2xl text-[13px] font-semibold overflow-hidden"
           style={{
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(255,255,255,0.09)",
+            background: "rgba(255,255,255,0.09)",
+            border: "1px solid rgba(255,255,255,0.2)",
             backdropFilter: "blur(16px)",
-            color: "rgba(203,213,225,0.8)",
+            color: "rgba(226,232,240,0.95)",
             textDecoration: "none",
             transition: "all 0.25s ease",
           }}
           onMouseEnter={e => {
             e.currentTarget.style.background = accent;
             e.currentTarget.style.border = `1px solid ${border}`;
-            e.currentTarget.style.boxShadow = `0 0 20px ${glow}, inset 0 1px 0 rgba(255,255,255,0.1)`;
+            e.currentTarget.style.boxShadow = `0 0 20px ${glow}, inset 0 1px 0 rgba(255,255,255,0.12)`;
             e.currentTarget.style.color = textColor;
           }}
           onMouseLeave={e => {
-            e.currentTarget.style.background = "rgba(255,255,255,0.04)";
-            e.currentTarget.style.border = "1px solid rgba(255,255,255,0.09)";
+            e.currentTarget.style.background = "rgba(255,255,255,0.09)";
+            e.currentTarget.style.border = "1px solid rgba(255,255,255,0.2)";
             e.currentTarget.style.boxShadow = "none";
-            e.currentTarget.style.color = "rgba(203,213,225,0.8)";
+            e.currentTarget.style.color = "rgba(226,232,240,0.95)";
           }}
         >
-          {/* top shine */}
           <div className="absolute inset-x-0 top-0 h-px pointer-events-none"
-            style={{ background: "linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent)" }} />
+            style={{ background: "linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent)" }} />
           {icon}
           <span>{label}</span>
         </motion.a>
@@ -194,9 +198,7 @@ export const CursorGlow = () => {
 // ─── Animated mesh background ──────────────────────────────────────────────
 export const MeshBg = () => (
   <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-    {/* base */}
     <div className="absolute inset-0" style={{ background: "#04070F" }} />
-    {/* animated gradient orbs */}
     <motion.div className="absolute rounded-full"
       animate={{ x: [0, 60, 0], y: [0, -40, 0], scale: [1, 1.15, 1] }}
       transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
@@ -212,9 +214,6 @@ export const MeshBg = () => (
       transition={{ duration: 14, repeat: Infinity, ease: "easeInOut", delay: 6 }}
       style={{ width: 400, height: 400, top: "30%", left: "40%",
         background: "radial-gradient(circle,rgba(56,189,248,0.06) 0%,transparent 65%)" }} />
-    {/* noise overlay */}
-    <div className="absolute inset-0 opacity-[0.025]"
-      style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }} />
   </div>
 );
 
@@ -222,30 +221,30 @@ export const MeshBg = () => (
 export const GlassCard = ({ children, className = "" }) => (
   <div className={"relative rounded-3xl overflow-hidden " + className}
     style={{
-      background: "linear-gradient(145deg,rgba(255,255,255,0.028) 0%,rgba(255,255,255,0.008) 50%,rgba(255,255,255,0.015) 100%)",
-      border: "1px solid rgba(255,255,255,0.08)",
-      backdropFilter: "blur(48px)",
-      WebkitBackdropFilter: "blur(48px)",
+      background: "linear-gradient(145deg,rgba(15,20,40,0.72) 0%,rgba(10,14,30,0.65) 50%,rgba(15,20,40,0.7) 100%)",
+      border: "1px solid rgba(255,255,255,0.16)",
+      backdropFilter: "blur(40px)",
+      WebkitBackdropFilter: "blur(40px)",
       boxShadow: [
-        "0 0 0 1px rgba(99,91,255,0.09)",
-        "0 32px 80px rgba(0,0,0,0.4)",
-        "0 0 80px rgba(99,91,255,0.05)",
-        "inset 0 1px 0 rgba(255,255,255,0.09)",
-        "inset 0 -1px 0 rgba(0,0,0,0.15)",
+        "0 0 0 1px rgba(99,91,255,0.15)",
+        "0 32px 80px rgba(0,0,0,0.35)",
+        "0 0 60px rgba(99,91,255,0.08)",
+        "inset 0 1px 0 rgba(255,255,255,0.15)",
+        "inset 0 -1px 0 rgba(0,0,0,0.12)",
       ].join(", "),
       padding: "44px 40px",
     }}>
     {/* top accent line */}
     <div className="absolute top-0 inset-x-0 h-px pointer-events-none"
-      style={{ background: "linear-gradient(90deg,transparent 5%,rgba(99,91,255,0.65) 38%,rgba(56,189,248,0.35) 62%,transparent 95%)" }} />
+      style={{ background: "linear-gradient(90deg,transparent 5%,rgba(99,91,255,0.75) 38%,rgba(56,189,248,0.45) 62%,transparent 95%)" }} />
     {/* inner light reflection */}
     <div className="absolute top-0 inset-x-0 h-[120px] pointer-events-none rounded-t-3xl"
-      style={{ background: "linear-gradient(180deg,rgba(255,255,255,0.04) 0%,transparent 100%)" }} />
+      style={{ background: "linear-gradient(180deg,rgba(255,255,255,0.05) 0%,transparent 100%)" }} />
     {/* corner glows */}
     <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full pointer-events-none"
-      style={{ background: "radial-gradient(circle,rgba(99,91,255,0.12) 0%,transparent 70%)" }} />
+      style={{ background: "radial-gradient(circle,rgba(99,91,255,0.14) 0%,transparent 70%)" }} />
     <div className="absolute -bottom-16 -left-10 w-52 h-52 rounded-full pointer-events-none"
-      style={{ background: "radial-gradient(circle,rgba(56,189,248,0.06) 0%,transparent 70%)" }} />
+      style={{ background: "radial-gradient(circle,rgba(56,189,248,0.07) 0%,transparent 70%)" }} />
     <div className="relative">{children}</div>
   </div>
 );
@@ -257,27 +256,26 @@ export const CTAButton = ({ children, disabled, isLoading, onClick, type = "subm
     whileTap={!disabled && !isLoading ? { scale: 0.975 } : {}}
     onClick={onClick}
     className="relative w-full h-[52px] rounded-2xl flex items-center justify-center gap-2
-               text-[14px] font-semibold text-white overflow-hidden"
+               text-[14px] font-semibold overflow-hidden"
     style={{
       background: !disabled && !isLoading
         ? "linear-gradient(135deg,#6366F1 0%,#8B5CF6 50%,#A855F7 100%)"
-        : "rgba(255,255,255,0.05)",
+        : "rgba(255,255,255,0.08)",
       boxShadow: !disabled && !isLoading
         ? "0 0 0 1px rgba(139,92,246,0.4),0 8px 32px rgba(99,91,255,0.45),inset 0 1px 0 rgba(255,255,255,0.18)"
-        : "none",
-      color: !disabled && !isLoading ? "#fff" : "rgba(75,85,99,0.45)",
+        : "inset 0 1px 0 rgba(255,255,255,0.06)",
+      color: !disabled && !isLoading ? "#fff" : "rgba(148,163,184,0.6)",
       cursor: disabled || isLoading ? "not-allowed" : "pointer",
       transition: "all 0.3s ease",
       backdropFilter: "blur(8px)",
+      border: disabled || isLoading ? "1px solid rgba(255,255,255,0.1)" : "none",
     }}>
     {!disabled && !isLoading && (
       <>
-        {/* shimmer sweep */}
         <motion.div className="absolute inset-0 pointer-events-none"
           style={{ background: "linear-gradient(105deg,transparent 30%,rgba(255,255,255,0.14) 50%,transparent 70%)", backgroundSize: "200% 100%" }}
           animate={{ backgroundPosition: ["200% 0","−200% 0"] }}
           transition={{ duration: 2.8, repeat: Infinity, ease: "linear" }} />
-        {/* top shine */}
         <div className="absolute inset-x-0 top-0 h-px rounded-t-2xl pointer-events-none"
           style={{ background: "linear-gradient(90deg,transparent,rgba(255,255,255,0.35),transparent)" }} />
       </>
