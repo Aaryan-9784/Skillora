@@ -10,6 +10,7 @@ import toast from "react-hot-toast";
 import { AuthInput, OAuthButtons } from "./_authShared";
 
 const Login = () => {
+  const [role, setRole]   = useState("freelancer"); // "freelancer" | "client"
   const [form, setForm]   = useState({ email: "", password: "", rememberMe: false });
   const [showPw, setShowPw] = useState(false);
   const { login, isLoading, errors, clearErrors } = useAuthStore();
@@ -29,8 +30,12 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const { success } = await login(form);
-    if (success) navigate("/dashboard");
+    const { success, role: userRole } = await login(form);
+    if (success) {
+      if (userRole === "admin")       navigate("/admin");
+      else if (userRole === "client") navigate("/client/dashboard");
+      else                            navigate("/dashboard");
+    }
   };
 
   const apiBase   = import.meta.env.VITE_SERVER_URL || "http://localhost:5000";
@@ -208,7 +213,7 @@ const Login = () => {
 
               <div className="relative">
                 {/* Header */}
-                <div className="mb-8">
+                <div className="mb-6">
                   <h2 className="text-[1.65rem] font-bold text-white mb-1.5 tracking-[-0.025em]">
                     Welcome back
                   </h2>
@@ -217,8 +222,26 @@ const Login = () => {
                   </p>
                 </div>
 
+                {/* Role selector */}
+                <div className="flex gap-2 mb-6 p-1 rounded-xl" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                  {[
+                    { value: "freelancer", label: "Freelancer" },
+                    { value: "client",     label: "Client" },
+                  ].map((r) => (
+                    <button key={r.value} type="button" onClick={() => setRole(r.value)}
+                      className="flex-1 py-2 rounded-lg text-[13px] font-semibold transition-all duration-200"
+                      style={{
+                        background: role === r.value ? "linear-gradient(135deg,#635BFF,#8B5CF6)" : "transparent",
+                        color: role === r.value ? "#fff" : "rgba(100,116,139,0.7)",
+                        boxShadow: role === r.value ? "0 0 12px rgba(99,91,255,0.4)" : "none",
+                      }}>
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
+
                 {/* OAuth */}
-                <OAuthButtons apiBase={apiBase} />
+                <OAuthButtons apiBase={apiBase} role={role} />
 
                 {/* Divider */}
                 <div className="flex items-center gap-3 my-7">

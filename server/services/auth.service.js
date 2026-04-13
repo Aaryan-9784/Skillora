@@ -66,11 +66,15 @@ const clearTokenCookies = (res) => {
 
 // ── Register ──────────────────────────────────────────────
 
-const register = async ({ name, email, password }) => {
+const register = async ({ name, email, password, role = "freelancer" }) => {
   const existing = await User.findOne({ email });
   if (existing) throw ApiError.conflict("An account with this email already exists");
 
-  const user = await User.create({ name, email, password, provider: "local" });
+  // Only allow freelancer or client self-registration (admin is seeded only)
+  const allowedRoles = ["freelancer", "client"];
+  const userRole = allowedRoles.includes(role) ? role : "freelancer";
+
+  const user = await User.create({ name, email, password, role: userRole, provider: "local" });
   const { accessToken, refreshToken } = generateTokens(user);
 
   user.refreshToken = refreshToken;
@@ -80,7 +84,7 @@ const register = async ({ name, email, password }) => {
   const emailService = require("./email.service");
   emailService.sendWelcome(user);
 
-  logger.info(`New user registered: ${email}`);
+  logger.info(`New user registered: ${email} (role: ${userRole})`);
   return { user, accessToken, refreshToken };
 };
 
@@ -213,7 +217,7 @@ const resetPassword = async (token, newPassword) => {
   const user = await User.findOne({
     passwordResetToken:   hashed,
     passwordResetExpires: { $gt: Date.now() },
-  });
+  }).select("+passwordResetToken +passwordResetExpires +password +tokenVersion");
 
   if (!user) throw ApiError.badRequest("Token is invalid or has expired");
 

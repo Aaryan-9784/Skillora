@@ -83,7 +83,8 @@ const InvoiceBuilder = () => {
   const [saving, setSaving]   = useState(false);
   const [draft, setDraft]     = useState(false);
   const [form, setForm]       = useState({
-    clientId: "", dueDate: "", notes: "Thank you for your business!",
+    clientId: "", projectId: "", dueDate: "", currency: "INR",
+    notes: "Thank you for your business!",
     terms: "Payment due within 30 days.", taxRate: 0, discount: 0,
   });
   const [items, setItems] = useState([{ ...EMPTY_ITEM }]);
@@ -217,6 +218,28 @@ const InvoiceBuilder = () => {
                       <Calendar size={13} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
                         style={{ color: "#4B5563" }} />
                     </div>
+                  </div>
+
+                  {/* Currency */}
+                  <div>
+                    <Label>Currency</Label>
+                    <select name="currency" value={form.currency} onChange={setField}
+                      className="w-full px-3 py-2.5 appearance-none"
+                      style={iBase} onFocus={iFocus} onBlur={iBlur}>
+                      {["INR","USD","EUR","GBP","AUD","CAD"].map(c => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Project (optional) */}
+                  <div>
+                    <Label>Project (optional)</Label>
+                    <select name="projectId" value={form.projectId} onChange={setField}
+                      className="w-full px-3 py-2.5 appearance-none"
+                      style={iBase} onFocus={iFocus} onBlur={iBlur}>
+                      <option value="">No project</option>
+                    </select>
                   </div>
                 </div>
               </div>

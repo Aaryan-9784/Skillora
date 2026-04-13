@@ -194,4 +194,24 @@ const sendSubscriptionConfirm = (user, plan) =>
       </div>`,
   });
 
-module.exports = { send, sendWelcome, sendPasswordReset, sendInvoice, sendSubscriptionConfirm };
+const sendClientInvite = (client, inviteToken) => {
+  const inviteUrl = `${process.env.CLIENT_URL}/client/accept-invite?token=${inviteToken}`;
+  return send({
+    to:      client.email,
+    subject: "You've been invited to the client portal",
+    html: `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto">
+        <h2>Hi ${client.name},</h2>
+        <p>You've been invited to access your client portal where you can view invoices and project updates.</p>
+        <p>Click the button below to set your password and activate your account. This link expires in 48 hours.</p>
+        <a href="${inviteUrl}"
+           style="display:inline-block;padding:12px 24px;background:#635BFF;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;margin:16px 0">
+          Accept Invite
+        </a>
+        <p style="color:#6B7280;font-size:13px">If you weren't expecting this, you can safely ignore this email.</p>
+      </div>
+    `,
+  });
+};
+
+module.exports = { send, sendWelcome, sendPasswordReset, sendInvoice, sendSubscriptionConfirm, sendClientInvite };

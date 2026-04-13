@@ -26,7 +26,7 @@ const useAuthStore = create((set, get) => ({
       tokenStore.set(data.data.accessToken);
       set({ user: data.data.user, isAuthenticated: true });
       toast.success("Welcome to Skillora!");
-      return { success: true };
+      return { success: true, role: data.data.user.role };
     } catch (err) {
       const errors = extractErrors(err);
       set({ errors });
@@ -44,7 +44,7 @@ const useAuthStore = create((set, get) => ({
       tokenStore.set(data.data.accessToken);
       set({ user: data.data.user, isAuthenticated: true });
       toast.success(`Welcome back, ${data.data.user.name.split(" ")[0]}!`);
-      return { success: true };
+      return { success: true, role: data.data.user.role };
     } catch (err) {
       const errors = extractErrors(err);
       set({ errors });
@@ -95,21 +95,35 @@ const useAuthStore = create((set, get) => ({
   fetchMe: async () => {
     set({ isLoading: true });
     try {
-      // If access token is missing, the interceptor will silently try
-      // to refresh via the cookie before this throws. If refresh also
-      // fails, the interceptor handles the redirect — we just clean up state.
+      // On page refresh, accessToken is gone from memory.
+      // First silently refresh to get a new accessToken from the httpOnly cookie,
+      // then call /me with the fresh token.
+      if (!tokenStore.get()) {
+        try {
+          const { data: refreshData } = await authService.refreshToken();
+          if (refreshData?.data?.accessToken) {
+            tokenStore.set(refreshData.data.accessToken);
+          }
+        } catch {
+          // Refresh failed — user is not logged in, stay on public page
+          set({ user: null, isAuthenticated: false, isLoading: false });
+          return;
+        }
+      }
+
       const { data } = await authService.getMe();
-      tokenStore.set(data.data?.accessToken ?? tokenStore.get()); // keep token in sync
+      tokenStore.set(data.data?.accessToken ?? tokenStore.get());
       set({ user: data.data.user, isAuthenticated: true });
     } catch {
-      // Interceptor already handles redirect + toast on true expiry.
-      // Just reset local state quietly.
       tokenStore.clear();
       set({ user: null, isAuthenticated: false });
     } finally {
       set({ isLoading: false });
     }
   },
+
+  // ── Update user (partial merge) ─────────────────────────
+  updateUser: (updates) => set((s) => ({ user: s.user ? { ...s.user, ...updates } : s.user })),
 
   // ── Forgot password ──────────────────────────────────────
   forgotPassword: async (email) => {

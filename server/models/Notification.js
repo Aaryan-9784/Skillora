@@ -14,6 +14,12 @@ const notificationSchema = new Schema(
         "payment_received",
         "ai_suggestion",
         "system",
+        // Cross-dashboard sync events
+        "invoice_viewed",
+        "client_portal_joined",
+        "plan_changed",
+        "account_deactivated",
+        "project_status_changed",
       ],
       required: true,
     },

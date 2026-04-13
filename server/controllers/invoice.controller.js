@@ -38,7 +38,25 @@ const getOutstandingBalance = asyncHandler(async (req, res) => {
   ApiResponse.success(res, "Outstanding balance", { balance });
 });
 
+const updateStatus = asyncHandler(async (req, res) => {
+  const invoice = await invoiceService.updateInvoiceStatus(
+    req.params.id, req.user._id, req.body.status
+  );
+  ApiResponse.success(res, "Invoice status updated", { invoice });
+});
+
+const sendInvoice = asyncHandler(async (req, res) => {
+  const invoice = await invoiceService.sendInvoice(req.params.id, req.user._id);
+  ApiResponse.success(res, "Invoice sent", { invoice });
+});
+
+const duplicateInvoice = asyncHandler(async (req, res) => {
+  const invoice = await invoiceService.duplicateInvoice(req.params.id, req.user._id);
+  ApiResponse.created(res, "Invoice duplicated", { invoice });
+});
+
 module.exports = {
   createInvoice, getInvoices, getInvoice, updateInvoice, deleteInvoice,
   getRevenueAnalytics, getOutstandingBalance,
+  updateStatus, sendInvoice, duplicateInvoice,
 };

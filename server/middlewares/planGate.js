@@ -48,4 +48,21 @@ const checkLimit = (resource) => async (req, res, next) => {
   }
 };
 
-module.exports = { requireFeature, checkLimit };
+/**
+ * planGate — blocks access if the user's plan rank is below the minimum required.
+ * @param {"free"|"pro"|"premium"} minimumPlan
+ */
+const planGate = (minimumPlan) => (req, res, next) => {
+  if (!req.user) return next(ApiError.unauthorized("Authentication required"));
+  const order = { free: 0, pro: 1, premium: 2 };
+  const userLevel = order[req.user.plan] ?? 0;
+  const minLevel  = order[minimumPlan]   ?? 0;
+  if (userLevel < minLevel) {
+    return next(ApiError.forbidden(
+      `This feature requires the ${minimumPlan} plan. Please upgrade.`
+    ));
+  }
+  next();
+};
+
+module.exports = { requireFeature, checkLimit, planGate };

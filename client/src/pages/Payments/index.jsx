@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, TrendingUp, Clock, CheckCircle, FileText,
   AlertCircle, ArrowRight, ExternalLink, MoreHorizontal,
-  Send, Eye, Trash2,
+  Send, Eye, Trash2, Search,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import useInvoiceStore from "../../store/invoiceStore";
@@ -311,13 +311,16 @@ const AnalyticsTab = ({ chartData, totalRevenue, invoices }) => {
 // ─────────────────────────────────────────────────────────
 const InvoiceRow = ({ inv, index }) => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  const { sendInvoice, updateStatus } = useInvoiceStore();
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.04 }}
-      className="flex items-center gap-4 py-3.5 px-4 rounded-xl transition-all duration-150 group relative"
+      onClick={() => navigate(`/payments/${inv._id}`)}
+      className="flex items-center gap-4 py-3.5 px-4 rounded-xl transition-all duration-150 group relative cursor-pointer"
       onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
       onMouseLeave={e => e.currentTarget.style.background = "transparent"}
     >
@@ -347,20 +350,37 @@ const InvoiceRow = ({ inv, index }) => {
 
       {/* Actions */}
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 shrink-0">
-        <button className="w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-100"
+        <button
+          onClick={(e) => { e.stopPropagation(); navigate(`/payments/${inv._id}`); }}
+          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-100"
           style={{ color: "#6B7280" }}
           onMouseEnter={e => { e.currentTarget.style.background = "rgba(99,91,255,0.15)"; e.currentTarget.style.color = "#A78BFA"; }}
           onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#6B7280"; }}
           title="View">
           <Eye size={13} />
         </button>
-        <button className="w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-100"
-          style={{ color: "#6B7280" }}
-          onMouseEnter={e => { e.currentTarget.style.background = "rgba(34,197,94,0.15)"; e.currentTarget.style.color = "#22C55E"; }}
-          onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#6B7280"; }}
-          title="Send">
-          <Send size={13} />
-        </button>
+        {inv.status === "draft" && (
+          <button
+            onClick={(e) => { e.stopPropagation(); sendInvoice(inv._id); }}
+            className="w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-100"
+            style={{ color: "#6B7280" }}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(34,197,94,0.15)"; e.currentTarget.style.color = "#22C55E"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#6B7280"; }}
+            title="Send">
+            <Send size={13} />
+          </button>
+        )}
+        {["sent", "viewed", "overdue"].includes(inv.status) && (
+          <button
+            onClick={(e) => { e.stopPropagation(); updateStatus(inv._id, "paid"); }}
+            className="w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-100"
+            style={{ color: "#6B7280" }}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(34,197,94,0.15)"; e.currentTarget.style.color = "#22C55E"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#6B7280"; }}
+            title="Mark paid">
+            <CheckCircle size={13} />
+          </button>
+        )}
       </div>
     </motion.div>
   );
@@ -372,12 +392,21 @@ const InvoiceRow = ({ inv, index }) => {
 const Payments = () => {
   const { invoices, analytics, outstanding, fetchInvoices, fetchAnalytics, isLoading } = useInvoiceStore();
   const [tab, setTab] = useState("invoices");
+  const [filters, setFilters] = useState({ status: "", search: "" });
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchInvoices();
     fetchAnalytics();
   }, []);
+
+  const filtered = invoices.filter((inv) => {
+    const matchStatus = !filters.status || inv.status === filters.status;
+    const matchSearch = !filters.search ||
+      inv.invoiceNumber?.toLowerCase().includes(filters.search.toLowerCase()) ||
+      inv.clientId?.name?.toLowerCase().includes(filters.search.toLowerCase());
+    return matchStatus && matchSearch;
+  });
 
   const chartData = (analytics || []).map((d) => ({
     month: MONTH_NAMES[(d.month || 1) - 1],
@@ -410,7 +439,7 @@ const Payments = () => {
   ];
 
   const TABS = [
-    { id: "invoices",  label: "Invoices",  icon: FileText,   count: invoices.length },
+    { id: "invoices",  label: "Invoices",  icon: FileText,   count: filtered.length },
     { id: "analytics", label: "Analytics", icon: TrendingUp },
   ];
 
@@ -499,6 +528,29 @@ const Payments = () => {
               <div className="rounded-2xl overflow-hidden"
                 style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
 
+                {/* Filter bar */}
+                <div className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                  <div className="relative flex-1 max-w-xs">
+                    <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "#4B5563" }} />
+                    <input
+                      value={filters.search}
+                      onChange={(e) => setFilters(f => ({ ...f, search: e.target.value }))}
+                      placeholder="Search invoices…"
+                      className="w-full pl-8 pr-3 py-1.5 rounded-lg text-sm bg-white/5 border border-white/10 text-slate-300 placeholder-slate-600 focus:outline-none focus:border-brand/40"
+                    />
+                  </div>
+                  <select
+                    value={filters.status}
+                    onChange={(e) => setFilters(f => ({ ...f, status: e.target.value }))}
+                    className="px-3 py-1.5 rounded-lg text-sm bg-white/5 border border-white/10 text-slate-300 focus:outline-none focus:border-brand/40"
+                  >
+                    <option value="">All status</option>
+                    {["draft","sent","viewed","paid","overdue","cancelled"].map(s => (
+                      <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                    ))}
+                  </select>
+                </div>
+
                 {/* Table header */}
                 {invoices.length > 0 && (
                   <div className="flex items-center gap-4 px-4 py-3"
@@ -524,7 +576,7 @@ const Payments = () => {
                   <EmptyInvoices onNew={() => navigate("/payments/new")} />
                 ) : (
                   <div>
-                    {invoices.map((inv, i) => (
+                    {filtered.map((inv, i) => (
                       <InvoiceRow key={inv._id} inv={inv} index={i} />
                     ))}
                   </div>

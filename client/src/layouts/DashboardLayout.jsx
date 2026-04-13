@@ -6,8 +6,12 @@ import Navbar from "../components/dashboard/Navbar";
 import CommandPalette from "../components/ui/CommandPalette";
 import GlobalSearch from "../components/ui/GlobalSearch";
 import FloatingAiButton from "../components/ai/FloatingAiButton";
+import useSocket from "../hooks/useSocket";
+import useSyncEvents from "../hooks/useSyncEvents";
 
 const DashboardLayout = () => {
+  useSocket();
+  useSyncEvents();
   const [collapsed, setCollapsed] = useState(false);
   const [cmdOpen, setCmdOpen]     = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);

@@ -1,6 +1,7 @@
 const asyncHandler   = require("../utils/asyncHandler");
 const ApiResponse    = require("../utils/ApiResponse");
 const clientService  = require("../services/client.service");
+const { inviteClient } = require("../services/clientPortal.service");
 
 const createClient = asyncHandler(async (req, res) => {
   const client = await clientService.createClient(req.user._id, req.body);
@@ -32,4 +33,9 @@ const getRevenueStats = asyncHandler(async (req, res) => {
   ApiResponse.success(res, "Client revenue stats", { stats });
 });
 
-module.exports = { createClient, getClients, getClient, updateClient, deleteClient, getRevenueStats };
+const inviteToPortal = asyncHandler(async (req, res) => {
+  const clientUser = await inviteClient(req.params.id, req.user._id);
+  ApiResponse.success(res, "Invite sent to client", { clientUser });
+});
+
+module.exports = { createClient, getClients, getClient, updateClient, deleteClient, getRevenueStats, inviteToPortal };

@@ -62,6 +62,36 @@ const useInvoiceStore = create((set) => ({
     set((s) => ({ invoices: s.invoices.filter((i) => i._id !== id) }));
     toast.success("Invoice deleted");
   },
+
+  updateStatus: async (id, status) => {
+    const { data } = await api.patch(`/invoices/${id}/status`, { status });
+    const invoice  = data.data.invoice;
+    set((s) => ({
+      invoices: s.invoices.map((i) => i._id === id ? invoice : i),
+      current:  s.current?._id === id ? invoice : s.current,
+    }));
+    toast.success(`Invoice marked as ${status}`);
+    return invoice;
+  },
+
+  sendInvoice: async (id) => {
+    const { data } = await api.post(`/invoices/${id}/send`);
+    const invoice  = data.data.invoice;
+    set((s) => ({
+      invoices: s.invoices.map((i) => i._id === id ? invoice : i),
+      current:  s.current?._id === id ? invoice : s.current,
+    }));
+    toast.success("Invoice sent to client");
+    return invoice;
+  },
+
+  duplicateInvoice: async (id) => {
+    const { data } = await api.post(`/invoices/${id}/duplicate`);
+    const invoice  = data.data.invoice;
+    set((s) => ({ invoices: [invoice, ...s.invoices] }));
+    toast.success("Invoice duplicated as draft");
+    return invoice;
+  },
 }));
 
 export default useInvoiceStore;

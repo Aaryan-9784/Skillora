@@ -1,17 +1,35 @@
 const Invoice      = require("../models/Invoice");
 const Client       = require("../models/Client");
+const Counter      = require("../models/Counter");
 const ApiError     = require("../utils/ApiError");
 const QueryBuilder = require("../utils/queryBuilder");
 const notify       = require("../utils/notify");
 
 /**
- * Auto-generate invoice number: INV-YYYYMM-XXXX
+ * Valid status transitions — enforces invoice lifecycle.
+ */
+const VALID_TRANSITIONS = {
+  draft:     ["sent", "cancelled"],
+  sent:      ["viewed", "paid", "overdue", "cancelled"],
+  viewed:    ["paid", "overdue", "cancelled"],
+  overdue:   ["paid", "cancelled"],
+  paid:      [],
+  cancelled: [],
+};
+
+/**
+ * Atomic invoice number generation using Counter model.
+ * Prevents collision under concurrent requests.
  */
 const generateInvoiceNumber = async (ownerId) => {
   const now    = new Date();
   const prefix = `INV-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}`;
-  const count  = await Invoice.countDocuments({ owner: ownerId });
-  return `${prefix}-${String(count + 1).padStart(4, "0")}`;
+  const counter = await Counter.findOneAndUpdate(
+    { key: `invoice_${ownerId}_${prefix}` },
+    { $inc: { seq: 1 } },
+    { upsert: true, new: true }
+  );
+  return `${prefix}-${String(counter.seq).padStart(4, "0")}`;
 };
 
 const createInvoice = async (ownerId, data) => {
@@ -163,7 +181,78 @@ const getOutstandingBalance = async (ownerId) => {
   return result || { outstanding: 0, count: 0, overdue: 0 };
 };
 
+/**
+ * Update invoice status with lifecycle validation.
+ */
+const updateInvoiceStatus = async (invoiceId, ownerId, newStatus) => {
+  const invoice = await Invoice.findOne({ _id: invoiceId, owner: ownerId });
+  if (!invoice) throw ApiError.notFound("Invoice not found");
+
+  const allowed = VALID_TRANSITIONS[invoice.status] || [];
+  if (!allowed.includes(newStatus)) {
+    throw ApiError.badRequest(
+      `Cannot transition from "${invoice.status}" to "${newStatus}". ` +
+      `Allowed: ${allowed.join(", ") || "none"}`
+    );
+  }
+
+  invoice.status = newStatus;
+
+  if (newStatus === "paid" && !invoice.paidAt) {
+    invoice.paidAt = new Date();
+    await Client.findByIdAndUpdate(invoice.clientId, {
+      $inc: { "stats.totalPaid": invoice.total },
+    });
+  }
+
+  await invoice.save();
+  return invoice;
+};
+
+/**
+ * Send invoice — transitions draft → sent and triggers sync notifications.
+ */
+const sendInvoice = async (invoiceId, ownerId) => {
+  const invoice = await updateInvoiceStatus(invoiceId, ownerId, "sent");
+  try {
+    const syncService = require("./sync.service");
+    await syncService.onInvoiceSent(invoice, ownerId);
+  } catch { /* sync service may not be available */ }
+  return invoice;
+};
+
+/**
+ * Duplicate invoice — creates a new draft with same line items.
+ */
+const duplicateInvoice = async (invoiceId, ownerId) => {
+  const original = await Invoice.findOne({ _id: invoiceId, owner: ownerId });
+  if (!original) throw ApiError.notFound("Invoice not found");
+
+  const invoiceNumber = await generateInvoiceNumber(ownerId);
+
+  const duplicate = await Invoice.create({
+    owner:     ownerId,
+    clientId:  original.clientId,
+    projectId: original.projectId,
+    invoiceNumber,
+    lineItems: original.lineItems,
+    subtotal:  original.subtotal,
+    taxRate:   original.taxRate,
+    taxAmount: original.taxAmount,
+    discount:  original.discount,
+    total:     original.total,
+    currency:  original.currency,
+    notes:     original.notes,
+    terms:     original.terms,
+    status:    "draft",
+    issueDate: new Date(),
+  });
+
+  return duplicate;
+};
+
 module.exports = {
   createInvoice, getInvoices, getInvoiceById, updateInvoice, deleteInvoice,
   getRevenueAnalytics, getOutstandingBalance,
+  updateInvoiceStatus, sendInvoice, duplicateInvoice,
 };

@@ -6,7 +6,7 @@ const logger = require("../utils/logger");
 
 const SERVER_URL = process.env.SERVER_URL || "http://localhost:5000";
 
-const findOrCreateOAuthUser = async (provider, profile, email, name, avatar) => {
+const findOrCreateOAuthUser = async (provider, profile, email, name, avatar, role = "freelancer") => {
   let user = await User.findOne({ provider, providerId: profile.id });
   if (user) return user;
 
@@ -22,6 +22,10 @@ const findOrCreateOAuthUser = async (provider, profile, email, name, avatar) => 
     }
   }
 
+  // New user — use the role passed from the OAuth initiation
+  const allowedRoles = ["freelancer", "client"];
+  const userRole = allowedRoles.includes(role) ? role : "freelancer";
+
   user = await User.create({
     name,
     email:    email || `${provider}_${profile.id}@skillora.app`,
@@ -29,6 +33,7 @@ const findOrCreateOAuthUser = async (provider, profile, email, name, avatar) => 
     provider,
     providerId:      profile.id,
     isEmailVerified: true,
+    role:            userRole,
   });
   return user;
 };
@@ -40,17 +45,17 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
       {
         clientID:     process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        // MUST be absolute — relative URLs cause Google to redirect to the
-        // frontend origin (localhost:5173) instead of the Express server (localhost:5000)
         callbackURL:  `${SERVER_URL}/api/auth/google/callback`,
         scope:        ["profile", "email"],
+        passReqToCallback: true,
       },
-      async (accessToken, refreshToken, profile, done) => {
+      async (req, accessToken, refreshToken, profile, done) => {
         try {
           const email  = profile.emails?.[0]?.value;
           const name   = profile.displayName || profile.name?.givenName || "Google User";
           const avatar = profile.photos?.[0]?.value;
-          const user   = await findOrCreateOAuthUser("google", profile, email, name, avatar);
+          const role   = req.query.state || "freelancer";
+          const user   = await findOrCreateOAuthUser("google", profile, email, name, avatar, role);
           return done(null, user);
         } catch (err) {
           logger.error(`Google OAuth error: ${err.message}`);
@@ -70,13 +75,15 @@ if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
         clientSecret: process.env.GITHUB_CLIENT_SECRET,
         callbackURL:  `${SERVER_URL}/api/auth/github/callback`,
         scope:        ["user:email"],
+        passReqToCallback: true,
       },
-      async (accessToken, refreshToken, profile, done) => {
+      async (req, accessToken, refreshToken, profile, done) => {
         try {
           const email  = profile.emails?.[0]?.value;
           const name   = profile.displayName || profile.username || "GitHub User";
           const avatar = profile.photos?.[0]?.value;
-          const user   = await findOrCreateOAuthUser("github", profile, email, name, avatar);
+          const role   = req.query.state || "freelancer";
+          const user   = await findOrCreateOAuthUser("github", profile, email, name, avatar, role);
           return done(null, user);
         } catch (err) {
           logger.error(`GitHub OAuth error: ${err.message}`);

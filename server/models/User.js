@@ -15,7 +15,9 @@ const userSchema = new Schema(
     providerId: { type: String, default: null },
 
     // Access control
-    role:            { type: String, enum: ["freelancer", "admin"], default: "freelancer" },
+    role:            { type: String, enum: ["freelancer", "admin", "client"], default: "freelancer" },
+    clientRef:       { type: Schema.Types.ObjectId, ref: "Client", default: null },
+    freelancerRef:   { type: Schema.Types.ObjectId, ref: "User", default: null },
     isEmailVerified: { type: Boolean, default: false },
     isActive:        { type: Boolean, default: true },
 

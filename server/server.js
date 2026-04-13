@@ -10,6 +10,12 @@ const PORT = process.env.PORT || 5000;
 const start = async () => {
   await connectDB();
 
+  // Schedule cron jobs after DB is connected
+  const cron = require("node-cron");
+  const { markOverdueInvoices } = require("./jobs/markOverdue.job");
+  cron.schedule("0 0 * * *", markOverdueInvoices); // midnight daily
+  markOverdueInvoices(); // run once on startup
+
   const server = http.createServer(app);
 
   // Initialize Socket.io

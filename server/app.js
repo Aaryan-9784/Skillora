@@ -23,6 +23,7 @@ const aiRoutes           = require("./routes/ai.routes");
 const adminRoutes        = require("./routes/admin.routes");
 const billingRoutes      = require("./routes/billing.routes");
 const uploadRoutes       = require("./routes/upload.routes");
+const clientPortalRoutes = require("./routes/clientPortal.routes");
 
 const app = express();
 
@@ -80,6 +81,7 @@ app.use("/api/ai",            aiRoutes);
 app.use("/api/admin",         adminRoutes);
 app.use("/api/billing",       billingRoutes);
 app.use("/api/upload",        uploadRoutes);
+app.use("/api/client",        clientPortalRoutes);
 
 // ── 404 ───────────────────────────────────────────────────
 app.use((req, res) =>

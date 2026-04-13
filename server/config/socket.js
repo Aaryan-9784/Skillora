@@ -34,7 +34,7 @@ const initSocket = (httpServer) => {
   });
 
   // ── Connection handler ────────────────────────────────
-  io.on("connection", (socket) => {
+  io.on("connection", async (socket) => {
     const { userId } = socket;
     logger.info(`Socket connected: ${socket.id} (user: ${userId})`);
 
@@ -44,6 +44,14 @@ const initSocket = (httpServer) => {
 
     // Join personal room
     socket.join(`user:${userId}`);
+
+    // Join role-based rooms for broadcast targeting
+    try {
+      const User = require("../models/User");
+      const user = await User.findById(userId).select("role").lean();
+      if (user?.role === "admin")  socket.join("role:admin");
+      if (user?.role === "client") socket.join("role:client");
+    } catch { /* non-fatal */ }
 
     socket.on("disconnect", () => {
       const sockets = userSockets.get(userId);

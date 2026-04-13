@@ -1,16 +1,19 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Mail, Phone, Building2, MapPin, FolderKanban, FileText } from "lucide-react";
+import { ArrowLeft, Mail, Phone, Building2, MapPin, FolderKanban, FileText, Send } from "lucide-react";
 import useClientStore from "../../store/clientStore";
 import Badge from "../../components/ui/Badge";
 import ProgressBar from "../../components/ui/ProgressBar";
 import Spinner from "../../components/common/Spinner";
 import { formatDate, formatCurrency, getInitials } from "../../utils/helpers";
+import api from "../../services/api";
+import toast from "react-hot-toast";
 
 const ClientDetail = () => {
   const { id } = useParams();
   const { current, fetchClient, isLoading } = useClientStore();
+  const [inviting, setInviting] = useState(false);
 
   useEffect(() => { fetchClient(id); }, [id]);
 
@@ -18,12 +21,24 @@ const ClientDetail = () => {
 
   const { client, projects = [], invoices = [] } = current;
 
+  const handleInvite = async () => {
+    setInviting(true);
+    try {
+      await api.post(`/clients/${id}/invite`);
+      toast.success(`Portal invite sent to ${client.email}`);
+    } catch (err) {
+      const msg = err.response?.data?.message || "Failed to send invite";
+      toast.error(msg);
+    } finally {
+      setInviting(false);
+    }
+  };
+
   return (
     <div className="p-6 lg:p-8 max-w-5xl mx-auto">
       <Link to="/clients" className="flex items-center gap-1.5 text-sm text-ink-secondary hover:text-ink mb-6 transition-colors">
         <ArrowLeft size={14} /> Back to clients
       </Link>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Profile card */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="card">
@@ -67,6 +82,26 @@ const ClientDetail = () => {
                 <p className="text-2xs text-ink-muted">{label}</p>
               </div>
             ))}
+          </div>
+
+          {/* Invite to Portal button */}
+          <div className="mt-4 pt-4 border-t border-surface-border dark:border-dark-border">
+            <button
+              onClick={handleInvite}
+              disabled={inviting}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
+              style={{
+                background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)",
+                boxShadow: "0 0 16px rgba(99,91,255,0.3)",
+                opacity: inviting ? 0.7 : 1,
+              }}
+            >
+              <Send size={14} />
+              {inviting ? "Sending invite…" : "Invite to Client Portal"}
+            </button>
+            <p className="text-xs text-ink-muted text-center mt-2">
+              Sends a portal access link to {client.email}
+            </p>
           </div>
         </motion.div>
 

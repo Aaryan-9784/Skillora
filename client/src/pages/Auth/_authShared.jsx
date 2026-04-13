@@ -115,12 +115,12 @@ export const GoogleIcon = () => (
 // ─────────────────────────────────────────────────────────
 // OAUTH BUTTONS
 // ─────────────────────────────────────────────────────────
-export const OAuthButtons = ({ apiBase }) => (
+export const OAuthButtons = ({ apiBase, role = "freelancer" }) => (
   <div className="grid grid-cols-2 gap-2.5">
     {[
-      { href: `${apiBase}/api/auth/google`, icon: <GoogleIcon />, label: "Google",
+      { href: `${apiBase}/api/auth/google?role=${role}`, icon: <GoogleIcon />, label: "Google",
         hoverBg: "rgba(66,133,244,0.08)", hoverBorder: "rgba(66,133,244,0.35)" },
-      { href: `${apiBase}/api/auth/github`, icon: <Github size={14} />, label: "GitHub",
+      { href: `${apiBase}/api/auth/github?role=${role}`, icon: <Github size={14} />, label: "GitHub",
         hoverBg: "rgba(255,255,255,0.06)", hoverBorder: "rgba(255,255,255,0.18)" },
     ].map(({ href, icon, label, hoverBg, hoverBorder }) => (
       <a key={label} href={href}
