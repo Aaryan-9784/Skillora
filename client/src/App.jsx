@@ -39,6 +39,7 @@ import AdminOverview from "./pages/Admin/overview";
 import AdminUsers    from "./pages/Admin/Users";
 import AdminRevenue  from "./pages/Admin/Revenue";
 import AdminSettings from "./pages/Admin/Settings";
+import AdminProfile  from "./pages/Admin/Profile";
 
 // Client Portal
 const ClientDashboard = lazy(() => import("./pages/ClientPortal/Dashboard"));
@@ -156,6 +157,7 @@ const App = () => {
               <Route path="/admin/users"     element={<AdminUsers />} />
               <Route path="/admin/revenue"   element={<AdminRevenue />} />
               <Route path="/admin/settings"  element={<AdminSettings />} />
+              <Route path="/admin/profile"   element={<AdminProfile />} />
             </Route>
           </Route>
 

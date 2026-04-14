@@ -98,7 +98,16 @@ const useAuthStore = create((set, get) => ({
 
   // ── Bootstrap session on app load ────────────────────────
   fetchMe: async () => {
+    // Skip fetch entirely if no session marker — avoids hanging on cold load
+    if (!sessionStorage.getItem("sk_has_session") && !tokenStore.get()) {
+      set({ isLoading: false });
+      return;
+    }
     set({ isLoading: true });
+    // Hard safety timeout — never hang the app more than 5s
+    const timeout = setTimeout(() => {
+      set({ isLoading: false });
+    }, 5000);
     try {
       const { data } = await authService.getMe();
       tokenStore.set(data.data?.accessToken ?? tokenStore.get());
@@ -109,6 +118,7 @@ const useAuthStore = create((set, get) => ({
       sessionStorage.removeItem("sk_has_session");
       set({ user: null, isAuthenticated: false });
     } finally {
+      clearTimeout(timeout);
       set({ isLoading: false });
     }
   },

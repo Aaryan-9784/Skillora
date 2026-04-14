@@ -273,20 +273,22 @@ const UserCard = ({ user, collapsed, onToggle, onLogout, onSettings }) => (
                 style={{ background: "#22C55E", borderColor: "#080E1A", boxShadow: "0 0 8px rgba(34,197,94,0.9)" }} />
             </div>
 
-            {/* Name + plan */}
+            {/* Name + role + plan */}
             <div className="flex-1 min-w-0 text-left">
               <p className="text-sm font-semibold truncate leading-tight" style={{ color: "#F9FAFB" }}>
                 {user?.name}
               </p>
-              <span className="inline-flex items-center gap-1 mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full capitalize"
-                style={{
-                  background: "rgba(99,91,255,0.2)",
-                  color: "#A78BFA",
-                  border: "1px solid rgba(99,91,255,0.3)",
-                  letterSpacing: "0.03em",
-                }}>
-                {user?.plan || "free"}
-              </span>
+              <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full capitalize"
+                  style={{
+                    background: "rgba(99,91,255,0.2)",
+                    color: "#A78BFA",
+                    border: "1px solid rgba(99,91,255,0.3)",
+                    letterSpacing: "0.03em",
+                  }}>
+                  {user?.role || "freelancer"}
+                </span>
+              </div>
             </div>
 
             {/* Arrow */}
