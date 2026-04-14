@@ -150,7 +150,8 @@ const Register = () => {
               className="text-[10px] font-bold tracking-[0.3em] uppercase"
               style={{ color: "rgba(129,140,248,0.65)" }}>Freelancer OS</motion.p>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.25, ease: [0.16,1,0.3,1] }} className="space-y-5">
+              whileHover={{ y: -4 }} transition={{ duration: 0.7, delay: 0.25, ease: [0.16,1,0.3,1] }}
+              className="space-y-5" style={{ cursor: "default" }}>
               <h1 className="font-bold leading-[1.1] text-white"
                 style={{ fontSize: "clamp(2.2rem,3.2vw,3rem)", letterSpacing: "-0.03em" }}>
                 Run your freelance business<br />with{" "}
@@ -165,13 +166,15 @@ const Register = () => {
                 Manage clients, projects, invoices, and growth — all in one intelligent workspace.
               </p>
             </motion.div>
-            <div className="space-y-4">
+            <motion.div className="space-y-4" whileHover={{ y: -3 }}
+              transition={{ duration: 0.3 }} style={{ cursor: "default" }}>
               <Feature icon={Kanban}   text="Smart project tracking"  delay={0.4} />
               <Feature icon={Brain}    text="AI-powered insights"      delay={0.5} />
               <Feature icon={FileText} text="Seamless invoicing"       delay={0.6} />
               <Feature icon={Users}    text="Client relationship hub"  delay={0.7} />
-            </div>
+            </motion.div>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.85 }}
+              whileHover={{ y: -3 }} style={{ cursor: "default" }}
               className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full"
               style={{ background: "rgba(99,91,255,0.1)", border: "1px solid rgba(99,91,255,0.2)" }}>
               <div className="flex -space-x-1.5">
@@ -184,7 +187,7 @@ const Register = () => {
               </span>
             </motion.div>
           </div>
-          <p className="text-[11px]" style={{ color: "rgba(51,65,85,0.45)" }}>© 2025 Skillora. All rights reserved.</p>
+          <p className="text-[11px]" style={{ color: "rgba(148,163,184,0.55)" }}>© 2025 Skillora. All rights reserved.</p>
         </div>
 
         {/* RIGHT */}

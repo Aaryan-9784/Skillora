@@ -115,7 +115,8 @@ const Login = () => {
               Freelancer OS
             </motion.p>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.25, ease: [0.16,1,0.3,1] }} className="space-y-5">
+              whileHover={{ y: -4 }} transition={{ duration: 0.7, delay: 0.25, ease: [0.16,1,0.3,1] }}
+              className="space-y-5" style={{ cursor: "default" }}>
               <h1 className="font-bold leading-[1.1] text-white"
                 style={{ fontSize: "clamp(2.2rem,3.2vw,3rem)", letterSpacing: "-0.03em" }}>
                 Welcome back.<br />
@@ -132,7 +133,8 @@ const Login = () => {
               </p>
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.6 }} className="flex items-center gap-8">
+              whileHover={{ y: -3 }} transition={{ delay: 0.5, duration: 0.6 }}
+              className="flex items-center gap-8" style={{ cursor: "default" }}>
               {[{ value: "10K+", label: "Freelancers" },{ value: "₹2M+", label: "Revenue tracked" },{ value: "50K+", label: "Invoices sent" }].map(s => (
                 <div key={s.label}>
                   <p className="text-[18px] font-bold text-white" style={{ letterSpacing: "-0.02em" }}>{s.value}</p>
@@ -141,7 +143,7 @@ const Login = () => {
               ))}
             </motion.div>
           </div>
-          <p className="text-[11px]" style={{ color: "rgba(51,65,85,0.45)" }}>© 2025 Skillora. All rights reserved.</p>
+          <p className="text-[11px]" style={{ color: "rgba(148,163,184,0.55)" }}>© 2025 Skillora. All rights reserved.</p>
         </div>
 
         {/* RIGHT — form */}
