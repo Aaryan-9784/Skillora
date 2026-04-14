@@ -3,7 +3,7 @@ import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Users, TrendingUp, Settings,
   Zap, Shield, LogOut, ChevronRight, Bell,
-  Search, Command, ChevronDown, User,
+  ChevronDown, User,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import useAuthStore from "../store/authStore";
@@ -236,24 +236,6 @@ const AdminNavbar = ({ onSearch }) => {
         }}>
         <div className="absolute top-0 inset-x-0 h-px pointer-events-none"
           style={{ background: "linear-gradient(90deg,transparent,rgba(99,91,255,0.35),rgba(0,212,255,0.2),transparent)" }} />
-
-        {/* Search */}
-        <motion.button onClick={onSearch} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
-          className="hidden md:flex items-center gap-2.5 h-9 px-4 rounded-xl flex-1 max-w-[360px] text-left transition-all duration-200"
-          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
-          onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.border = "1px solid rgba(99,91,255,0.35)"; e.currentTarget.style.boxShadow = "0 0 20px rgba(99,91,255,0.12)"; }}
-          onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.border = "1px solid rgba(255,255,255,0.07)"; e.currentTarget.style.boxShadow = "none"; }}>
-          <Search size={13} style={{ color: "#635BFF", flexShrink: 0 }} />
-          <span className="flex-1 text-xs" style={{ color: "#6B7280" }}>Search, commands, or jump to…</span>
-          <div className="flex items-center gap-0.5 shrink-0">
-            <kbd className="flex items-center justify-center w-5 h-5 rounded text-[10px]"
-              style={{ background: "rgba(255,255,255,0.06)", color: "#4B5563", border: "1px solid rgba(255,255,255,0.08)" }}>
-              <Command size={9} />
-            </kbd>
-            <kbd className="flex items-center justify-center w-5 h-5 rounded text-[10px]"
-              style={{ background: "rgba(255,255,255,0.06)", color: "#4B5563", border: "1px solid rgba(255,255,255,0.08)" }}>K</kbd>
-          </div>
-        </motion.button>
 
         <div className="flex-1" />
 
