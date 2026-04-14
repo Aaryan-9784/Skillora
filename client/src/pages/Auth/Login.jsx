@@ -143,7 +143,13 @@ const Login = () => {
               ))}
             </motion.div>
           </div>
-          <p className="text-[11px]" style={{ color: "rgba(148,163,184,0.55)" }}>© 2025 Skillora. All rights reserved.</p>
+          <motion.p
+            className="text-[11px]"
+            style={{ color: "rgba(148,163,184,0.55)", cursor: "default" }}
+            whileHover={{ color: "rgba(203,213,225,0.9)", y: -1 }}
+            transition={{ duration: 0.2 }}>
+            © 2025 Skillora. All rights reserved.
+          </motion.p>
         </div>
 
         {/* RIGHT — form */}
