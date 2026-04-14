@@ -292,7 +292,7 @@ const AdminOverview = () => {
           transition={{ duration: 0.5, ease: [0.16,1,0.3,1] }}
           className="flex flex-wrap items-start justify-between gap-5 mb-8">
           <div>
-            <h1 className="text-[30px] font-black tracking-tight leading-none"
+            <h1 className="text-[30px] font-black tracking-tight leading-tight pb-1"
               style={{ background: "linear-gradient(135deg,#FFFFFF 25%,#A78BFA 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
               Platform Overview
             </h1>

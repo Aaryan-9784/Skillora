@@ -8,7 +8,7 @@ import {
 import {
   TrendingUp, TrendingDown, DollarSign, FileText, Crown,
   ArrowUpRight, ArrowDownRight, Users, Download, BarChart2,
-  Activity, Percent, Zap, Award, ChevronRight,
+  Activity, Percent, Zap, Award, ChevronRight, RefreshCw,
 } from "lucide-react";
 import useAdminStore from "../../store/adminStore";
 
@@ -326,7 +326,7 @@ const AdminRevenue = () => {
           transition={{ duration: 0.45, ease: [0.16,1,0.3,1] }}
           className="flex flex-wrap items-start justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-[28px] font-black tracking-tight leading-none"
+            <h1 className="text-[28px] font-black tracking-tight leading-tight pb-1"
               style={{ background: "linear-gradient(135deg, #FFFFFF 30%, #A78BFA 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
               Revenue Analytics
             </h1>
@@ -342,6 +342,14 @@ const AdminRevenue = () => {
             <ToggleGroup
               options={[{value:3,label:"3m"},{value:6,label:"6m"},{value:12,label:"12m"}]}
               value={months} onChange={setMonths} />
+            <motion.button whileHover={{ rotate: 180 }} transition={{ duration: 0.35 }}
+              onClick={() => { fetchRevenueSummary(); fetchRevenue(months); }}
+              className="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.09)", color: "rgba(148,163,184,0.7)" }}
+              onMouseEnter={e => { e.currentTarget.style.background = "rgba(99,91,255,0.12)"; e.currentTarget.style.color = "#A78BFA"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "rgba(148,163,184,0.7)"; }}>
+              <RefreshCw size={14} />
+            </motion.button>
             <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
               onClick={() => exportCSV(chartData)}
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-semibold transition-all"

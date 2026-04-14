@@ -100,31 +100,6 @@ const useAuthStore = create((set, get) => ({
   fetchMe: async () => {
     set({ isLoading: true });
     try {
-      // If no in-memory token AND no session flag, skip the refresh request
-      // entirely — avoids a guaranteed-to-fail 401 in the browser console
-      if (!tokenStore.get()) {
-        const mayHaveSession = sessionStorage.getItem("sk_has_session") === "1";
-        if (!mayHaveSession) {
-          set({ user: null, isAuthenticated: false });
-          return;
-        }
-        // Has session flag — try to restore token from httpOnly cookie
-        try {
-          const { data: refreshData, status } = await authService.refreshToken();
-          if (status === 200 && refreshData?.data?.accessToken) {
-            tokenStore.set(refreshData.data.accessToken);
-          } else {
-            sessionStorage.removeItem("sk_has_session");
-            set({ user: null, isAuthenticated: false });
-            return;
-          }
-        } catch {
-          sessionStorage.removeItem("sk_has_session");
-          set({ user: null, isAuthenticated: false });
-          return;
-        }
-      }
-
       const { data } = await authService.getMe();
       tokenStore.set(data.data?.accessToken ?? tokenStore.get());
       sessionStorage.setItem("sk_has_session", "1");

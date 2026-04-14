@@ -288,7 +288,7 @@ const AdminSettings = () => {
           className="flex flex-wrap items-start justify-between gap-4 mb-10"
         >
           <div>
-            <h1 className="text-[28px] font-black tracking-tight leading-none"
+            <h1 className="text-[28px] font-black tracking-tight leading-tight pb-1"
               style={{
                 background: "linear-gradient(135deg, #FFFFFF 30%, #A78BFA 100%)",
                 WebkitBackgroundClip: "text",
@@ -301,51 +301,7 @@ const AdminSettings = () => {
             </p>
           </div>
 
-          {/* Save button */}
-          <motion.button
-            whileHover={{ scale: 1.04, boxShadow: "0 0 32px rgba(99,91,255,0.55)" }}
-            whileTap={{ scale: 0.96 }}
-            onClick={handleSave}
-            disabled={saving}
-            className="relative flex items-center gap-2.5 px-6 py-3 rounded-xl text-sm font-bold text-white overflow-hidden transition-all"
-            style={{
-              background: saved
-                ? "linear-gradient(135deg, #10B981, #059669)"
-                : "linear-gradient(135deg, #635BFF, #8B5CF6)",
-              boxShadow: saved
-                ? "0 0 24px rgba(16,185,129,0.4)"
-                : "0 0 24px rgba(99,91,255,0.4)",
-              opacity: saving ? 0.85 : 1,
-            }}
-          >
-            {/* shimmer */}
-            <span className="absolute inset-0 pointer-events-none overflow-hidden rounded-xl">
-              <span className="absolute inset-y-0 -left-full w-1/2 bg-white/10 skew-x-12"
-                style={{ animation: saving ? "none" : "shimmer 2.5s infinite" }} />
-            </span>
-
-            <AnimatePresence mode="wait">
-              {saving ? (
-                <motion.span key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                  className="flex items-center gap-2">
-                  <Loader size={14} className="animate-spin" />
-                  Saving…
-                </motion.span>
-              ) : saved ? (
-                <motion.span key="saved" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
-                  className="flex items-center gap-2">
-                  <CheckCircle size={14} />
-                  Saved
-                </motion.span>
-              ) : (
-                <motion.span key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                  className="flex items-center gap-2">
-                  <Save size={14} />
-                  Save Changes
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </motion.button>
+          {/* Save button removed from header — now at bottom */}
         </motion.div>
 
         {/* ── Grid ── */}
@@ -439,40 +395,57 @@ const AdminSettings = () => {
 
         </div>
 
-        {/* ── Bottom save bar (sticky on scroll) ── */}
-        <AnimatePresence>
-          {!saved && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              transition={{ delay: 0.5, duration: 0.4 }}
-              className="mt-8 flex items-center justify-between gap-4 px-5 py-3.5 rounded-2xl"
-              style={{
-                background: "rgba(255,255,255,0.03)",
-                border: "1px solid rgba(255,255,255,0.07)",
-                backdropFilter: "blur(12px)",
-              }}
-            >
-              <p className="text-[13px]" style={{ color: "rgba(100,116,139,0.7)" }}>
-                Changes are saved to the platform immediately upon clicking Save.
-              </p>
-              <motion.button
-                whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-                onClick={handleSave} disabled={saving}
-                className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold text-white"
-                style={{
-                  background: "linear-gradient(135deg, #635BFF, #8B5CF6)",
-                  boxShadow: "0 0 20px rgba(99,91,255,0.3)",
-                  opacity: saving ? 0.7 : 1,
-                }}
-              >
-                {saving ? <Loader size={13} className="animate-spin" /> : <Save size={13} />}
-                {saving ? "Saving…" : "Save Changes"}
-              </motion.button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* ── Bottom save button (left-aligned) ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.4 }}
+          className="mt-8 flex items-center"
+        >
+          <motion.button
+            whileHover={{ scale: 1.04, boxShadow: "0 0 32px rgba(99,91,255,0.55)" }}
+            whileTap={{ scale: 0.96 }}
+            onClick={handleSave}
+            disabled={saving}
+            className="relative flex items-center gap-2.5 px-6 py-3 rounded-xl text-sm font-bold text-white overflow-hidden transition-all"
+            style={{
+              background: saved
+                ? "linear-gradient(135deg, #10B981, #059669)"
+                : "linear-gradient(135deg, #635BFF, #8B5CF6)",
+              boxShadow: saved
+                ? "0 0 24px rgba(16,185,129,0.4)"
+                : "0 0 24px rgba(99,91,255,0.4)",
+              opacity: saving ? 0.85 : 1,
+            }}
+          >
+            {/* shimmer */}
+            <span className="absolute inset-0 pointer-events-none overflow-hidden rounded-xl">
+              <span className="absolute inset-y-0 -left-full w-1/2 bg-white/10 skew-x-12"
+                style={{ animation: saving ? "none" : "shimmer 2.5s infinite" }} />
+            </span>
+            <AnimatePresence mode="wait">
+              {saving ? (
+                <motion.span key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className="flex items-center gap-2">
+                  <Loader size={14} className="animate-spin" />
+                  Saving…
+                </motion.span>
+              ) : saved ? (
+                <motion.span key="saved" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
+                  className="flex items-center gap-2">
+                  <CheckCircle size={14} />
+                  Saved
+                </motion.span>
+              ) : (
+                <motion.span key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className="flex items-center gap-2">
+                  <Save size={14} />
+                  Save Changes
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </motion.button>
+        </motion.div>
       </div>
 
       <style>{`

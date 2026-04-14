@@ -62,8 +62,7 @@ api.interceptors.response.use(
       !original._retry &&
       !original.url?.includes("/auth/refresh") &&
       !original.url?.includes("/auth/login") &&
-      !original.url?.includes("/auth/register") &&
-      !original.url?.includes("/auth/me")
+      !original.url?.includes("/auth/register")
     ) {
       if (isRefreshing) {
         // Queue this request — resolve once refresh completes
