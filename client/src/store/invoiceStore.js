@@ -2,31 +2,48 @@ import { create } from "zustand";
 import api from "../services/api";
 import toast from "react-hot-toast";
 
-const useInvoiceStore = create((set) => ({
-  invoices:   [],
-  current:    null,
-  analytics:  [],
-  outstanding: null,
-  isLoading:  false,
-  pagination: {},
+const useInvoiceStore = create((set, get) => ({
+  invoices:    [],
+  current:     null,
+  analytics:   [],   // [{year,month,revenue,invoiceCount}]
+  outstanding: null, // {outstanding,count,overdue}
+  isLoading:   false,
+  pagination:  { total: 0, page: 1, pages: 1, limit: 20 },
+  filters:     { status: "", search: "", dateFrom: "", dateTo: "", sort: "-createdAt" },
 
+  // ── Filters ───────────────────────────────────────────
+  setFilters: (updates) =>
+    set((s) => ({ filters: { ...s.filters, ...updates } })),
+
+  resetFilters: () =>
+    set({ filters: { status: "", search: "", dateFrom: "", dateTo: "", sort: "-createdAt" } }),
+
+  // ── Fetch list ────────────────────────────────────────
   fetchInvoices: async (params = {}) => {
     set({ isLoading: true });
     try {
-      const { data } = await api.get("/invoices", { params });
+      const { filters } = get();
+      const query = { ...filters, ...params };
+      Object.keys(query).forEach((k) => { if (query[k] === "") delete query[k]; });
+      const { data } = await api.get("/invoices", { params: query });
       const d = data.data;
-      set({ invoices: d.data || [], pagination: d.pagination || {} });
+      set({
+        invoices:   d.data       || [],
+        pagination: d.pagination || { total: 0, page: 1, pages: 1, limit: 20 },
+      });
     } finally {
       set({ isLoading: false });
     }
   },
 
+  // ── Fetch single ──────────────────────────────────────
   fetchInvoice: async (id) => {
     const { data } = await api.get(`/invoices/${id}`);
     set({ current: data.data.invoice });
     return data.data.invoice;
   },
 
+  // ── Analytics ─────────────────────────────────────────
   fetchAnalytics: async () => {
     const [analyticsRes, outstandingRes] = await Promise.all([
       api.get("/invoices/analytics"),
@@ -38,6 +55,7 @@ const useInvoiceStore = create((set) => ({
     });
   },
 
+  // ── CRUD ──────────────────────────────────────────────
   createInvoice: async (payload) => {
     const { data } = await api.post("/invoices", payload);
     const invoice = data.data.invoice;
@@ -59,10 +77,14 @@ const useInvoiceStore = create((set) => ({
 
   deleteInvoice: async (id) => {
     await api.delete(`/invoices/${id}`);
-    set((s) => ({ invoices: s.invoices.filter((i) => i._id !== id) }));
+    set((s) => ({
+      invoices: s.invoices.filter((i) => i._id !== id),
+      current:  s.current?._id === id ? null : s.current,
+    }));
     toast.success("Invoice deleted");
   },
 
+  // ── Status transitions ────────────────────────────────
   updateStatus: async (id, status) => {
     const { data } = await api.patch(`/invoices/${id}/status`, { status });
     const invoice  = data.data.invoice;
@@ -92,6 +114,13 @@ const useInvoiceStore = create((set) => ({
     toast.success("Invoice duplicated as draft");
     return invoice;
   },
+
+  // ── Real-time patch (socket events) ──────────────────
+  patchInvoice: (id, updates) =>
+    set((s) => ({
+      invoices: s.invoices.map((i) => i._id === id ? { ...i, ...updates } : i),
+      current:  s.current?._id === id ? { ...s.current, ...updates } : s.current,
+    })),
 }));
 
 export default useInvoiceStore;
