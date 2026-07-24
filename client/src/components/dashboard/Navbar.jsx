@@ -4,7 +4,8 @@ import {
   Search, Bell, ChevronDown, LogOut,
   User, Command, Plus, Zap, FolderKanban,
   CheckSquare, Users, CreditCard, Sparkles,
-  FolderPlus, ListPlus, UserPlus, FileText,
+  FolderPlus, ListPlus, UserPlus, FileText, Home,
+  ChevronRight,
 } from "lucide-react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import useAuthStore from "../../store/authStore";
@@ -69,7 +70,6 @@ const Navbar = ({ onCommandPalette }) => {
   const { unreadCount, fetchUnreadCount } = useNotificationStore();
   const [dropdownOpen, setDropdownOpen]   = useState(false);
   const [notifOpen, setNotifOpen]         = useState(false);
-  const [createOpen, setCreateOpen]       = useState(false);
   const { isOpen: cmdOpen, open: openCmd, close: closeCmd } = useCommandPalette();
   const navigate = useNavigate();
   const location = useLocation();
@@ -97,7 +97,7 @@ const Navbar = ({ onCommandPalette }) => {
   return (
     <>
       <header
-        className="sticky top-0 z-40 flex items-center h-14 px-5 gap-3"
+        className="sticky top-0 z-40 flex items-center h-16 px-6 gap-3"
         style={{
           background: "linear-gradient(90deg,rgba(9,15,28,0.94) 0%,rgba(11,18,32,0.94) 100%)",
           backdropFilter: "blur(20px)",
@@ -110,22 +110,28 @@ const Navbar = ({ onCommandPalette }) => {
         <div className="absolute top-0 inset-x-0 h-px pointer-events-none"
           style={{ background: "linear-gradient(90deg,transparent,rgba(99,91,255,0.35),rgba(0,212,255,0.2),transparent)" }} />
 
-        {/* ── BRAND LOGO / BREADCRUMB NAVIGATION ── */}
-        <div className="flex items-center gap-2.5 select-none">
-          <Link to="/" title="Go to Home Page" className="flex items-center gap-2 group transition-opacity hover:opacity-90">
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+        {/* ── BREADCRUMB NAVIGATION ── */}
+        <div className="flex items-center gap-2.5 select-none text-xs">
+          <Link to="/" title="Home" className="group transition-transform hover:scale-105 active:scale-95 shrink-0">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-lg"
               style={{
-                background: "linear-gradient(135deg,#635BFF,#00D4FF)",
-                boxShadow: "0 0 14px rgba(99,91,255,0.4)",
+                background: "linear-gradient(135deg, #3B82F6 0%, #00D4FF 100%)",
+                boxShadow: "0 0 16px rgba(59,130,246,0.45)",
+                border: "1px solid rgba(255,255,255,0.25)",
               }}>
-              <Zap size={15} className="text-white fill-white" />
+              <Home size={15} className="text-white fill-white" />
             </div>
-            <span className="font-extrabold text-sm tracking-tight text-white hidden sm:inline-block">
-              Skillora
-            </span>
           </Link>
-          <span className="text-gray-600 text-xs font-semibold">/</span>
-          <span className="text-xs font-semibold text-gray-200">
+
+          <span className="text-gray-500 font-bold text-sm select-none">/</span>
+
+          <span className="text-indigo-400 font-semibold hidden sm:inline text-xs">
+            Freelancer Workspace
+          </span>
+
+          <span className="text-gray-500 font-bold text-sm hidden sm:inline select-none">/</span>
+
+          <span className="font-bold text-white text-xs">
             {pageTitle}
           </span>
         </div>
@@ -133,101 +139,18 @@ const Navbar = ({ onCommandPalette }) => {
         <div className="flex-1" />
 
         {/* ── RIGHT ACTIONS ── */}
-        <div className="flex items-center gap-1">
-
-          {/* + New button with dropdown */}
-          <div className="relative mr-1">
-            <motion.button
-              whileHover={{ scale: 1.04, y: -1 }}
-              whileTap={{ scale: 0.96 }}
-              onClick={() => setCreateOpen((o) => !o)}
-              className="hidden sm:flex items-center gap-1.5 h-8 px-3.5 rounded-xl text-xs font-semibold text-white transition-all duration-150"
-              style={{
-                background: "linear-gradient(135deg,#635BFF 0%,#8B5CF6 100%)",
-                boxShadow: "0 0 16px rgba(99,91,255,0.35)",
-                border: "1px solid rgba(255,255,255,0.15)",
-              }}
-              onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 24px rgba(99,91,255,0.55)"}
-              onMouseLeave={e => e.currentTarget.style.boxShadow = "0 0 16px rgba(99,91,255,0.35)"}
-            >
-              <Plus size={13} strokeWidth={2.5} />
-              New
-            </motion.button>
-
-            {/* Create dropdown */}
-            <AnimatePresence>
-              {createOpen && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setCreateOpen(false)} />
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.96, y: -8 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.96, y: -8 }}
-                    transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-                    className="absolute right-0 top-10 z-20 w-52 rounded-2xl overflow-hidden"
-                    style={{
-                      background: "linear-gradient(160deg,rgba(12,19,36,0.99) 0%,rgba(8,14,26,0.99) 100%)",
-                      border: "1px solid rgba(255,255,255,0.09)",
-                      boxShadow: "0 0 0 1px rgba(99,91,255,0.12), 0 24px 48px rgba(0,0,0,0.7), 0 0 40px rgba(99,91,255,0.06)",
-                      backdropFilter: "blur(24px)",
-                    }}
-                  >
-                    <div className="absolute top-0 inset-x-0 h-px"
-                      style={{ background: "linear-gradient(90deg,transparent,rgba(99,91,255,0.6),rgba(0,212,255,0.3),transparent)" }} />
-                    <div className="px-4 pt-3.5 pb-2">
-                      <p className="text-[9.5px] font-bold tracking-[0.14em] uppercase"
-                        style={{ color: "#374151" }}>Create new</p>
-                    </div>
-                    <div className="px-2 pb-2 flex flex-col gap-0.5">
-                      {CREATE_ITEMS.map(({ icon: Icon, label, path, color }, i) => (
-                        <motion.button
-                          key={label}
-                          initial={{ opacity: 0, x: -6 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: i * 0.05 }}
-                          onClick={() => { navigate(path); setCreateOpen(false); }}
-                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-150"
-                          style={{ color: "#9CA3AF" }}
-                          onMouseEnter={e => {
-                            e.currentTarget.style.background = `${color}12`;
-                            e.currentTarget.style.color = "#F9FAFB";
-                          }}
-                          onMouseLeave={e => {
-                            e.currentTarget.style.background = "transparent";
-                            e.currentTarget.style.color = "#9CA3AF";
-                          }}
-                        >
-                          <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
-                            style={{
-                              background: `${color}18`,
-                              border: `1px solid ${color}28`,
-                              boxShadow: `0 0 12px ${color}15`,
-                            }}>
-                            <Icon size={15} style={{ color }} />
-                          </div>
-                          <span className="font-medium">{label}</span>
-                        </motion.button>
-                      ))}
-                    </div>
-                  </motion.div>
-                </>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* Divider */}
-          <div className="w-px h-5 mx-0.5" style={{ background: "rgba(255,255,255,0.07)" }} />
+        <div className="flex items-center gap-3.5">
 
           {/* Notifications */}
           <div className="relative">
             <NavIconBtn onClick={() => setNotifOpen((o) => !o)} badge={unreadCount} title="Notifications">
-              <Bell size={15} />
+              <Bell size={16} />
             </NavIconBtn>
             <NotificationsPanel open={notifOpen} onClose={() => setNotifOpen(false)} />
           </div>
 
-          {/* Divider */}
-          <div className="w-px h-5 mx-0.5" style={{ background: "rgba(255,255,255,0.07)" }} />
+          {/* Vertical Divider */}
+          <div className="w-px h-5" style={{ background: "rgba(255,255,255,0.12)" }} />
 
           {/* User profile */}
           <div className="relative">
@@ -235,36 +158,27 @@ const Navbar = ({ onCommandPalette }) => {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => setDropdownOpen((o) => !o)}
-              className="flex items-center gap-2 h-9 pl-1.5 pr-2.5 rounded-xl transition-all duration-150"
-              style={{ border: "1px solid transparent" }}
-              onMouseEnter={e => {
-                e.currentTarget.style.background = "rgba(255,255,255,0.06)";
-                e.currentTarget.style.border = "1px solid rgba(255,255,255,0.08)";
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.background = "transparent";
-                e.currentTarget.style.border = "1px solid transparent";
-              }}
+              className="flex items-center gap-2.5 px-1 py-1 rounded-xl transition-all duration-150 group cursor-pointer"
             >
               {/* Avatar */}
-              <div className="relative w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold text-white shrink-0"
+              <div className="relative w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold text-white shrink-0"
                 style={{ background: "linear-gradient(135deg,#635BFF,#8579FF)", boxShadow: "0 0 12px rgba(99,91,255,0.4)" }}>
                 {getInitials(user?.name)}
-                <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-[#0A1120]"
+                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-[#0A1120]"
                   style={{ background: "#22C55E", boxShadow: "0 0 6px rgba(34,197,94,0.8)" }} />
               </div>
 
-              <div className="hidden sm:block text-left">
-                <p className="text-xs font-semibold leading-none mb-0.5" style={{ color: "#F9FAFB" }}>
-                  {user?.name?.split(" ")[0]}
+              <div className="hidden sm:flex flex-col justify-center text-left leading-none">
+                <p className="text-xs font-bold text-white group-hover:text-indigo-300 transition-colors">
+                  {user?.name}
                 </p>
-                <p className="text-[10px] leading-none capitalize" style={{ color: "#635BFF" }}>
-                  {user?.plan || "free"}
+                <p className="text-[10px] font-medium text-indigo-400 capitalize mt-1">
+                  {user?.role || "freelancer"}
                 </p>
               </div>
 
-              <motion.div animate={{ rotate: dropdownOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
-                <ChevronDown size={12} style={{ color: "#6B7280" }} />
+              <motion.div animate={{ rotate: dropdownOpen ? 180 : 0 }} transition={{ duration: 0.2 }} className="ml-0.5">
+                <ChevronDown size={13} className="text-gray-400 group-hover:text-white transition-colors" />
               </motion.div>
             </motion.button>
 
@@ -303,16 +217,9 @@ const Navbar = ({ onCommandPalette }) => {
                           <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2"
                             style={{ background: "#22C55E", borderColor: "#080E1A", boxShadow: "0 0 8px rgba(34,197,94,0.7)" }} />
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold truncate" style={{ color: "#F9FAFB" }}>{user?.name}</p>
-                          <p className="text-xs truncate mt-0.5" style={{ color: "#4B5563" }}>{user?.email}</p>
-                          <div className="mt-2 flex items-center gap-1.5 px-2 py-1 rounded-lg w-fit"
-                            style={{ background: "rgba(99,91,255,0.14)", border: "1px solid rgba(99,91,255,0.25)" }}>
-                            <Zap size={9} style={{ color: "#635BFF" }} />
-                            <span className="text-[10px] font-bold capitalize tracking-wide" style={{ color: "#A78BFA" }}>
-                              {user?.plan || "free"} plan
-                            </span>
-                          </div>
+                        <div className="min-w-0 flex-1 flex flex-col justify-center">
+                          <p className="text-sm font-bold truncate text-white leading-tight">{user?.name}</p>
+                          <p className="text-xs text-indigo-400 font-medium capitalize mt-1 leading-tight">{user?.role || "freelancer"}</p>
                         </div>
                       </div>
                     </div>

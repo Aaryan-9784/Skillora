@@ -10,7 +10,7 @@ const ADMIN_TITLES = {
 import {
   LayoutDashboard, Users, TrendingUp, Settings,
   Zap, Shield, LogOut, ChevronRight, Bell,
-  ChevronDown, User,
+  ChevronDown, User, Home,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import useAuthStore from "../store/authStore";
@@ -150,15 +150,9 @@ const UserCard = ({ user, collapsed, onToggle, onLogout, navigate }) => (
               <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2"
                 style={{ background: "#22C55E", borderColor: "#080E1A", boxShadow: "0 0 8px rgba(34,197,94,0.9)" }} />
             </div>
-            <div className="flex-1 min-w-0 text-left">
-              <p className="text-sm font-semibold truncate leading-tight" style={{ color: "#F9FAFB" }}>{user?.name}</p>
-              <p className="text-[11px] truncate mt-0.5" style={{ color: "rgba(100,116,139,0.7)" }}>{user?.email}</p>
-              <div className="flex items-center gap-1.5 mt-1">
-                <span className="inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full"
-                  style={{ background: "rgba(99,91,255,0.2)", color: "#A78BFA", border: "1px solid rgba(99,91,255,0.3)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-                  <Shield size={8} strokeWidth={2.5} /> Admin
-                </span>
-              </div>
+            <div className="flex-1 min-w-0 text-left flex flex-col justify-center">
+              <p className="text-xs font-bold truncate text-white group-hover:text-purple-300 transition-colors">{user?.name}</p>
+              <p className="text-[11px] font-medium text-purple-400 capitalize mt-1 truncate">Admin</p>
             </div>
             <ChevronRight size={14} style={{ color: "rgba(167,139,250,0.4)", flexShrink: 0, transition: "color 0.2s" }}
               className="group-hover:!text-[#A78BFA]" />
@@ -236,7 +230,7 @@ const AdminNavbar = ({ onSearch }) => {
 
   return (
     <>
-      <header className="sticky top-0 z-40 flex items-center h-14 px-5 gap-3"
+      <header className="sticky top-0 z-40 flex items-center h-16 px-6 gap-3"
         style={{
           background: "linear-gradient(90deg,rgba(9,15,28,0.94) 0%,rgba(11,18,32,0.94) 100%)",
           backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
@@ -246,29 +240,36 @@ const AdminNavbar = ({ onSearch }) => {
         <div className="absolute top-0 inset-x-0 h-px pointer-events-none"
           style={{ background: "linear-gradient(90deg,transparent,rgba(99,91,255,0.35),rgba(0,212,255,0.2),transparent)" }} />
 
-        {/* ── BRAND LOGO / BREADCRUMB NAVIGATION ── */}
-        <div className="flex items-center gap-2.5 select-none">
-          <Link to="/" title="Go to Home Page" className="flex items-center gap-2 group transition-opacity hover:opacity-90">
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+        {/* ── BREADCRUMB NAVIGATION ── */}
+        <div className="flex items-center gap-2.5 select-none text-xs">
+          <Link to="/" title="Home" className="group transition-transform hover:scale-105 active:scale-95 shrink-0">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-lg"
               style={{
-                background: "linear-gradient(135deg,#635BFF,#00D4FF)",
-                boxShadow: "0 0 14px rgba(99,91,255,0.4)",
+                background: "linear-gradient(135deg, #3B82F6 0%, #00D4FF 100%)",
+                boxShadow: "0 0 16px rgba(59,130,246,0.45)",
+                border: "1px solid rgba(255,255,255,0.25)",
               }}>
-              <Zap size={15} className="text-white fill-white" />
+              <Home size={15} className="text-white fill-white" />
             </div>
-            <span className="font-extrabold text-sm tracking-tight text-white hidden sm:inline-block">
-              Skillora
-            </span>
           </Link>
-          <span className="text-gray-600 text-xs font-semibold">/</span>
-          <span className="text-xs font-semibold text-gray-200">
-            Admin Panel / {pageTitle}
+
+          <span className="text-gray-500 font-bold text-sm select-none">/</span>
+
+          <span className="text-purple-400 font-semibold hidden sm:inline text-xs">
+            Admin Panel
+          </span>
+
+          <span className="text-gray-500 font-bold text-sm hidden sm:inline select-none">/</span>
+
+          <span className="font-bold text-white text-xs">
+            {pageTitle}
           </span>
         </div>
 
         <div className="flex-1" />
 
-        <div className="flex items-center gap-1">
+        {/* ── RIGHT ACTIONS ── */}
+        <div className="flex items-center gap-3.5">
           {/* Notifications */}
           <div className="relative">
             <motion.button whileHover={{ scale: 1.06, y: -1 }} whileTap={{ scale: 0.94 }}
@@ -277,7 +278,7 @@ const AdminNavbar = ({ onSearch }) => {
               style={{ color: "#6B7280" }}
               onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.07)"; e.currentTarget.style.color = "#E5E7EB"; }}
               onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#6B7280"; }}>
-              <Bell size={15} />
+              <Bell size={16} />
               {unreadCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-0.5 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
                   style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)", boxShadow: "0 0 8px rgba(99,91,255,0.6)" }}>
@@ -288,28 +289,25 @@ const AdminNavbar = ({ onSearch }) => {
             <NotificationsPanel open={notifOpen} onClose={() => setNotifOpen(false)} />
           </div>
 
-          <div className="w-px h-5 mx-0.5" style={{ background: "rgba(255,255,255,0.07)" }} />
+          <div className="w-px h-5" style={{ background: "rgba(255,255,255,0.12)" }} />
 
           {/* User profile */}
           <div className="relative">
             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
               onClick={() => setDropdownOpen(o => !o)}
-              className="flex items-center gap-2 h-9 pl-1.5 pr-2.5 rounded-xl transition-all duration-150"
-              style={{ border: "1px solid transparent" }}
-              onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.border = "1px solid rgba(255,255,255,0.08)"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.border = "1px solid transparent"; }}>
-              <div className="relative w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold text-white shrink-0"
+              className="flex items-center gap-2.5 px-1 py-1 rounded-xl transition-all duration-150 group cursor-pointer">
+              <div className="relative w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold text-white shrink-0"
                 style={{ background: "linear-gradient(135deg,#635BFF,#8579FF)", boxShadow: "0 0 12px rgba(99,91,255,0.4)" }}>
                 {getInitials(user?.name)}
-                <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-[#0A1120]"
+                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-[#0A1120]"
                   style={{ background: "#22C55E", boxShadow: "0 0 6px rgba(34,197,94,0.8)" }} />
               </div>
-              <div className="hidden sm:block text-left">
-                <p className="text-xs font-semibold leading-none mb-0.5" style={{ color: "#F9FAFB" }}>{user?.name?.split(" ")[0]}</p>
-                <p className="text-[10px] leading-none" style={{ color: "#A78BFA" }}>Admin</p>
+              <div className="hidden sm:flex flex-col justify-center text-left leading-none">
+                <p className="text-xs font-bold text-white group-hover:text-purple-300 transition-colors">{user?.name}</p>
+                <p className="text-[10px] font-medium text-purple-400 capitalize mt-1">Admin</p>
               </div>
-              <motion.div animate={{ rotate: dropdownOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
-                <ChevronDown size={12} style={{ color: "#6B7280" }} />
+              <motion.div animate={{ rotate: dropdownOpen ? 180 : 0 }} transition={{ duration: 0.2 }} className="ml-0.5">
+                <ChevronDown size={13} className="text-gray-400 group-hover:text-white transition-colors" />
               </motion.div>
             </motion.button>
 
@@ -333,14 +331,9 @@ const AdminNavbar = ({ onSearch }) => {
                           <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2"
                             style={{ background: "#22C55E", borderColor: "#080E1A", boxShadow: "0 0 8px rgba(34,197,94,0.7)" }} />
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold truncate" style={{ color: "#F9FAFB" }}>{user?.name}</p>
-                          <p className="text-xs truncate mt-0.5" style={{ color: "#4B5563" }}>{user?.email}</p>
-                          <div className="mt-2 flex items-center gap-1.5 px-2 py-1 rounded-lg w-fit"
-                            style={{ background: "rgba(99,91,255,0.14)", border: "1px solid rgba(99,91,255,0.25)" }}>
-                            <Shield size={9} style={{ color: "#635BFF" }} />
-                            <span className="text-[10px] font-bold tracking-wide" style={{ color: "#A78BFA" }}>Admin</span>
-                          </div>
+                        <div className="min-w-0 flex-1 flex flex-col justify-center">
+                          <p className="text-sm font-bold truncate text-white leading-tight">{user?.name}</p>
+                          <p className="text-xs text-purple-400 font-medium capitalize mt-1 leading-tight">Admin</p>
                         </div>
                       </div>
                     </div>
@@ -432,38 +425,31 @@ const AdminLayout = () => {
         <div className="absolute left-0 top-0 bottom-0 w-px pointer-events-none"
           style={{ background: "linear-gradient(180deg,transparent 0%,rgba(99,91,255,0.5) 35%,rgba(0,212,255,0.35) 65%,transparent 100%)" }} />
 
-        {/* Logo */}
-        <div className={`flex items-center h-[72px] shrink-0 relative ${collapsed ? "justify-center px-0" : "px-4"}`}>
-          <div className="absolute bottom-0 inset-x-3 h-px"
-            style={{ background: "linear-gradient(90deg,transparent,rgba(99,91,255,0.25),transparent)" }} />
-          <motion.div whileHover={{ scale: 1.07 }} whileTap={{ scale: 0.93 }} transition={{ duration: 0.18 }}
-            className="relative shrink-0 cursor-pointer" onClick={() => navigate("/admin")}>
-            <motion.div className="absolute inset-0 rounded-xl"
-              animate={{ opacity: [0.35,0.7,0.35] }} transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
-              style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)", filter: "blur(12px)", transform: "scale(1.3)" }} />
-            <div className="relative w-10 h-10 rounded-xl flex items-center justify-center"
-              style={{ background: "linear-gradient(145deg,#7C6FFF 0%,#5B52F0 100%)", boxShadow: "0 0 0 1px rgba(255,255,255,0.12),0 4px 16px rgba(99,91,255,0.5),inset 0 1px 0 rgba(255,255,255,0.22)" }}>
-              <Zap size={18} className="text-white" strokeWidth={2.8} />
-            </div>
-          </motion.div>
-          <AnimatePresence>
-            {!collapsed && (
-              <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -8 }} transition={{ duration: 0.22, ease: [0.16,1,0.3,1] }}
-                className="ml-3 overflow-hidden select-none">
-                <p className="text-[18px] font-black tracking-[-0.02em] whitespace-nowrap leading-none"
-                  style={{ background: "linear-gradient(135deg,#FFFFFF 20%,#A78BFA 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                  Skillora
-                </p>
-                <div className="flex items-center gap-1 mt-1.5">
-                  <span className="inline-flex items-center gap-1 px-2 py-[3px] rounded-full"
-                    style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", background: "linear-gradient(135deg,rgba(99,91,255,0.28) 0%,rgba(139,92,246,0.18) 100%)", border: "1px solid rgba(99,91,255,0.35)", color: "#C4B5FD" }}>
-                    <Shield size={8} strokeWidth={2.5} /> Admin
-                  </span>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+        {/* Logo / Workspace Header */}
+        <div className={`flex items-center h-[76px] shrink-0 relative ${collapsed ? "justify-center px-0" : "px-4"}`}>
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate("/admin")}>
+            <motion.div whileHover={{ scale: 1.07 }} whileTap={{ scale: 0.93 }} transition={{ duration: 0.18 }}
+              className="relative shrink-0">
+              <div className="relative w-9 h-9 rounded-xl flex items-center justify-center"
+                style={{ background: "linear-gradient(145deg,#7C6FFF 0%,#5B52F0 100%)", boxShadow: "0 0 0 1px rgba(255,255,255,0.12),0 4px 16px rgba(99,91,255,0.5)" }}>
+                <Zap size={17} className="text-white fill-white" />
+              </div>
+            </motion.div>
+            <AnimatePresence>
+              {!collapsed && (
+                <motion.div initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -6 }} transition={{ duration: 0.2 }}
+                  className="select-none flex flex-col justify-center text-left">
+                  <p className="text-[17px] font-extrabold tracking-tight leading-none text-white">
+                    Skillora
+                  </p>
+                  <p className="text-[9.5px] font-bold tracking-[0.16em] uppercase mt-1 text-purple-400">
+                    ADMIN WORKSPACE
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
         {/* Nav */}

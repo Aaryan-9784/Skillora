@@ -272,22 +272,14 @@ const UserCard = ({ user, collapsed, onToggle, onLogout, onSettings }) => (
                 style={{ background: "#22C55E", borderColor: "#080E1A", boxShadow: "0 0 8px rgba(34,197,94,0.9)" }} />
             </div>
 
-            {/* Name + role + plan */}
-            <div className="flex-1 min-w-0 text-left">
-              <p className="text-sm font-semibold truncate leading-tight" style={{ color: "#F9FAFB" }}>
+            {/* Name + role */}
+            <div className="flex-1 min-w-0 text-left flex flex-col justify-center">
+              <p className="text-xs font-bold truncate leading-tight text-white group-hover:text-indigo-300 transition-colors">
                 {user?.name}
               </p>
-              <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full capitalize"
-                  style={{
-                    background: "rgba(99,91,255,0.2)",
-                    color: "#A78BFA",
-                    border: "1px solid rgba(99,91,255,0.3)",
-                    letterSpacing: "0.03em",
-                  }}>
-                  {user?.role || "freelancer"}
-                </span>
-              </div>
+              <p className="text-[11px] font-medium text-indigo-400 capitalize mt-1 leading-tight truncate">
+                {user?.role || "freelancer"}
+              </p>
             </div>
 
             {/* Arrow */}
@@ -419,71 +411,62 @@ const Sidebar = ({ collapsed, onToggle }) => {
       />
 
       {/* ════════════════════════════════════════
-          LOGO
+          LOGO / WORKSPACE HEADER
       ════════════════════════════════════════ */}
       <div
-        className={`flex items-center h-[72px] shrink-0 relative ${
+        className={`flex items-center h-[76px] shrink-0 relative ${
           collapsed ? "justify-center px-0" : "px-4"
         }`}
       >
-        {/* Subtle bottom divider */}
-        <div className="absolute bottom-0 inset-x-3 h-px"
-          style={{ background: "linear-gradient(90deg, transparent, rgba(99,91,255,0.25), transparent)" }} />
-
-        {/* Icon */}
-        <motion.div
-          whileHover={{ scale: 1.07 }}
-          whileTap={{ scale: 0.93 }}
-          transition={{ duration: 0.18, ease: [0.16,1,0.3,1] }}
-          className="relative shrink-0 cursor-pointer"
-          onClick={() => navigate("/dashboard")}
-        >
-          {/* Ambient glow behind icon */}
+        <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate("/dashboard")}>
+          {/* Icon */}
           <motion.div
-            className="absolute inset-0 rounded-xl"
-            animate={{ opacity: [0.35, 0.7, 0.35] }}
-            transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
-            style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)", filter: "blur(12px)", transform: "scale(1.3)" }}
-          />
-          {/* Icon box */}
-          <div
-            className="relative w-10 h-10 rounded-xl flex items-center justify-center"
-            style={{
-              background: "linear-gradient(145deg, #7C6FFF 0%, #5B52F0 100%)",
-              boxShadow: "0 0 0 1px rgba(255,255,255,0.12), 0 4px 16px rgba(99,91,255,0.5), inset 0 1px 0 rgba(255,255,255,0.22)",
-            }}
+            whileHover={{ scale: 1.07 }}
+            whileTap={{ scale: 0.93 }}
+            transition={{ duration: 0.18, ease: [0.16,1,0.3,1] }}
+            className="relative shrink-0"
           >
-            <Zap size={18} className="text-white" strokeWidth={2.8} />
-          </div>
-        </motion.div>
-
-        {/* Wordmark */}
-        <AnimatePresence>
-          {!collapsed && (
+            {/* Ambient glow behind icon */}
             <motion.div
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -8 }}
-              transition={{ duration: 0.22, ease: [0.16,1,0.3,1] }}
-              className="ml-3 overflow-hidden select-none"
+              className="absolute inset-0 rounded-xl"
+              animate={{ opacity: [0.35, 0.7, 0.35] }}
+              transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
+              style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)", filter: "blur(12px)", transform: "scale(1.3)" }}
+            />
+            {/* Icon box */}
+            <div
+              className="relative w-9 h-9 rounded-xl flex items-center justify-center"
+              style={{
+                background: "linear-gradient(145deg, #7C6FFF 0%, #5B52F0 100%)",
+                boxShadow: "0 0 0 1px rgba(255,255,255,0.12), 0 4px 16px rgba(99,91,255,0.5), inset 0 1px 0 rgba(255,255,255,0.22)",
+              }}
             >
-              <p
-                className="text-[18px] font-black tracking-[-0.02em] whitespace-nowrap leading-none"
-                style={{
-                  background: "linear-gradient(135deg, #FFFFFF 20%, #A78BFA 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                }}
+              <Zap size={17} className="text-white fill-white" strokeWidth={2.8} />
+            </div>
+          </motion.div>
+
+          {/* Wordmark + Workspace label */}
+          <AnimatePresence>
+            {!collapsed && (
+              <motion.div
+                initial={{ opacity: 0, x: -6 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -6 }}
+                transition={{ duration: 0.2, ease: [0.16,1,0.3,1] }}
+                className="overflow-hidden select-none flex flex-col justify-center text-left"
               >
-                Skillora
-              </p>
-              <p className="text-[10px] font-semibold tracking-[0.2em] uppercase mt-1 whitespace-nowrap"
-                style={{ color: "rgba(99,91,255,0.6)", letterSpacing: "0.22em" }}>
-                workspace
-              </p>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                <p
+                  className="text-[17px] font-black tracking-tight leading-none text-white"
+                >
+                  Skillora
+                </p>
+                <p className="text-[9.5px] font-bold tracking-[0.16em] uppercase mt-1 text-indigo-400">
+                  FREELANCER WORKSPACE
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
       {/* ════════════════════════════════════════

@@ -5,7 +5,7 @@ import {
   LayoutDashboard, FileText, FolderOpen, User,
   LogOut, Bell, ChevronRight, Zap, Menu, X,
   MessageSquare, CheckCircle2, Clock, AlertCircle,
-  FolderKanban, CreditCard, Sparkles,
+  FolderKanban, CreditCard, Sparkles, Home,
 } from "lucide-react";
 import useAuthStore from "../store/authStore";
 import useSocket from "../hooks/useSocket";
@@ -247,34 +247,31 @@ const ClientLayout = () => {
         <div className="absolute left-0 top-0 bottom-0 w-px pointer-events-none"
           style={{ background: "linear-gradient(180deg,transparent 0%,rgba(99,91,255,0.5) 35%,rgba(0,212,255,0.35) 65%,transparent 100%)" }} />
 
-        {/* Logo */}
-        <div className={`flex items-center h-[72px] shrink-0 relative ${collapsed ? "justify-center px-0" : "px-4"}`}>
-          <div className="absolute bottom-0 inset-x-3 h-px"
-            style={{ background: "linear-gradient(90deg,transparent,rgba(99,91,255,0.25),transparent)" }} />
-          <motion.div whileHover={{ scale: 1.07 }} whileTap={{ scale: 0.93 }}
-            className="relative shrink-0 cursor-pointer" onClick={() => navigate("/client/dashboard")}>
-            <motion.div className="absolute inset-0 rounded-xl"
-              animate={{ opacity: [0.35, 0.7, 0.35] }}
-              transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
-              style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)", filter: "blur(12px)", transform: "scale(1.3)" }} />
-            <div className="relative w-10 h-10 rounded-xl flex items-center justify-center"
-              style={{ background: "linear-gradient(145deg,#7C6FFF 0%,#5B52F0 100%)", boxShadow: "0 0 0 1px rgba(255,255,255,0.12),0 4px 16px rgba(99,91,255,0.5)" }}>
-              <Zap size={18} className="text-white" strokeWidth={2.8} />
-            </div>
-          </motion.div>
-          <AnimatePresence>
-            {!collapsed && (
-              <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -8 }}
-                transition={{ duration: 0.22 }} className="ml-3 overflow-hidden select-none">
-                <p className="text-[17px] font-black tracking-[-0.02em] whitespace-nowrap leading-none"
-                  style={{ background: "linear-gradient(135deg,#FFFFFF 20%,#A78BFA 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                  Skillora
-                </p>
-                <p className="text-[9px] font-bold tracking-[0.22em] uppercase mt-1 whitespace-nowrap"
-                  style={{ color: "rgba(0,212,255,0.7)" }}>CLIENT</p>
-              </motion.div>
-            )}
-          </AnimatePresence>
+        {/* Logo / Workspace Header */}
+        <div className={`flex items-center h-[76px] shrink-0 relative ${collapsed ? "justify-center px-0" : "px-4"}`}>
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate("/client/dashboard")}>
+            <motion.div whileHover={{ scale: 1.07 }} whileTap={{ scale: 0.93 }} transition={{ duration: 0.18 }}
+              className="relative shrink-0">
+              <div className="relative w-9 h-9 rounded-xl flex items-center justify-center"
+                style={{ background: "linear-gradient(145deg,#7C6FFF 0%,#5B52F0 100%)", boxShadow: "0 0 0 1px rgba(255,255,255,0.12),0 4px 16px rgba(99,91,255,0.5)" }}>
+                <Zap size={17} className="text-white fill-white" />
+              </div>
+            </motion.div>
+            <AnimatePresence>
+              {!collapsed && (
+                <motion.div initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -6 }} transition={{ duration: 0.2 }}
+                  className="select-none flex flex-col justify-center text-left">
+                  <p className="text-[17px] font-extrabold tracking-tight leading-none text-white">
+                    Skillora
+                  </p>
+                  <p className="text-[9.5px] font-bold tracking-[0.16em] uppercase mt-1 text-cyan-400">
+                    CLIENT WORKSPACE
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
         {/* Nav */}
@@ -300,9 +297,9 @@ const ClientLayout = () => {
                     style={{ background: "linear-gradient(135deg,#635BFF,#A78BFA)", boxShadow: "0 0 12px rgba(99,91,255,0.4)" }}>
                     {getInitials(user?.name)}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold truncate" style={{ color: "#F9FAFB" }}>{user?.name}</p>
-                    <p className="text-[10px] truncate" style={{ color: "#4B5563" }}>{user?.email}</p>
+                  <div className="flex-1 min-w-0 text-left flex flex-col justify-center">
+                    <p className="text-xs font-bold truncate text-white leading-tight">{user?.name}</p>
+                    <p className="text-[11px] font-medium text-cyan-400 capitalize mt-1 leading-tight truncate">Client</p>
                   </div>
                 </div>
                 <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
@@ -354,7 +351,7 @@ const ClientLayout = () => {
         style={{ background: "linear-gradient(135deg,#0B1120 0%,#0D1526 100%)" }}>
 
         {/* Topbar */}
-        <header className="sticky top-0 z-30 flex items-center h-14 px-5 gap-3 shrink-0"
+        <header className="sticky top-0 z-30 flex items-center h-16 px-6 gap-3 shrink-0"
           style={{
             background: "linear-gradient(90deg,rgba(9,15,28,0.94) 0%,rgba(11,18,32,0.94) 100%)",
             backdropFilter: "blur(20px)",
@@ -369,27 +366,36 @@ const ClientLayout = () => {
             {mobileOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
 
-        {/* ── BRAND LOGO / BREADCRUMB NAVIGATION ── */}
-        <div className="flex items-center gap-2.5 select-none">
-          <Link to="/" title="Go to Home Page" className="flex items-center gap-2 group transition-opacity hover:opacity-90">
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+        {/* ── BREADCRUMB NAVIGATION ── */}
+        <div className="flex items-center gap-2.5 select-none text-xs">
+          <Link to="/" title="Home" className="group transition-transform hover:scale-105 active:scale-95 shrink-0">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-lg"
               style={{
-                background: "linear-gradient(135deg,#635BFF,#00D4FF)",
-                boxShadow: "0 0 14px rgba(99,91,255,0.4)",
+                background: "linear-gradient(135deg, #3B82F6 0%, #00D4FF 100%)",
+                boxShadow: "0 0 16px rgba(59,130,246,0.45)",
+                border: "1px solid rgba(255,255,255,0.25)",
               }}>
-              <Zap size={15} className="text-white fill-white" />
+              <Home size={15} className="text-white fill-white" />
             </div>
-            <span className="font-extrabold text-sm tracking-tight text-white hidden sm:inline-block">
-              Skillora
-            </span>
           </Link>
-          <span className="text-gray-600 text-xs font-semibold">/</span>
-          <span className="text-xs font-semibold text-gray-200">
-            Client Portal / {pageTitle}
+
+          <span className="text-gray-500 font-bold text-sm select-none">/</span>
+
+          <span className="text-cyan-400 font-semibold hidden sm:inline text-xs">
+            Client Portal
+          </span>
+
+          <span className="text-gray-500 font-bold text-sm hidden sm:inline select-none">/</span>
+
+          <span className="font-bold text-white text-xs">
+            {pageTitle}
           </span>
         </div>
-          <div className="flex-1" />
 
+        <div className="flex-1" />
+
+        {/* ── RIGHT ACTIONS ── */}
+        <div className="flex items-center gap-3.5">
           {/* Notifications bell */}
           <div className="relative">
             <motion.button whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}
@@ -398,7 +404,7 @@ const ClientLayout = () => {
               style={{ color: "#6B7280" }}
               onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.07)"; e.currentTarget.style.color = "#E5E7EB"; }}
               onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#6B7280"; }}>
-              <Bell size={15} />
+              <Bell size={16} />
               {unreadCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-0.5 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
                   style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)", boxShadow: "0 0 8px rgba(99,91,255,0.6)" }}>
@@ -409,17 +415,24 @@ const ClientLayout = () => {
             <NotificationsPanel open={notifOpen} onClose={() => setNotifOpen(false)} />
           </div>
 
+          <div className="w-px h-5" style={{ background: "rgba(255,255,255,0.12)" }} />
+
           {/* User chip */}
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl"
-            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
-            <div className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold text-white"
-              style={{ background: "linear-gradient(135deg,#635BFF,#A78BFA)" }}>
+          <div className="flex items-center gap-2.5 px-1 py-1">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold text-white shrink-0"
+              style={{ background: "linear-gradient(135deg,#635BFF,#A78BFA)", boxShadow: "0 0 12px rgba(99,91,255,0.4)" }}>
               {getInitials(user?.name)}
             </div>
-            <span className="text-xs font-medium hidden sm:block" style={{ color: "#D1D5DB" }}>
-              {user?.name?.split(" ")[0]}
-            </span>
+            <div className="hidden sm:flex flex-col justify-center text-left leading-none">
+              <p className="text-xs font-bold text-white leading-none">
+                {user?.name}
+              </p>
+              <p className="text-[10px] font-medium text-cyan-400 capitalize mt-1 leading-none">
+                Client
+              </p>
+            </div>
           </div>
+        </div>
         </header>
 
         {/* Page content */}
