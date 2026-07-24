@@ -9,7 +9,6 @@ const ADMIN_CONFIG = {
   "/admin":          { title: "Overview",          icon: LayoutDashboard },
   "/admin/users":    { title: "Users",             icon: Users },
   "/admin/revenue":  { title: "Revenue Analytics", icon: TrendingUp },
-  "/admin/settings": { title: "Settings",          icon: Settings },
   "/admin/profile":  { title: "Profile",           icon: User },
 };
 import { motion, AnimatePresence } from "framer-motion";
@@ -33,12 +32,6 @@ const NAV_SECTIONS = [
       { to: "/admin",          icon: LayoutDashboard, label: "Overview", end: true },
       { to: "/admin/users",    icon: Users,           label: "Users"              },
       { to: "/admin/revenue",  icon: TrendingUp,      label: "Revenue"            },
-    ],
-  },
-  {
-    label: "SYSTEM",
-    items: [
-      { to: "/admin/settings", icon: Settings, label: "Settings" },
     ],
   },
 ];
@@ -132,40 +125,12 @@ const UserCard = ({ user, collapsed, onToggle, onLogout, navigate }) => (
     <AnimatePresence>
       {!collapsed ? (
         <motion.div key="expanded" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 8 }} transition={{ duration: 0.2 }}
-          className="rounded-2xl overflow-hidden"
-          style={{ background: "linear-gradient(145deg,rgba(99,91,255,0.07) 0%,rgba(255,255,255,0.025) 100%)", border: "1px solid rgba(99,91,255,0.18)", boxShadow: "0 0 0 1px rgba(99,91,255,0.06),inset 0 1px 0 rgba(255,255,255,0.06)" }}>
-          <button
-            onClick={() => navigate("/admin/profile")}
-            className="w-full flex items-center gap-3 px-3 py-3 transition-all duration-200 group"
-            style={{ background: "transparent" }}
-            onMouseEnter={e => e.currentTarget.style.background = "rgba(99,91,255,0.08)"}
-            onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-          >
-            <div className="relative shrink-0">
-              <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-sm font-bold text-white"
-                style={{ background: "linear-gradient(135deg,#635BFF 0%,#A78BFA 100%)", boxShadow: "0 0 18px rgba(99,91,255,0.55),inset 0 1px 0 rgba(255,255,255,0.2)" }}>
-                {getInitials(user?.name)}
-              </div>
-              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2"
-                style={{ background: "#22C55E", borderColor: "#080E1A", boxShadow: "0 0 8px rgba(34,197,94,0.9)" }} />
-            </div>
-            <div className="flex-1 min-w-0 text-left flex flex-col justify-center gap-0.5">
-              <p className="text-sm font-bold truncate leading-tight text-white group-hover:text-purple-300 transition-colors">{user?.name}</p>
-              <p className="text-xs font-semibold text-purple-400 capitalize leading-tight truncate">Admin</p>
-            </div>
-            <ChevronRight size={14} style={{ color: "rgba(167,139,250,0.4)", flexShrink: 0, transition: "color 0.2s" }}
-              className="group-hover:!text-[#A78BFA]" />
+          exit={{ opacity: 0, y: 8 }} transition={{ duration: 0.2 }}>
+          <button onClick={onLogout}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold text-gray-400 hover:text-red-400 hover:bg-red-500/10 border border-white/5 hover:border-red-500/20 transition-all duration-200 cursor-pointer group/logout">
+            <LogOut size={14} strokeWidth={2} className="group-hover/logout:-translate-x-0.5 transition-transform duration-200" />
+            <span>Sign out</span>
           </button>
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-            <button onClick={onLogout}
-              className="w-full flex items-center justify-center gap-2 py-2.5 text-xs font-semibold transition-all duration-200"
-              style={{ color: "#4B5563" }}
-              onMouseEnter={e => { e.currentTarget.style.background = "rgba(239,68,68,0.08)"; e.currentTarget.style.color = "#F87171"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#4B5563"; }}>
-              <LogOut size={13} strokeWidth={2} /> Sign out
-            </button>
-          </div>
         </motion.div>
       ) : (
         <motion.div key="collapsed" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}

@@ -24,7 +24,6 @@ const PATH_CONFIG = {
   "/payments/new": { title: "New Invoice",     icon: FileText },
   "/skills":       { title: "Skills",          icon: Sparkles },
   "/ai":           { title: "AI Assistant",    icon: Bot },
-  "/settings":     { title: "Settings",        icon: Settings },
 };
 
 // ─────────────────────────────────────────────────────────
@@ -97,9 +96,7 @@ const Navbar = ({ onCommandPalette }) => {
     { icon: FileText,   label: "New Invoice", path: "/payments/new", color: "#00D4FF" },
   ];
 
-  const PROFILE_ITEMS = [
-    { icon: User, label: "Profile", action: () => navigate("/settings?tab=profile") },
-  ];
+  const PROFILE_ITEMS = [];
 
   return (
     <>

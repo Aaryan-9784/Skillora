@@ -147,7 +147,7 @@ const App = () => {
               <Route path="/payments/:id"    element={<InvoiceDetail />} />
               <Route path="/skills"          element={<Skills />} />
               <Route path="/ai"              element={<AI />} />
-              <Route path="/settings"        element={<Settings />} />
+              <Route path="/settings"        element={<Navigate to="/dashboard" replace />} />
             </Route>
           </Route>
 
@@ -157,7 +157,7 @@ const App = () => {
               <Route path="/admin"           element={<AdminOverview />} />
               <Route path="/admin/users"     element={<AdminUsers />} />
               <Route path="/admin/revenue"   element={<AdminRevenue />} />
-              <Route path="/admin/settings"  element={<AdminSettings />} />
+              <Route path="/admin/settings"  element={<Navigate to="/admin" replace />} />
               <Route path="/admin/profile"   element={<AdminProfile />} />
             </Route>
           </Route>

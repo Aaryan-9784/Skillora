@@ -34,12 +34,6 @@ const NAV_SECTIONS = [
       { to: "/skills", icon: Sparkles, label: "Skills" },
     ],
   },
-  {
-    label: "ACCOUNT",
-    items: [
-      { to: "/settings", icon: Settings, label: "Settings" },
-    ],
-  },
 ];
 
 // ─────────────────────────────────────────────────────────
@@ -236,81 +230,15 @@ const UserCard = ({ user, collapsed, onToggle, onLogout, onSettings }) => (
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 8 }}
           transition={{ duration: 0.2 }}
-          className="rounded-2xl overflow-hidden"
-          style={{
-            background: "linear-gradient(145deg, rgba(99,91,255,0.07) 0%, rgba(255,255,255,0.025) 100%)",
-            border: "1px solid rgba(99,91,255,0.18)",
-            boxShadow: "0 0 0 1px rgba(99,91,255,0.06), inset 0 1px 0 rgba(255,255,255,0.06)",
-          }}
         >
-          {/* Top glow line */}
-          <div className="absolute inset-x-0 h-px pointer-events-none"
-            style={{ background: "linear-gradient(90deg, transparent, rgba(99,91,255,0.5), transparent)" }} />
-
-          {/* ── Clickable profile area → Settings ── */}
-          <button
-            onClick={onSettings}
-            className="w-full flex items-center gap-3 px-3 py-3 transition-all duration-200 group relative overflow-hidden"
-            onMouseEnter={e => {
-              e.currentTarget.style.background = "rgba(99,91,255,0.1)";
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = "transparent";
-            }}
-          >
-            {/* Avatar */}
-            <div className="relative shrink-0">
-              <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-sm font-bold text-white"
-                style={{
-                  background: "linear-gradient(135deg, #635BFF 0%, #A78BFA 100%)",
-                  boxShadow: "0 0 18px rgba(99,91,255,0.55), inset 0 1px 0 rgba(255,255,255,0.2)",
-                }}>
-                {getInitials(user?.name)}
-              </div>
-              {/* Online dot */}
-              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2"
-                style={{ background: "#22C55E", borderColor: "#080E1A", boxShadow: "0 0 8px rgba(34,197,94,0.9)" }} />
-            </div>
-
-            {/* Name + role */}
-            <div className="flex-1 min-w-0 text-left flex flex-col justify-center gap-0.5">
-              <p className="text-sm font-bold truncate leading-tight text-white group-hover:text-indigo-300 transition-colors">
-                {user?.name}
-              </p>
-              <p className="text-xs font-semibold text-indigo-400 capitalize leading-tight truncate">
-                {user?.role || "freelancer"}
-              </p>
-            </div>
-
-            {/* Arrow */}
-            <motion.div
-              className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-              animate={{ x: 0 }}
-              whileHover={{ x: 2 }}
-            >
-              <ChevronRight size={14} style={{ color: "#635BFF" }} />
-            </motion.div>
-          </button>
-
           {/* ── Logout button ── */}
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-            <button
-              onClick={onLogout}
-              className="w-full flex items-center justify-center gap-2 py-2.5 text-xs font-semibold transition-all duration-200 group/logout"
-              style={{ color: "#4B5563" }}
-              onMouseEnter={e => {
-                e.currentTarget.style.background = "rgba(239,68,68,0.08)";
-                e.currentTarget.style.color = "#F87171";
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.background = "transparent";
-                e.currentTarget.style.color = "#4B5563";
-              }}
-            >
-              <LogOut size={13} strokeWidth={2} />
-              Sign out
-            </button>
-          </div>
+          <button
+            onClick={onLogout}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold text-gray-400 hover:text-red-400 hover:bg-red-500/10 border border-white/5 hover:border-red-500/20 transition-all duration-200 cursor-pointer group/logout"
+          >
+            <LogOut size={14} strokeWidth={2} className="group-hover/logout:-translate-x-0.5 transition-transform duration-200" />
+            <span>Sign out</span>
+          </button>
         </motion.div>
       ) : (
         /* ── Collapsed mode ── */
