@@ -255,9 +255,14 @@ const AdminNavbar = ({ onSearch }) => {
 
           <span className="text-gray-500 font-bold text-sm select-none">/</span>
 
-          <span className="text-purple-400 font-semibold hidden sm:inline text-xs">
-            Admin Panel
-          </span>
+          <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-semibold shrink-0"
+            style={{
+              background: "rgba(139,92,246,0.12)",
+              borderColor: "rgba(139,92,246,0.25)",
+              color: "#C4B5FD",
+            }}>
+            <span>Admin Panel</span>
+          </div>
 
           <span className="text-gray-500 font-bold text-sm hidden sm:inline select-none">/</span>
 

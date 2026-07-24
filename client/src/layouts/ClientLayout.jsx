@@ -381,9 +381,14 @@ const ClientLayout = () => {
 
           <span className="text-gray-500 font-bold text-sm select-none">/</span>
 
-          <span className="text-cyan-400 font-semibold hidden sm:inline text-xs">
-            Client Portal
-          </span>
+          <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-semibold shrink-0"
+            style={{
+              background: "rgba(0,212,255,0.12)",
+              borderColor: "rgba(0,212,255,0.25)",
+              color: "#22D3EE",
+            }}>
+            <span>Client Portal</span>
+          </div>
 
           <span className="text-gray-500 font-bold text-sm hidden sm:inline select-none">/</span>
 
