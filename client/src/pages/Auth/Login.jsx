@@ -8,7 +8,7 @@ import {
 import useAuthStore from "../../store/authStore";
 import toast from "react-hot-toast";
 import {
-  AuthInput, OAuthButtons, RoleToggle, GlassCard, CTAButton, CursorGlow,
+  AuthInput, OAuthButtons, GlassCard, CTAButton, CursorGlow,
 } from "./_authShared";
 
 const Login = () => {
@@ -179,12 +179,6 @@ const Login = () => {
                   Welcome back
                 </h2>
                 <p className="text-[13px]" style={{ color: "rgba(148,163,184,0.85)" }}>Sign in to continue</p>
-              </motion.div>
-
-              {/* role toggle */}
-              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-                <RoleToggle value={role} onChange={setRole}
-                  options={[{ value: "freelancer", label: "Freelancer" },{ value: "client", label: "Client" }]} />
               </motion.div>
 
               {/* error */}              <AnimatePresence>

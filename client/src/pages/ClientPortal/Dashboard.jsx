@@ -1,15 +1,40 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer,
+} from "recharts";
 import {
   FileText, FolderOpen, DollarSign, CheckCircle2,
   AlertCircle, ArrowRight, TrendingUp, TrendingDown,
   Clock, CreditCard, Activity, Bell, Calendar,
-  ExternalLink,
+  ExternalLink, Sparkles, BarChart2, FolderKanban, RefreshCw,
 } from "lucide-react";
 import useClientPortalStore from "../../store/clientPortalStore";
 import useAuthStore from "../../store/authStore";
 import { formatCurrency, formatDate, relativeTime } from "../../utils/helpers";
+
+const ChartTooltip = ({ active, payload, label }) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="px-3 py-2.5 rounded-xl text-xs"
+      style={{
+        background: "rgba(10,17,32,0.95)",
+        border: "1px solid rgba(255,255,255,0.1)",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+        backdropFilter: "blur(12px)",
+      }}>
+      <p className="text-xs mb-1 font-medium style={{ color: '#9CA3AF' }}">{label}</p>
+      {payload.map((p) => (
+        <div key={p.dataKey} className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full" style={{ background: p.color }} />
+          <span className="font-semibold text-white">₹{p.value?.toLocaleString()}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 // ── Shared ────────────────────────────────────────────────
 const STATUS_STYLE = {
@@ -37,8 +62,8 @@ const GlassSkeleton = ({ className = "" }) => (
     style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }} />
 );
 
-// ── Finance KPI card ──────────────────────────────────────
-const FinanceCard = ({ icon: Icon, label, value, sub, color, trend, delay = 0 }) => (
+// ── Stat KPI card ─────────────────────────────────────────
+const StatCard = ({ icon: Icon, label, value, sub, color, trend, delay = 0 }) => (
   <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.35, delay, ease: [0.16, 1, 0.3, 1] }}
     className="relative rounded-2xl p-5 overflow-hidden group"
@@ -349,7 +374,7 @@ const ClientDashboard = () => {
     return (
       <div className="p-6 lg:p-8 space-y-6">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => <SkeletonStat key={i} />)}
+          {[...Array(4)].map((_, i) => <GlassSkeleton key={i} className="h-32" />)}
         </div>
       </div>
     );
