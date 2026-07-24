@@ -6,13 +6,25 @@ import {
   CheckSquare, Users, CreditCard, Sparkles,
   FolderPlus, ListPlus, UserPlus, FileText,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import useAuthStore from "../../store/authStore";
 import useNotificationStore from "../../store/notificationStore";
 import NotificationsPanel from "./NotificationsPanel";
 import CommandPalette from "../ui/CommandPalette";
 import useCommandPalette from "../../hooks/useCommandPalette";
 import { getInitials } from "../../utils/helpers";
+
+const PATH_TITLES = {
+  "/dashboard": "Dashboard",
+  "/projects": "Projects",
+  "/tasks": "Tasks",
+  "/clients": "Clients",
+  "/payments": "Payments",
+  "/payments/new": "New Invoice",
+  "/skills": "Skills Matrix",
+  "/ai": "AI Assistant",
+  "/settings": "Settings",
+};
 
 // ─────────────────────────────────────────────────────────
 // ICON BUTTON
@@ -60,6 +72,12 @@ const Navbar = ({ onCommandPalette }) => {
   const [createOpen, setCreateOpen]       = useState(false);
   const { isOpen: cmdOpen, open: openCmd, close: closeCmd } = useCommandPalette();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const pageTitle = PATH_TITLES[location.pathname] ||
+    (location.pathname.startsWith("/projects/") ? "Project Details" :
+     location.pathname.startsWith("/clients/") ? "Client Details" :
+     location.pathname.startsWith("/payments/") ? "Invoice Details" : "Dashboard");
 
   useEffect(() => { fetchUnreadCount(); }, []);
 
@@ -92,39 +110,25 @@ const Navbar = ({ onCommandPalette }) => {
         <div className="absolute top-0 inset-x-0 h-px pointer-events-none"
           style={{ background: "linear-gradient(90deg,transparent,rgba(99,91,255,0.35),rgba(0,212,255,0.2),transparent)" }} />
 
-        {/* ── SEARCH BAR ── */}
-        <motion.button
-          onClick={openCmd}
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.99 }}
-          className="hidden md:flex items-center gap-2.5 h-9 px-4 rounded-xl flex-1 max-w-[360px] text-left transition-all duration-200"
-          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
-          onMouseEnter={e => {
-            e.currentTarget.style.background = "rgba(255,255,255,0.06)";
-            e.currentTarget.style.border = "1px solid rgba(99,91,255,0.35)";
-            e.currentTarget.style.boxShadow = "0 0 20px rgba(99,91,255,0.12)";
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.background = "rgba(255,255,255,0.04)";
-            e.currentTarget.style.border = "1px solid rgba(255,255,255,0.07)";
-            e.currentTarget.style.boxShadow = "none";
-          }}
-        >
-          <Search size={13} style={{ color: "#635BFF", flexShrink: 0 }} />
-          <span className="flex-1 text-xs" style={{ color: "#6B7280" }}>
-            Search, commands, or jump to…
+        {/* ── BRAND LOGO / BREADCRUMB NAVIGATION ── */}
+        <div className="flex items-center gap-2.5 select-none">
+          <Link to="/" title="Go to Home Page" className="flex items-center gap-2 group transition-opacity hover:opacity-90">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+              style={{
+                background: "linear-gradient(135deg,#635BFF,#00D4FF)",
+                boxShadow: "0 0 14px rgba(99,91,255,0.4)",
+              }}>
+              <Zap size={15} className="text-white fill-white" />
+            </div>
+            <span className="font-extrabold text-sm tracking-tight text-white hidden sm:inline-block">
+              Skillora
+            </span>
+          </Link>
+          <span className="text-gray-600 text-xs font-semibold">/</span>
+          <span className="text-xs font-semibold text-gray-200">
+            {pageTitle}
           </span>
-          <div className="flex items-center gap-0.5 shrink-0">
-            <kbd className="flex items-center justify-center w-5 h-5 rounded text-[10px]"
-              style={{ background: "rgba(255,255,255,0.06)", color: "#4B5563", border: "1px solid rgba(255,255,255,0.08)" }}>
-              <Command size={9} />
-            </kbd>
-            <kbd className="flex items-center justify-center w-5 h-5 rounded text-[10px]"
-              style={{ background: "rgba(255,255,255,0.06)", color: "#4B5563", border: "1px solid rgba(255,255,255,0.08)" }}>
-              K
-            </kbd>
-          </div>
-        </motion.button>
+        </div>
 
         <div className="flex-1" />
 

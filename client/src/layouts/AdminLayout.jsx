@@ -1,5 +1,12 @@
-import { useState, useEffect } from "react";
-import { Outlet, NavLink, useNavigate } from "react-router-dom";
+import { Outlet, NavLink, useNavigate, useLocation, Link } from "react-router-dom";
+
+const ADMIN_TITLES = {
+  "/admin": "Overview",
+  "/admin/users": "Users",
+  "/admin/revenue": "Revenue Analytics",
+  "/admin/settings": "Settings",
+  "/admin/profile": "Profile",
+};
 import {
   LayoutDashboard, Users, TrendingUp, Settings,
   Zap, Shield, LogOut, ChevronRight, Bell,
@@ -220,6 +227,8 @@ const AdminNavbar = ({ onSearch }) => {
   const [dropdownOpen, setDropdownOpen]   = useState(false);
   const [notifOpen, setNotifOpen]         = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const pageTitle = ADMIN_TITLES[location.pathname] || "Overview";
 
   useEffect(() => { fetchUnreadCount(); }, []);
 
@@ -236,6 +245,26 @@ const AdminNavbar = ({ onSearch }) => {
         }}>
         <div className="absolute top-0 inset-x-0 h-px pointer-events-none"
           style={{ background: "linear-gradient(90deg,transparent,rgba(99,91,255,0.35),rgba(0,212,255,0.2),transparent)" }} />
+
+        {/* ── BRAND LOGO / BREADCRUMB NAVIGATION ── */}
+        <div className="flex items-center gap-2.5 select-none">
+          <Link to="/" title="Go to Home Page" className="flex items-center gap-2 group transition-opacity hover:opacity-90">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+              style={{
+                background: "linear-gradient(135deg,#635BFF,#00D4FF)",
+                boxShadow: "0 0 14px rgba(99,91,255,0.4)",
+              }}>
+              <Zap size={15} className="text-white fill-white" />
+            </div>
+            <span className="font-extrabold text-sm tracking-tight text-white hidden sm:inline-block">
+              Skillora
+            </span>
+          </Link>
+          <span className="text-gray-600 text-xs font-semibold">/</span>
+          <span className="text-xs font-semibold text-gray-200">
+            Admin Panel / {pageTitle}
+          </span>
+        </div>
 
         <div className="flex-1" />
 

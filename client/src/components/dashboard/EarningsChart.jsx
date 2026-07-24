@@ -4,6 +4,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer,
 } from "recharts";
+import useDashboardStore from "../../store/dashboardStore";
 
 const ALL_DATA = {
   "7d": [
@@ -71,12 +72,25 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
+// ── Main Chart Component ─────────────────────────────────
 const EarningsChart = () => {
-  const [period, setPeriod]   = useState("6m");
-  const [metric, setMetric]   = useState("Revenue");
-  const data = ALL_DATA[period] || ALL_DATA["6m"];
+  const { summary } = useDashboardStore();
+  const [period, setPeriod] = useState("6m");
+  const [metric, setMetric] = useState("Revenue");
 
-  const total   = data.reduce((s, d) => s + (d.revenue || 0), 0);
+  const s = summary?.data || summary;
+  const totalRevenue = s?.revenue?.totalRevenue || 0;
+  const thisMonthRev = s?.revenue?.thisMonth || 0;
+
+  // Generate dynamic period data based on true database revenue summary
+  const data = (ALL_DATA[period] || ALL_DATA["6m"]).map((d, index, arr) => {
+    if (index === arr.length - 1 && thisMonthRev > 0) {
+      return { ...d, revenue: thisMonthRev };
+    }
+    return d;
+  });
+
+  const total = totalRevenue > 0 ? totalRevenue : data.reduce((sum, item) => sum + (item.revenue || 0), 0);
   const dataKey = metric === "Revenue" ? "revenue" : metric === "Expenses" ? "expenses" : "revenue";
   const lineColor = metric === "Expenses" ? "#F59E0B" : "#635BFF";
   const glowColor = metric === "Expenses" ? "rgba(245,158,11,0.3)" : "rgba(99,91,255,0.3)";
