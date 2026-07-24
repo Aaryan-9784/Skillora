@@ -4,6 +4,7 @@ const env = {
   NODE_ENV: process.env.NODE_ENV || "development",
   PORT: parseInt(process.env.PORT, 10) || 5000,
   MONGO_URI: process.env.MONGO_URI,
+  MONGO_URI_LOCAL: process.env.MONGO_URI_LOCAL || "mongodb://127.0.0.1:27017/skillora",
   JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET,
   JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET,
   JWT_ACCESS_EXPIRES: process.env.JWT_ACCESS_EXPIRES || "15m",

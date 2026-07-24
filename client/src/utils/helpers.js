@@ -20,3 +20,19 @@ export const truncate = (str, n = 60) =>
   str?.length > n ? str.slice(0, n) + "…" : str;
 
 export const classNames = (...classes) => classes.filter(Boolean).join(" ");
+
+export const relativeTime = (date) => {
+  if (!date) return "";
+  const now = new Date();
+  const past = new Date(date);
+  const diffInSecs = Math.floor((now - past) / 1000);
+
+  if (diffInSecs < 60) return "just now";
+  const diffInMins = Math.floor(diffInSecs / 60);
+  if (diffInMins < 60) return `${diffInMins}m ago`;
+  const diffInHours = Math.floor(diffInMins / 60);
+  if (diffInHours < 24) return `${diffInHours}h ago`;
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays < 30) return `${diffInDays}d ago`;
+  return formatDate(date);
+};

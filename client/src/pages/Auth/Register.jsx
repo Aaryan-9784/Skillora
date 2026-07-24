@@ -174,9 +174,9 @@ const Register = () => {
               <Feature icon={Users}    text="Client relationship hub"  delay={0.7} />
             </motion.div>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.85 }}
-              whileHover={{ y: -3 }} style={{ cursor: "default" }}
+              whileHover={{ y: -3 }}
               className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full"
-              style={{ background: "rgba(99,91,255,0.1)", border: "1px solid rgba(99,91,255,0.2)" }}>
+              style={{ cursor: "default", background: "rgba(99,91,255,0.1)", border: "1px solid rgba(99,91,255,0.2)" }}>
               <div className="flex -space-x-1.5">
                 {["#635BFF","#10B981","#F59E0B","#00D4FF"].map(c => (
                   <div key={c} className="w-5 h-5 rounded-full border border-black/30" style={{ background: c }} />

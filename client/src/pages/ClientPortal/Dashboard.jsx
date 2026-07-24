@@ -1,57 +1,67 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
   FileText, FolderOpen, DollarSign, CheckCircle2,
   AlertCircle, ArrowRight, TrendingUp, TrendingDown,
-  Sparkles, BarChart2, RefreshCw, ChevronRight,
+  Clock, CreditCard, Activity, Bell, Calendar,
+  ExternalLink,
 } from "lucide-react";
-import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer,
-} from "recharts";
 import useClientPortalStore from "../../store/clientPortalStore";
-import { formatCurrency, formatDate } from "../../utils/helpers";
-import { SkeletonStat } from "../../components/ui/Skeleton";
+import useAuthStore from "../../store/authStore";
+import { formatCurrency, formatDate, relativeTime } from "../../utils/helpers";
 
-// ── Shared style helpers ──────────────────────────────────
-const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-
+// ── Shared ────────────────────────────────────────────────
 const STATUS_STYLE = {
-  draft:     { bg: "rgba(107,114,128,0.15)", color: "#9CA3AF", label: "Draft" },
-  sent:      { bg: "rgba(59,130,246,0.15)",  color: "#60A5FA", label: "Sent" },
-  viewed:    { bg: "rgba(99,91,255,0.15)",   color: "#A78BFA", label: "Viewed" },
-  paid:      { bg: "rgba(34,197,94,0.15)",   color: "#4ADE80", label: "Paid" },
-  overdue:   { bg: "rgba(239,68,68,0.15)",   color: "#F87171", label: "Overdue" },
-  cancelled: { bg: "rgba(107,114,128,0.15)", color: "#9CA3AF", label: "Cancelled" },
+  draft:     { bg: "rgba(107,114,128,0.15)", color: "#9CA3AF", dot: "#9CA3AF" },
+  sent:      { bg: "rgba(59,130,246,0.15)",  color: "#60A5FA", dot: "#60A5FA" },
+  viewed:    { bg: "rgba(99,91,255,0.15)",   color: "#A78BFA", dot: "#A78BFA" },
+  paid:      { bg: "rgba(34,197,94,0.15)",   color: "#4ADE80", dot: "#4ADE80" },
+  overdue:   { bg: "rgba(239,68,68,0.15)",   color: "#F87171", dot: "#EF4444" },
+  cancelled: { bg: "rgba(107,114,128,0.15)", color: "#9CA3AF", dot: "#9CA3AF" },
 };
 
 const StatusBadge = ({ status }) => {
   const s = STATUS_STYLE[status] || STATUS_STYLE.draft;
   return (
-    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold"
-      style={{ background: s.bg, color: s.color }}>{s.label}</span>
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold capitalize"
+      style={{ background: s.bg, color: s.color }}>
+      <span className="w-1.5 h-1.5 rounded-full" style={{ background: s.dot }} />
+      {status}
+    </span>
   );
 };
 
-// ── Stat card ─────────────────────────────────────────────
-const StatCard = ({ icon: Icon, label, value, sub, color, trend, delay = 0 }) => (
+const GlassSkeleton = ({ className = "" }) => (
+  <div className={`rounded-2xl animate-pulse ${className}`}
+    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }} />
+);
+
+// ── Finance KPI card ──────────────────────────────────────
+const FinanceCard = ({ icon: Icon, label, value, sub, color, trend, delay = 0 }) => (
   <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.35, delay, ease: [0.16, 1, 0.3, 1] }}
-    className="relative rounded-2xl p-5 overflow-hidden"
+    className="relative rounded-2xl p-5 overflow-hidden group"
     style={{
       background: "linear-gradient(145deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.02) 100%)",
       border: "1px solid rgba(255,255,255,0.07)",
-      boxShadow: "0 4px 24px rgba(0,0,0,0.25)",
+    }}
+    onMouseEnter={e => {
+      e.currentTarget.style.border = `1px solid ${color}30`;
+      e.currentTarget.style.boxShadow = `0 8px 32px rgba(0,0,0,0.3), 0 0 0 1px ${color}15`;
+    }}
+    onMouseLeave={e => {
+      e.currentTarget.style.border = "1px solid rgba(255,255,255,0.07)";
+      e.currentTarget.style.boxShadow = "none";
     }}>
-    <div className="absolute top-0 right-0 w-32 h-32 rounded-full pointer-events-none"
+    <div className="absolute top-0 right-0 w-32 h-32 rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
       style={{ background: `radial-gradient(circle,${color}12 0%,transparent 70%)`, transform: "translate(30%,-30%)" }} />
     <div className="flex items-start justify-between mb-4">
       <div className="w-10 h-10 rounded-xl flex items-center justify-center"
         style={{ background: `${color}18`, border: `1px solid ${color}28`, boxShadow: `0 0 16px ${color}15` }}>
         <Icon size={18} style={{ color }} />
       </div>
-      {trend !== undefined && (
+      {trend !== null && trend !== undefined && (
         <div className="flex items-center gap-1 text-xs font-semibold"
           style={{ color: trend >= 0 ? "#4ADE80" : "#F87171" }}>
           {trend >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
@@ -65,37 +75,45 @@ const StatCard = ({ icon: Icon, label, value, sub, color, trend, delay = 0 }) =>
   </motion.div>
 );
 
-// ── Chart tooltip ─────────────────────────────────────────
-const ChartTooltip = ({ active, payload, label }) => {
-  if (!active || !payload?.length) return null;
+// ── Alert banners ─────────────────────────────────────────
+const AlertBanners = ({ invoices = [], projects = [] }) => {
+  const overdueInvs   = invoices.filter((i) => i.status === "overdue");
+  const pendingInvs   = invoices.filter((i) => ["sent","viewed"].includes(i.status));
+  const upcomingDeadlines = projects.filter((p) => {
+    if (!p.deadline || p.status === "completed") return false;
+    const diff = (new Date(p.deadline) - new Date()) / (1000 * 60 * 60 * 24);
+    return diff > 0 && diff <= 7;
+  });
+
+  if (overdueInvs.length === 0 && pendingInvs.length === 0 && upcomingDeadlines.length === 0) return null;
+
   return (
-    <div className="px-3 py-2.5 rounded-xl text-sm"
-      style={{ background: "rgba(10,17,32,0.97)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 8px 32px rgba(0,0,0,0.5)", backdropFilter: "blur(12px)" }}>
-      <p className="text-xs mb-1.5 font-medium" style={{ color: "#9CA3AF" }}>{label}</p>
-      {payload.map((p) => (
-        <div key={p.dataKey} className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full" style={{ background: p.color }} />
-          <span className="font-semibold text-white">₹{p.value?.toLocaleString()}</span>
+    <div className="space-y-2 mb-6">
+      {overdueInvs.length > 0 && (
+        <div className="flex items-center justify-between p-3.5 rounded-xl text-xs font-semibold"
+          style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#F87171" }}>
+          <div className="flex items-center gap-2">
+            <AlertCircle size={15} />
+            <span>You have {overdueInvs.length} overdue invoice(s).</span>
+          </div>
+          <Link to="/client/invoices" className="underline hover:opacity-80">Pay Now</Link>
         </div>
-      ))}
+      )}
     </div>
   );
 };
 
-// Earnings chart (real API data)
-const EarningsSection = ({ revenueAnalytics, loading }) => {
+// ── Earnings chart (real API data) ────────────────────────
+const EarningsSection = ({ revenueAnalytics = [], loading }) => {
   const [period, setPeriod] = useState("6m");
-
-  // Guard: revenueAnalytics may be undefined on first render
-  const analytics = Array.isArray(revenueAnalytics) ? revenueAnalytics : [];
-
   const chartData = useMemo(() => {
     const now = new Date();
     const monthsBack = period === "3m" ? 3 : period === "6m" ? 6 : 12;
     const result = [];
+    const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     for (let i = monthsBack - 1; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const found = analytics.find(
+      const found = (revenueAnalytics || []).find(
         (r) => r.year === d.getFullYear() && r.month === d.getMonth() + 1
       );
       result.push({
@@ -105,7 +123,7 @@ const EarningsSection = ({ revenueAnalytics, loading }) => {
       });
     }
     return result;
-  }, [analytics, period]);
+  }, [revenueAnalytics, period]);
 
   const totalRevenue = chartData.reduce((s, d) => s + d.revenue, 0);
   const prevHalf     = chartData.slice(0, Math.floor(chartData.length / 2)).reduce((s, d) => s + d.revenue, 0);
