@@ -32,7 +32,7 @@ const InvoiceBuilder = lazy(() => import("./pages/Payments/InvoiceBuilder"));
 const InvoiceDetail  = lazy(() => import("./pages/Payments/InvoiceDetail"));
 const Skills         = lazy(() => import("./pages/Skills"));
 const AI             = lazy(() => import("./pages/AI"));
-const Settings       = lazy(() => import("./pages/Settings"));
+const Profile        = lazy(() => import("./pages/Profile"));
 
 // Admin — direct imports (not lazy) to avoid HMR race condition with file writes
 import AdminOverview from "./pages/Admin/overview";
@@ -147,6 +147,7 @@ const App = () => {
               <Route path="/payments/:id"    element={<InvoiceDetail />} />
               <Route path="/skills"          element={<Skills />} />
               <Route path="/ai"              element={<AI />} />
+              <Route path="/profile"         element={<Profile />} />
               <Route path="/settings"        element={<Navigate to="/dashboard" replace />} />
             </Route>
           </Route>

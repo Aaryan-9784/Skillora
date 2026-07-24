@@ -24,6 +24,7 @@ const PATH_CONFIG = {
   "/payments/new": { title: "New Invoice",     icon: FileText },
   "/skills":       { title: "Skills",          icon: Sparkles },
   "/ai":           { title: "AI Assistant",    icon: Bot },
+  "/profile":      { title: "Profile",         icon: User },
 };
 
 // ─────────────────────────────────────────────────────────

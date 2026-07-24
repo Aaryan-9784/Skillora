@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, FolderKanban, CheckSquare,
   Users, CreditCard, Sparkles, Settings, Zap,
-  ChevronRight, Bot, LogOut,
+  ChevronRight, Bot, LogOut, User,
 } from "lucide-react";
 import useAuthStore from "../../store/authStore";
 import { getInitials } from "../../utils/helpers";
@@ -32,6 +32,12 @@ const NAV_SECTIONS = [
     label: "GROWTH",
     items: [
       { to: "/skills", icon: Sparkles, label: "Skills" },
+    ],
+  },
+  {
+    label: "ACCOUNT",
+    items: [
+      { to: "/profile", icon: User, label: "Profile" },
     ],
   },
 ];
