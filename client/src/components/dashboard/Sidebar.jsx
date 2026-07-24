@@ -273,11 +273,11 @@ const UserCard = ({ user, collapsed, onToggle, onLogout, onSettings }) => (
             </div>
 
             {/* Name + role */}
-            <div className="flex-1 min-w-0 text-left flex flex-col justify-center">
-              <p className="text-xs font-bold truncate leading-tight text-white group-hover:text-indigo-300 transition-colors">
+            <div className="flex-1 min-w-0 text-left flex flex-col justify-center gap-0.5">
+              <p className="text-sm font-bold truncate leading-tight text-white group-hover:text-indigo-300 transition-colors">
                 {user?.name}
               </p>
-              <p className="text-[11px] font-medium text-indigo-400 capitalize mt-1 leading-tight truncate">
+              <p className="text-xs font-semibold text-indigo-400 capitalize leading-tight truncate">
                 {user?.role || "freelancer"}
               </p>
             </div>
@@ -414,7 +414,7 @@ const Sidebar = ({ collapsed, onToggle }) => {
           LOGO / WORKSPACE HEADER
       ════════════════════════════════════════ */}
       <div
-        className={`flex items-center h-[76px] shrink-0 relative ${
+        className={`flex items-center h-16 pt-1.5 shrink-0 relative ${
           collapsed ? "justify-center px-0" : "px-4"
         }`}
       >

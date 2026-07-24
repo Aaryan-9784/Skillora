@@ -21,6 +21,14 @@ const NAV = [
   { to: "/client/profile", icon: User, label: "Profile" },
 ];
 
+const CLIENT_CONFIG = {
+  "/client/dashboard": { title: "Overview", icon: LayoutDashboard },
+  "/client/invoices":  { title: "Invoices", icon: FileText },
+  "/client/projects":  { title: "Projects", icon: FolderOpen },
+  "/client/messages":  { title: "Messages", icon: MessageSquare },
+  "/client/profile":   { title: "Profile",  icon: User },
+};
+
 // ── Notification type → icon + color ─────────────────────
 const NOTIF_CONFIG = {
   invoice_sent: { icon: FileText, color: "#F59E0B" },
@@ -208,9 +216,12 @@ const ClientLayout = () => {
     navigate("/login");
   };
 
-  const pageTitle = NAV.find((n) =>
-    n.end ? location.pathname === n.to : location.pathname.startsWith(n.to)
-  )?.label ?? "Client Portal";
+  const currentConfig = CLIENT_CONFIG[location.pathname] || {
+    title: NAV.find((n) => n.end ? location.pathname === n.to : location.pathname.startsWith(n.to))?.label ?? "Overview",
+    icon: NAV.find((n) => n.end ? location.pathname === n.to : location.pathname.startsWith(n.to))?.icon ?? LayoutDashboard,
+  };
+  const PageIcon = currentConfig.icon;
+  const pageTitle = currentConfig.title;
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: "#080E1A" }}>
@@ -248,7 +259,7 @@ const ClientLayout = () => {
           style={{ background: "linear-gradient(180deg,transparent 0%,rgba(99,91,255,0.5) 35%,rgba(0,212,255,0.35) 65%,transparent 100%)" }} />
 
         {/* Logo / Workspace Header */}
-        <div className={`flex items-center h-[76px] shrink-0 relative ${collapsed ? "justify-center px-0" : "px-4"}`}>
+        <div className={`flex items-center h-16 pt-1.5 shrink-0 relative ${collapsed ? "justify-center px-0" : "px-4"}`}>
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate("/client/dashboard")}>
             <motion.div whileHover={{ scale: 1.07 }} whileTap={{ scale: 0.93 }} transition={{ duration: 0.18 }}
               className="relative shrink-0">
@@ -297,9 +308,9 @@ const ClientLayout = () => {
                     style={{ background: "linear-gradient(135deg,#635BFF,#A78BFA)", boxShadow: "0 0 12px rgba(99,91,255,0.4)" }}>
                     {getInitials(user?.name)}
                   </div>
-                  <div className="flex-1 min-w-0 text-left flex flex-col justify-center">
-                    <p className="text-xs font-bold truncate text-white leading-tight">{user?.name}</p>
-                    <p className="text-[11px] font-medium text-cyan-400 capitalize mt-1 leading-tight truncate">Client</p>
+                  <div className="flex-1 min-w-0 text-left flex flex-col justify-center gap-0.5">
+                    <p className="text-sm font-bold truncate leading-tight text-white">{user?.name}</p>
+                    <p className="text-xs font-semibold text-cyan-400 capitalize leading-tight truncate">Client</p>
                   </div>
                 </div>
                 <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
@@ -392,9 +403,10 @@ const ClientLayout = () => {
 
           <span className="text-gray-500 font-bold text-sm hidden sm:inline select-none">/</span>
 
-          <span className="font-bold text-white text-xs">
-            {pageTitle}
-          </span>
+          <div className="flex items-center gap-1.5 font-bold text-white text-xs">
+            {PageIcon && <PageIcon size={14} className="text-cyan-400 shrink-0" />}
+            <span>{pageTitle}</span>
+          </div>
         </div>
 
         <div className="flex-1" />
@@ -405,7 +417,7 @@ const ClientLayout = () => {
           <div className="relative">
             <motion.button whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}
               onClick={() => setNotifOpen((o) => !o)}
-              className="relative w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-150"
+              className="relative w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-150 cursor-pointer"
               style={{ color: "#6B7280" }}
               onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.07)"; e.currentTarget.style.color = "#E5E7EB"; }}
               onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#6B7280"; }}>
@@ -428,11 +440,11 @@ const ClientLayout = () => {
               style={{ background: "linear-gradient(135deg,#635BFF,#A78BFA)", boxShadow: "0 0 12px rgba(99,91,255,0.4)" }}>
               {getInitials(user?.name)}
             </div>
-            <div className="hidden sm:flex flex-col justify-center text-left leading-none">
-              <p className="text-xs font-bold text-white leading-none">
+            <div className="hidden sm:flex flex-col justify-center text-left py-0.5">
+              <p className="text-xs font-bold text-white leading-tight">
                 {user?.name}
               </p>
-              <p className="text-[10px] font-medium text-cyan-400 capitalize mt-1 leading-none">
+              <p className="text-[10px] font-medium text-cyan-400 capitalize leading-tight mt-0.5">
                 Client
               </p>
             </div>

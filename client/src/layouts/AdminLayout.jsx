@@ -1,17 +1,17 @@
 import { Outlet, NavLink, useNavigate, useLocation, Link } from "react-router-dom";
-
-const ADMIN_TITLES = {
-  "/admin": "Overview",
-  "/admin/users": "Users",
-  "/admin/revenue": "Revenue Analytics",
-  "/admin/settings": "Settings",
-  "/admin/profile": "Profile",
-};
 import {
   LayoutDashboard, Users, TrendingUp, Settings,
   Zap, Shield, LogOut, ChevronRight, Bell,
   ChevronDown, User, Home,
 } from "lucide-react";
+
+const ADMIN_CONFIG = {
+  "/admin":          { title: "Overview",          icon: LayoutDashboard },
+  "/admin/users":    { title: "Users",             icon: Users },
+  "/admin/revenue":  { title: "Revenue Analytics", icon: TrendingUp },
+  "/admin/settings": { title: "Settings",          icon: Settings },
+  "/admin/profile":  { title: "Profile",           icon: User },
+};
 import { motion, AnimatePresence } from "framer-motion";
 import useAuthStore from "../store/authStore";
 import useSocket from "../hooks/useSocket";
@@ -150,9 +150,9 @@ const UserCard = ({ user, collapsed, onToggle, onLogout, navigate }) => (
               <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2"
                 style={{ background: "#22C55E", borderColor: "#080E1A", boxShadow: "0 0 8px rgba(34,197,94,0.9)" }} />
             </div>
-            <div className="flex-1 min-w-0 text-left flex flex-col justify-center">
-              <p className="text-xs font-bold truncate text-white group-hover:text-purple-300 transition-colors">{user?.name}</p>
-              <p className="text-[11px] font-medium text-purple-400 capitalize mt-1 truncate">Admin</p>
+            <div className="flex-1 min-w-0 text-left flex flex-col justify-center gap-0.5">
+              <p className="text-sm font-bold truncate leading-tight text-white group-hover:text-purple-300 transition-colors">{user?.name}</p>
+              <p className="text-xs font-semibold text-purple-400 capitalize leading-tight truncate">Admin</p>
             </div>
             <ChevronRight size={14} style={{ color: "rgba(167,139,250,0.4)", flexShrink: 0, transition: "color 0.2s" }}
               className="group-hover:!text-[#A78BFA]" />
@@ -222,7 +222,9 @@ const AdminNavbar = ({ onSearch }) => {
   const [notifOpen, setNotifOpen]         = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const pageTitle = ADMIN_TITLES[location.pathname] || "Overview";
+  const currentConfig = ADMIN_CONFIG[location.pathname] || { title: "Overview", icon: LayoutDashboard };
+  const PageIcon = currentConfig.icon;
+  const pageTitle = currentConfig.title;
 
   useEffect(() => { fetchUnreadCount(); }, []);
 
@@ -266,9 +268,10 @@ const AdminNavbar = ({ onSearch }) => {
 
           <span className="text-gray-500 font-bold text-sm hidden sm:inline select-none">/</span>
 
-          <span className="font-bold text-white text-xs">
-            {pageTitle}
-          </span>
+          <div className="flex items-center gap-1.5 font-bold text-white text-xs">
+            {PageIcon && <PageIcon size={14} className="text-purple-400 shrink-0" />}
+            <span>{pageTitle}</span>
+          </div>
         </div>
 
         <div className="flex-1" />
@@ -279,7 +282,7 @@ const AdminNavbar = ({ onSearch }) => {
           <div className="relative">
             <motion.button whileHover={{ scale: 1.06, y: -1 }} whileTap={{ scale: 0.94 }}
               onClick={() => setNotifOpen(o => !o)}
-              className="relative w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-150"
+              className="relative w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-150 cursor-pointer"
               style={{ color: "#6B7280" }}
               onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.07)"; e.currentTarget.style.color = "#E5E7EB"; }}
               onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#6B7280"; }}>
@@ -307,9 +310,9 @@ const AdminNavbar = ({ onSearch }) => {
                 <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-[#0A1120]"
                   style={{ background: "#22C55E", boxShadow: "0 0 6px rgba(34,197,94,0.8)" }} />
               </div>
-              <div className="hidden sm:flex flex-col justify-center text-left leading-none">
-                <p className="text-xs font-bold text-white group-hover:text-purple-300 transition-colors">{user?.name}</p>
-                <p className="text-[10px] font-medium text-purple-400 capitalize mt-1">Admin</p>
+              <div className="hidden sm:flex flex-col justify-center text-left py-0.5">
+                <p className="text-xs font-bold text-white group-hover:text-purple-300 transition-colors leading-tight">{user?.name}</p>
+                <p className="text-[10px] font-medium text-purple-400 capitalize leading-tight mt-0.5">Admin</p>
               </div>
               <motion.div animate={{ rotate: dropdownOpen ? 180 : 0 }} transition={{ duration: 0.2 }} className="ml-0.5">
                 <ChevronDown size={13} className="text-gray-400 group-hover:text-white transition-colors" />
@@ -336,9 +339,9 @@ const AdminNavbar = ({ onSearch }) => {
                           <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2"
                             style={{ background: "#22C55E", borderColor: "#080E1A", boxShadow: "0 0 8px rgba(34,197,94,0.7)" }} />
                         </div>
-                        <div className="min-w-0 flex-1 flex flex-col justify-center">
+                        <div className="min-w-0 flex-1 flex flex-col justify-center text-left py-0.5">
                           <p className="text-sm font-bold truncate text-white leading-tight">{user?.name}</p>
-                          <p className="text-xs text-purple-400 font-medium capitalize mt-1 leading-tight">Admin</p>
+                          <p className="text-xs text-purple-400 font-medium capitalize leading-tight mt-0.5">Admin</p>
                         </div>
                       </div>
                     </div>
@@ -431,7 +434,7 @@ const AdminLayout = () => {
           style={{ background: "linear-gradient(180deg,transparent 0%,rgba(99,91,255,0.5) 35%,rgba(0,212,255,0.35) 65%,transparent 100%)" }} />
 
         {/* Logo / Workspace Header */}
-        <div className={`flex items-center h-[76px] shrink-0 relative ${collapsed ? "justify-center px-0" : "px-4"}`}>
+        <div className={`flex items-center h-16 pt-1.5 shrink-0 relative ${collapsed ? "justify-center px-0" : "px-4"}`}>
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate("/admin")}>
             <motion.div whileHover={{ scale: 1.07 }} whileTap={{ scale: 0.93 }} transition={{ duration: 0.18 }}
               className="relative shrink-0">

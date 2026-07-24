@@ -5,7 +5,7 @@ import {
   User, Command, Plus, Zap, FolderKanban,
   CheckSquare, Users, CreditCard, Sparkles,
   FolderPlus, ListPlus, UserPlus, FileText, Home,
-  ChevronRight,
+  ChevronRight, LayoutDashboard, Settings, Bot,
 } from "lucide-react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import useAuthStore from "../../store/authStore";
@@ -15,16 +15,16 @@ import CommandPalette from "../ui/CommandPalette";
 import useCommandPalette from "../../hooks/useCommandPalette";
 import { getInitials } from "../../utils/helpers";
 
-const PATH_TITLES = {
-  "/dashboard": "Dashboard",
-  "/projects": "Projects",
-  "/tasks": "Tasks",
-  "/clients": "Clients",
-  "/payments": "Payments",
-  "/payments/new": "New Invoice",
-  "/skills": "Skills Matrix",
-  "/ai": "AI Assistant",
-  "/settings": "Settings",
+const PATH_CONFIG = {
+  "/dashboard":    { title: "Dashboard",       icon: LayoutDashboard },
+  "/projects":     { title: "Projects",        icon: FolderKanban },
+  "/tasks":        { title: "Tasks",           icon: CheckSquare },
+  "/clients":      { title: "Clients",         icon: Users },
+  "/payments":     { title: "Payments",        icon: CreditCard },
+  "/payments/new": { title: "New Invoice",     icon: FileText },
+  "/skills":       { title: "Skills",          icon: Sparkles },
+  "/ai":           { title: "AI Assistant",    icon: Bot },
+  "/settings":     { title: "Settings",        icon: Settings },
 };
 
 // ─────────────────────────────────────────────────────────
@@ -36,7 +36,7 @@ const NavIconBtn = ({ onClick, children, badge, title }) => (
     whileTap={{ scale: 0.94 }}
     onClick={onClick}
     title={title}
-    className="relative w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-150"
+    className="relative w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-150 cursor-pointer"
     style={{ color: "#6B7280" }}
     onMouseEnter={e => {
       e.currentTarget.style.background = "rgba(255,255,255,0.07)";
@@ -74,10 +74,17 @@ const Navbar = ({ onCommandPalette }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const pageTitle = PATH_TITLES[location.pathname] ||
-    (location.pathname.startsWith("/projects/") ? "Project Details" :
-     location.pathname.startsWith("/clients/") ? "Client Details" :
-     location.pathname.startsWith("/payments/") ? "Invoice Details" : "Dashboard");
+  const currentConfig = PATH_CONFIG[location.pathname] || {
+    title: location.pathname.startsWith("/projects/") ? "Project Details" :
+           location.pathname.startsWith("/clients/") ? "Client Details" :
+           location.pathname.startsWith("/payments/") ? "Invoice Details" : "Dashboard",
+    icon: location.pathname.startsWith("/projects/") ? FolderKanban :
+          location.pathname.startsWith("/clients/") ? Users :
+          location.pathname.startsWith("/payments/") ? CreditCard : LayoutDashboard,
+  };
+
+  const PageIcon = currentConfig.icon;
+  const pageTitle = currentConfig.title;
 
   useEffect(() => { fetchUnreadCount(); }, []);
 
@@ -136,9 +143,10 @@ const Navbar = ({ onCommandPalette }) => {
 
           <span className="text-gray-500 font-bold text-sm hidden sm:inline select-none">/</span>
 
-          <span className="font-bold text-white text-xs">
-            {pageTitle}
-          </span>
+          <div className="flex items-center gap-1.5 font-bold text-white text-xs">
+            {PageIcon && <PageIcon size={14} className="text-indigo-400 shrink-0" />}
+            <span>{pageTitle}</span>
+          </div>
         </div>
 
         <div className="flex-1" />
@@ -173,11 +181,11 @@ const Navbar = ({ onCommandPalette }) => {
                   style={{ background: "#22C55E", boxShadow: "0 0 6px rgba(34,197,94,0.8)" }} />
               </div>
 
-              <div className="hidden sm:flex flex-col justify-center text-left leading-none">
-                <p className="text-xs font-bold text-white group-hover:text-indigo-300 transition-colors">
+              <div className="hidden sm:flex flex-col justify-center text-left py-0.5">
+                <p className="text-xs font-bold text-white group-hover:text-indigo-300 transition-colors leading-tight">
                   {user?.name}
                 </p>
-                <p className="text-[10px] font-medium text-indigo-400 capitalize mt-1">
+                <p className="text-[10px] font-medium text-indigo-400 capitalize leading-tight mt-0.5">
                   {user?.role || "freelancer"}
                 </p>
               </div>
@@ -222,9 +230,9 @@ const Navbar = ({ onCommandPalette }) => {
                           <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2"
                             style={{ background: "#22C55E", borderColor: "#080E1A", boxShadow: "0 0 8px rgba(34,197,94,0.7)" }} />
                         </div>
-                        <div className="min-w-0 flex-1 flex flex-col justify-center">
+                        <div className="min-w-0 flex-1 flex flex-col justify-center text-left py-0.5">
                           <p className="text-sm font-bold truncate text-white leading-tight">{user?.name}</p>
-                          <p className="text-xs text-indigo-400 font-medium capitalize mt-1 leading-tight">{user?.role || "freelancer"}</p>
+                          <p className="text-xs text-indigo-400 font-medium capitalize leading-tight mt-0.5">{user?.role || "freelancer"}</p>
                         </div>
                       </div>
                     </div>
