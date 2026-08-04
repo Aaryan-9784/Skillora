@@ -1589,7 +1589,7 @@ const Footer = () => {
             ))}
             <div className="mt-3 pt-4 flex flex-col gap-1.5" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
               <p className="text-[11px]" style={{ color: "rgba(203,213,225,0.6)" }}>Get in touch</p>
-              <FooterLink href="mailto:hello@skillora.io">hello@skillora.io</FooterLink>
+              <FooterLink href="mailto:aaryanpatel9784@gmail.com">aaryanpatel9784@gmail.com</FooterLink>
             </div>
           </div>
         </div>
