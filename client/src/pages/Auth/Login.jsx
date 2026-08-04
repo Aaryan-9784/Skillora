@@ -13,7 +13,7 @@ import {
 
 const Login = () => {
   const [role, setRole]     = useState("freelancer");
-  const [form, setForm]     = useState({ email: "", password: "", rememberMe: false });
+  const [form, setForm]     = useState({ email: "", password: "" });
   const [showPw, setShowPw] = useState(false);
   const { login, isLoading, errors, clearErrors } = useAuthStore();
   const navigate = useNavigate();
@@ -49,16 +49,18 @@ const Login = () => {
       {/* ── video bg ── */}
       <video autoPlay muted loop playsInline
         className="absolute inset-0 z-0 w-full h-full object-cover opacity-85"
-        style={{ filter: "brightness(0.6) contrast(1.15) saturate(1.1) blur(0.3px)" }}>
+        style={{ filter: "brightness(0.55) contrast(1.15) saturate(1.1) blur(0.3px)" }}>
         <source src="/videos/login-bg.mp4" type="video/mp4" />
       </video>
 
-      {/* ── overlay stack ── */}
-      <div className="absolute inset-0 z-[1]" style={{ background: "rgba(4,7,18,0.12)" }} />
+      {/* ── overlay stack: dark on left for text, lighter on right ── */}
+      <div className="absolute inset-0 z-[1]" style={{ background: "rgba(4,7,18,0.15)" }} />
       <div className="absolute inset-0 z-[2]"
-        style={{ background: "linear-gradient(to right,rgba(4,7,18,0.0) 0%,rgba(4,7,18,0.1) 42%,rgba(4,7,18,0.45) 68%,rgba(4,7,18,0.6) 100%)" }} />
+        style={{ background: "linear-gradient(to right, rgba(4,7,18,0.88) 0%, rgba(4,7,18,0.7) 40%, rgba(4,7,18,0.2) 70%, rgba(4,7,18,0.05) 100%)" }} />
       <div className="absolute inset-0 z-[2]"
-        style={{ background: "linear-gradient(to top,rgba(4,7,18,0.3) 0%,transparent 40%)" }} />
+        style={{ background: "linear-gradient(to top, rgba(4,7,18,0.35) 0%, transparent 40%)" }} />
+      <div className="absolute inset-0 z-[2] pointer-events-none"
+        style={{ background: "radial-gradient(ellipse 70% 85% at 20% 50%, rgba(4,7,18,0.75) 0%, transparent 85%)" }} />
 
       {/* animated mesh orbs */}
       <motion.div className="absolute rounded-full pointer-events-none z-[1]"
@@ -102,7 +104,8 @@ const Login = () => {
               <motion.span whileHover={{ filter: "drop-shadow(0 0 14px rgba(99,91,255,0.7))" }}
                 transition={{ duration: 0.2 }}
                 style={{ fontFamily: "'Sora','Inter',sans-serif", fontSize: 26, fontWeight: 800,
-                  letterSpacing: "-0.04em", color: "#fff", lineHeight: 1, cursor: "pointer", display: "block" }}>
+                  letterSpacing: "-0.04em", color: "#fff", lineHeight: 1, cursor: "pointer", display: "block",
+                  textShadow: "0 2px 12px rgba(0,0,0,0.8)" }}>
                 Skillora
               </motion.span>
             </Link>
@@ -111,24 +114,24 @@ const Login = () => {
           <div className="space-y-8 max-w-[460px]">
             <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
               className="text-[10px] font-bold tracking-[0.3em] uppercase"
-              style={{ color: "rgba(129,140,248,0.65)" }}>
+              style={{ color: "#A5B4FC", textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>
               Freelancer OS
             </motion.p>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
               whileHover={{ y: -4 }} transition={{ duration: 0.7, delay: 0.25, ease: [0.16,1,0.3,1] }}
               className="space-y-5" style={{ cursor: "default" }}>
               <h1 className="font-bold leading-[1.1] text-white"
-                style={{ fontSize: "clamp(2.2rem,3.2vw,3rem)", letterSpacing: "-0.03em" }}>
+                style={{ fontSize: "clamp(2.2rem,3.2vw,3rem)", letterSpacing: "-0.03em", textShadow: "0 4px 16px rgba(0,0,0,0.9)" }}>
                 Welcome back.<br />
                 Let's get you{" "}
                 <span style={{
                   background: "linear-gradient(135deg,#818CF8 0%,#C4B5FD 40%,#38BDF8 100%)",
                   WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-                  filter: "drop-shadow(0 0 20px rgba(129,140,248,0.4))",
+                  filter: "drop-shadow(0 0 20px rgba(129,140,248,0.5))",
                 }}>back to work.</span>
               </h1>
-              <p className="text-[14px] leading-[1.75]"
-                style={{ color: "rgba(148,163,184,0.62)", maxWidth: "36ch" }}>
+              <p className="text-[14px] leading-[1.75] font-medium"
+                style={{ color: "#CBD5E1", maxWidth: "36ch", textShadow: "0 2px 8px rgba(0,0,0,0.9)" }}>
                 Continue managing your clients, projects, and growth — all in one place.
               </p>
             </motion.div>
@@ -137,15 +140,15 @@ const Login = () => {
               className="flex items-center gap-8" style={{ cursor: "default" }}>
               {[{ value: "10K+", label: "Freelancers" },{ value: "₹2M+", label: "Revenue tracked" },{ value: "50K+", label: "Invoices sent" }].map(s => (
                 <div key={s.label}>
-                  <p className="text-[18px] font-bold text-white" style={{ letterSpacing: "-0.02em" }}>{s.value}</p>
-                  <p className="text-[11px]" style={{ color: "rgba(100,116,139,0.7)" }}>{s.label}</p>
+                  <p className="text-[18px] font-bold text-white" style={{ letterSpacing: "-0.02em", textShadow: "0 2px 8px rgba(0,0,0,0.9)" }}>{s.value}</p>
+                  <p className="text-[11px] font-medium" style={{ color: "#94A3B8", textShadow: "0 1px 6px rgba(0,0,0,0.8)" }}>{s.label}</p>
                 </div>
               ))}
             </motion.div>
           </div>
           <motion.p
-            className="text-[11px]"
-            style={{ color: "rgba(148,163,184,0.55)", cursor: "default" }}
+            className="text-[11px] font-medium"
+            style={{ color: "#94A3B8", textShadow: "0 1px 6px rgba(0,0,0,0.8)", cursor: "default" }}
             whileHover={{ color: "rgba(203,213,225,0.9)", y: -1 }}
             transition={{ duration: 0.2 }}>
             © 2025 Skillora. All rights reserved.
@@ -224,26 +227,6 @@ const Login = () => {
                     }
                   />
                 </motion.div>
-
-                {/* remember me */}
-                <motion.label initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.42 }}
-                  className="flex items-center gap-2.5 cursor-pointer select-none pt-1">
-                  <motion.div whileTap={{ scale: 0.88 }}
-                    className="w-4 h-4 rounded-md flex items-center justify-center shrink-0 transition-all duration-300"
-                    style={{
-                      background: form.rememberMe ? "linear-gradient(135deg,#635BFF,#8B5CF6)" : "rgba(255,255,255,0.05)",
-                      border: form.rememberMe ? "1px solid rgba(99,91,255,0.6)" : "1px solid rgba(255,255,255,0.1)",
-                      boxShadow: form.rememberMe ? "0 0 10px rgba(99,91,255,0.35)" : "none",
-                    }}
-                    onClick={() => setForm(f => ({ ...f, rememberMe: !f.rememberMe }))}>
-                    {form.rememberMe && (
-                      <svg width="8" height="6" viewBox="0 0 9 7" fill="none">
-                        <path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    )}
-                  </motion.div>
-                  <span className="text-[12px]" style={{ color: "rgba(148,163,184,0.85)" }}>Remember me for 30 days</span>
-                </motion.label>
 
                 {/* CTA */}
                 <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.48 }}>

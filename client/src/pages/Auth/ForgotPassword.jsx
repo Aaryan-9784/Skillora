@@ -58,16 +58,18 @@ const ForgotPassword = () => {
       {/* video bg */}
       <video autoPlay muted loop playsInline
         className="absolute inset-0 z-0 w-full h-full object-cover opacity-80"
-        style={{ filter: "blur(0.5px)" }}>
+        style={{ filter: "brightness(0.55) contrast(1.15) saturate(1.1) blur(0.3px)" }}>
         <source src="/videos/login-bg.mp4" type="video/mp4" />
       </video>
 
-      {/* overlay stack */}
-      <div className="absolute inset-0 z-[1]" style={{ background: "rgba(4,7,18,0.12)" }} />
+      {/* overlay stack: dark on left for text, lighter on right */}
+      <div className="absolute inset-0 z-[1]" style={{ background: "rgba(4,7,18,0.15)" }} />
       <div className="absolute inset-0 z-[2]"
-        style={{ background: "linear-gradient(to right,rgba(4,7,18,0.0) 0%,rgba(4,7,18,0.1) 42%,rgba(4,7,18,0.45) 68%,rgba(4,7,18,0.6) 100%)" }} />
+        style={{ background: "linear-gradient(to right, rgba(4,7,18,0.88) 0%, rgba(4,7,18,0.7) 40%, rgba(4,7,18,0.2) 70%, rgba(4,7,18,0.05) 100%)" }} />
       <div className="absolute inset-0 z-[2]"
-        style={{ background: "linear-gradient(to top,rgba(4,7,18,0.3) 0%,transparent 40%)" }} />
+        style={{ background: "linear-gradient(to top, rgba(4,7,18,0.35) 0%, transparent 40%)" }} />
+      <div className="absolute inset-0 z-[2] pointer-events-none"
+        style={{ background: "radial-gradient(ellipse 70% 85% at 20% 50%, rgba(4,7,18,0.75) 0%, transparent 85%)" }} />
 
       {/* animated orbs */}
       <motion.div className="absolute rounded-full pointer-events-none z-[1]"
@@ -111,7 +113,8 @@ const ForgotPassword = () => {
                 whileHover={{ filter: "drop-shadow(0 0 14px rgba(99,91,255,0.7))" }}
                 transition={{ duration: 0.2 }}
                 style={{ fontFamily: "'Sora','Inter',sans-serif", fontSize: 26, fontWeight: 800,
-                  letterSpacing: "-0.04em", color: "#fff", lineHeight: 1, cursor: "pointer", display: "block" }}>
+                  letterSpacing: "-0.04em", color: "#fff", lineHeight: 1, cursor: "pointer", display: "block",
+                  textShadow: "0 2px 12px rgba(0,0,0,0.8)" }}>
                 Skillora
               </motion.span>
             </Link>
@@ -120,39 +123,39 @@ const ForgotPassword = () => {
           <div className="space-y-8 max-w-[460px]">
             <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
               className="text-[10px] font-bold tracking-[0.3em] uppercase"
-              style={{ color: "rgba(129,140,248,0.65)" }}>
+              style={{ color: "#A5B4FC", textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>
               Account Recovery
             </motion.p>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
               whileHover={{ y: -4 }} transition={{ duration: 0.7, delay: 0.25, ease: [0.16,1,0.3,1] }}
               className="space-y-5" style={{ cursor: "default" }}>
               <h1 className="font-bold leading-[1.1] text-white"
-                style={{ fontSize: "clamp(2.2rem,3.2vw,3rem)", letterSpacing: "-0.03em" }}>
+                style={{ fontSize: "clamp(2.2rem,3.2vw,3rem)", letterSpacing: "-0.03em", textShadow: "0 4px 16px rgba(0,0,0,0.9)" }}>
                 Happens to the{" "}<br />
                 <span style={{
                   background: "linear-gradient(135deg,#818CF8 0%,#C4B5FD 40%,#38BDF8 100%)",
                   WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-                  filter: "drop-shadow(0 0 20px rgba(129,140,248,0.4))",
+                  filter: "drop-shadow(0 0 20px rgba(129,140,248,0.5))",
                 }}>best of us.</span>
               </h1>
-              <p className="text-[14px] leading-[1.75]"
-                style={{ color: "rgba(148,163,184,0.62)", maxWidth: "36ch" }}>
+              <p className="text-[14px] leading-[1.75] font-medium"
+                style={{ color: "#CBD5E1", maxWidth: "36ch", textShadow: "0 2px 8px rgba(0,0,0,0.9)" }}>
                 We'll send a secure reset link straight to your inbox. Back in seconds.
               </p>
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
               whileHover={{ y: -3 }} transition={{ delay: 0.5, duration: 0.6 }}
               className="flex items-center gap-3 px-4 py-3 rounded-2xl" style={{ cursor: "default",
-                background: "rgba(99,91,255,0.08)", border: "1px solid rgba(99,91,255,0.18)" }}>
+                background: "rgba(15,23,42,0.6)", border: "1px solid rgba(99,91,255,0.35)", backdropFilter: "blur(8px)" }}>
               <ShieldCheck size={16} style={{ color: "rgba(74,222,128,0.85)", flexShrink: 0 }} />
-              <span className="text-[13px]" style={{ color: "rgba(203,213,225,0.75)" }}>
+              <span className="text-[13px] font-medium" style={{ color: "#E2E8F0", textShadow: "0 1px 6px rgba(0,0,0,0.8)" }}>
                 Secure · Encrypted · Expires in 1 hour
               </span>
             </motion.div>
           </div>
 
-          <motion.p className="text-[11px]"
-            style={{ color: "rgba(148,163,184,0.55)", cursor: "default" }}
+          <motion.p className="text-[11px] font-medium"
+            style={{ color: "#94A3B8", textShadow: "0 1px 6px rgba(0,0,0,0.8)", cursor: "default" }}
             whileHover={{ color: "rgba(203,213,225,0.9)", y: -1 }}
             transition={{ duration: 0.2 }}>
             © 2025 Skillora. All rights reserved.

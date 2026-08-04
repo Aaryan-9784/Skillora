@@ -51,10 +51,10 @@ const Feature = ({ icon: Icon, text, delay }) => (
     transition={{ duration: 0.5, delay, ease: [0.16,1,0.3,1] }}
     className="flex items-center gap-3">
     <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
-      style={{ background: "rgba(99,91,255,0.15)", border: "1px solid rgba(99,91,255,0.25)" }}>
-      <Icon size={14} style={{ color: "#A39AFF" }} />
+      style={{ background: "rgba(99,91,255,0.25)", border: "1px solid rgba(163,154,255,0.4)" }}>
+      <Icon size={14} style={{ color: "#C4B5FD" }} />
     </div>
-    <span className="text-[13px] font-medium" style={{ color: "rgba(203,213,225,0.75)" }}>{text}</span>
+    <span className="text-[13px] font-semibold text-white" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.85)" }}>{text}</span>
   </motion.div>
 );
 
@@ -87,16 +87,18 @@ const Register = () => {
       {/* video bg */}
       <video autoPlay muted loop playsInline
         className="absolute inset-0 z-0 w-full h-full object-cover opacity-85"
-        style={{ filter: "brightness(0.6) contrast(1.15) saturate(1.1) blur(0.3px)" }}>
+        style={{ filter: "brightness(0.55) contrast(1.15) saturate(1.1) blur(0.3px)" }}>
         <source src="/videos/signup-bg.mp4" type="video/mp4" />
       </video>
 
-      {/* overlays */}
-      <div className="absolute inset-0 z-[1]" style={{ background: "rgba(4,7,18,0.12)" }} />
+      {/* overlays: dark on left for text, lighter on right */}
+      <div className="absolute inset-0 z-[1]" style={{ background: "rgba(4,7,18,0.15)" }} />
       <div className="absolute inset-0 z-[2]"
-        style={{ background: "linear-gradient(to right,rgba(4,7,18,0.0) 0%,rgba(4,7,18,0.1) 45%,rgba(4,7,18,0.45) 70%,rgba(4,7,18,0.6) 100%)" }} />
+        style={{ background: "linear-gradient(to right, rgba(4,7,18,0.88) 0%, rgba(4,7,18,0.7) 40%, rgba(4,7,18,0.2) 70%, rgba(4,7,18,0.05) 100%)" }} />
       <div className="absolute inset-0 z-[2]"
-        style={{ background: "linear-gradient(to top,rgba(4,7,18,0.3) 0%,transparent 40%)" }} />
+        style={{ background: "linear-gradient(to top, rgba(4,7,18,0.35) 0%, transparent 40%)" }} />
+      <div className="absolute inset-0 z-[2] pointer-events-none"
+        style={{ background: "radial-gradient(ellipse 70% 85% at 20% 50%, rgba(4,7,18,0.75) 0%, transparent 85%)" }} />
 
       {/* animated orbs */}
       <motion.div className="absolute rounded-full pointer-events-none z-[1]"
@@ -139,7 +141,7 @@ const Register = () => {
             <Link to="/" style={{ textDecoration: "none" }}>
               <span style={{ fontFamily: "'Sora','Inter',sans-serif", fontSize: 26, fontWeight: 800,
                 letterSpacing: "-0.04em", color: "#fff", lineHeight: 1, cursor: "pointer",
-                textShadow: "0 0 20px rgba(99,91,255,0.4)" }}>
+                textShadow: "0 2px 12px rgba(0,0,0,0.8)" }}>
                 Skillora
               </span>
             </Link>
@@ -148,21 +150,21 @@ const Register = () => {
           <div className="space-y-10 max-w-[500px]">
             <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
               className="text-[10px] font-bold tracking-[0.3em] uppercase"
-              style={{ color: "rgba(129,140,248,0.65)" }}>Freelancer OS</motion.p>
+              style={{ color: "#A5B4FC", textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>Freelancer OS</motion.p>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
               whileHover={{ y: -4 }} transition={{ duration: 0.7, delay: 0.25, ease: [0.16,1,0.3,1] }}
               className="space-y-5" style={{ cursor: "default" }}>
               <h1 className="font-bold leading-[1.1] text-white"
-                style={{ fontSize: "clamp(2.2rem,3.2vw,3rem)", letterSpacing: "-0.03em" }}>
+                style={{ fontSize: "clamp(2.2rem,3.2vw,3rem)", letterSpacing: "-0.03em", textShadow: "0 4px 16px rgba(0,0,0,0.9)" }}>
                 Run your freelance business<br />with{" "}
                 <span style={{
                   background: "linear-gradient(135deg,#818CF8 0%,#C4B5FD 40%,#38BDF8 100%)",
                   WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-                  filter: "drop-shadow(0 0 20px rgba(129,140,248,0.4))",
+                  filter: "drop-shadow(0 0 20px rgba(129,140,248,0.5))",
                 }}>clarity &amp; control.</span>
               </h1>
-              <p className="text-[14px] leading-[1.75]"
-                style={{ color: "rgba(148,163,184,0.65)", maxWidth: "38ch" }}>
+              <p className="text-[14px] leading-[1.75] font-medium"
+                style={{ color: "#CBD5E1", maxWidth: "38ch", textShadow: "0 2px 8px rgba(0,0,0,0.9)" }}>
                 Manage clients, projects, invoices, and growth — all in one intelligent workspace.
               </p>
             </motion.div>
@@ -176,20 +178,20 @@ const Register = () => {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.85 }}
               whileHover={{ y: -3 }}
               className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full"
-              style={{ cursor: "default", background: "rgba(99,91,255,0.1)", border: "1px solid rgba(99,91,255,0.2)" }}>
+              style={{ cursor: "default", background: "rgba(15,23,42,0.6)", border: "1px solid rgba(99,91,255,0.35)", backdropFilter: "blur(8px)" }}>
               <div className="flex -space-x-1.5">
                 {["#635BFF","#10B981","#F59E0B","#00D4FF"].map(c => (
                   <div key={c} className="w-5 h-5 rounded-full border border-black/30" style={{ background: c }} />
                 ))}
               </div>
-              <span className="text-[12px] font-medium" style={{ color: "rgba(203,213,225,0.75)" }}>
-                Trusted by <span style={{ color: "#A39AFF" }}>10,000+</span> freelancers
+              <span className="text-[12px] font-medium" style={{ color: "#E2E8F0", textShadow: "0 1px 6px rgba(0,0,0,0.8)" }}>
+                Trusted by <span style={{ color: "#C4B5FD", fontWeight: 700 }}>10,000+</span> freelancers
               </span>
             </motion.div>
           </div>
           <motion.p
-            className="text-[11px]"
-            style={{ color: "rgba(148,163,184,0.55)", cursor: "default" }}
+            className="text-[11px] font-medium"
+            style={{ color: "#94A3B8", textShadow: "0 1px 6px rgba(0,0,0,0.8)", cursor: "default" }}
             whileHover={{ color: "rgba(203,213,225,0.9)", y: -1 }}
             transition={{ duration: 0.2 }}>
             © 2025 Skillora. All rights reserved.
