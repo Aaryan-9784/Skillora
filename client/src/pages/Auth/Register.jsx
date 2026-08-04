@@ -177,11 +177,18 @@ const Register = () => {
             </motion.div>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.85 }}
               whileHover={{ y: -3 }}
-              className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full"
-              style={{ cursor: "default", background: "rgba(15,23,42,0.6)", border: "1px solid rgba(99,91,255,0.35)", backdropFilter: "blur(8px)" }}>
+              className="inline-flex items-center gap-2.5"
+              style={{ cursor: "default" }}>
               <div className="flex -space-x-1.5">
-                {["#635BFF","#10B981","#F59E0B","#00D4FF"].map(c => (
-                  <div key={c} className="w-5 h-5 rounded-full border border-black/30" style={{ background: c }} />
+                {[
+                  { initial: "A", bg: "linear-gradient(135deg,#635BFF,#8B5CF6)" },
+                  { initial: "S", bg: "linear-gradient(135deg,#10B981,#059669)" },
+                  { initial: "M", bg: "linear-gradient(135deg,#F59E0B,#D97706)" },
+                  { initial: "K", bg: "linear-gradient(135deg,#00D4FF,#0284C7)" },
+                ].map(a => (
+                  <div key={a.initial} className="w-5 h-5 rounded-full border border-black/40 flex items-center justify-center text-[9px] font-bold text-white shadow-sm shrink-0 select-none" style={{ background: a.bg }}>
+                    {a.initial}
+                  </div>
                 ))}
               </div>
               <span className="text-[12px] font-medium" style={{ color: "#E2E8F0", textShadow: "0 1px 6px rgba(0,0,0,0.8)" }}>
@@ -229,11 +236,7 @@ const Register = () => {
                 </p>
               </motion.div>
 
-              {/* role toggle */}
-              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-                <RoleToggle value={role} onChange={setRole}
-                  options={[{ value: "freelancer", label: "I'm a Freelancer" },{ value: "client", label: "I'm a Client" }]} />
-              </motion.div>
+
 
               {/* error */}
               <AnimatePresence>

@@ -145,8 +145,7 @@ const ForgotPassword = () => {
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
               whileHover={{ y: -3 }} transition={{ delay: 0.5, duration: 0.6 }}
-              className="flex items-center gap-3 px-4 py-3 rounded-2xl" style={{ cursor: "default",
-                background: "rgba(15,23,42,0.6)", border: "1px solid rgba(99,91,255,0.35)", backdropFilter: "blur(8px)" }}>
+              className="flex items-center gap-2.5" style={{ cursor: "default" }}>
               <ShieldCheck size={16} style={{ color: "rgba(74,222,128,0.85)", flexShrink: 0 }} />
               <span className="text-[13px] font-medium" style={{ color: "#E2E8F0", textShadow: "0 1px 6px rgba(0,0,0,0.8)" }}>
                 Secure · Encrypted · Expires in 1 hour
