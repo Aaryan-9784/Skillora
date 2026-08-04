@@ -5,7 +5,9 @@ import {
   Zap, LayoutDashboard, Users, CreditCard, Brain, CheckCircle2,
   ArrowRight, Star, TrendingUp, Shield, Clock, Globe,
   ChevronRight, Play, BarChart3, FileText, Kanban, Bot, X,
+  MessageSquarePlus, Send,
 } from "lucide-react";
+import toast from "react-hot-toast";
 
 // ─── Reusable fade-in wrapper ─────────────────────────────
 const FadeIn = ({ children, delay = 0, y = 20, className = "" }) => {
@@ -1129,35 +1131,63 @@ const HowItWorks = () => (
 );
 
 // ─── Testimonials ─────────────────────────────────────────
-const testimonials = [
+const initialTestimonials = [
   {
     name: "Priya Sharma", role: "UI/UX Designer",
     quote: "Skillora replaced 4 different tools for me. The AI assistant is a game-changer — it drafted a client proposal in 30 seconds that would've taken me an hour.",
-    avatar: "PS", color: "#8B5CF6",
+    avatar: "PS", color: "#8B5CF6", rating: 5,
   },
   {
     name: "Arjun Mehta", role: "Full-Stack Developer",
     quote: "The client portal alone is worth it. My clients can view project status and pay invoices without a single email from me. Professional and effortless.",
-    avatar: "AM", color: "#3B82F6",
+    avatar: "AM", color: "#3B82F6", rating: 5,
   },
   {
     name: "Sneha Reddy", role: "Content Strategist",
     quote: "I went from chasing payments in spreadsheets to getting paid on time, every time. Razorpay integration works flawlessly with the invoicing system.",
-    avatar: "SR", color: "#10B981",
+    avatar: "SR", color: "#10B981", rating: 5,
   },
 ];
 
 const Testimonials = () => {
+  const [items, setItems] = useState(initialTestimonials);
   const [active, setActive] = useState(0);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [form, setForm] = useState({ name: "", role: "", quote: "", rating: 5 });
 
   useEffect(() => {
-    const timer = setInterval(() => setActive((p) => (p + 1) % testimonials.length), 5000);
+    if (modalOpen) return;
+    const timer = setInterval(() => setActive((p) => (p + 1) % items.length), 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [items.length, modalOpen]);
+
+  const handleSubmitReview = (e) => {
+    e.preventDefault();
+    if (!form.name.trim() || !form.quote.trim()) {
+      toast.error("Please enter your name and review text");
+      return;
+    }
+    const initials = form.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || "U";
+    const colors = ["#8B5CF6", "#3B82F6", "#10B981", "#EC4899", "#F59E0B"];
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+    const newRev = {
+      name: form.name.trim(),
+      role: form.role.trim() || "Freelancer",
+      quote: form.quote.trim(),
+      avatar: initials,
+      color: randomColor,
+      rating: form.rating,
+    };
+    setItems((prev) => [...prev, newRev]);
+    setActive(items.length);
+    setForm({ name: "", role: "", quote: "", rating: 5 });
+    setModalOpen(false);
+    toast.success("Thank you! Your review has been added.");
+  };
 
   return (
     <section id="reviews" className="min-h-[85vh] md:min-h-[90vh] py-36 md:py-44 px-6 flex flex-col justify-center scroll-mt-20" style={{ background: "rgba(7,10,20,0.75)", backdropFilter: "blur(2px)" }}>
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto w-full">
         <FadeIn className="text-center mb-16">
           <p className="text-[12px] font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#8B5CF6" }}>Reviews</p>
           <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight" style={{ letterSpacing: "-0.02em" }}>
@@ -1182,21 +1212,21 @@ const Testimonials = () => {
               }}
             >
               <div className="flex items-center gap-1 justify-center mb-6">
-                {[...Array(5)].map((_, i) => (
+                {[...Array(items[active]?.rating || 5)].map((_, i) => (
                   <Star key={i} size={16} fill="#F59E0B" stroke="none" />
                 ))}
               </div>
               <p className="text-[16px] md:text-[18px] text-slate-200 leading-relaxed mb-8 max-w-2xl mx-auto italic">
-                "{testimonials[active].quote}"
+                "{items[active]?.quote}"
               </p>
               <div className="flex items-center justify-center gap-3">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-[13px] font-bold text-white"
-                  style={{ background: testimonials[active].color }}>
-                  {testimonials[active].avatar}
+                <div className="w-10 h-10 rounded-full flex items-center justify-center text-[13px] font-bold text-white shrink-0"
+                  style={{ background: items[active]?.color || "#8B5CF6" }}>
+                  {items[active]?.avatar}
                 </div>
                 <div className="text-left">
-                  <p className="text-[14px] font-semibold text-white">{testimonials[active].name}</p>
-                  <p className="text-[12px] text-slate-400">{testimonials[active].role}</p>
+                  <p className="text-[14px] font-semibold text-white">{items[active]?.name}</p>
+                  <p className="text-[12px] text-slate-400">{items[active]?.role}</p>
                 </div>
               </div>
             </motion.div>
@@ -1205,11 +1235,11 @@ const Testimonials = () => {
 
         {/* Dots */}
         <div className="flex items-center justify-center gap-2 mt-8">
-          {testimonials.map((_, i) => (
+          {items.map((_, i) => (
             <button
               key={i}
               onClick={() => setActive(i)}
-              className="w-2 h-2 rounded-full transition-all duration-300"
+              className="w-2 h-2 rounded-full transition-all duration-300 cursor-pointer"
               style={{
                 background: i === active ? "#8B5CF6" : "rgba(255,255,255,0.15)",
                 width: i === active ? 24 : 8,
@@ -1217,6 +1247,159 @@ const Testimonials = () => {
             />
           ))}
         </div>
+
+        {/* Write a Review Button */}
+        <div className="flex justify-center mt-10">
+          <motion.button
+            whileHover={{ scale: 1.04, boxShadow: "0 0 32px rgba(139,92,246,0.6)" }}
+            whileTap={{ scale: 0.96 }}
+            onClick={() => setModalOpen(true)}
+            className="relative h-10 px-6 rounded-full text-[14px] font-semibold text-white flex items-center gap-2 overflow-hidden cursor-pointer"
+            style={{
+              background: "linear-gradient(90deg, #4F46E5 0%, #7C3AED 45%, #EC4899 100%)",
+              boxShadow: "0 4px 18px rgba(124,58,237,0.4), inset 0 1px 0 rgba(255,255,255,0.2)",
+              letterSpacing: "0.01em",
+            }}
+          >
+            <motion.div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background: "linear-gradient(105deg,transparent 30%,rgba(255,255,255,0.18) 50%,transparent 70%)",
+                backgroundSize: "200% 100%",
+              }}
+              animate={{ backgroundPosition: ["200% 0", "-200% 0"] }}
+              transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
+            />
+            <MessageSquarePlus size={15} />
+            <span>Write a Review</span>
+          </motion.button>
+        </div>
+
+        {/* Review Submission Modal */}
+        <AnimatePresence>
+          {modalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-black/70 backdrop-blur-md"
+                onClick={() => setModalOpen(false)}
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.94, y: 16 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.94, y: 16 }}
+                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                className="relative z-10 w-full max-w-lg rounded-3xl p-6 sm:p-8 overflow-hidden text-left"
+                style={{
+                  background: "linear-gradient(160deg, rgba(17,24,39,0.98), rgba(11,15,26,0.99))",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  boxShadow: "0 24px 80px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.1)",
+                }}
+              >
+                <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-800/80">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-purple-500/15 border border-purple-500/30">
+                      <Star size={18} className="text-amber-400 fill-amber-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-white">Write a Review</h3>
+                      <p className="text-xs text-slate-400">Share your experience with Skillora</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setModalOpen(false)}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/5 border border-white/10 text-slate-400 hover:text-white transition-colors"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+
+                <form onSubmit={handleSubmitReview} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">Rating</label>
+                    <div className="flex items-center gap-2">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          type="button"
+                          key={star}
+                          onClick={() => setForm({ ...form, rating: star })}
+                          className="p-1 transition-transform hover:scale-110 cursor-pointer"
+                        >
+                          <Star
+                            size={22}
+                            fill={star <= form.rating ? "#F59E0B" : "none"}
+                            className={star <= form.rating ? "text-amber-400" : "text-slate-600"}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1.5">Your Name *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Priya Sharma"
+                        value={form.name}
+                        onChange={(e) => setForm({ ...form, name: e.target.value })}
+                        className="w-full h-10 px-3.5 rounded-xl text-xs bg-white/5 border border-white/10 text-white outline-none focus:border-purple-500 transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1.5">Your Role / Profession</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Full-Stack Developer"
+                        value={form.role}
+                        onChange={(e) => setForm({ ...form, role: e.target.value })}
+                        className="w-full h-10 px-3.5 rounded-xl text-xs bg-white/5 border border-white/10 text-white outline-none focus:border-purple-500 transition-colors"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">Your Review *</label>
+                    <textarea
+                      required
+                      rows={3}
+                      placeholder="What do you love about using Skillora?"
+                      value={form.quote}
+                      onChange={(e) => setForm({ ...form, quote: e.target.value })}
+                      className="w-full p-3.5 rounded-xl text-xs bg-white/5 border border-white/10 text-white outline-none focus:border-purple-500 transition-colors resize-none"
+                    />
+                  </div>
+
+                  <div className="pt-3 flex items-center justify-end gap-3 border-t border-slate-800/80">
+                    <button
+                      type="button"
+                      onClick={() => setModalOpen(false)}
+                      className="px-4 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      type="submit"
+                      className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold text-white cursor-pointer"
+                      style={{
+                        background: "linear-gradient(135deg, #3B82F6 0%, #8B5CF6 50%, #EC4899 100%)",
+                        boxShadow: "0 4px 20px rgba(139,92,246,0.35)",
+                      }}
+                    >
+                      <Send size={13} />
+                      <span>Submit Review</span>
+                    </motion.button>
+                  </div>
+                </form>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
       </div>
     </section>
   );
@@ -1241,20 +1424,36 @@ const FinalCTA = () => (
           elevated.
         </span>
       </h2>
-      <p className="text-slate-300 text-lg mb-10">Join 10,000+ freelancers already using Skillora.</p>
+      <p className="text-slate-300 text-base md:text-lg max-w-xl mx-auto mb-10 leading-relaxed font-medium">
+        Ready to simplify your client workflow, invoicing, and growth? Get started in under 2 minutes.
+      </p>
       <Link to="/register">
         <motion.button
-          whileHover={{ scale: 1.04, boxShadow: "0 0 50px rgba(99,91,255,0.5)" }}
-          whileTap={{ scale: 0.97 }}
-          className="h-14 px-10 rounded-2xl text-[16px] font-semibold text-white flex items-center gap-2 mx-auto"
+          whileHover={{ scale: 1.04, boxShadow: "0 0 36px rgba(139,92,246,0.6)" }}
+          whileTap={{ scale: 0.96 }}
+          className="relative h-12 px-8 rounded-full text-[15px] font-semibold text-white inline-flex items-center gap-2.5 overflow-hidden cursor-pointer shadow-xl mx-auto"
           style={{
-            background: "linear-gradient(135deg, #5B54F0, #7C6FF7, #6366F1)",
-            boxShadow: "0 0 30px rgba(99,91,255,0.4), inset 0 1px 0 rgba(255,255,255,0.12)",
+            background: "linear-gradient(90deg, #4F46E5 0%, #7C3AED 45%, #EC4899 100%)",
+            boxShadow: "0 4px 24px rgba(124,58,237,0.45), inset 0 1px 0 rgba(255,255,255,0.25)",
+            letterSpacing: "0.01em",
           }}
         >
-          Start for free — no card needed <ArrowRight size={18} />
+          <motion.div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: "linear-gradient(105deg,transparent 30%,rgba(255,255,255,0.2) 50%,transparent 70%)",
+              backgroundSize: "200% 100%",
+            }}
+            animate={{ backgroundPosition: ["200% 0", "-200% 0"] }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
+          />
+          <span>Get Started Free</span>
+          <ArrowRight size={16} strokeWidth={2.5} />
         </motion.button>
       </Link>
+      <p className="text-[12px] text-slate-400 mt-4 font-medium">
+        No credit card required • Free forever plan available
+      </p>
     </FadeIn>
   </section>
 );
