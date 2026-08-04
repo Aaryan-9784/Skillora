@@ -6,12 +6,16 @@ import {
   LogOut, Bell, ChevronRight, Zap, Menu, X,
   MessageSquare, CheckCircle2, Clock, AlertCircle,
   FolderKanban, CreditCard, Sparkles, Home,
+  Search, Command, ChevronDown,
 } from "lucide-react";
 import useAuthStore from "../store/authStore";
 import useSocket from "../hooks/useSocket";
 import useSyncEvents from "../hooks/useSyncEvents";
 import useClientPortalStore from "../store/clientPortalStore";
 import { getInitials, relativeTime } from "../utils/helpers";
+import GlobalSearch from "../components/ui/GlobalSearch";
+import CommandPalette from "../components/ui/CommandPalette";
+import FloatingAiButton from "../components/ai/FloatingAiButton";
 
 const NAV = [
   { to: "/client/dashboard", icon: LayoutDashboard, label: "Overview", end: true },
@@ -195,9 +199,12 @@ const ClientLayout = () => {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed]   = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifOpen, setNotifOpen]   = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [cmdOpen, setCmdOpen]       = useState(false);
 
   const { unreadCount, fetchUnreadCount } = useClientPortalStore();
 
@@ -205,8 +212,18 @@ const ClientLayout = () => {
   useSyncEvents();
 
   useEffect(() => {
+    const handler = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") { e.preventDefault(); setSearchOpen(o => !o); }
+      if ((e.metaKey || e.ctrlKey) && e.key === "p") { e.preventDefault(); setCmdOpen(o => !o); }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+  useEffect(() => {
     setMobileOpen(false);
     setNotifOpen(false);
+    setDropdownOpen(false);
   }, [location.pathname]);
 
   useEffect(() => { fetchUnreadCount(); }, []);
@@ -398,6 +415,21 @@ const ClientLayout = () => {
 
         {/* ── RIGHT ACTIONS ── */}
         <div className="flex items-center gap-3.5">
+          {/* Quick Search */}
+          <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+            onClick={() => setSearchOpen(true)}
+            className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs cursor-pointer transition-all duration-150"
+            style={{
+              background: "rgba(255,255,255,0.04)",
+              borderColor: "rgba(255,255,255,0.08)",
+              color: "#9CA3AF",
+            }}>
+            <Search size={13} className="text-cyan-400" />
+            <span>Search workspace...</span>
+            <kbd className="ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-semibold text-gray-400"
+              style={{ background: "rgba(255,255,255,0.08)" }}>Ctrl K</kbd>
+          </motion.button>
+
           {/* Notifications bell */}
           <div className="relative">
             <motion.button whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}
@@ -419,20 +451,83 @@ const ClientLayout = () => {
 
           <div className="w-px h-5" style={{ background: "rgba(255,255,255,0.12)" }} />
 
-          {/* User chip */}
-          <div className="flex items-center gap-2.5 px-1 py-1">
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold text-white shrink-0"
-              style={{ background: "linear-gradient(135deg,#635BFF,#A78BFA)", boxShadow: "0 0 12px rgba(99,91,255,0.4)" }}>
-              {getInitials(user?.name)}
-            </div>
-            <div className="hidden sm:flex flex-col justify-center text-left py-0.5">
-              <p className="text-xs font-bold text-white leading-tight">
-                {user?.name}
-              </p>
-              <p className="text-[10px] font-medium text-cyan-400 capitalize leading-tight mt-0.5">
-                Client
-              </p>
-            </div>
+          {/* User profile dropdown */}
+          <div className="relative">
+            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+              onClick={() => setDropdownOpen(o => !o)}
+              className="flex items-center gap-2.5 px-1 py-1 rounded-xl transition-all duration-150 group cursor-pointer">
+              <div className="relative w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold text-white shrink-0"
+                style={{ background: "linear-gradient(135deg,#635BFF,#A78BFA)", boxShadow: "0 0 12px rgba(99,91,255,0.4)" }}>
+                {getInitials(user?.name)}
+                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-[#0A1120]"
+                  style={{ background: "#22C55E", boxShadow: "0 0 6px rgba(34,197,94,0.8)" }} />
+              </div>
+              <div className="hidden sm:flex flex-col justify-center text-left py-0.5">
+                <p className="text-xs font-bold text-white group-hover:text-cyan-300 transition-colors leading-tight">{user?.name}</p>
+                <p className="text-[10px] font-medium text-cyan-400 capitalize leading-tight mt-0.5">Client</p>
+              </div>
+              <motion.div animate={{ rotate: dropdownOpen ? 180 : 0 }} transition={{ duration: 0.2 }} className="ml-0.5">
+                <ChevronDown size={13} className="text-gray-400 group-hover:text-white transition-colors" />
+              </motion.div>
+            </motion.button>
+
+            <AnimatePresence>
+              {dropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setDropdownOpen(false)} />
+                  <motion.div initial={{ opacity: 0, scale: 0.96, y: -8 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.96, y: -8 }} transition={{ duration: 0.18, ease: [0.16,1,0.3,1] }}
+                    className="absolute right-0 top-11 z-20 w-60 rounded-2xl overflow-hidden"
+                    style={{ background: "linear-gradient(160deg,rgba(12,19,36,0.99) 0%,rgba(8,14,26,0.99) 100%)", border: "1px solid rgba(255,255,255,0.09)", boxShadow: "0 0 0 1px rgba(99,91,255,0.1),0 24px 56px rgba(0,0,0,0.7)", backdropFilter: "blur(24px)" }}>
+                    <div className="absolute top-0 inset-x-0 h-px"
+                      style={{ background: "linear-gradient(90deg,transparent,rgba(99,91,255,0.6),rgba(0,212,255,0.3),transparent)" }} />
+                    <div className="px-4 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                      <div className="flex items-center gap-3">
+                        <div className="relative shrink-0">
+                          <div className="w-11 h-11 rounded-2xl flex items-center justify-center text-sm font-bold text-white"
+                            style={{ background: "linear-gradient(135deg,#635BFF,#A78BFA)", boxShadow: "0 0 20px rgba(99,91,255,0.45)" }}>
+                            {getInitials(user?.name)}
+                          </div>
+                          <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2"
+                            style={{ background: "#22C55E", borderColor: "#080E1A", boxShadow: "0 0 8px rgba(34,197,94,0.7)" }} />
+                        </div>
+                        <div className="min-w-0 flex-1 flex flex-col justify-center text-left py-0.5">
+                          <p className="text-sm font-bold truncate text-white leading-tight">{user?.name}</p>
+                          <p className="text-xs text-cyan-400 font-medium capitalize leading-tight mt-0.5">Client</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="py-2 px-2">
+                      <motion.button whileHover={{ x: 2 }}
+                        onClick={() => { navigate("/client/profile"); setDropdownOpen(false); }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-150"
+                        style={{ color: "#9CA3AF" }}
+                        onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "#F9FAFB"; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#9CA3AF"; }}>
+                        <div className="w-7 h-7 rounded-xl flex items-center justify-center shrink-0"
+                          style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                          <User size={13} />
+                        </div>
+                        <span className="font-medium">Profile</span>
+                      </motion.button>
+                    </div>
+                    <div className="px-2 pb-2" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+                      <motion.button whileHover={{ x: 2 }} onClick={handleLogout}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-150 mt-1"
+                        style={{ color: "#EF4444" }}
+                        onMouseEnter={e => e.currentTarget.style.background = "rgba(239,68,68,0.1)"}
+                        onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                        <div className="w-7 h-7 rounded-xl flex items-center justify-center shrink-0"
+                          style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.15)" }}>
+                          <LogOut size={13} style={{ color: "#EF4444" }} />
+                        </div>
+                        <span className="font-medium">Sign out</span>
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
           </div>
         </div>
         </header>
@@ -445,6 +540,9 @@ const ClientLayout = () => {
           <Outlet />
         </motion.main>
       </div>
+      <GlobalSearch isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+      <CommandPalette isOpen={cmdOpen} onClose={() => setCmdOpen(false)} />
+      <FloatingAiButton />
     </div>
   );
 };

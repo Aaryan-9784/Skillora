@@ -3,7 +3,7 @@ import { Outlet, NavLink, useNavigate, useLocation, Link } from "react-router-do
 import {
   LayoutDashboard, Users, TrendingUp, Settings,
   Zap, Shield, LogOut, ChevronRight, Bell,
-  ChevronDown, User, Home,
+  ChevronDown, User, Home, Search,
 } from "lucide-react";
 
 const ADMIN_CONFIG = {
@@ -246,10 +246,23 @@ const AdminNavbar = ({ onSearch }) => {
           </div>
         </div>
 
-        <div className="flex-1" />
-
         {/* ── RIGHT ACTIONS ── */}
         <div className="flex items-center gap-3.5">
+          {/* Quick Search */}
+          <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+            onClick={onSearch}
+            className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs cursor-pointer transition-all duration-150"
+            style={{
+              background: "rgba(255,255,255,0.04)",
+              borderColor: "rgba(255,255,255,0.08)",
+              color: "#9CA3AF",
+            }}>
+            <Search size={13} className="text-purple-400" />
+            <span>Search workspace...</span>
+            <kbd className="ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-semibold text-gray-400"
+              style={{ background: "rgba(255,255,255,0.08)" }}>Ctrl K</kbd>
+          </motion.button>
+
           {/* Notifications */}
           <div className="relative">
             <motion.button whileHover={{ scale: 1.06, y: -1 }} whileTap={{ scale: 0.94 }}
@@ -361,12 +374,14 @@ const AdminLayout = () => {
   const navigate         = useNavigate();
   const [collapsed, setCollapsed]   = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [cmdOpen, setCmdOpen]       = useState(false);
   useSocket();
   useSyncEvents();
 
   useEffect(() => {
     const handler = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") { e.preventDefault(); setSearchOpen(o => !o); }
+      if ((e.metaKey || e.ctrlKey) && e.key === "p") { e.preventDefault(); setCmdOpen(o => !o); }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
@@ -464,6 +479,7 @@ const AdminLayout = () => {
       </div>
 
       <GlobalSearch isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+      <CommandPalette isOpen={cmdOpen} onClose={() => setCmdOpen(false)} />
       <FloatingAiButton />
     </div>
   );
