@@ -65,16 +65,16 @@ const CursorGlow = () => {
 const NavLink = ({ href, children }) => (
   <a
     href={href}
-    className="group relative text-[14px] font-medium transition-colors duration-300"
+    className="group relative text-[14px] font-semibold transition-colors duration-300 tracking-wide"
     style={{
       color: "#fff",
-      textShadow: "0 1px 8px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.7)",
+      textShadow: "0 1px 10px rgba(0,0,0,0.95), 0 0 20px rgba(0,0,0,0.8)",
     }}
     onMouseEnter={e => e.currentTarget.style.color = "#C084FC"}
     onMouseLeave={e => e.currentTarget.style.color = "#fff"}
   >
     {children}
-    <span className="absolute -bottom-0.5 left-0 h-px w-0 group-hover:w-full transition-all duration-300 rounded-full"
+    <span className="absolute -bottom-1 left-0 h-[2px] w-0 group-hover:w-full transition-all duration-300 rounded-full"
       style={{ background: "linear-gradient(90deg,#3B82F6,#8B5CF6,#EC4899)" }} />
   </a>
 );
@@ -100,7 +100,7 @@ const Navbar = () => {
     { label: "Features",     href: "#features" },
     { label: "How It Works", href: "#how-it-works" },
     { label: "Why Skillora", href: "#why-skillora" },
-    { label: "Reviews",      href: "#testimonials" },
+    { label: "Reviews",      href: "#reviews" },
   ];
 
   return (
@@ -113,14 +113,13 @@ const Navbar = () => {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-        className="fixed top-0 inset-x-0 z-40 h-[72px] px-5 md:px-10 grid grid-cols-3 items-center"
+        className="fixed top-0 inset-x-0 z-40 h-[76px] px-6 sm:px-10 lg:px-14 flex items-center justify-between transition-all duration-300"
         style={{
-          background: scrolled ? "rgba(8,11,22,0.82)" : "transparent",
+          background: scrolled ? "rgba(8,11,22,0.85)" : "transparent",
           backdropFilter: scrolled ? "blur(20px)" : "none",
           WebkitBackdropFilter: scrolled ? "blur(20px)" : "none",
-          borderBottom: scrolled ? "1px solid rgba(255,255,255,0.07)" : "none",
-          boxShadow: scrolled ? "0 8px 32px rgba(0,0,0,0.3)" : "none",
-          transition: "all 0.35s ease",
+          borderBottom: scrolled ? "1px solid rgba(255,255,255,0.08)" : "none",
+          boxShadow: scrolled ? "0 8px 32px rgba(0,0,0,0.4)" : "none",
         }}
       >
         {/* ── Logo — left ── */}
@@ -131,13 +130,13 @@ const Navbar = () => {
               transition={{ duration: 0.2 }}
               style={{
                 fontFamily: "'Sora','Inter',sans-serif",
-                fontSize: 26,
+                fontSize: 27,
                 fontWeight: 800,
                 letterSpacing: "-0.04em",
                 color: "#fff",
                 cursor: "pointer",
                 display: "block",
-                textShadow: "0 1px 10px rgba(0,0,0,0.9)",
+                textShadow: "0 2px 10px rgba(0,0,0,0.95)",
               }}
             >
               Skillora
@@ -146,18 +145,18 @@ const Navbar = () => {
         </div>
 
         {/* ── Desktop nav links — center ── */}
-        <div className="hidden md:flex items-center justify-center gap-8">
+        <div className="hidden md:flex items-center justify-center gap-7 lg:gap-9">
           {links.map((l) => (
             <NavLink key={l.label} href={l.href}>{l.label}</NavLink>
           ))}
         </div>
 
         {/* ── Desktop right actions — right ── */}
-        <div className="hidden md:flex items-center justify-end gap-3">
+        <div className="hidden md:flex items-center justify-end gap-6">
           <Link to="/login">
             <motion.span
               whileHover={{ color: "#C084FC" }}
-              className="text-[13px] font-medium cursor-pointer transition-colors duration-200"
+              className="text-[14px] font-semibold cursor-pointer transition-colors duration-200"
               style={{
                 color: "#fff",
                 textShadow: "0 1px 8px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.7)",
@@ -169,28 +168,26 @@ const Navbar = () => {
 
           <Link to="/register">
             <motion.button
-              whileHover={{ scale: 1.04, boxShadow: "0 0 36px rgba(139,92,246,0.7)" }}
+              whileHover={{ scale: 1.04, boxShadow: "0 0 32px rgba(139,92,246,0.6)" }}
               whileTap={{ scale: 0.96 }}
-              className="relative h-9 px-5 rounded-xl text-[13px] font-semibold text-white flex items-center gap-2 overflow-hidden"
+              className="relative h-10 px-6 rounded-full text-[14px] font-semibold text-white flex items-center gap-2 overflow-hidden cursor-pointer"
               style={{
-                background: "linear-gradient(135deg,#3B82F6 0%,#8B5CF6 50%,#EC4899 100%)",
-                boxShadow: "0 0 0 1px rgba(139,92,246,0.35), 0 4px 20px rgba(139,92,246,0.45), inset 0 1px 0 rgba(255,255,255,0.15)",
+                background: "linear-gradient(90deg, #4F46E5 0%, #7C3AED 45%, #EC4899 100%)",
+                boxShadow: "0 4px 18px rgba(124,58,237,0.4), inset 0 1px 0 rgba(255,255,255,0.2)",
                 letterSpacing: "0.01em",
               }}
             >
               <motion.div
                 className="absolute inset-0 pointer-events-none"
                 style={{
-                  background: "linear-gradient(105deg,transparent 30%,rgba(255,255,255,0.14) 50%,transparent 70%)",
+                  background: "linear-gradient(105deg,transparent 30%,rgba(255,255,255,0.18) 50%,transparent 70%)",
                   backgroundSize: "200% 100%",
                 }}
                 animate={{ backgroundPosition: ["200% 0", "-200% 0"] }}
                 transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
               />
-              <div className="absolute inset-x-0 top-0 h-px rounded-t-xl pointer-events-none"
-                style={{ background: "linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent)" }} />
               Get started
-              <ArrowRight size={13} strokeWidth={2.5} />
+              <ArrowRight size={14} strokeWidth={2.5} />
             </motion.button>
           </Link>
         </div>
@@ -328,7 +325,7 @@ const VideoModal = ({ isOpen, onClose }) => {
     { label: "Features",     href: "#features" },
     { label: "How It Works", href: "#how-it-works" },
     { label: "Why Skillora", href: "#why-skillora" },
-    { label: "Reviews",      href: "#testimonials" },
+    { label: "Reviews",      href: "#reviews" },
   ];
 
   const handleNavClick = (e, href) => {
@@ -364,12 +361,9 @@ const VideoModal = ({ isOpen, onClose }) => {
           </video>
         </div>
 
-        {/* Top Header Overlay (Transparent header with dark text shadow contrast) */}
+        {/* Top Header Overlay */}
         <div
-          className="relative z-20 w-full h-[76px] px-5 md:px-10 grid grid-cols-3 items-center border-none"
-          style={{
-            background: "linear-gradient(to bottom, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.25) 75%, transparent 100%)",
-          }}
+          className="relative z-20 w-full h-[76px] px-6 sm:px-10 lg:px-14 flex items-center justify-between border-none bg-transparent"
         >
           {/* Logo — Left */}
           <div className="flex items-center">
@@ -378,7 +372,7 @@ const VideoModal = ({ isOpen, onClose }) => {
                 className="hover:opacity-90 transition-opacity cursor-pointer block"
                 style={{
                   fontFamily: "'Sora','Inter',sans-serif",
-                  fontSize: 26,
+                  fontSize: 27,
                   fontWeight: 800,
                   letterSpacing: "-0.04em",
                   color: "#fff",
@@ -390,14 +384,14 @@ const VideoModal = ({ isOpen, onClose }) => {
             </Link>
           </div>
 
-          {/* Desktop Nav Links — Center (Darkness around text only, no rounded box border) */}
-          <div className="hidden md:flex items-center justify-center gap-8">
+          {/* Desktop Nav Links — Center */}
+          <div className="hidden md:flex items-center justify-center gap-7 lg:gap-9">
             {links.map((l) => (
               <a
                 key={l.label}
                 href={l.href}
                 onClick={(e) => handleNavClick(e, l.href)}
-                className="text-[13px] font-bold text-white hover:text-purple-300 transition-all duration-200"
+                className="text-[14px] font-semibold text-white hover:text-purple-300 transition-all duration-200"
                 style={{
                   textShadow: "0 0 10px rgba(0,0,0,1), 0 0 20px rgba(0,0,0,0.95), 0 2px 4px rgba(0,0,0,1)",
                   filter: "drop-shadow(0 0 8px rgba(0,0,0,0.95)) drop-shadow(0 2px 4px rgba(0,0,0,1))",
@@ -408,12 +402,12 @@ const VideoModal = ({ isOpen, onClose }) => {
             ))}
           </div>
 
-          {/* Right Actions (No X button) */}
-          <div className="flex items-center justify-end gap-4">
-            <div className="hidden md:flex items-center gap-5">
+          {/* Right Actions */}
+          <div className="flex items-center justify-end gap-6">
+            <div className="hidden md:flex items-center gap-6">
               <Link to="/login" onClick={onClose}>
                 <span
-                  className="text-[13px] font-semibold text-white hover:text-purple-300 transition-colors cursor-pointer"
+                  className="text-[14px] font-semibold text-white hover:text-purple-300 transition-colors cursor-pointer"
                   style={{
                     textShadow: "0 2px 10px rgba(0,0,0,0.95), 0 0 16px rgba(0,0,0,0.9), 0 1px 3px rgba(0,0,0,1)",
                   }}
@@ -424,15 +418,15 @@ const VideoModal = ({ isOpen, onClose }) => {
 
               <Link to="/register" onClick={onClose}>
                 <button
-                  className="relative h-9 px-5 rounded-xl text-[13px] font-semibold text-white flex items-center gap-2 overflow-hidden transition-transform active:scale-95 cursor-pointer"
+                  className="relative h-10 px-6 rounded-full text-[14px] font-semibold text-white flex items-center gap-2 overflow-hidden transition-transform active:scale-95 cursor-pointer"
                   style={{
-                    background: "linear-gradient(135deg,#3B82F6 0%,#8B5CF6 50%,#EC4899 100%)",
-                    boxShadow: "0 0 0 1px rgba(139,92,246,0.35), 0 4px 20px rgba(139,92,246,0.5)",
+                    background: "linear-gradient(90deg, #4F46E5 0%, #7C3AED 45%, #EC4899 100%)",
+                    boxShadow: "0 4px 18px rgba(124,58,237,0.4)",
                     letterSpacing: "0.01em",
                   }}
                 >
                   Get started
-                  <ArrowRight size={13} strokeWidth={2.5} />
+                  <ArrowRight size={14} strokeWidth={2.5} />
                 </button>
               </Link>
             </div>
@@ -669,10 +663,10 @@ const ProductPreview = () => {
   const tab = tabs.find((t) => t.id === active);
 
   return (
-    <section id="product" className="py-24 px-6" style={{ background: "rgba(7,10,20,0.75)", backdropFilter: "blur(2px)" }}>
+    <section id="product" className="min-h-[85vh] md:min-h-[90vh] py-36 md:py-44 px-6 flex flex-col justify-center scroll-mt-20" style={{ background: "rgba(7,10,20,0.75)", backdropFilter: "blur(2px)" }}>
       <div className="max-w-6xl mx-auto">
         <FadeIn className="text-center mb-16">
-          <p className="text-[12px] font-semibold tracking-[0.2em] uppercase text-brand mb-4" style={{ color: "#8B5CF6" }}>Product Preview</p>
+          <p className="text-[12px] font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#8B5CF6" }}>Product</p>
           <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight" style={{ letterSpacing: "-0.02em" }}>
             Everything you need.<br />Nothing you don't.
           </h2>
@@ -888,35 +882,6 @@ const ProductPreview = () => {
   );
 };
 
-// ─── Stats Counter ────────────────────────────────────────
-const AnimatedCounter = ({ target, suffix = "" }) => {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true });
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    if (!inView) return;
-    let start = 0;
-    const duration = 2000;
-    const increment = target / (duration / 16);
-    const timer = setInterval(() => {
-      start += increment;
-      if (start >= target) { setCount(target); clearInterval(timer); }
-      else setCount(Math.floor(start));
-    }, 16);
-    return () => clearInterval(timer);
-  }, [inView, target]);
-
-  return <span ref={ref}>{count.toLocaleString()}{suffix}</span>;
-};
-
-const stats = [
-  { value: 10000, suffix: "+", label: "Freelancers onboard", color: "#8B5CF6" },
-  { value: 2, suffix: "M+", label: "Invoices generated", color: "#3B82F6" },
-  { value: 99, suffix: ".9%", label: "Uptime guaranteed", color: "#10B981" },
-  { value: 150, suffix: "+", label: "Countries served", color: "#F59E0B" },
-];
-
 // ─── Value cards ──────────────────────────────────────────
 const values = [
   {
@@ -942,22 +907,8 @@ const values = [
 ];
 
 const ValueSection = () => (
-  <section id="why-skillora" className="py-28 px-6" style={{ background: "rgba(7,10,20,0.78)", backdropFilter: "blur(2px)" }}>
+  <section id="why-skillora" className="min-h-[85vh] md:min-h-[90vh] py-36 md:py-44 px-6 flex flex-col justify-center scroll-mt-20" style={{ background: "rgba(7,10,20,0.78)", backdropFilter: "blur(2px)" }}>
     <div className="max-w-6xl mx-auto">
-      {/* Stats bar */}
-      <FadeIn>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-20">
-          {stats.map((s) => (
-            <div key={s.label} className="text-center">
-              <div className="text-3xl md:text-4xl font-bold mb-2" style={{ color: s.color }}>
-                <AnimatedCounter target={s.value} suffix={s.suffix} />
-              </div>
-              <p className="text-[13px] text-slate-400 font-medium">{s.label}</p>
-            </div>
-          ))}
-        </div>
-      </FadeIn>
-
       <FadeIn className="text-center mb-16">
         <p className="text-[12px] font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#8B5CF6" }}>Why Skillora</p>
         <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight" style={{ letterSpacing: "-0.02em" }}>
@@ -1030,7 +981,7 @@ const secondaryFeatures = [
 ];
 
 const FeatureGrid = () => (
-  <section id="features" className="py-28 px-6" style={{ background: "rgba(7,10,20,0.72)", backdropFilter: "blur(2px)" }}>
+  <section id="features" className="min-h-[85vh] md:min-h-[90vh] py-36 md:py-44 px-6 flex flex-col justify-center scroll-mt-20" style={{ background: "rgba(7,10,20,0.72)", backdropFilter: "blur(2px)" }}>
     <div className="max-w-6xl mx-auto">
       <FadeIn className="text-center mb-16">
         <p className="text-[12px] font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#8B5CF6" }}>Features</p>
@@ -1120,14 +1071,14 @@ const steps = [
 ];
 
 const HowItWorks = () => (
-  <section id="how-it-works" className="py-28 px-6" style={{ background: "rgba(7,10,20,0.78)", backdropFilter: "blur(2px)" }}>
+  <section id="how-it-works" className="min-h-[85vh] md:min-h-[90vh] py-36 md:py-44 px-6 flex flex-col justify-center scroll-mt-20" style={{ background: "rgba(7,10,20,0.78)", backdropFilter: "blur(2px)" }}>
     <div className="max-w-5xl mx-auto">
-      <FadeIn className="text-center mb-20">
+      <FadeIn className="text-center mb-16">
         <p className="text-[12px] font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#8B5CF6" }}>How It Works</p>
         <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight" style={{ letterSpacing: "-0.02em" }}>
           From zero to paid in four steps
         </h2>
-        <p className="text-slate-400 mt-4">No learning curve. No onboarding calls. Just results.</p>
+        <p className="text-slate-400 mt-4 max-w-xl mx-auto">No learning curve. No onboarding calls. Just results.</p>
       </FadeIn>
 
       {/* Timeline */}
@@ -1205,13 +1156,14 @@ const Testimonials = () => {
   }, []);
 
   return (
-    <section id="testimonials" className="py-28 px-6" style={{ background: "rgba(7,10,20,0.75)", backdropFilter: "blur(2px)" }}>
+    <section id="reviews" className="min-h-[85vh] md:min-h-[90vh] py-36 md:py-44 px-6 flex flex-col justify-center scroll-mt-20" style={{ background: "rgba(7,10,20,0.75)", backdropFilter: "blur(2px)" }}>
       <div className="max-w-4xl mx-auto">
         <FadeIn className="text-center mb-16">
-          <p className="text-[12px] font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#8B5CF6" }}>Testimonials</p>
+          <p className="text-[12px] font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#8B5CF6" }}>Reviews</p>
           <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight" style={{ letterSpacing: "-0.02em" }}>
             Loved by freelancers
           </h2>
+          <p className="text-slate-400 mt-4 max-w-xl mx-auto">See how independent professionals scale their workflow and get paid faster with Skillora.</p>
         </FadeIn>
 
         <div className="relative min-h-[220px]">
@@ -1273,7 +1225,7 @@ const Testimonials = () => {
 
 // ─── Final CTA ────────────────────────────────────────────
 const FinalCTA = () => (
-  <section className="py-32 px-6 relative overflow-hidden" style={{ background: "rgba(7,10,20,0.82)", backdropFilter: "blur(2px)" }}>
+  <section className="min-h-[70vh] py-36 md:py-44 px-6 flex flex-col justify-center relative overflow-hidden" style={{ background: "rgba(7,10,20,0.82)", backdropFilter: "blur(2px)" }}>
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
       <div className="w-[600px] h-[300px] rounded-full blur-3xl"
         style={{ background: "radial-gradient(ellipse, rgba(99,91,255,0.18) 0%, transparent 70%)" }} />
@@ -1417,7 +1369,7 @@ const Footer = () => {
           {/* Product */}
           <div className="flex flex-col gap-4">
             <p className="text-[11px] font-bold tracking-[0.18em] uppercase mb-1" style={{ color: "#8B5CF6" }}>Product</p>
-            {["Features", "How It Works", "Changelog"].map((l) => (
+            {["Product", "Features", "How It Works", "Why Skillora", "Reviews"].map((l) => (
               <FooterLink key={l} href={`#${l.toLowerCase().replace(/ /g, "-")}`}>{l}</FooterLink>
             ))}
           </div>
