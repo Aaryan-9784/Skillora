@@ -5,24 +5,29 @@ node_modules/
 
 # ── Build outputs ─────────────────────────────────────────
 dist/
+dist-ssr/
 build/
 .next/
 out/
+*.tsbuildinfo
 
-# ── Environment variables (NEVER commit) ─────────────────
+# ── Environment variables (NEVER commit secrets) ───────────
 .env
 .env.local
 .env.development
-.env.production
 .env.test
+.env.production
 server/.env
 client/.env
 
-# ── Local video assets (large files — add your own) ──────
+# ── Local video & media assets ─────────────────────────────
 client/public/videos/
 video/
+*.mp4
+*.webm
+*.mov
 
-# ── Logs ─────────────────────────────────────────────────
+# ── Logs & Databases ──────────────────────────────────────
 logs/
 *.log
 npm-debug.log*
@@ -30,7 +35,11 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# ── OS files ─────────────────────────────────────────────
+# ── Testing & Coverage ────────────────────────────────────
+coverage/
+.nyc_output/
+
+# ── OS & Temp files ───────────────────────────────────────
 .DS_Store
 .DS_Store?
 ._*
@@ -39,18 +48,17 @@ pnpm-debug.log*
 ehthumbs.db
 Thumbs.db
 
-# ── Editor ───────────────────────────────────────────────
-.vscode/settings.json
+# ── Editor & IDE ──────────────────────────────────────────
+.vscode/*
+!.vscode/extensions.json
 .idea/
 *.swp
 *.swo
 *~
 
-# ── Testing ──────────────────────────────────────────────
-coverage/
-.nyc_output/
-
-# ── Misc ─────────────────────────────────────────────────
+# ── Cache & Local Scratch ──────────────────────────────────
 .cache/
 .parcel-cache/
-*.tsbuildinfo
+.eslintcache
+.temp/
+scratch/

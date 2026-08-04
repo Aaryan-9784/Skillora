@@ -1,6 +1,54 @@
 import { lazy, Suspense, useEffect, Component } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
+
+const TITLE_MAP = {
+  "/": "Skillora — Freelancer OS & Client Portal",
+  "/login": "Sign In — Skillora",
+  "/register": "Create Account — Skillora",
+  "/forgot-password": "Reset Password — Skillora",
+  "/dashboard": "Dashboard — Skillora",
+  "/projects": "Projects & Kanban — Skillora",
+  "/tasks": "Tasks — Skillora",
+  "/clients": "Client CRM — Skillora",
+  "/payments": "Invoices & Payments — Skillora",
+  "/payments/new": "Create Invoice — Skillora",
+  "/skills": "Skill Matrix — Skillora",
+  "/ai": "AI Studio — Skillora",
+  "/profile": "My Profile — Skillora",
+  "/settings": "Account Settings — Skillora",
+  "/admin": "Admin Command Center — Skillora",
+  "/admin/users": "User Management — Skillora",
+  "/admin/revenue": "Revenue Analytics — Skillora",
+  "/admin/settings": "Platform Configuration — Skillora",
+  "/admin/profile": "Admin Profile — Skillora",
+  "/client/dashboard": "Client Portal — Skillora",
+  "/client/invoices": "Client Invoices — Skillora",
+  "/client/projects": "Client Projects — Skillora",
+  "/client/messages": "Project Messages — Skillora",
+  "/client/profile": "Client Profile — Skillora",
+};
+
+const TitleUpdater = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    const path = location.pathname;
+    if (TITLE_MAP[path]) {
+      document.title = TITLE_MAP[path];
+    } else if (path.startsWith("/projects/")) {
+      document.title = "Project Details — Skillora";
+    } else if (path.startsWith("/clients/")) {
+      document.title = "Client Profile — Skillora";
+    } else if (path.startsWith("/payments/")) {
+      document.title = "Invoice Details — Skillora";
+    } else {
+      document.title = "Skillora — Freelancer OS & Client Portal";
+    }
+  }, [location.pathname]);
+
+  return null;
+};
 import ProtectedRoute  from "./components/common/ProtectedRoute";
 import FreelancerRoute from "./components/common/FreelancerRoute";
 import AdminRoute      from "./components/common/AdminRoute";
@@ -81,6 +129,7 @@ const App = () => {
 
   return (
     <>
+      <TitleUpdater />
       <Toaster
         position="top-right"
         toastOptions={{

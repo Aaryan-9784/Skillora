@@ -1,134 +1,222 @@
 <div align="center">
 
-<img src="https://img.shields.io/badge/Skillora-Freelancer%20OS-635BFF?style=for-the-badge&logoColor=white" alt="Skillora" />
+# ⚡ Skillora — Freelancer OS & Client Portal
 
-# Skillora — Freelancer OS
+### *A Production-Grade, 100% Free Workspace for Freelancers, Admins & Clients*
 
-**A production-grade SaaS platform for freelancers.**  
-Manage clients, projects, tasks, invoices, payments, and AI-powered productivity — all in one workspace.
-
-<br/>
-
-[![Status](https://img.shields.io/badge/Status-Production%20Ready-22C55E?style=flat-square)](.)
-[![Stack](https://img.shields.io/badge/Stack-MERN-00D4FF?style=flat-square)](.)
-[![AI](https://img.shields.io/badge/AI-Gemini%201.5%20Pro-FF6B35?style=flat-square)](.)
-[![Payments](https://img.shields.io/badge/Payments-Razorpay-3395FF?style=flat-square)](.)
-[![License](https://img.shields.io/badge/License-MIT-A78BFA?style=flat-square)](.)
+Manage clients, projects, tasks, invoices, payments, real-time sync, and AI-powered productivity — all in one seamless ecosystem.
 
 <br/>
 
-[Features](#-features) · [Tech Stack](#-tech-stack) · [Quick Start](#-quick-start) · [Project Structure](#-project-structure) · [Environment Variables](#-environment-variables) · [Auth Flow](#-authentication-flow) · [Plans](#-saas-plans)
+[![Status](https://img.shields.io/badge/Status-Production%20Ready-22C55E?style=for-the-badge&logo=rocket&logoColor=white)](.)
+[![Pricing](https://img.shields.io/badge/Pricing-100%25%20Free%20Forever-635BFF?style=for-the-badge&logo=star&logoColor=white)](.)
+[![Frontend](https://img.shields.io/badge/Frontend-React%2018%20%2B%20Vite-61DAFB?style=for-the-badge&logo=react&logoColor=black)](.)
+[![Backend](https://img.shields.io/badge/Backend-Node.js%20%2B%20Express-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](.)
+[![Database](https://img.shields.io/badge/Database-MongoDB%20%2B%20Mongoose-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](.)
+[![AI](https://img.shields.io/badge/AI-Google%20Gemini%201.5%20Pro-FF6B35?style=for-the-badge&logo=googlegemini&logoColor=white)](.)
+[![Sync](https://img.shields.io/badge/Realtime-Socket.io-10B981?style=for-the-badge&logo=socketdotio&logoColor=white)](.)
+[![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](.)
+
+<br/>
+
+[📖 Overview](#-what-is-skillora) · [🌟 Key Features](#-key-features) · [🖥 The 3 Portals](#-the-3-dashboards-at-a-glance) · [🏗 Architecture](#-system-architecture--real-time-sync) · [🚀 Quick Start](#-quick-start-3-step-setup) · [🔌 API Reference](#-complete-api-reference) · [🗄 Database Schemas](#-database-schemas-explained) · [📁 Directory Tree](#-project-structure)
 
 </div>
 
 ---
 
-## ✨ Features
+## 📖 What is Skillora?
 
-### 🔐 Authentication & Security
-- JWT access tokens (2h) + refresh token rotation (30d) via HTTP-only cookies
-- Google & GitHub OAuth via Passport.js
-- Brute-force lockout, token version invalidation, silent refresh on 401
-- Access token stored **in-memory only** — never `localStorage`
+**Skillora** is an all-in-one management platform built to unify freelancer workflows, client collaboration, and platform administration into a single high-performance application.
 
-### 📊 Dashboard & Analytics
-- KPI widgets, sparkline charts, earnings overview (Recharts)
-- Activity feed, real-time notifications via Socket.io
-- Revenue analytics with period comparison
+Instead of subscribing to multiple disconnected software suites for project tracking, task boards, client communication, invoice generation, and AI assistance, Skillora integrates everything into **one synchronized workspace**.
 
-### 📁 Projects & Tasks
-- Kanban board with drag-and-drop (`@dnd-kit`)
-- Task priority, due dates, checklists, time logging
-- Auto-progress calculation from task completion
-- Budget and timeline tracking per project
-
-### 👥 Clients (CRM)
-- Full client profiles with contact info, notes, tags
-- Project and invoice history per client
-- Denormalized revenue stats for fast queries
-
-### 🧾 Invoices & Payments
-- Line-item invoice builder with tax and discount support
-- Full status lifecycle: Draft → Sent → Paid → Overdue
-- Razorpay subscription billing with webhook lifecycle handling
-- Pro (₹1,499/mo) and Premium (₹3,999/mo) plans
-
-### 🤖 AI Assistant
-- Powered by Google Gemini 1.5 Pro
-- Streaming SSE responses with typing cursor
-- Workspace-aware context (projects, tasks, clients)
-- Floating widget + full-page chat panel
-- AI-suggested task generation per project
-
-### 🎨 UI & Experience
-- Premium glassmorphism design system
-- Video backgrounds on auth pages
-- Framer Motion micro-interactions throughout
-- Dark mode persisted via Zustand (zero flash)
-- Command palette, global search, notifications panel
-- Fully responsive — mobile to desktop
-
-### 🛠 Admin Panel
-- User management, platform revenue overview
-- Admin-only routes with role-based access control
-- Admin profile page with security settings
-
-### 📧 Email & Uploads
-- Transactional emails: welcome, password reset, invoice sent, subscription events (Nodemailer)
-- Cloudinary integration for avatars and file attachments
-
-### 🔗 Client Portal
-- Separate login for clients to view their projects and invoices
-- Invite flow with secure token-based access
+> 💡 **100% Free Forever**: All features — including unlimited projects, client portals, line-item invoicing, AI prompt studios, real-time chat, and admin configuration — are completely unlocked with no paywalls or hidden tier limits.
 
 ---
 
-## 🧱 Tech Stack
+## 🌟 Key Features
 
-| Layer | Technology |
-|---|---|
-| **Frontend** | React 18, Vite, Tailwind CSS v3, Framer Motion |
-| **Backend** | Node.js, Express.js |
-| **Database** | MongoDB + Mongoose |
-| **Auth** | JWT (access 2h + refresh 30d), Passport.js (Google, GitHub) |
-| **AI** | Google Gemini 1.5 Pro — streaming SSE |
-| **Payments** | Razorpay — subscriptions + webhooks |
-| **Real-time** | Socket.io |
-| **Email** | Nodemailer (SMTP) |
-| **File Upload** | Cloudinary + Multer |
-| **Caching** | Redis via ioredis (optional) |
-| **State** | Zustand |
-| **Charts** | Recharts |
-| **Drag & Drop** | @dnd-kit |
-| **Validation** | Joi |
-| **Logging** | Winston |
-| **Security** | Helmet, express-rate-limit, express-mongo-sanitize, xss-clean |
+- 💼 **Freelancer OS**: Drag-and-drop Kanban boards (`@dnd-kit`), project progress metrics, client CRM, invoice generator, and technical skill matrix.
+- 👥 **Dedicated Client Portal**: Secure client interface to review project progress, approve/request changes on milestones, view/pay invoices online, and chat directly with freelancers.
+- 🛡 **Admin Command Center**: Complete oversight of registered users, revenue statistics, live activity logs, and MongoDB-persisted platform configuration (Maintenance Mode, Registration rules, Support contacts).
+- ⚡ **Real-Time Socket Synchronization**: Bi-directional updates using Socket.io so changes on one dashboard instantaneously reflect across all active sessions.
+- 🤖 **Google Gemini 1.5 Pro AI Studio**: Native AI assistance supporting Server-Sent Events (SSE) streaming for generating project breakdown structures, task checklists, and smart summaries.
+- 🔐 **Bank-Grade Authentication**: OAuth 2.0 (Google & GitHub) + JWT architecture featuring **in-memory access tokens** (`tokenStore.js`) and HttpOnly SameSite=Strict refresh cookies for maximum security against XSS & CSRF attacks.
 
 ---
 
-## 🚀 Quick Start
+## 🖥 The 3 Dashboards at a Glance
+
+Skillora provides dedicated, role-specific interfaces tailored for each user type:
+
+```mermaid
+graph TD
+    A["⚡ Skillora Ecosystem"] --> B["💼 1. Freelancer OS"]
+    A --> C["👥 2. Client Portal"]
+    A --> D["🛡 3. Admin Command Center"]
+
+    B --> B1["Projects, Tasks & Kanban Board"]
+    B --> B2["Client CRM & Revenue Analytics"]
+    B --> B3["Line-Item Invoices & PDF Export"]
+    B --> B4["AI Studio & Skill Matrix"]
+
+    C --> C1["Project Progress & Milestone Tracker"]
+    C --> C2["Invoice Review & Online Payments"]
+    C --> C3["Real-time Project Chat"]
+
+    D --> D1["Platform Stats & Global Revenue"]
+    D --> D2["User & Role Management"]
+    D --> D3["MongoDB Platform Config Settings"]
+    D --> D4["System Audit Log"]
+```
+
+### 1. 💼 Freelancer OS (`/dashboard`)
+- **Project & Task Management**: Interactive Kanban boards with drag-and-drop support (`@dnd-kit`), task priorities, checklist completion tracking, and automatic project progress calculation.
+- **Client CRM**: Manage client contacts, company billing profiles, total billed revenue, and project history.
+- **Invoice & Payments**: Professional line-item invoice builder with automatic sequential numbering (`INV-2026-0001`), invoice status lifecycle (`Draft` → `Sent` → `Viewed` → `Paid` → `Overdue`), and PDF rendering.
+- **Skill Portfolio Matrix**: Track technical skills with auto-calculated proficiency levels (Beginner → Expert).
+- **AI Studio**: Integrated Google Gemini 1.5 Pro AI assistant for task generation, project scoping, and invoice descriptions with live streaming responses.
+
+### 2. 👥 Client Portal (`/client/dashboard`)
+- **Project & Milestone Progress**: View real-time completion percentages, task statuses, and approve/request changes on milestone deliverables.
+- **Invoice Review & Payments**: Access sent invoices, view detailed line items, and process payments securely online (Stripe, PayPal, Bank Transfer).
+- **Direct Client Messaging**: Real-time project discussion threads powered by Socket.io.
+- **Notifications**: Instant notification alerts when new invoices are issued, milestones are updated, or messages arrive.
+
+### 3. 🛡 Admin Command Center (`/admin`)
+- **System Analytics**: Platform-wide metrics including total registered users, active projects, volume processed, and real-time user activity.
+- **User Control**: Search/filter users by role (`freelancer`, `client`, `admin`), update account statuses (active/suspended), or modify user roles.
+- **MongoDB Persisted Config**: Dynamic settings management (`Config` schema) controlling system maintenance mode, public registration toggles, and global support contacts.
+- **Audit Log**: System event log tracking user registrations, role updates, and administrative actions.
+
+---
+
+## 🏗 System Architecture & Real-Time Sync
+
+### Overall Architecture
+
+```mermaid
+graph LR
+    subgraph Client Tier
+        UI["React 18 + Vite Frontend"]
+        Zustand["Zustand State Store"]
+        TokenStore["In-Memory Token Store"]
+    end
+
+    subgraph Server Tier
+        Express["Express.js Server"]
+        Auth["Passport & JWT Middleware"]
+        Sockets["Socket.io Engine"]
+    end
+
+    subgraph Data & Services
+        Mongo[("MongoDB Database\n(12 Schemas)")]
+        Gemini["Google Gemini 1.5 Pro AI"]
+    end
+
+    UI <-->|"HTTP / REST API"| Express
+    UI <-->|"WebSockets (WSS)"| Sockets
+    Express <--> Mongo
+    Express <-->|"SSE Streaming"| Gemini
+```
+
+### Real-Time Socket.io Event Flow
+
+All 3 dashboards stay synchronized in real-time using Socket.io event dispatches (`useSyncEvents.js`):
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Freelancer as 💼 Freelancer OS
+    participant Server as ⚙️ Server (Socket.io)
+    participant Client as 👥 Client Portal
+    participant Admin as 🛡 Admin Panel
+
+    Freelancer->>Server: Updates Project Progress / Issues Invoice
+    Server->>Client: Emits 'project:updated' / 'invoice:updated'
+    Client-->>Client: Auto-refetches & patches live project status
+    Server->>Admin: Emits 'admin:stats_refresh'
+    Admin-->>Admin: Auto-refetches platform analytics & activity log
+    Client->>Server: Approves Milestone / Pays Invoice
+    Server->>Freelancer: Emits 'invoice:updated' / 'dashboard:refresh'
+    Freelancer-->>Freelancer: Updates revenue chart & live invoice state
+```
+
+---
+
+## 🔒 Enterprise Security Architecture
+
+Skillora implements modern web security practices:
+
+- **In-Memory Access Tokens**: Access JWTs are kept strictly in JavaScript memory (`tokenStore.js`) and never stored in `localStorage` or `sessionStorage`, completely insulating the app from XSS token theft.
+- **HttpOnly Refresh Cookies**: Refresh tokens are stored in secure, `HttpOnly`, `SameSite=Strict` cookies for automatic silent token rotation.
+- **NoSQL Injection Prevention**: Requests pass through `express-mongo-sanitize` to strip prohibited `$` or `.` operators.
+- **XSS Attack Defense**: Sanitized payloads using `xss-clean`.
+- **API Rate Limiting**: Dedicated rate limiters (`express-rate-limit`) protect sensitive auth routes (`/api/auth/*`) and general endpoints against brute-force attacks.
+- **HTTP Security Headers**: Powered by `helmet` to set secure CSP, HSTS, X-Frame-Options, and referrer policies.
+
+---
+
+## 🗄 Database Schemas Explained
+
+Skillora uses **12 MongoDB Mongoose models** (`server/models/`) to support relational and scalable data modeling:
+
+| # | Schema Model | Database Collection | Primary Purpose & Key Fields |
+| :--- | :--- | :--- | :--- |
+| 1 | **`User`** | `users` | Passwords (bcrypt), authentication, roles (`admin`, `freelancer`, `client`), avatar, OAuth IDs |
+| 2 | **`Project`** | `projects` | Title, budget, deadlines, progress percentage, task counters, milestone deliverables |
+| 3 | **`Task`** | `tasks` | Title, status (`todo`, `in_progress`, `review`, `done`), priority, Kanban position order, checklist items |
+| 4 | **`Client`** | `clients` | Company name, contact email, billing address, denormalized revenue statistics, linked user profile |
+| 5 | **`Invoice`** | `invoices` | Sequential invoice numbers (`INV-2026-XXXX`), line items, subtotal, tax, status (`draft`, `sent`, `paid`, `overdue`) |
+| 6 | **`Payment`** | `payments` | Transaction amount, method (`stripe`, `paypal`, `bank`), payment status, invoice linkage |
+| 7 | **`Skill`** | `skills` | Skill title, category, score (1–100), auto-calculated proficiency level (`Beginner` → `Expert`) |
+| 8 | **`Notification`** | `notifications` | User notifications with 90-day auto-cleanup TTL index |
+| 9 | **`Message`** | `messages` | Project-based real-time chat messages between freelancer & client |
+| 10 | **`AiLog`** | `ailogs` | AI prompt & response logs, token usage, latency metrics, 180-day TTL auto-cleanup |
+| 11 | **`Counter`** | `counters` | Atomic sequential ID sequence generator for invoice numbers |
+| 12 | **`Config`** | `configs` | **[Persisted MongoDB Settings]** Maintenance mode, registration controls, support emails, app preferences |
+
+---
+
+## 🛠 Tech Stack
+
+```
+Frontend:  React 18  │  Vite  │  Tailwind CSS v3  │  Framer Motion  │  Recharts  │  Zustand  │  @dnd-kit
+Backend:   Node.js   │  Express.js  │  Socket.io  │  Passport.js  │  JWT
+Database:  MongoDB   │  Mongoose (12 Schemas)
+AI:        Google Gemini 1.5 Pro (SSE Streaming)
+Security:  Helmet    │  express-rate-limit  │  express-mongo-sanitize  │  xss-clean  │  In-Memory Tokens
+```
+
+---
+
+## 🚀 Quick Start (3-Step Setup)
 
 ### Prerequisites
+- **Node.js** v18.0.0 or higher
+- **MongoDB** (Local instance or MongoDB Atlas URI)
+- **Git**
 
-- Node.js **v18+**
-- MongoDB (local or [Atlas](https://cloud.mongodb.com))
-- Git
+---
 
-### 1. Clone
+### Step 1: Clone Repository
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/skillora.git
 cd skillora
 ```
 
-### 2. Backend
+---
+
+### Step 2: Set Up Backend (`server`)
 
 ```bash
 cd server
 npm install
 ```
 
-Create `server/.env` (minimum required):
+Create a `server/.env` file with the required environment variables:
 
 ```env
 NODE_ENV=development
@@ -136,27 +224,103 @@ PORT=5000
 SERVER_URL=http://localhost:5000
 CLIENT_URL=http://localhost:5173
 
+# MongoDB Connection String
 MONGO_URI=mongodb://localhost:27017/skillora
 
-JWT_ACCESS_SECRET=your_access_secret_min_32_chars
-JWT_REFRESH_SECRET=your_refresh_secret_min_32_chars
+# JWT Configuration (Minimum 32 random characters for secret keys)
+JWT_ACCESS_SECRET=your_jwt_access_secret_key_minimum_32_characters
+JWT_REFRESH_SECRET=your_jwt_refresh_secret_key_minimum_32_characters
 JWT_ACCESS_EXPIRES=2h
 JWT_REFRESH_EXPIRES=30d
+
+# Google Gemini AI Key (Optional for AI Studio)
+GEMINI_API_KEY=your_google_gemini_api_key
+
+# OAuth Credentials (Optional)
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GITHUB_CLIENT_ID=your_github_client_id
+GITHUB_CLIENT_SECRET=your_github_client_secret
 ```
+
+Start the backend development server:
 
 ```bash
 npm run dev
-# → http://localhost:5000
+# 🚀 Backend running at http://localhost:5000
 ```
 
-### 3. Frontend
+---
+
+### Step 3: Set Up Frontend (`client`)
+
+Open a new terminal window:
 
 ```bash
 cd client
 npm install
-npm run dev
-# → http://localhost:5173
 ```
+
+Create a `client/.env` file:
+
+```env
+VITE_API_URL=/api
+VITE_SERVER_URL=http://localhost:5000
+```
+
+Start the frontend application:
+
+```bash
+npm run dev
+# 🚀 Client application running at http://localhost:5173
+```
+
+Open **`http://localhost:5173`** in your browser!
+
+---
+
+## 🔌 Complete API Reference
+
+### 🔑 Authentication (`/api/auth`)
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :---: |
+| `POST` | `/api/auth/register` | Register a new user (`freelancer` or `client`) | ❌ |
+| `POST` | `/api/auth/login` | Authenticate user and receive refresh token cookie | ❌ |
+| `POST` | `/api/auth/refresh` | Issue new in-memory access token via refresh cookie | ❌ |
+| `POST` | `/api/auth/logout` | Logout user and clear authentication cookie | 🔒 |
+| `POST` | `/api/auth/logout-all` | Invalidate all active user sessions | 🔒 |
+| `GET` | `/api/auth/me` | Fetch currently authenticated user profile | 🔒 |
+| `GET` | `/api/auth/google` | Initiate Google OAuth 2.0 flow | ❌ |
+| `GET` | `/api/auth/github` | Initiate GitHub OAuth 2.0 flow | ❌ |
+
+### 👥 Client Portal (`/api/client-portal`)
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :---: |
+| `POST` | `/api/client-portal/login` | Portal authentication for client accounts | ❌ |
+| `POST` | `/api/client-portal/accept-invite` | Redeem portal invitation code | ❌ |
+| `GET` | `/api/client-portal/me` | Get client portal session user | 🔒 Client |
+| `GET` | `/api/client-portal/projects` | List projects assigned to client | 🔒 Client |
+| `GET` | `/api/client-portal/invoices` | List invoices issued to client | 🔒 Client |
+| `POST` | `/api/client-portal/invoices/:id/pay` | Initiate online payment for invoice | 🔒 Client |
+| `POST` | `/api/client-portal/projects/:id/milestones/:milestoneId/approve` | Approve milestone deliverable | 🔒 Client |
+
+### 🛡 Admin Command Center (`/api/admin`)
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :---: |
+| `GET` | `/api/admin/stats` | Platform-wide user, project, and volume analytics | 🔒 Admin |
+| `GET` | `/api/admin/users` | List, filter, and search registered users | 🔒 Admin |
+| `PATCH` | `/api/admin/users/:id` | Update user status or assign admin roles | 🔒 Admin |
+| `DELETE` | `/api/admin/users/:id` | Remove user account from system | 🔒 Admin |
+| `GET` | `/api/admin/config` | Retrieve MongoDB-persisted platform configuration | 🔒 Admin |
+| `PATCH` | `/api/admin/config` | Update system settings (Maintenance, Config) | 🔒 Admin |
+| `GET` | `/api/admin/activity` | Retrieve platform activity audit logs | 🔒 Admin |
+
+### 🤖 AI Assistant Studio (`/api/ai`)
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :---: |
+| `POST` | `/api/ai/chat` | Send prompt to Gemini 1.5 Pro | 🔒 |
+| `POST` | `/api/ai/generate-tasks` | Generate project task breakdown structure | 🔒 |
+| `POST` | `/api/ai/summarize-invoice` | Generate smart client invoice summary | 🔒 |
 
 ---
 
@@ -164,183 +328,75 @@ npm run dev
 
 ```
 skillora/
-├── client/                        # React + Vite frontend
-│   ├── public/
-│   │   └── videos/                # Video backgrounds (login, signup, landing)
+├── client/                        # React 18 + Vite Frontend
+│   ├── public/                    # Static assets & favicon
 │   └── src/
 │       ├── components/
-│       │   ├── ai/                # Chat panel, widget, streaming, quick actions
-│       │   ├── dashboard/         # KPI widgets, charts, activity feed, navbar
-│       │   ├── projects/          # Kanban board
-│       │   ├── ui/                # Button, Modal, Input, Badge, Tabs, Tooltip...
-│       │   └── common/            # ProtectedRoute, AdminRoute, Spinner, PlanGate
+│       │   ├── ai/                # AI floating widget, chat studio components
+│       │   ├── dashboard/         # Stat cards, revenue charts, activity feeds
+│       │   ├── projects/          # Drag-and-drop Kanban board (@dnd-kit)
+│       │   ├── ui/                # Command palette, modals, buttons, badges
+│       │   └── common/            # ProtectedRoute, AdminRoute, ClientRoute loaders
 │       ├── pages/
-│       │   ├── Landing/           # Cinematic landing page
-│       │   ├── Auth/              # Login, Register, ForgotPassword, ResetPassword, OAuth
-│       │   ├── Dashboard/
-│       │   ├── Projects/          # List + ProjectDetail
-│       │   ├── Tasks/
-│       │   ├── Clients/           # List + ClientDetail (CRM)
-│       │   ├── Payments/          # Invoice list, builder, detail
-│       │   ├── Skills/
-│       │   ├── AI/                # Full AI chat page
-│       │   ├── Settings/          # Profile, security, billing, appearance, notifications
-│       │   ├── Admin/             # Overview, Users, Revenue, Settings, Profile
-│       │   └── ClientPortal/      # Client-facing dashboard, invoices, projects
-│       ├── layouts/               # DashboardLayout, AdminLayout, ClientLayout, MainLayout
-│       ├── store/                 # Zustand: auth, ai, billing, client, dashboard, invoice...
-│       ├── services/
-│       │   ├── api.js             # Axios + silent token refresh + session expiry guard
-│       │   ├── authService.js
-│       │   ├── tokenStore.js      # In-memory access token (never localStorage)
-│       │   └── socketService.js
-│       ├── hooks/                 # useAuth, useSocket, useSyncEvents, useDebounce...
-│       └── utils/                 # helpers, planConstants
+│       │   ├── Landing/           # Public product landing page
+│       │   ├── Auth/              # Login, Register, Password Recovery, OAuth
+│       │   ├── Dashboard/         # Freelancer main overview
+│       │   ├── Projects/          # Project list & detail views
+│       │   ├── Tasks/             # Dedicated Kanban board view
+│       │   ├── Clients/           # Client CRM list & detail views
+│       │   ├── Payments/          # Invoices list, builder, & detail views
+│       │   ├── Skills/            # Technical skill matrix
+│       │   ├── AI/                # Dedicated AI Chat Studio
+│       │   ├── Settings/          # Profile, Security, Preferences
+│       │   ├── Admin/             # Overview, Users, Revenue, Settings, Logs
+│       │   └── ClientPortal/      # Client Dashboard, Invoices, Projects, Chat
+│       ├── layouts/               # DashboardLayout, AdminLayout, ClientLayout
+│       ├── store/                 # Zustand state stores (auth, project, invoice...)
+│       ├── services/              # Axios instance, tokenStore, socketService
+│       ├── hooks/                 # useAuth, useSocket, useSyncEvents, useDebounce
+│       └── utils/                 # Currency formatters, date formatters, constants
 │
-└── server/                        # Express backend
-    ├── app.js
-    ├── server.js
-    ├── config/                    # db, env, passport, plans, redis, socket, oauth
-    ├── controllers/               # auth, project, task, client, invoice, ai, admin...
-    ├── middlewares/               # auth, rateLimiter, error, planGate, upload
-    ├── models/                    # User, Project, Task, Client, Invoice, Payment, Skill...
-    ├── routes/                    # One file per resource
-    ├── services/                  # auth, ai, billing, email, project, dashboard...
-    ├── utils/                     # ApiError, ApiResponse, asyncHandler, logger, notify
-    └── validators/                # Joi schemas for auth, project, task
+└── server/                        # Node.js + Express Backend
+    ├── app.js                     # Express app configuration & middleware setup
+    ├── server.js                  # HTTP + Socket.io server bootstrap
+    ├── config/                    # DB connection, passport, socket.io, plans config
+    ├── controllers/               # Controllers (auth, project, invoice, admin, etc.)
+    ├── middlewares/               # Authentication, rate limiting, error handlers
+    ├── models/                    # 12 Mongoose schemas (User, Project, Config...)
+    ├── routes/                    # API route definitions
+    ├── services/                  # Business logic (sync, admin, AI, auth, invoice)
+    └── utils/                     # ApiError, ApiResponse, asyncHandler, logger
 ```
 
 ---
 
-## 🔑 Environment Variables
+## ❓ Frequently Asked Questions (FAQ)
 
-### Server — `server/.env`
+<details>
+<summary><b>Is Skillora really 100% free?</b></summary>
+<br/>
+<b>Yes!</b> Skillora is completely free for all users. There are no trial periods, mandatory credit cards, or locked premium features. All users have full access to unlimited projects, client portals, invoicing, real-time sync, and AI assistance.
+</details>
 
-| Variable | Required | Description |
-|---|---|---|
-| `MONGO_URI` | ✅ | MongoDB connection string |
-| `JWT_ACCESS_SECRET` | ✅ | Min 32 chars |
-| `JWT_REFRESH_SECRET` | ✅ | Min 32 chars |
-| `JWT_ACCESS_EXPIRES` | — | Default: `2h` |
-| `JWT_REFRESH_EXPIRES` | — | Default: `30d` |
-| `CLIENT_URL` | ✅ | Frontend origin (CORS) |
-| `SERVER_URL` | ✅ | Backend URL (OAuth callbacks) |
-| `NODE_ENV` | ✅ | `development` / `production` |
-| `PORT` | — | Default: `5000` |
-| `GOOGLE_CLIENT_ID` | OAuth | Google OAuth app ID |
-| `GOOGLE_CLIENT_SECRET` | OAuth | Google OAuth secret |
-| `GITHUB_CLIENT_ID` | OAuth | GitHub OAuth app ID |
-| `GITHUB_CLIENT_SECRET` | OAuth | GitHub OAuth secret |
-| `GEMINI_API_KEY` | AI | Google Gemini API key |
-| `GEMINI_MODEL` | AI | Default: `gemini-1.5-pro` |
-| `RAZORPAY_KEY_ID` | Billing | Razorpay key ID |
-| `RAZORPAY_KEY_SECRET` | Billing | Razorpay key secret |
-| `RAZORPAY_WEBHOOK_SECRET` | Billing | Webhook signature verification |
-| `EMAIL_HOST` | Email | SMTP host (e.g. `smtp.gmail.com`) |
-| `EMAIL_PORT` | Email | Default: `587` |
-| `EMAIL_USER` | Email | SMTP username |
-| `EMAIL_PASS` | Email | App password |
-| `EMAIL_FROM` | Email | Sender display address |
-| `CLOUDINARY_CLOUD_NAME` | Upload | Cloudinary cloud name |
-| `CLOUDINARY_API_KEY` | Upload | Cloudinary API key |
-| `CLOUDINARY_API_SECRET` | Upload | Cloudinary API secret |
-| `REDIS_URL` | Cache | Optional — Redis connection URL |
+<details>
+<summary><b>How does real-time synchronization work across different user roles?</b></summary>
+<br/>
+Skillora utilizes <b>Socket.io</b> to broadcast scoped event payloads when data mutations occur. For example, when a freelancer updates project progress or sends an invoice, custom hooks (`useSyncEvents.js`) intercept the server broadcast and seamlessly update the UI state across active Freelancer, Client, and Admin sessions without full page refreshes.
+</details>
 
-### Client — `client/.env`
-
-```env
-VITE_API_URL=/api
-VITE_SERVER_URL=http://localhost:5000
-```
-
----
-
-## 🔐 Authentication Flow
-
-### Local (Email + Password)
-
-```
-Register / Login
-      ↓
-Server issues:
-  • Access token (2h)  → memory only (tokenStore.js)
-  • Refresh token (30d) → HTTP-only cookie
-      ↓
-Axios interceptor catches 401
-      ↓
-Silent POST /auth/refresh → new access token
-      ↓
-Session expired? → toast + redirect to /login
-```
-
-### OAuth (Google / GitHub)
-
-```
-Click OAuth button
-      ↓
-Redirect → SERVER_URL/api/auth/google (or /github)
-      ↓
-Passport authenticates → issues JWT pair
-      ↓
-Redirect → /oauth/callback#token=...
-      ↓
-Frontend reads token from URL fragment
-Stores in memory, clears from URL
-```
-
----
-
-## 💳 SaaS Plans
-
-| Feature | Free | Pro | Premium |
-|---|---|---|---|
-| **Price** | Free | ₹1,499/mo | ₹3,999/mo |
-| Projects | 3 | 25 | Unlimited |
-| Clients | 5 | 50 | Unlimited |
-| Invoices | 10 | 100 | Unlimited |
-| AI Requests/mo | 20 | 200 | Unlimited |
-| Analytics | — | ✅ | ✅ |
-| Custom Domain | — | — | ✅ |
-| Priority Support | — | — | ✅ |
-
-Payments via **Razorpay** · Prices in INR · Cancel anytime
-
----
-
-## 🔗 OAuth Setup
-
-### Google
-1. [console.cloud.google.com](https://console.cloud.google.com) → Create OAuth 2.0 credentials
-2. Authorized redirect URI: `http://localhost:5000/api/auth/google/callback`
-3. Authorized JS origin: `http://localhost:5000`
-
-### GitHub
-1. [github.com/settings/developers](https://github.com/settings/developers) → New OAuth App
-2. Callback URL: `http://localhost:5000/api/auth/github/callback`
-
----
-
-## 💸 Razorpay Setup
-
-1. Create account at [dashboard.razorpay.com](https://dashboard.razorpay.com)
-2. Create subscription plans for Pro and Premium
-3. Add webhook: `https://yourdomain.com/api/billing/webhook`
-4. Enable events: `subscription.activated`, `subscription.charged`, `subscription.cancelled`, `payment.failed`
-
----
-
-## 🛡 Security Highlights
-
-- Helmet for HTTP security headers
-- Rate limiting on auth routes (express-rate-limit)
-- MongoDB injection prevention (express-mongo-sanitize)
-- XSS sanitization (xss-clean)
-- CORS locked to `CLIENT_URL`
-- Refresh tokens stored as HTTP-only, Secure, SameSite=Strict cookies
-- Token version field on User model — invalidates all sessions on password change
+<details>
+<summary><b>How are access tokens securely stored?</b></summary>
+<br/>
+Access tokens are kept <b>strictly in JavaScript memory</b> within `tokenStore.js`. Refresh tokens are stored in secure, `HttpOnly`, `SameSite=Strict` cookies. Tokens are never stored in <code>localStorage</code> or <code>sessionStorage</code>, rendering the application immune to token theft via XSS attacks.
+</details>
 
 ---
 
 ## 📜 License
 
-MIT © 2025 Skillora
+Distributed under the **MIT License**. See `LICENSE` for more information.
+
+<div align="center">
+  <br/>
+  <b>Skillora — Empowering Freelancers Worldwide 🚀</b>
+</div>

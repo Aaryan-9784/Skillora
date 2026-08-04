@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7C6FFF"/>
+      <stop offset="100%" stop-color="#5B52F0"/>
+    </linearGradient>
+  </defs>
+  <!-- Main squircle matching app logo -->
+  <rect width="32" height="32" rx="9.5" fill="url(#g)"/>
+  <!-- Glossy top inner border highlight -->
+  <rect x="0.75" y="0.75" width="30.5" height="30.5" rx="8.75" fill="none" stroke="white" stroke-opacity="0.25" stroke-width="1.2"/>
+  <!-- Matching filled white Zap lightning icon -->
+  <g transform="translate(4, 4)">
+    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="white" stroke="white" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+  </g>
+</svg>
