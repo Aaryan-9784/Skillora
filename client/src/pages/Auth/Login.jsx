@@ -48,8 +48,8 @@ const Login = () => {
 
       {/* ── video bg ── */}
       <video autoPlay muted loop playsInline
-        className="absolute inset-0 z-0 w-full h-full object-cover opacity-80"
-        style={{ filter: "blur(0.5px)" }}>
+        className="absolute inset-0 z-0 w-full h-full object-cover opacity-85"
+        style={{ filter: "brightness(0.6) contrast(1.15) saturate(1.1) blur(0.3px)" }}>
         <source src="/videos/login-bg.mp4" type="video/mp4" />
       </video>
 

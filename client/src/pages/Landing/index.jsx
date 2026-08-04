@@ -4,7 +4,7 @@ import { motion, useScroll, useTransform, useInView, AnimatePresence } from "fra
 import {
   Zap, LayoutDashboard, Users, CreditCard, Brain, CheckCircle2,
   ArrowRight, Star, TrendingUp, Shield, Clock, Globe,
-  ChevronRight, Play, BarChart3, FileText, Kanban, Bot,
+  ChevronRight, Play, BarChart3, FileText, Kanban, Bot, X,
 } from "lucide-react";
 
 // ─── Reusable fade-in wrapper ─────────────────────────────
@@ -96,9 +96,11 @@ const Navbar = () => {
   }, [menuOpen]);
 
   const links = [
+    { label: "Product",      href: "#product" },
+    { label: "Why Skillora", href: "#why-skillora" },
     { label: "Features",     href: "#features" },
-    { label: "Pricing",      href: "#pricing" },
     { label: "How it works", href: "#how-it-works" },
+    { label: "Reviews",      href: "#testimonials" },
   ];
 
   return (
@@ -303,15 +305,93 @@ const Navbar = () => {
   );
 };
 
+// ─── Video Demo Modal ──────────────────────────────────────
+const VideoModal = ({ isOpen, onClose }) => {
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+      window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  return (
+    <AnimatePresence>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8">
+        {/* Backdrop */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          className="absolute inset-0 bg-black/80 backdrop-blur-md"
+        />
+
+        {/* Modal Window */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          className="relative z-10 w-full max-w-5xl rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-[#0B0F1A]"
+        >
+          {/* Header Only (no text buttons or floating animations) */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-[#0D1222]">
+            <div className="flex items-center gap-2.5">
+              <div className="w-3 h-3 rounded-full bg-red-500/80" />
+              <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
+              <div className="w-3 h-3 rounded-full bg-green-500/80" />
+              <span className="ml-2 text-[14px] font-semibold text-slate-200">
+                Skillora Platform Overview
+              </span>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          {/* Clear Video Player (no text buttons, no overlay, 100% clear video) */}
+          <div className="relative aspect-video bg-black flex items-center justify-center">
+            <video
+              autoPlay
+              controls
+              playsInline
+              className="w-full h-full object-contain"
+            >
+              <source src="/videos/landing-bg.mp4" type="video/mp4" />
+              Your browser does not support HTML5 video.
+            </video>
+          </div>
+        </motion.div>
+      </div>
+    </AnimatePresence>
+  );
+};
+
 // ─── Hero ─────────────────────────────────────────────────
 const Hero = () => {
+  const [demoOpen, setDemoOpen] = useState(false);
   const { scrollY } = useScroll();
   const bgY     = useTransform(scrollY, [0, 600], [0, 120]);
   const textY   = useTransform(scrollY, [0, 400], [0, 60]);
   const opacity = useTransform(scrollY, [0, 320], [1, 0]);
 
   return (
-    <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 overflow-hidden">
+    <>
+      <VideoModal isOpen={demoOpen} onClose={() => setDemoOpen(false)} />
+
+      <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 overflow-hidden">
 
       {/* ── Layer 2: Dark gradient overlay ── */}
       <div className="absolute inset-0 z-[2]" style={{
@@ -341,15 +421,17 @@ const Hero = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
           className="text-[clamp(2.8rem,7vw,5.5rem)] font-bold leading-[1.04] mb-7 tracking-tight"
-          style={{ letterSpacing: "-0.04em", textShadow: "0 2px 20px rgba(0,0,0,0.9)" }}
+          style={{ letterSpacing: "-0.04em" }}
         >
-          <span style={{ color: "#fff", textShadow: "0 2px 20px rgba(0,0,0,0.9)" }}>Your freelance business,</span>
+          <span style={{ color: "#fff", textShadow: "0 4px 24px rgba(0,0,0,0.95), 0 2px 8px rgba(0,0,0,0.9)" }}>
+            Your freelance business,
+          </span>
           <br />
           <span style={{
-            background: "linear-gradient(135deg, #3B82F6 0%, #8B5CF6 45%, #EC4899 100%)",
+            background: "linear-gradient(135deg, #60A5FA 0%, #C084FC 45%, #F472B6 100%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
-            filter: "drop-shadow(0 0 30px rgba(139,92,246,0.7)) drop-shadow(0 2px 4px rgba(0,0,0,0.9))",
+            filter: "drop-shadow(0 0 35px rgba(192,132,252,0.9)) drop-shadow(0 4px 16px rgba(0,0,0,0.98))",
           }}>
             finally under control.
           </span>
@@ -409,9 +491,10 @@ const Hero = () => {
           </Link>
 
           <motion.button
+            onClick={() => setDemoOpen(true)}
             whileHover={{ scale: 1.04, background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.22)" }}
             whileTap={{ scale: 0.96 }}
-            className="h-[52px] px-7 rounded-2xl text-[14px] font-medium flex items-center gap-2.5 transition-all duration-250"
+            className="h-[52px] px-7 rounded-2xl text-[14px] font-medium flex items-center gap-2.5 transition-all duration-250 cursor-pointer"
             style={{
               background: "rgba(255,255,255,0.0)",
               border: "1px solid rgba(255,255,255,0.22)",
@@ -458,6 +541,7 @@ const Hero = () => {
       </motion.div>
 
     </section>
+    </>
   );
 };
 
@@ -467,29 +551,45 @@ const tabs = [
   {
     id: "projects", label: "Projects", icon: Kanban,
     title: "Kanban-powered project management",
-    desc: "Visualize every project with drag-and-drop boards. Track progress, set deadlines, and never miss a milestone.",
+    desc: "Visualize every project with drag-and-drop boards. Track progress, set deadlines, tag team members, and never miss a milestone.",
     preview: [
-      { col: "To Do", items: ["Brand redesign", "API integration"], color: "#3B82F6" },
-      { col: "In Progress", items: ["Mobile app UI", "Client onboarding"], color: "#F59E0B" },
-      { col: "Done", items: ["Logo design", "Proposal sent"], color: "#10B981" },
+      {
+        col: "In Progress", color: "#3B82F6",
+        items: [
+          { title: "SaaS Dashboard Redesign", client: "Acme Corp", tag: "Design", tagBg: "rgba(59,130,246,0.15)", tagColor: "#60A5FA", progress: 75, due: "Tomorrow" },
+          { title: "Stripe Webhook Sync", client: "TechStart", tag: "Backend", tagBg: "rgba(139,92,246,0.15)", tagColor: "#C084FC", progress: 40, due: "3 days" },
+        ],
+      },
+      {
+        col: "Review", color: "#F59E0B",
+        items: [
+          { title: "Client Onboarding Flow", client: "DesignCo", tag: "UX", tagBg: "rgba(245,158,11,0.15)", tagColor: "#FBBF24", progress: 90, due: "Today" },
+        ],
+      },
+      {
+        col: "Completed", color: "#10B981",
+        items: [
+          { title: "Brand Identity Guidelines", client: "BuildFast", tag: "Branding", tagBg: "rgba(16,185,129,0.15)", tagColor: "#34D399", progress: 100, due: "Done" },
+        ],
+      },
     ],
   },
   {
     id: "payments", label: "Payments", icon: CreditCard,
     title: "Invoicing that gets you paid faster",
-    desc: "Create professional invoices in seconds. Track payments, send reminders, and accept online payments.",
+    desc: "Create professional line-item invoices in seconds. Track real-time status, send automatic reminders, and accept Razorpay payments.",
     preview: null,
   },
   {
     id: "clients", label: "Clients", icon: Users,
     title: "Your client relationships, organized",
-    desc: "Keep every client detail, conversation, and project history in one clean view.",
+    desc: "Keep every client contact, contract value, project history, and portal link in one sleek, centralized database.",
     preview: null,
   },
   {
     id: "ai", label: "AI Assistant", icon: Brain,
     title: "Your AI-powered business partner",
-    desc: "Get smart suggestions, auto-draft proposals, analyze your earnings, and more.",
+    desc: "Get intelligent suggestions, auto-draft proposal emails, compute project profit margins, and forecast monthly revenue.",
     preview: null,
   },
 ];
@@ -499,32 +599,37 @@ const ProductPreview = () => {
   const tab = tabs.find((t) => t.id === active);
 
   return (
-    <section id="features" className="py-24 px-6" style={{ background: "rgba(7,10,20,0.75)", backdropFilter: "blur(2px)" }}>
+    <section id="product" className="py-24 px-6" style={{ background: "rgba(7,10,20,0.75)", backdropFilter: "blur(2px)" }}>
       <div className="max-w-6xl mx-auto">
         <FadeIn className="text-center mb-16">
-          <p className="text-[12px] font-semibold tracking-[0.2em] uppercase text-brand mb-4" style={{ color: "#8B5CF6" }}>Product</p>
+          <p className="text-[12px] font-semibold tracking-[0.2em] uppercase text-brand mb-4" style={{ color: "#8B5CF6" }}>Product Preview</p>
           <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight" style={{ letterSpacing: "-0.02em" }}>
             Everything you need.<br />Nothing you don't.
           </h2>
+          <p className="text-slate-400 mt-4 max-w-xl mx-auto">Explore how Skillora brings your tasks, invoices, client portal, and AI insights into one unified interface.</p>
         </FadeIn>
 
         {/* Tab bar */}
-        <div className="flex items-center justify-center gap-2 mb-12 flex-wrap">
+        <div className="flex items-center justify-center gap-3 mb-12 flex-wrap">
           {tabs.map((t) => (
             <motion.button
               key={t.id}
               onClick={() => setActive(t.id)}
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-200"
+              className="flex items-center gap-2.5 px-6 py-3 rounded-xl text-[13px] font-semibold transition-all duration-250"
               style={{
-                background: active === t.id ? "rgba(99,91,255,0.15)" : "rgba(255,255,255,0.04)",
-                border: active === t.id ? "1px solid rgba(99,91,255,0.4)" : "1px solid rgba(255,255,255,0.07)",
-                color: active === t.id ? "#C084FC" : "rgba(203,213,225,0.8)",
-                boxShadow: active === t.id ? "0 0 20px rgba(139,92,246,0.2)" : "none",
+                background: active === t.id
+                  ? "linear-gradient(135deg, rgba(139,92,246,0.25), rgba(59,130,246,0.15))"
+                  : "rgba(255,255,255,0.03)",
+                border: active === t.id
+                  ? "1px solid rgba(139,92,246,0.5)"
+                  : "1px solid rgba(255,255,255,0.07)",
+                color: active === t.id ? "#E9D5FF" : "rgba(203,213,225,0.75)",
+                boxShadow: active === t.id ? "0 0 24px rgba(139,92,246,0.25)" : "none",
               }}
             >
-              <t.icon size={14} /> {t.label}
+              <t.icon size={16} style={{ color: active === t.id ? "#C084FC" : "#94A3B8" }} /> {t.label}
             </motion.button>
           ))}
         </div>
@@ -537,107 +642,166 @@ const ProductPreview = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="rounded-2xl overflow-hidden"
+            className="rounded-3xl overflow-hidden"
             style={{
-              background: "linear-gradient(160deg,rgba(17,24,39,0.8),rgba(11,15,26,0.9))",
-              border: "1px solid rgba(255,255,255,0.07)",
-              boxShadow: "0 24px 80px rgba(0,0,0,0.4)",
+              background: "linear-gradient(160deg, rgba(17,24,39,0.95), rgba(11,15,26,0.98))",
+              border: "1px solid rgba(255,255,255,0.09)",
+              boxShadow: "0 24px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)",
             }}
           >
-            <div className="grid md:grid-cols-2 gap-0">
+            <div className="grid lg:grid-cols-12 gap-0 min-h-[420px]">
               {/* Left: text */}
-              <div className="p-10 flex flex-col justify-center">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-6"
-                  style={{ background: "rgba(99,91,255,0.15)", border: "1px solid rgba(99,91,255,0.25)" }}>
-                  <tab.icon size={18} style={{ color: "#A39AFF" }} />
+              <div className="lg:col-span-5 p-8 md:p-12 flex flex-col justify-center border-b lg:border-b-0 lg:border-r border-slate-800/60">
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-6"
+                  style={{ background: "linear-gradient(135deg, rgba(139,92,246,0.2), rgba(59,130,246,0.1))", border: "1px solid rgba(139,92,246,0.3)" }}>
+                  <tab.icon size={22} style={{ color: "#C084FC" }} />
                 </div>
-                <h3 className="text-2xl font-bold text-white mb-4 tracking-tight">{tab.title}</h3>
-                <p className="text-slate-300 leading-relaxed mb-8">{tab.desc}</p>
+                <h3 className="text-2xl md:text-3xl font-bold text-white mb-4 tracking-tight">{tab.title}</h3>
+                <p className="text-slate-300 leading-relaxed mb-8 text-[14px] md:text-[15px]">{tab.desc}</p>
                 <Link to="/register">
                   <motion.button
-                    whileHover={{ x: 4 }}
-                    className="flex items-center gap-2 text-[13px] font-semibold text-brand-300"
+                    whileHover={{ x: 6 }}
+                    className="flex items-center gap-2 text-[14px] font-semibold"
                     style={{ color: "#C084FC" }}
                   >
-                    Try it free <ChevronRight size={14} />
+                    Explore {tab.label} Feature <ChevronRight size={16} />
                   </motion.button>
                 </Link>
               </div>
+
               {/* Right: visual */}
-              <div className="p-6 flex items-center justify-center min-h-[280px]"
-                style={{ borderLeft: "1px solid rgba(255,255,255,0.05)" }}>
+              <div className="lg:col-span-7 p-6 md:p-8 flex items-center justify-center"
+                style={{ background: "rgba(7,10,20,0.5)" }}>
                 {active === "projects" && (
-                  <div className="w-full grid grid-cols-3 gap-3">
+                  <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-3">
                     {tab.preview.map((col) => (
-                      <div key={col.col} className="rounded-xl p-3"
-                        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className="w-2 h-2 rounded-full" style={{ background: col.color }} />
-                          <span className="text-[11px] font-semibold text-slate-400">{col.col}</span>
+                      <div key={col.col} className="rounded-2xl p-3.5"
+                        style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                        <div className="flex items-center justify-between mb-3 px-1">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2.5 h-2.5 rounded-full" style={{ background: col.color }} />
+                            <span className="text-[12px] font-bold text-slate-300">{col.col}</span>
+                          </div>
+                          <span className="text-[11px] text-slate-500 font-medium">{col.items.length}</span>
                         </div>
                         {col.items.map((item) => (
-                          <div key={item} className="mb-2 px-3 py-2 rounded-lg text-[12px] text-slate-300"
-                            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                            {item}
+                          <div key={item.title} className="mb-3 p-3.5 rounded-xl transition-all duration-200"
+                            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md"
+                                style={{ background: item.tagBg, color: item.tagColor }}>
+                                {item.tag}
+                              </span>
+                              <span className="text-[10px] text-slate-400">{item.due}</span>
+                            </div>
+                            <p className="text-[12px] font-semibold text-white mb-1">{item.title}</p>
+                            <p className="text-[11px] text-slate-400 mb-2.5">{item.client}</p>
+                            <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
+                              <div className="h-full rounded-full" style={{ width: `${item.progress}%`, background: col.color }} />
+                            </div>
                           </div>
                         ))}
                       </div>
                     ))}
                   </div>
                 )}
+
                 {active === "payments" && (
-                  <div className="w-full space-y-3">
+                  <div className="w-full max-w-lg space-y-3">
+                    <div className="flex items-center justify-between p-4 rounded-2xl mb-2"
+                      style={{ background: "linear-gradient(135deg, rgba(16,185,129,0.1), rgba(59,130,246,0.05))", border: "1px solid rgba(16,185,129,0.2)" }}>
+                      <div>
+                        <p className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider">Total Revenue (This Month)</p>
+                        <p className="text-2xl font-bold text-white mt-0.5">₹1,35,500</p>
+                      </div>
+                      <span className="text-[12px] font-semibold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        +24.5% vs last mo
+                      </span>
+                    </div>
                     {[
-                      { client: "Acme Corp", amount: "₹45,000", status: "Paid", color: "#10B981" },
-                      { client: "TechStart", amount: "₹28,500", status: "Pending", color: "#F59E0B" },
-                      { client: "DesignCo", amount: "₹62,000", status: "Overdue", color: "#EF4444" },
+                      { invNo: "INV-2025-004", client: "Acme Corp", amount: "₹45,000", status: "Paid", color: "#10B981", date: "Aug 02, 2026" },
+                      { invNo: "INV-2025-003", client: "TechStart Inc", amount: "₹28,500", status: "Pending", color: "#F59E0B", date: "Due in 4 days" },
+                      { invNo: "INV-2025-002", client: "DesignCo Agency", amount: "₹62,000", status: "Paid", color: "#10B981", date: "Jul 28, 2026" },
                     ].map((inv) => (
-                      <div key={inv.client} className="flex items-center justify-between px-4 py-3 rounded-xl"
+                      <div key={inv.invNo} className="flex items-center justify-between px-5 py-3.5 rounded-2xl"
                         style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                        <div>
-                          <p className="text-[13px] font-medium text-white">{inv.client}</p>
-                          <p className="text-[11px] text-slate-500">Invoice</p>
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+                            style={{ background: `${inv.color}15`, border: `1px solid ${inv.color}25` }}>
+                            <CreditCard size={16} style={{ color: inv.color }} />
+                          </div>
+                          <div>
+                            <p className="text-[13px] font-semibold text-white">{inv.client}</p>
+                            <p className="text-[11px] text-slate-400">{inv.invNo} • {inv.date}</p>
+                          </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-[13px] font-semibold text-white">{inv.amount}</p>
-                          <span className="text-[11px] font-medium px-2 py-0.5 rounded-full"
-                            style={{ background: `${inv.color}18`, color: inv.color }}>{inv.status}</span>
+                          <p className="text-[14px] font-bold text-white">{inv.amount}</p>
+                          <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full"
+                            style={{ background: `${inv.color}18`, color: inv.color, border: `1px solid ${inv.color}30` }}>
+                            {inv.status}
+                          </span>
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
+
                 {active === "clients" && (
-                  <div className="w-full space-y-3">
-                    {["Acme Corp", "TechStart Inc", "DesignCo", "BuildFast"].map((c, i) => (
-                      <div key={c} className="flex items-center gap-3 px-4 py-3 rounded-xl"
+                  <div className="w-full max-w-lg space-y-3">
+                    {[
+                      { name: "Acme Corp", contact: "sarah@acme.com", projects: 3, revenue: "₹1,45,000", status: "Active", color: "#3B82F6" },
+                      { name: "TechStart Inc", contact: "alex@techstart.io", projects: 2, revenue: "₹85,000", status: "Active", color: "#10B981" },
+                      { name: "DesignCo Agency", contact: "mira@designco.net", projects: 4, revenue: "₹2,10,000", status: "VIP Client", color: "#8B5CF6" },
+                    ].map((c) => (
+                      <div key={c.name} className="flex items-center justify-between px-5 py-4 rounded-2xl"
                         style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold text-white"
-                          style={{ background: ["#3B82F6","#10B981","#8B5CF6","#F59E0B"][i] }}>
-                          {c[0]}
+                        <div className="flex items-center gap-3.5">
+                          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[13px] font-bold text-white shadow-inner"
+                            style={{ background: `linear-gradient(135deg, ${c.color}, ${c.color}99)` }}>
+                            {c.name[0]}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="text-[13px] font-semibold text-white">{c.name}</p>
+                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                                style={{ background: `${c.color}18`, color: c.color }}>{c.status}</span>
+                            </div>
+                            <p className="text-[11px] text-slate-400">{c.contact} • {c.projects} active projects</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-[13px] font-medium text-white">{c}</p>
-                          <p className="text-[11px] text-slate-500">{[3,5,2,4][i]} active projects</p>
+                        <div className="text-right">
+                          <p className="text-[13px] font-bold text-white">{c.revenue}</p>
+                          <p className="text-[10px] text-slate-500">Lifetime value</p>
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
+
                 {active === "ai" && (
-                  <div className="w-full space-y-3">
+                  <div className="w-full max-w-lg space-y-3">
+                    <div className="p-3.5 rounded-2xl mb-2 flex items-center gap-3"
+                      style={{ background: "rgba(139,92,246,0.12)", border: "1px solid rgba(139,92,246,0.25)" }}>
+                      <Bot size={20} className="text-purple-400 shrink-0" />
+                      <p className="text-[12px] text-purple-200">
+                        <span className="font-semibold text-white">Skillora AI</span> has contextual awareness of your clients & revenue.
+                      </p>
+                    </div>
                     {[
-                      { role: "user", msg: "Draft a proposal for a logo project" },
-                      { role: "ai", msg: "Sure! Here's a professional proposal for your logo design project..." },
-                      { role: "user", msg: "What's my revenue this month?" },
-                      { role: "ai", msg: "Your revenue this month is ₹1,24,500 — up 22% from last month 🚀" },
+                      { role: "user", msg: "Draft a proposal for Acme Corp's mobile app overhaul." },
+                      { role: "ai", msg: "Here is your customized proposal draft detailing deliverables, ₹95,000 milestone breakdown, and estimated 3-week completion." },
+                      { role: "user", msg: "What is my average hourly rate across active projects?" },
+                      { role: "ai", msg: "Your average rate is ₹2,850/hr across 4 projects. Recommendation: bump Acme Corp's new quote by 15%." },
                     ].map((m, i) => (
                       <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                        <div className="max-w-[80%] px-3 py-2 rounded-xl text-[12px]"
+                        <div className="max-w-[85%] px-4 py-3 rounded-2xl text-[12px] leading-relaxed"
                           style={{
-                            background: m.role === "user" ? "rgba(99,91,255,0.2)" : "rgba(255,255,255,0.05)",
-                            border: `1px solid ${m.role === "user" ? "rgba(99,91,255,0.3)" : "rgba(255,255,255,0.07)"}`,
-                            color: m.role === "user" ? "#C4BFFF" : "#CBD5E1",
+                            background: m.role === "user"
+                              ? "linear-gradient(135deg, rgba(99,91,255,0.25), rgba(139,92,246,0.2))"
+                              : "rgba(255,255,255,0.04)",
+                            border: `1px solid ${m.role === "user" ? "rgba(139,92,246,0.4)" : "rgba(255,255,255,0.07)"}`,
+                            color: m.role === "user" ? "#E9D5FF" : "#CBD5E1",
                           }}>
                           {m.msg}
                         </div>
@@ -654,41 +818,106 @@ const ProductPreview = () => {
   );
 };
 
+// ─── Stats Counter ────────────────────────────────────────
+const AnimatedCounter = ({ target, suffix = "" }) => {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true });
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (!inView) return;
+    let start = 0;
+    const duration = 2000;
+    const increment = target / (duration / 16);
+    const timer = setInterval(() => {
+      start += increment;
+      if (start >= target) { setCount(target); clearInterval(timer); }
+      else setCount(Math.floor(start));
+    }, 16);
+    return () => clearInterval(timer);
+  }, [inView, target]);
+
+  return <span ref={ref}>{count.toLocaleString()}{suffix}</span>;
+};
+
+const stats = [
+  { value: 10000, suffix: "+", label: "Freelancers onboard", color: "#8B5CF6" },
+  { value: 2, suffix: "M+", label: "Invoices generated", color: "#3B82F6" },
+  { value: 99, suffix: ".9%", label: "Uptime guaranteed", color: "#10B981" },
+  { value: 150, suffix: "+", label: "Countries served", color: "#F59E0B" },
+];
+
 // ─── Value cards ──────────────────────────────────────────
 const values = [
-  { icon: Zap, title: "Built for speed", desc: "From signup to first invoice in under 2 minutes.", color: "#F59E0B" },
-  { icon: Shield, title: "Bank-grade security", desc: "JWT auth, encrypted data, and SOC2-ready infrastructure.", color: "#10B981" },
-  { icon: Brain, title: "AI-powered insights", desc: "Smart suggestions that help you earn more and work less.", color: "#8B5CF6" },
-  { icon: Globe, title: "Works everywhere", desc: "Desktop, tablet, mobile — pixel-perfect on every screen.", color: "#3B82F6" },
+  {
+    icon: Zap, title: "Lightning-fast workflow",
+    desc: "From signup to your first invoice in under 2 minutes. No bloat, no friction — just the tools you need.",
+    color: "#F59E0B", gradient: "linear-gradient(135deg, rgba(245,158,11,0.12), rgba(245,158,11,0.02))",
+  },
+  {
+    icon: Shield, title: "Enterprise-grade security",
+    desc: "JWT + refresh tokens, encrypted at rest, webhook HMAC verification, and role-based access control.",
+    color: "#10B981", gradient: "linear-gradient(135deg, rgba(16,185,129,0.12), rgba(16,185,129,0.02))",
+  },
+  {
+    icon: Brain, title: "AI that knows your business",
+    desc: "Context-aware assistant that analyzes your clients, revenue, and projects to give actionable advice.",
+    color: "#8B5CF6", gradient: "linear-gradient(135deg, rgba(139,92,246,0.12), rgba(139,92,246,0.02))",
+  },
+  {
+    icon: Globe, title: "Pixel-perfect everywhere",
+    desc: "Responsive from mobile to ultrawide. Dedicated client portal so your clients get a premium experience.",
+    color: "#3B82F6", gradient: "linear-gradient(135deg, rgba(59,130,246,0.12), rgba(59,130,246,0.02))",
+  },
 ];
 
 const ValueSection = () => (
-  <section className="py-24 px-6" style={{ background: "rgba(7,10,20,0.78)", backdropFilter: "blur(2px)" }}>
+  <section id="why-skillora" className="py-28 px-6" style={{ background: "rgba(7,10,20,0.78)", backdropFilter: "blur(2px)" }}>
     <div className="max-w-6xl mx-auto">
+      {/* Stats bar */}
+      <FadeIn>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-20">
+          {stats.map((s) => (
+            <div key={s.label} className="text-center">
+              <div className="text-3xl md:text-4xl font-bold mb-2" style={{ color: s.color }}>
+                <AnimatedCounter target={s.value} suffix={s.suffix} />
+              </div>
+              <p className="text-[13px] text-slate-400 font-medium">{s.label}</p>
+            </div>
+          ))}
+        </div>
+      </FadeIn>
+
       <FadeIn className="text-center mb-16">
         <p className="text-[12px] font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#8B5CF6" }}>Why Skillora</p>
         <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight" style={{ letterSpacing: "-0.02em" }}>
-          Designed for how you actually work
+          Built different. Built for freelancers.
         </h2>
+        <p className="text-slate-400 mt-4 max-w-xl mx-auto">Not another generic project tool — Skillora is purpose-built for the way independent professionals actually run their business.</p>
       </FadeIn>
-      <div className="grid md:grid-cols-4 gap-5">
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
         {values.map((v, i) => (
           <FadeIn key={v.title} delay={i * 0.1}>
             <motion.div
-              whileHover={{ y: -6, boxShadow: `0 20px 60px rgba(0,0,0,0.3), 0 0 0 1px ${v.color}30` }}
-              transition={{ duration: 0.3 }}
-              className="rounded-2xl p-6 h-full"
+              whileHover={{ y: -8, boxShadow: `0 24px 64px rgba(0,0,0,0.35), 0 0 0 1px ${v.color}40` }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              className="rounded-2xl p-7 h-full relative overflow-hidden group"
               style={{
-                background: "rgba(255,255,255,0.03)",
-                border: "1px solid rgba(255,255,255,0.07)",
+                background: v.gradient,
+                border: `1px solid ${v.color}20`,
               }}
             >
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-5"
-                style={{ background: `${v.color}18`, border: `1px solid ${v.color}30` }}>
-                <v.icon size={18} style={{ color: v.color }} />
+              {/* Hover glow */}
+              <div className="absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                style={{ background: `${v.color}15` }} />
+              <div className="relative z-10">
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-6"
+                  style={{ background: `${v.color}20`, border: `1px solid ${v.color}35` }}>
+                  <v.icon size={20} style={{ color: v.color }} />
+                </div>
+                <h3 className="text-[16px] font-bold text-white mb-3">{v.title}</h3>
+                <p className="text-[13px] text-slate-300 leading-relaxed">{v.desc}</p>
               </div>
-              <h3 className="text-[15px] font-semibold text-white mb-2">{v.title}</h3>
-              <p className="text-[13px] text-slate-300 leading-relaxed">{v.desc}</p>
             </motion.div>
           </FadeIn>
         ))}
@@ -697,45 +926,97 @@ const ValueSection = () => (
   </section>
 );
 
-// ─── Feature grid ─────────────────────────────────────────
-const features = [
-  { icon: Kanban,       title: "Kanban Boards",      desc: "Drag-and-drop project management" },
-  { icon: FileText,     title: "Smart Invoicing",     desc: "Professional invoices in seconds" },
-  { icon: Users,        title: "Client CRM",          desc: "All your client data in one place" },
-  { icon: Brain,        title: "AI Assistant",        desc: "Proposals, insights, and more" },
-  { icon: BarChart3,    title: "Analytics",           desc: "Revenue trends and forecasts" },
-  { icon: Clock,        title: "Time Tracking",       desc: "Log hours, bill accurately" },
-  { icon: TrendingUp,   title: "Growth Insights",     desc: "Know what's working" },
-  { icon: Shield,       title: "Secure & Private",    desc: "Your data, always protected" },
+// ─── Feature grid (Bento style) ───────────────────────────
+const primaryFeatures = [
+  {
+    icon: Kanban, title: "Kanban Project Boards",
+    desc: "Drag-and-drop tasks across customizable columns. Set deadlines, assign priorities, and track every milestone from start to delivery.",
+    color: "#3B82F6", span: "md:col-span-2",
+  },
+  {
+    icon: FileText, title: "Professional Invoicing",
+    desc: "Generate line-item invoices with tax, discounts, and notes. Mark sent, track payments, and auto-number with sequential IDs.",
+    color: "#10B981", span: "",
+  },
+  {
+    icon: Bot, title: "AI Business Assistant",
+    desc: "Get context-aware proposals, pricing advice, revenue analysis, and smart task suggestions — powered by your real workspace data.",
+    color: "#8B5CF6", span: "",
+  },
+  {
+    icon: CreditCard, title: "Razorpay Payments",
+    desc: "Accept online payments directly on invoices. Clients pay in one click through the secure client portal.",
+    color: "#F59E0B", span: "md:col-span-2",
+  },
+];
+
+const secondaryFeatures = [
+  { icon: Users, title: "Client Portal", desc: "Branded portal where clients view projects, download invoices, and make payments", color: "#EC4899" },
+  { icon: BarChart3, title: "Revenue Analytics", desc: "Real-time dashboards tracking earnings, growth trends, and client metrics", color: "#06B6D4" },
+  { icon: LayoutDashboard, title: "Unified Dashboard", desc: "Everything at a glance — projects, tasks, invoices, and AI insights in one view", color: "#8B5CF6" },
+  { icon: Clock, title: "Activity Timeline", desc: "Full audit trail of every action across your workspace for accountability", color: "#F59E0B" },
+  { icon: Star, title: "Client Ratings", desc: "Rate clients, track satisfaction, and prioritize your best relationships", color: "#10B981" },
+  { icon: Shield, title: "Role-based Access", desc: "Freelancer, Admin, and Client roles with granular permission control", color: "#3B82F6" },
 ];
 
 const FeatureGrid = () => (
-  <section className="py-24 px-6" style={{ background: "rgba(7,10,20,0.72)", backdropFilter: "blur(2px)" }}>
+  <section id="features" className="py-28 px-6" style={{ background: "rgba(7,10,20,0.72)", backdropFilter: "blur(2px)" }}>
     <div className="max-w-6xl mx-auto">
       <FadeIn className="text-center mb-16">
         <p className="text-[12px] font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#8B5CF6" }}>Features</p>
         <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight" style={{ letterSpacing: "-0.02em" }}>
-          One platform. Infinite possibilities.
+          One platform. Every tool you need.
         </h2>
+        <p className="text-slate-400 mt-4 max-w-xl mx-auto">From winning clients to getting paid — manage your entire freelance business without switching tabs.</p>
       </FadeIn>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {features.map((f, i) => (
-          <FadeIn key={f.title} delay={i * 0.06}>
+
+      {/* Primary features — bento grid */}
+      <div className="grid md:grid-cols-3 gap-4 mb-6">
+        {primaryFeatures.map((f, i) => (
+          <FadeIn key={f.title} delay={i * 0.08} className={f.span}>
             <motion.div
-              whileHover={{ scale: 1.03, borderColor: "rgba(99,91,255,0.4)" }}
-              transition={{ duration: 0.2 }}
-              className="rounded-2xl p-5"
+              whileHover={{ y: -4, borderColor: `${f.color}50` }}
+              transition={{ duration: 0.25 }}
+              className="rounded-2xl p-7 h-full relative overflow-hidden group"
               style={{
-                background: "rgba(255,255,255,0.03)",
+                background: `linear-gradient(160deg, ${f.color}0A, rgba(255,255,255,0.02))`,
                 border: "1px solid rgba(255,255,255,0.07)",
               }}
             >
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-4"
-                style={{ background: "rgba(139,92,246,0.12)", border: "1px solid rgba(139,92,246,0.25)" }}>
-                <f.icon size={16} style={{ color: "#C084FC" }} />
+              <div className="absolute -bottom-10 -right-10 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"
+                style={{ background: `${f.color}12` }} />
+              <div className="relative z-10">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-5"
+                  style={{ background: `${f.color}18`, border: `1px solid ${f.color}30` }}>
+                  <f.icon size={18} style={{ color: f.color }} />
+                </div>
+                <h3 className="text-[16px] font-bold text-white mb-2">{f.title}</h3>
+                <p className="text-[13px] text-slate-300 leading-relaxed">{f.desc}</p>
+              </div>
+            </motion.div>
+          </FadeIn>
+        ))}
+      </div>
+
+      {/* Secondary features — compact grid */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        {secondaryFeatures.map((f, i) => (
+          <FadeIn key={f.title} delay={i * 0.06}>
+            <motion.div
+              whileHover={{ scale: 1.02, borderColor: `${f.color}40` }}
+              transition={{ duration: 0.2 }}
+              className="rounded-2xl p-5 group"
+              style={{
+                background: "rgba(255,255,255,0.02)",
+                border: "1px solid rgba(255,255,255,0.06)",
+              }}
+            >
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center mb-4 transition-all duration-300"
+                style={{ background: `${f.color}12`, border: `1px solid ${f.color}20` }}>
+                <f.icon size={16} style={{ color: f.color }} />
               </div>
               <h3 className="text-[14px] font-semibold text-white mb-1">{f.title}</h3>
-              <p className="text-[12px] text-slate-300">{f.desc}</p>
+              <p className="text-[12px] text-slate-400 leading-relaxed">{f.desc}</p>
             </motion.div>
           </FadeIn>
         ))}
@@ -744,45 +1025,78 @@ const FeatureGrid = () => (
   </section>
 );
 
-// ─── How it works ─────────────────────────────────────────
+// ─── How it works (horizontal timeline) ───────────────────
 const steps = [
-  { n: "01", title: "Create your account", desc: "Sign up free in 30 seconds. No credit card needed." },
-  { n: "02", title: "Add clients & projects", desc: "Import or create your clients and kick off your first project." },
-  { n: "03", title: "Get paid & grow", desc: "Send invoices, track payments, and use AI insights to scale." },
+  {
+    n: "01", title: "Sign up in seconds",
+    desc: "Create your free account with email or Google OAuth. No credit card, no setup wizard — you're in immediately.",
+    icon: Zap, color: "#3B82F6",
+  },
+  {
+    n: "02", title: "Set up your workspace",
+    desc: "Add clients, create projects with Kanban boards, and configure your invoice branding. Import existing data or start fresh.",
+    icon: LayoutDashboard, color: "#8B5CF6",
+  },
+  {
+    n: "03", title: "Invoice & get paid",
+    desc: "Generate professional invoices, send them via the client portal, and accept Razorpay payments — all without leaving Skillora.",
+    icon: CreditCard, color: "#10B981",
+  },
+  {
+    n: "04", title: "Grow with AI insights",
+    desc: "Your AI assistant analyzes your workspace — suggesting pricing, drafting proposals, and spotting revenue trends to help you scale.",
+    icon: Brain, color: "#EC4899",
+  },
 ];
 
 const HowItWorks = () => (
-  <section id="how-it-works" className="py-24 px-6" style={{ background: "rgba(7,10,20,0.78)", backdropFilter: "blur(2px)" }}>
-    <div className="max-w-4xl mx-auto">
-      <FadeIn className="text-center mb-16">
+  <section id="how-it-works" className="py-28 px-6" style={{ background: "rgba(7,10,20,0.78)", backdropFilter: "blur(2px)" }}>
+    <div className="max-w-5xl mx-auto">
+      <FadeIn className="text-center mb-20">
         <p className="text-[12px] font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#8B5CF6" }}>How it works</p>
         <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight" style={{ letterSpacing: "-0.02em" }}>
-          Up and running in minutes
+          From zero to paid in four steps
         </h2>
+        <p className="text-slate-400 mt-4">No learning curve. No onboarding calls. Just results.</p>
       </FadeIn>
+
+      {/* Timeline */}
       <div className="relative">
-        {/* Connecting line */}
-        <div className="absolute left-8 top-10 bottom-10 w-px hidden md:block"
-          style={{ background: "linear-gradient(to bottom, rgba(99,91,255,0.5), rgba(0,212,255,0.3))" }} />
-        <div className="space-y-8">
+        {/* Horizontal connecting line (desktop) */}
+        <div className="absolute top-[44px] left-[10%] right-[10%] h-px hidden md:block"
+          style={{ background: "linear-gradient(90deg, rgba(59,130,246,0.5), rgba(139,92,246,0.5), rgba(16,185,129,0.5), rgba(236,72,153,0.5))" }} />
+
+        {/* Vertical connecting line (mobile) */}
+        <div className="absolute left-[30px] top-20 bottom-20 w-px md:hidden"
+          style={{ background: "linear-gradient(to bottom, rgba(59,130,246,0.5), rgba(236,72,153,0.5))" }} />
+
+        <div className="grid md:grid-cols-4 gap-8">
           {steps.map((s, i) => (
-            <FadeIn key={s.n} delay={i * 0.15}>
+            <FadeIn key={s.n} delay={i * 0.12}>
               <motion.div
-                whileHover={{ x: 6 }}
-                transition={{ duration: 0.2 }}
-                className="flex items-start gap-6 pl-0 md:pl-4"
+                whileHover={{ y: -6 }}
+                transition={{ duration: 0.3 }}
+                className="relative flex md:flex-col items-start gap-5 md:text-center md:items-center"
               >
-                <div className="w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 text-lg font-bold"
+                {/* Step circle */}
+                <motion.div
+                  whileHover={{ scale: 1.1, boxShadow: `0 0 30px ${s.color}30` }}
+                  className="w-[60px] h-[60px] md:w-[88px] md:h-[88px] rounded-2xl flex items-center justify-center shrink-0 relative z-10"
                   style={{
-                    background: "linear-gradient(135deg,rgba(59,130,246,0.2),rgba(236,72,153,0.1))",
-                    border: "1px solid rgba(139,92,246,0.35)",
-                    color: "#C084FC",
-                  }}>
-                  {s.n}
-                </div>
-                <div className="pt-3">
-                  <h3 className="text-lg font-semibold text-white mb-1">{s.title}</h3>
-                  <p className="text-slate-300 text-[14px]">{s.desc}</p>
+                    background: `linear-gradient(135deg, ${s.color}20, ${s.color}08)`,
+                    border: `1px solid ${s.color}35`,
+                    boxShadow: `0 0 20px ${s.color}15`,
+                  }}
+                >
+                  <s.icon size={24} style={{ color: s.color }} />
+                </motion.div>
+
+                <div className="md:mt-4">
+                  <span className="text-[11px] font-bold tracking-[0.2em] uppercase mb-2 block" style={{ color: s.color }}>
+                    Step {s.n}
+                  </span>
+                  <h3 className="text-[16px] font-bold text-white mb-2">{s.title}</h3>
+                  <p className="text-[13px] text-slate-400 leading-relaxed">{s.desc}</p>
                 </div>
               </motion.div>
             </FadeIn>
@@ -793,109 +1107,112 @@ const HowItWorks = () => (
   </section>
 );
 
-// ─── Pricing ──────────────────────────────────────────────
-const plans = [
+// ─── Testimonials ─────────────────────────────────────────
+const testimonials = [
   {
-    name: "Free", price: "₹0", period: "/mo", highlight: false,
-    desc: "Perfect to get started",
-    features: ["3 Projects", "5 Clients", "10 Invoices", "20 AI requests", "Kanban boards"],
+    name: "Priya Sharma", role: "UI/UX Designer",
+    quote: "Skillora replaced 4 different tools for me. The AI assistant is a game-changer — it drafted a client proposal in 30 seconds that would've taken me an hour.",
+    avatar: "PS", color: "#8B5CF6",
   },
   {
-    name: "Pro", price: "₹1,499", period: "/mo", highlight: true,
-    desc: "For growing freelancers",
-    features: ["25 Projects", "50 Clients", "100 Invoices", "200 AI requests", "Analytics", "Priority support"],
+    name: "Arjun Mehta", role: "Full-Stack Developer",
+    quote: "The client portal alone is worth it. My clients can view project status and pay invoices without a single email from me. Professional and effortless.",
+    avatar: "AM", color: "#3B82F6",
   },
   {
-    name: "Premium", price: "₹3,999", period: "/mo", highlight: false,
-    desc: "Unlimited everything",
-    features: ["Unlimited Projects", "Unlimited Clients", "Unlimited Invoices", "Unlimited AI", "Custom domain", "White-label"],
+    name: "Sneha Reddy", role: "Content Strategist",
+    quote: "I went from chasing payments in spreadsheets to getting paid on time, every time. Razorpay integration works flawlessly with the invoicing system.",
+    avatar: "SR", color: "#10B981",
   },
 ];
 
-const Pricing = () => (
-  <section id="pricing" className="py-24 px-6" style={{ background: "rgba(7,10,20,0.8)", backdropFilter: "blur(2px)" }}>
-    <div className="max-w-5xl mx-auto">
-      <FadeIn className="text-center mb-16">
-        <p className="text-[12px] font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#8B5CF6" }}>Pricing</p>
-        <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight" style={{ letterSpacing: "-0.02em" }}>
-          Simple, transparent pricing
-        </h2>
-        <p className="text-slate-300 mt-4">Start free. Upgrade when you're ready.</p>
-      </FadeIn>
-      <div className="grid md:grid-cols-3 gap-6">
-        {plans.map((p, i) => (
-          <FadeIn key={p.name} delay={i * 0.1}>
+const Testimonials = () => {
+  const [active, setActive] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => setActive((p) => (p + 1) % testimonials.length), 5000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <section id="testimonials" className="py-28 px-6" style={{ background: "rgba(7,10,20,0.75)", backdropFilter: "blur(2px)" }}>
+      <div className="max-w-4xl mx-auto">
+        <FadeIn className="text-center mb-16">
+          <p className="text-[12px] font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#8B5CF6" }}>Testimonials</p>
+          <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight" style={{ letterSpacing: "-0.02em" }}>
+            Loved by freelancers
+          </h2>
+        </FadeIn>
+
+        <div className="relative min-h-[220px]">
+          <AnimatePresence mode="wait">
             <motion.div
-              whileHover={{ y: -6 }}
-              transition={{ duration: 0.3 }}
-              className="rounded-2xl p-7 flex flex-col h-full relative overflow-hidden"
+              key={active}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              className="rounded-2xl p-8 md:p-10 text-center"
               style={{
-                background: p.highlight
-                  ? "linear-gradient(160deg,rgba(99,91,255,0.15),rgba(0,212,255,0.05))"
-                  : "rgba(255,255,255,0.03)",
-                border: p.highlight ? "1px solid rgba(99,91,255,0.4)" : "1px solid rgba(255,255,255,0.07)",
-                boxShadow: p.highlight ? "0 0 40px rgba(99,91,255,0.15)" : "none",
+                background: "linear-gradient(160deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))",
+                border: "1px solid rgba(255,255,255,0.08)",
+                boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
               }}
             >
-              {p.highlight && (
-                <div className="absolute top-4 right-4 px-2.5 py-1 rounded-full text-[11px] font-semibold"
-                  style={{ background: "rgba(139,92,246,0.2)", color: "#C084FC", border: "1px solid rgba(139,92,246,0.35)" }}>
-                  Most popular
+              <div className="flex items-center gap-1 justify-center mb-6">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} size={16} fill="#F59E0B" stroke="none" />
+                ))}
+              </div>
+              <p className="text-[16px] md:text-[18px] text-slate-200 leading-relaxed mb-8 max-w-2xl mx-auto italic">
+                "{testimonials[active].quote}"
+              </p>
+              <div className="flex items-center justify-center gap-3">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center text-[13px] font-bold text-white"
+                  style={{ background: testimonials[active].color }}>
+                  {testimonials[active].avatar}
                 </div>
-              )}
-              <div className="mb-6">
-                <h3 className="text-lg font-bold text-white mb-1">{p.name}</h3>
-                <p className="text-[13px] text-slate-300 mb-4">{p.desc}</p>
-                <div className="flex items-end gap-1">
-                  <span className="text-4xl font-bold text-white">{p.price}</span>
-                  <span className="text-slate-400 mb-1">{p.period}</span>
+                <div className="text-left">
+                  <p className="text-[14px] font-semibold text-white">{testimonials[active].name}</p>
+                  <p className="text-[12px] text-slate-400">{testimonials[active].role}</p>
                 </div>
               </div>
-              <ul className="space-y-3 mb-8 flex-1">
-                {p.features.map((f) => (
-                  <li key={f} className="flex items-center gap-2.5 text-[13px] text-slate-200">
-                    <CheckCircle2 size={14} className="shrink-0" style={{ color: p.highlight ? "#A39AFF" : "#10B981" }} />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <Link to="/register">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full h-11 rounded-xl text-[14px] font-semibold transition-all duration-200"
-                  style={p.highlight ? {
-                    background: "linear-gradient(135deg,#3B82F6,#8B5CF6,#EC4899)",
-                    color: "#fff",
-                    boxShadow: "0 0 24px rgba(139,92,246,0.4)",
-                  } : {
-                    background: "rgba(255,255,255,0.06)",
-                    color: "#CBD5E1",                    border: "1px solid rgba(255,255,255,0.1)",
-                  }}
-                >
-                  Get started
-                </motion.button>
-              </Link>
             </motion.div>
-          </FadeIn>
-        ))}
+          </AnimatePresence>
+        </div>
+
+        {/* Dots */}
+        <div className="flex items-center justify-center gap-2 mt-8">
+          {testimonials.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setActive(i)}
+              className="w-2 h-2 rounded-full transition-all duration-300"
+              style={{
+                background: i === active ? "#8B5CF6" : "rgba(255,255,255,0.15)",
+                width: i === active ? 24 : 8,
+              }}
+            />
+          ))}
+        </div>
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
+
 
 // ─── Final CTA ────────────────────────────────────────────
 const FinalCTA = () => (
   <section className="py-32 px-6 relative overflow-hidden" style={{ background: "rgba(7,10,20,0.82)", backdropFilter: "blur(2px)" }}>
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
       <div className="w-[600px] h-[300px] rounded-full blur-3xl"
-        style={{ background: "radial-gradient(ellipse, rgba(99,91,255,0.15) 0%, transparent 70%)" }} />
+        style={{ background: "radial-gradient(ellipse, rgba(99,91,255,0.18) 0%, transparent 70%)" }} />
     </div>
     <FadeIn className="relative z-10 max-w-3xl mx-auto text-center">
       <h2 className="text-4xl md:text-6xl font-bold text-white mb-6 tracking-tight" style={{ letterSpacing: "-0.03em" }}>
         Your freelance business,<br />
         <span style={{
-          background: "linear-gradient(135deg,#3B82F6,#8B5CF6,#EC4899)",
+          background: "linear-gradient(135deg, #60A5FA 0%, #C084FC 50%, #F472B6 100%)",
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",
         }}>
@@ -909,7 +1226,7 @@ const FinalCTA = () => (
           whileTap={{ scale: 0.97 }}
           className="h-14 px-10 rounded-2xl text-[16px] font-semibold text-white flex items-center gap-2 mx-auto"
           style={{
-            background: "linear-gradient(135deg,#5B54F0,#7C6FF7,#6366F1)",
+            background: "linear-gradient(135deg, #5B54F0, #7C6FF7, #6366F1)",
             boxShadow: "0 0 30px rgba(99,91,255,0.4), inset 0 1px 0 rgba(255,255,255,0.12)",
           }}
         >
@@ -1030,7 +1347,7 @@ const Footer = () => {
           {/* Product */}
           <div className="flex flex-col gap-4">
             <p className="text-[11px] font-bold tracking-[0.18em] uppercase mb-1" style={{ color: "#8B5CF6" }}>Product</p>
-            {["Features", "Pricing", "How it works", "Changelog"].map((l) => (
+            {["Features", "How it works", "Changelog"].map((l) => (
               <FooterLink key={l} href={`#${l.toLowerCase().replace(/ /g, "-")}`}>{l}</FooterLink>
             ))}
           </div>
@@ -1090,12 +1407,14 @@ export default function LandingPage() {
           loop
           playsInline
           className="absolute inset-0 w-full h-full object-cover"
-          style={{ filter: "blur(0.5px)" }}
+          style={{ filter: "brightness(0.55) contrast(1.2) saturate(1.1) blur(0.3px)" }}
         >
           <source src="/videos/landing-bg.mp4" type="video/mp4" />
         </video>
-        {/* Dark overlay so sections below hero remain readable */}
-        <div className="absolute inset-0" style={{ background: "rgba(7,10,20,0.28)" }} />
+        {/* Dark vignette & ambient overlays so content remains crisp */}
+        <div className="absolute inset-0" style={{
+          background: "radial-gradient(ellipse at 50% 40%, rgba(7,10,20,0.35) 0%, rgba(7,10,20,0.7) 100%), linear-gradient(to bottom, rgba(7,10,20,0.2) 0%, rgba(7,10,20,0.5) 100%)",
+        }} />
       </div>
 
       {/* All page content sits above the video */}
@@ -1107,7 +1426,7 @@ export default function LandingPage() {
         <ValueSection />
         <FeatureGrid />
         <HowItWorks />
-        <Pricing />
+        <Testimonials />
         <FinalCTA />
         <Footer />
       </div>
