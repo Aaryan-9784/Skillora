@@ -7,21 +7,30 @@ let _transporter = null;
 const getTransporter = () => {
   if (_transporter) return _transporter;
 
-  // All SMTP env vars are optional — falls back to Ethereal (dev preview)
-  if (process.env.EMAIL_HOST) {
-    _transporter = nodemailer.createTransport({
-      host:   process.env.EMAIL_HOST,
-      port:   parseInt(process.env.EMAIL_PORT, 10) || 587,
-      secure: process.env.EMAIL_SECURE === "true", // true for port 465
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-      tls: {
-        // Allow self-signed certs in dev
-        rejectUnauthorized: process.env.NODE_ENV === "production",
-      },
-    });
+  if (process.env.EMAIL_SERVICE || process.env.EMAIL_HOST) {
+    const isGmail = (process.env.EMAIL_HOST && process.env.EMAIL_HOST.includes("gmail")) || process.env.EMAIL_SERVICE === "gmail";
+    const transportConfig = isGmail
+      ? {
+          service: "gmail",
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS,
+          },
+        }
+      : {
+          host:   process.env.EMAIL_HOST,
+          port:   parseInt(process.env.EMAIL_PORT, 10) || 587,
+          secure: process.env.EMAIL_SECURE === "true", // true for port 465
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS,
+          },
+          tls: {
+            rejectUnauthorized: process.env.NODE_ENV === "production",
+          },
+        };
+
+    _transporter = nodemailer.createTransport(transportConfig);
   }
 
   return _transporter;
