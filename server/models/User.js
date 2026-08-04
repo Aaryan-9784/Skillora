@@ -21,12 +21,8 @@ const userSchema = new Schema(
     isEmailVerified: { type: Boolean, default: false },
     isActive:        { type: Boolean, default: true },
 
-    // SaaS subscription
-    plan: {
-      type:    String,
-      enum:    ["free", "pro", "premium"],
-      default: "free",
-    },
+    // Platform tier (100% Free for all users)
+    plan: { type: String, default: "free" },
     subscription: {
       razorpayCustomerId:     { type: String, default: null, select: false },
       razorpaySubscriptionId: { type: String, default: null, select: false },

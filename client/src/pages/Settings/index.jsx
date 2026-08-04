@@ -337,105 +337,49 @@ const BillingTab = ({ user }) => {
 
   return (
     <div className="space-y-5">
-      {/* Current plan status */}
-      {info && (
-        <SectionCard title="Current Plan" description="Your active subscription">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                style={{ background: "rgba(99,91,255,0.15)", border: "1px solid rgba(99,91,255,0.25)" }}>
-                <Zap size={16} style={{ color: "#635BFF" }} />
-              </div>
-              <div>
-                <p className="text-sm font-semibold capitalize" style={{ color: "#F9FAFB" }}>
-                  {info.plan} Plan
-                </p>
-                {info.subscription?.currentPeriodEnd && (
-                  <p className="text-xs" style={{ color: "#6B7280" }}>
-                    {info.subscription.cancelAtPeriodEnd
-                      ? `Cancels ${formatDate(info.subscription.currentPeriodEnd)}`
-                      : `Renews ${formatDate(info.subscription.currentPeriodEnd)}`}
-                  </p>
-                )}
-              </div>
+      {/* Free Plan Status Card */}
+      <SectionCard title="Platform Access" description="Skillora is 100% Free for All Users — All Features Unlocked">
+        <div className="flex items-center justify-between p-2">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+              style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.2) 0%, rgba(99,91,255,0.2) 100%)", border: "1px solid rgba(34,197,94,0.3)" }}>
+              <Zap size={18} style={{ color: "#4ADE80" }} />
             </div>
-            {info.plan !== "free" && !info.subscription?.cancelAtPeriodEnd && (
-              <GradientBtn variant="danger" size="sm" loading={cancelling}
-                onClick={async () => { setCancelling(true); await cancelSubscription(); fetchInfo(); setCancelling(false); }}>
-                Cancel
-              </GradientBtn>
-            )}
+            <div>
+              <p className="text-base font-bold text-white">100% Free Community Tier</p>
+              <p className="text-xs text-emerald-400 font-medium mt-0.5">✓ Unlimited Projects · Unlimited Invoices · Unlimited Clients · Full AI Suite Unlocked</p>
+            </div>
           </div>
-        </SectionCard>
-      )}
-
-      {/* Plan cards */}
-      <div>
-        <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: "#374151" }}>
-          Available Plans
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {Object.entries(PLANS).map(([key, plan]) => {
-            const isActive  = currentPlan === key;
-            const isPremium = key === "premium";
-            return (
-              <motion.div key={key}
-                whileHover={{ y: -2, transition: { duration: 0.18 } }}
-                className="relative rounded-2xl p-4 overflow-hidden"
-                style={{
-                  background: isActive
-                    ? "linear-gradient(135deg, rgba(99,91,255,0.18) 0%, rgba(139,92,246,0.1) 100%)"
-                    : isPremium
-                      ? "linear-gradient(135deg, rgba(245,158,11,0.08) 0%, rgba(99,91,255,0.06) 100%)"
-                      : "rgba(255,255,255,0.03)",
-                  border: isActive
-                    ? "1px solid rgba(99,91,255,0.4)"
-                    : isPremium
-                      ? "1px solid rgba(245,158,11,0.25)"
-                      : "1px solid rgba(255,255,255,0.07)",
-                  boxShadow: isActive ? "0 0 0 1px rgba(99,91,255,0.2)" : "none",
-                }}>
-                {isPremium && (
-                  <div className="absolute top-0 inset-x-0 h-px"
-                    style={{ background: "linear-gradient(90deg,transparent,rgba(245,158,11,0.6),transparent)" }} />
-                )}
-                {isActive && (
-                  <div className="absolute top-3 right-3 w-5 h-5 rounded-full flex items-center justify-center"
-                    style={{ background: "#635BFF" }}>
-                    <Check size={10} className="text-white" />
-                  </div>
-                )}
-
-                <p className="text-xs font-semibold mb-1" style={{ color: "#9CA3AF" }}>{plan.name}</p>
-                <p className="text-xl font-bold mb-3" style={{ color: "#F9FAFB" }}>
-                  {key === "free" ? "Free" : `₹${plan.price.toLocaleString()}`}
-                  {key !== "free" && <span className="text-xs font-normal ml-1" style={{ color: "#6B7280" }}>/mo</span>}
-                </p>
-
-                <ul className="space-y-1.5 mb-4">
-                  {(PLAN_FEATURES[key] || []).map(f => (
-                    <li key={f} className="flex items-center gap-1.5 text-[11px]" style={{ color: "#9CA3AF" }}>
-                      <Check size={10} style={{ color: isActive ? "#A78BFA" : "#635BFF", flexShrink: 0 }} />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-
-                {!isActive && key !== "free" && (
-                  <GradientBtn size="sm" loading={upgrading === key} onClick={() => handleUpgrade(key)}>
-                    <Zap size={11} /> Upgrade
-                  </GradientBtn>
-                )}
-                {isActive && key !== "free" && (
-                  <p className="text-[11px] font-semibold" style={{ color: "#A78BFA" }}>✓ Current plan</p>
-                )}
-              </motion.div>
-            );
-          })}
+          <span className="px-3 py-1.5 rounded-full text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20">
+            Full Access Active
+          </span>
         </div>
-        <p className="text-[11px] mt-3" style={{ color: "#374151" }}>
-          Payments via Razorpay · Prices in INR · Cancel anytime
+      </SectionCard>
+
+      {/* Feature List */}
+      <div>
+        <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: "#9CA3AF" }}>
+          Included Features (Forever Free)
         </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {[
+            "Unlimited Projects & Milestones",
+            "Unlimited Client Profiles",
+            "Unlimited Professional Invoices",
+            "Unlimited AI Studio Requests",
+            "Full Kanban Task Management",
+            "Real-Time Messaging & Sync",
+            "Revenue & Financial Analytics",
+            "Custom Domain Support",
+            "24/7 Community Support",
+          ].map((feature) => (
+            <div key={feature} className="flex items-center gap-2.5 p-3.5 rounded-xl"
+              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+              <Check size={14} className="text-emerald-400 shrink-0" />
+              <span className="text-xs font-semibold text-gray-200">{feature}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

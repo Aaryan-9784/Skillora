@@ -3,6 +3,7 @@ const Project = require("../models/Project");
 const Invoice = require("../models/Invoice");
 const Payment = require("../models/Payment");
 const AiLog   = require("../models/AiLog");
+const Config  = require("../models/Config");
 const ApiError = require("../utils/ApiError");
 const { cacheGet, cacheSet } = require("../config/redis");
 
@@ -155,23 +156,23 @@ const getRevenueSummary = async () => {
 };
 
 // ─── Settings: get / update platform config ────────────────────────────────
-// Stored in-memory (extend to DB/env as needed)
-let _platformConfig = {
-  maintenanceMode:    false,
-  allowRegistrations: true,
-  maxAiRequestsPerDay: 50,
-  defaultPlan:        "free",
-  supportEmail:       "support@skillora.app",
-  platformName:       "Skillora",
+const getPlatformConfig = async () => {
+  let config = await Config.findOne({ key: "global" });
+  if (!config) {
+    config = await Config.create({ key: "global" });
+  }
+  return config.toObject();
 };
-
-const getPlatformConfig = async () => ({ ..._platformConfig });
 
 const updatePlatformConfig = async (updates) => {
   const allowed = ["maintenanceMode","allowRegistrations","maxAiRequestsPerDay","defaultPlan","supportEmail","platformName"];
   const filtered = Object.fromEntries(Object.entries(updates).filter(([k]) => allowed.includes(k)));
-  _platformConfig = { ..._platformConfig, ...filtered };
-  return { ..._platformConfig };
+  const config = await Config.findOneAndUpdate(
+    { key: "global" },
+    { $set: filtered },
+    { new: true, upsert: true, runValidators: true }
+  );
+  return config.toObject();
 };
 
 // ─── Activity log (recent admin-visible events) ────────────────────────────
