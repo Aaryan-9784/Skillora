@@ -97,9 +97,9 @@ const Navbar = () => {
 
   const links = [
     { label: "Product",      href: "#product" },
-    { label: "Why Skillora", href: "#why-skillora" },
     { label: "Features",     href: "#features" },
-    { label: "How it works", href: "#how-it-works" },
+    { label: "How It Works", href: "#how-it-works" },
+    { label: "Why Skillora", href: "#why-skillora" },
     { label: "Reviews",      href: "#testimonials" },
   ];
 
@@ -305,7 +305,7 @@ const Navbar = () => {
   );
 };
 
-// ─── Video Demo Modal ──────────────────────────────────────
+// ─── Video Demo Modal (Fullscreen continuous video & header) ─────────────
 const VideoModal = ({ isOpen, onClose }) => {
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -323,58 +323,132 @@ const VideoModal = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
+  const links = [
+    { label: "Product",      href: "#product" },
+    { label: "Features",     href: "#features" },
+    { label: "How It Works", href: "#how-it-works" },
+    { label: "Why Skillora", href: "#why-skillora" },
+    { label: "Reviews",      href: "#testimonials" },
+  ];
+
+  const handleNavClick = (e, href) => {
+    onClose();
+    setTimeout(() => {
+      const element = document.querySelector(href);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
+    }, 100);
+  };
+
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8">
-        {/* Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-          className="absolute inset-0 bg-black/80 backdrop-blur-md"
-        />
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
+        className="fixed inset-0 z-50 w-screen h-screen bg-black overflow-hidden flex flex-col justify-between"
+      >
+        {/* Continuous Fullscreen Video (No progressbar / controls) */}
+        <div className="absolute inset-0 z-0 w-full h-full bg-black cursor-pointer" onClick={onClose}>
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover"
+          >
+            <source src="/videos/landing-bg.mp4" type="video/mp4" />
+            Your browser does not support HTML5 video.
+          </video>
+        </div>
 
-        {/* Modal Window */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          className="relative z-10 w-full max-w-5xl rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-[#0B0F1A]"
+        {/* Top Header Overlay (Transparent header with dark text shadow contrast) */}
+        <div
+          className="relative z-20 w-full h-[76px] px-5 md:px-10 grid grid-cols-3 items-center border-none"
+          style={{
+            background: "linear-gradient(to bottom, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.25) 75%, transparent 100%)",
+          }}
         >
-          {/* Header Only (no text buttons or floating animations) */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-[#0D1222]">
-            <div className="flex items-center gap-2.5">
-              <div className="w-3 h-3 rounded-full bg-red-500/80" />
-              <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-              <div className="w-3 h-3 rounded-full bg-green-500/80" />
-              <span className="ml-2 text-[14px] font-semibold text-slate-200">
-                Skillora Platform Overview
+          {/* Logo — Left */}
+          <div className="flex items-center">
+            <Link to="/" onClick={onClose} style={{ textDecoration: "none" }}>
+              <span
+                className="hover:opacity-90 transition-opacity cursor-pointer block"
+                style={{
+                  fontFamily: "'Sora','Inter',sans-serif",
+                  fontSize: 26,
+                  fontWeight: 800,
+                  letterSpacing: "-0.04em",
+                  color: "#fff",
+                  textShadow: "0 2px 14px rgba(0,0,0,0.95), 0 0 24px rgba(0,0,0,0.9), 0 1px 3px rgba(0,0,0,1)",
+                }}
+              >
+                Skillora
               </span>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
-            >
-              <X size={18} />
-            </button>
+            </Link>
           </div>
 
-          {/* Clear Video Player (no text buttons, no overlay, 100% clear video) */}
-          <div className="relative aspect-video bg-black flex items-center justify-center">
-            <video
-              autoPlay
-              controls
-              playsInline
-              className="w-full h-full object-contain"
-            >
-              <source src="/videos/landing-bg.mp4" type="video/mp4" />
-              Your browser does not support HTML5 video.
-            </video>
+          {/* Desktop Nav Links — Center (Darkness around text only, no rounded box border) */}
+          <div className="hidden md:flex items-center justify-center gap-8">
+            {links.map((l) => (
+              <a
+                key={l.label}
+                href={l.href}
+                onClick={(e) => handleNavClick(e, l.href)}
+                className="text-[13px] font-bold text-white hover:text-purple-300 transition-all duration-200"
+                style={{
+                  textShadow: "0 0 10px rgba(0,0,0,1), 0 0 20px rgba(0,0,0,0.95), 0 2px 4px rgba(0,0,0,1)",
+                  filter: "drop-shadow(0 0 8px rgba(0,0,0,0.95)) drop-shadow(0 2px 4px rgba(0,0,0,1))",
+                }}
+              >
+                {l.label}
+              </a>
+            ))}
           </div>
-        </motion.div>
-      </div>
+
+          {/* Right Actions (No X button) */}
+          <div className="flex items-center justify-end gap-4">
+            <div className="hidden md:flex items-center gap-5">
+              <Link to="/login" onClick={onClose}>
+                <span
+                  className="text-[13px] font-semibold text-white hover:text-purple-300 transition-colors cursor-pointer"
+                  style={{
+                    textShadow: "0 2px 10px rgba(0,0,0,0.95), 0 0 16px rgba(0,0,0,0.9), 0 1px 3px rgba(0,0,0,1)",
+                  }}
+                >
+                  Sign in
+                </span>
+              </Link>
+
+              <Link to="/register" onClick={onClose}>
+                <button
+                  className="relative h-9 px-5 rounded-xl text-[13px] font-semibold text-white flex items-center gap-2 overflow-hidden transition-transform active:scale-95 cursor-pointer"
+                  style={{
+                    background: "linear-gradient(135deg,#3B82F6 0%,#8B5CF6 50%,#EC4899 100%)",
+                    boxShadow: "0 0 0 1px rgba(139,92,246,0.35), 0 4px 20px rgba(139,92,246,0.5)",
+                    letterSpacing: "0.01em",
+                  }}
+                >
+                  Get started
+                  <ArrowRight size={13} strokeWidth={2.5} />
+                </button>
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom subtle bar */}
+        <div className="relative z-10 w-full p-6 flex justify-between items-center pointer-events-none bg-gradient-to-t from-black/70 to-transparent">
+          <span className="text-xs text-slate-300 font-medium tracking-wide">
+            Skillora Platform Overview
+          </span>
+          <span className="text-xs text-slate-400 font-medium">
+            Press Esc to exit
+          </span>
+        </div>
+      </motion.div>
     </AnimatePresence>
   );
 };
@@ -383,7 +457,6 @@ const VideoModal = ({ isOpen, onClose }) => {
 const Hero = () => {
   const [demoOpen, setDemoOpen] = useState(false);
   const { scrollY } = useScroll();
-  const bgY     = useTransform(scrollY, [0, 600], [0, 120]);
   const textY   = useTransform(scrollY, [0, 400], [0, 60]);
   const opacity = useTransform(scrollY, [0, 320], [1, 0]);
 
@@ -391,153 +464,150 @@ const Hero = () => {
     <>
       <VideoModal isOpen={demoOpen} onClose={() => setDemoOpen(false)} />
 
-      <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 overflow-hidden">
+      <section className="relative min-h-screen flex flex-col justify-center px-6 sm:px-12 lg:px-20 pt-28 md:pt-36 pb-16 overflow-hidden">
 
-      {/* ── Layer 2: Dark gradient overlay ── */}
+      {/* ── Layer 1: Background video (Contained exclusively inside Hero section) ── */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="w-full h-full object-cover"
+          style={{
+            objectPosition: "75% center",
+            filter: "brightness(0.65) contrast(1.15) saturate(1.1)",
+          }}
+        >
+          <source src="/videos/landing-bg.mp4" type="video/mp4" />
+        </video>
+      </div>
+
+      {/* ── Layer 2: Dark gradient overlay (darker on left for text readability, clear on right for video) ── */}
       <div className="absolute inset-0 z-[2]" style={{
-        background: "linear-gradient(to bottom, transparent 0%, transparent 60%, rgba(7,10,20,0.35) 100%)",
+        background: "linear-gradient(to right, rgba(7,10,20,0.88) 0%, rgba(7,10,20,0.68) 40%, rgba(7,10,20,0.12) 75%, rgba(7,10,20,0.3) 100%)",
       }} />
 
-      {/* ── Layer 3: Radial glow behind headline ── */}
+      {/* ── Layer 3: Ambient glow behind headline ── */}
       <div className="absolute inset-0 z-[3] pointer-events-none" style={{
-        background: "radial-gradient(ellipse 70% 50% at 50% 38%, rgba(99,91,255,0.22) 0%, transparent 70%)",
+        background: "radial-gradient(ellipse 55% 55% at 25% 45%, rgba(99,91,255,0.25) 0%, transparent 70%)",
       }} />
       <div className="absolute inset-0 z-[3] pointer-events-none" style={{
-        background: "radial-gradient(ellipse 40% 30% at 50% 38%, rgba(0,212,255,0.07) 0%, transparent 60%)",
+        background: "radial-gradient(ellipse 35% 35% at 25% 45%, rgba(0,212,255,0.1) 0%, transparent 60%)",
       }} />
 
-      {/* ── Layer 4: Dot grid texture ── */}
-      <div className="absolute inset-0 z-[3] opacity-[0.08] pointer-events-none" style={{
-        backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.6) 1px, transparent 1px)",
-        backgroundSize: "28px 28px",
-      }} />
+      {/* ── Content (Positioned on the Left half to reveal right side background video) ── */}
+      <motion.div style={{ y: textY, opacity }} className="relative z-10 max-w-xl md:max-w-2xl lg:max-w-3xl flex flex-col items-start text-left mt-4 md:mt-8">
 
-      {/* ── Content ── */}
-      <motion.div style={{ y: textY, opacity }} className="relative z-10 max-w-5xl mx-auto w-full">
-
-        {/* Headline */}
+        {/* Main Headline */}
         <motion.h1
-          initial={{ opacity: 0, y: 40 }}
+          initial={{ opacity: 0, y: 35 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="text-[clamp(2.8rem,7vw,5.5rem)] font-bold leading-[1.04] mb-7 tracking-tight"
-          style={{ letterSpacing: "-0.04em" }}
+          className="font-extrabold leading-[1.12] mb-6 tracking-tight flex flex-col items-start text-left"
+          style={{ letterSpacing: "-0.03em" }}
         >
-          <span style={{ color: "#fff", textShadow: "0 4px 24px rgba(0,0,0,0.95), 0 2px 8px rgba(0,0,0,0.9)" }}>
-            Your freelance business,
+          <span className="block text-[clamp(2.2rem,4.8vw,4.5rem)] text-left" style={{
+            color: "#ffffff",
+            textShadow: "0 2px 16px rgba(0,0,0,0.9)",
+          }}>
+            The AI Workspace for Freelancers
           </span>
-          <br />
-          <span style={{
+          <span className="block mt-2 text-[clamp(1.6rem,3.4vw,2.9rem)] font-bold tracking-normal text-left" style={{
             background: "linear-gradient(135deg, #60A5FA 0%, #C084FC 45%, #F472B6 100%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
-            filter: "drop-shadow(0 0 35px rgba(192,132,252,0.9)) drop-shadow(0 4px 16px rgba(0,0,0,0.98))",
           }}>
-            finally under control.
+            Manage Clients. Deliver Projects. Get Paid.
           </span>
         </motion.h1>
 
-        {/* Subtext */}
+        {/* Subtext — Left aligned */}
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.28, ease: [0.16, 1, 0.3, 1] }}
-          className="text-[clamp(1rem,2vw,1.2rem)] max-w-xl mx-auto mb-12 leading-[1.7]"
-          style={{ color: "rgba(226,232,240,0.95)", textShadow: "0 1px 8px rgba(0,0,0,0.8)" }}
+          transition={{ duration: 0.7, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+          className="text-[clamp(1rem,1.7vw,1.2rem)] max-w-xl mb-10 font-medium leading-[1.7] text-left text-slate-200"
+          style={{
+            textShadow: "0 2px 12px rgba(0,0,0,0.95)",
+          }}
         >
-          Clients, projects, invoices, and AI insights —
-          one workspace built for how you actually work.
+          An all-in-one platform for invoicing, skill tracking, proposals, and smart analytics built to help independent professionals scale faster.
         </motion.p>
 
-        {/* CTAs */}
+        {/* CTAs — Left aligned */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-3"
+          transition={{ duration: 0.6, delay: 0.38, ease: [0.16, 1, 0.3, 1] }}
+          className="flex flex-col sm:flex-row items-center gap-4"
         >
           <Link to="/register">
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.96 }}
-              className="relative h-[52px] px-8 rounded-2xl text-[14px] font-semibold text-white flex items-center gap-2.5 overflow-hidden"
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              className="group relative h-[50px] px-8 rounded-2xl text-[14px] font-semibold text-white flex items-center gap-2.5 overflow-hidden cursor-pointer transition-all duration-300"
               style={{
-                background: "linear-gradient(135deg, #3B82F6 0%, #8B5CF6 45%, #EC4899 100%)",
-                boxShadow: "0 0 0 1px rgba(139,92,246,0.4), 0 8px 40px rgba(99,91,255,0.55), 0 2px 8px rgba(0,0,0,0.3)",
-                letterSpacing: "0.02em",
+                background: "linear-gradient(135deg, #3B82F6 0%, #8B5CF6 50%, #EC4899 100%)",
+                boxShadow: "0 0 0 1px rgba(255,255,255,0.2) inset",
+                letterSpacing: "0.01em",
               }}
             >
-              {/* animated shimmer */}
-              <motion.div
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                  background: "linear-gradient(105deg,transparent 20%,rgba(255,255,255,0.18) 50%,transparent 80%)",
-                  backgroundSize: "200% 100%",
-                }}
-                animate={{ backgroundPosition: ["200% 0", "-200% 0"] }}
-                transition={{ duration: 2.2, repeat: Infinity, ease: "linear" }}
-              />
-              {/* top highlight */}
-              <div className="absolute inset-x-0 top-0 h-px rounded-t-2xl pointer-events-none"
-                style={{ background: "linear-gradient(90deg,transparent,rgba(255,255,255,0.35),transparent)" }} />
-              Get started
-              <motion.span
-                animate={{ x: [0, 3, 0] }}
-                transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
-              >
-                <ArrowRight size={15} strokeWidth={2.5} />
-              </motion.span>
+              {/* Inner top highlight border */}
+              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none" />
+              <span>Start Building</span>
+              <ArrowRight size={15} strokeWidth={2.5} className="transition-transform duration-300 group-hover:translate-x-1" />
             </motion.button>
           </Link>
 
           <motion.button
             onClick={() => setDemoOpen(true)}
-            whileHover={{ scale: 1.04, background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.22)" }}
-            whileTap={{ scale: 0.96 }}
-            className="h-[52px] px-7 rounded-2xl text-[14px] font-medium flex items-center gap-2.5 transition-all duration-250 cursor-pointer"
+            whileHover={{ scale: 1.03, background: "rgba(255,255,255,0.08)", borderColor: "rgba(255,255,255,0.28)" }}
+            whileTap={{ scale: 0.97 }}
+            className="group h-[50px] px-7 rounded-2xl text-[14px] font-semibold text-white flex items-center gap-2.5 transition-all duration-300 cursor-pointer"
             style={{
-              background: "rgba(255,255,255,0.0)",
-              border: "1px solid rgba(255,255,255,0.22)",
-              color: "rgba(226,232,240,0.95)",
-              backdropFilter: "blur(6px)",
-              letterSpacing: "0.01em",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.18)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)",
+              textShadow: "0 1px 8px rgba(0,0,0,0.8)",
             }}
           >
-            <div className="w-6 h-6 rounded-full flex items-center justify-center"
-              style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)" }}>
-              <Play size={9} fill="currentColor" style={{ marginLeft: 1 }} />
+            <div className="w-6 h-6 rounded-full flex items-center justify-center bg-white/10 border border-white/20 transition-transform duration-300 group-hover:scale-105">
+              <Play size={10} fill="currentColor" className="ml-0.5 text-white" />
             </div>
-            Watch demo
+            <span>View Demo</span>
           </motion.button>
         </motion.div>
 
-      </motion.div>
-
-      {/* ── Scroll indicator ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.2, duration: 0.6 }}
-        className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2"
-      >
-        <span className="text-[11px] font-medium tracking-[0.18em] uppercase"
-          style={{ color: "rgba(203,213,225,0.7)", textShadow: "0 1px 6px rgba(0,0,0,0.8)" }}>
-          Scroll
-        </span>
+        {/* ── Scroll indicator (Left Aligned) ── */}
         <motion.div
-          animate={{ y: [0, 8, 0] }}
-          transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
-          className="w-5 h-8 rounded-full flex items-start justify-center pt-1.5"
-          style={{ border: "1px solid rgba(255,255,255,0.15)" }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.2, duration: 0.6 }}
+          className="mt-12 md:mt-14 flex items-center gap-3"
         >
           <motion.div
-            animate={{ y: [0, 10, 0], opacity: [1, 0, 1] }}
+            animate={{ y: [0, 6, 0] }}
             transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
-            className="w-1 h-1.5 rounded-full"
-            style={{ background: "rgba(99,91,255,0.9)" }}
-          />
+            className="w-5 h-8 rounded-full flex items-start justify-center pt-1.5 bg-black/40 backdrop-blur-md"
+            style={{ border: "1.5px solid rgba(255,255,255,0.3)", boxShadow: "0 4px 16px rgba(0,0,0,0.6)" }}
+          >
+            <motion.div
+              animate={{ y: [0, 10, 0], opacity: [1, 0, 1] }}
+              transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+              className="w-1 h-2 rounded-full bg-purple-400"
+            />
+          </motion.div>
+          <span
+            className="text-[11px] font-semibold tracking-[0.2em] uppercase text-slate-200"
+            style={{ textShadow: "0 2px 8px rgba(0,0,0,0.95)" }}
+          >
+            Scroll to explore
+          </span>
         </motion.div>
+
       </motion.div>
 
     </section>
@@ -1053,7 +1123,7 @@ const HowItWorks = () => (
   <section id="how-it-works" className="py-28 px-6" style={{ background: "rgba(7,10,20,0.78)", backdropFilter: "blur(2px)" }}>
     <div className="max-w-5xl mx-auto">
       <FadeIn className="text-center mb-20">
-        <p className="text-[12px] font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#8B5CF6" }}>How it works</p>
+        <p className="text-[12px] font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#8B5CF6" }}>How It Works</p>
         <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight" style={{ letterSpacing: "-0.02em" }}>
           From zero to paid in four steps
         </h2>
@@ -1347,7 +1417,7 @@ const Footer = () => {
           {/* Product */}
           <div className="flex flex-col gap-4">
             <p className="text-[11px] font-bold tracking-[0.18em] uppercase mb-1" style={{ color: "#8B5CF6" }}>Product</p>
-            {["Features", "How it works", "Changelog"].map((l) => (
+            {["Features", "How It Works", "Changelog"].map((l) => (
               <FooterLink key={l} href={`#${l.toLowerCase().replace(/ /g, "-")}`}>{l}</FooterLink>
             ))}
           </div>
@@ -1398,34 +1468,14 @@ const Footer = () => {
 export default function LandingPage() {
   return (
     <div className="min-h-screen relative" style={{ background: "#0B0F1A", color: "#fff" }}>
-
-      {/* ── Global video background — fixed behind entire page ── */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ filter: "brightness(0.55) contrast(1.2) saturate(1.1) blur(0.3px)" }}
-        >
-          <source src="/videos/landing-bg.mp4" type="video/mp4" />
-        </video>
-        {/* Dark vignette & ambient overlays so content remains crisp */}
-        <div className="absolute inset-0" style={{
-          background: "radial-gradient(ellipse at 50% 40%, rgba(7,10,20,0.35) 0%, rgba(7,10,20,0.7) 100%), linear-gradient(to bottom, rgba(7,10,20,0.2) 0%, rgba(7,10,20,0.5) 100%)",
-        }} />
-      </div>
-
-      {/* All page content sits above the video */}
+      {/* Page sections */}
       <div className="relative z-10">
-        <CursorGlow />
         <Navbar />
         <Hero />
         <ProductPreview />
-        <ValueSection />
         <FeatureGrid />
         <HowItWorks />
+        <ValueSection />
         <Testimonials />
         <FinalCTA />
         <Footer />
