@@ -237,6 +237,14 @@ const AdminOverview = () => {
     fetchStats();
     fetchRevenue(period);
     fetchActivity({ limit: 10 });
+
+    const handleSync = () => {
+      fetchStats();
+      fetchRevenue(period);
+      fetchActivity({ limit: 10 });
+    };
+    window.addEventListener("admin:stats_refresh", handleSync);
+    return () => window.removeEventListener("admin:stats_refresh", handleSync);
   }, [period]);
 
   const handleRefresh = async () => {

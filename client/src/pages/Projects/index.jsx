@@ -447,7 +447,16 @@ const Projects = () => {
   const [view, setView]           = useState("grid");
   const [searchFocused, setSearchFocused] = useState(false);
 
-  useEffect(() => { fetchProjects(); }, []);
+  useEffect(() => {
+    fetchProjects();
+    const handleSync = () => fetchProjects();
+    window.addEventListener("project:updated",   handleSync);
+    window.addEventListener("dashboard:refresh", handleSync);
+    return () => {
+      window.removeEventListener("project:updated",   handleSync);
+      window.removeEventListener("dashboard:refresh", handleSync);
+    };
+  }, []);
 
   const handleCreate = async (data) => {
     setCreating(true);

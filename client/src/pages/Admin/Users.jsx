@@ -432,7 +432,15 @@ const AdminUsers = () => {
   const [drawer, setDrawer]         = useState(null);
   const { confirm, confirmState, handleClose } = useConfirm();
 
-  useEffect(() => { fetchStats(); }, []);
+  useEffect(() => {
+    fetchStats();
+    const handleSync = () => {
+      fetchStats();
+      fetchUsers({ search, page, limit: LIMIT, role: roleFilter, plan: planFilter, sort: sortBy, dir: sortDir });
+    };
+    window.addEventListener("admin:stats_refresh", handleSync);
+    return () => window.removeEventListener("admin:stats_refresh", handleSync);
+  }, []);
   useEffect(() => {
     fetchUsers({ search, page, limit: LIMIT, role: roleFilter, plan: planFilter, sort: sortBy, dir: sortDir });
     setSelected(new Set());

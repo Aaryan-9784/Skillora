@@ -25,19 +25,21 @@ const NAV_SECTIONS = [
     label: "BUSINESS",
     items: [
       { to: "/clients",  icon: Users,     label: "Clients" },
-      { to: "/payments", icon: CreditCard, label: "Payments", badge: 3 },
+      { to: "/payments", icon: CreditCard, label: "Payments" },
     ],
   },
   {
     label: "GROWTH",
     items: [
       { to: "/skills", icon: Sparkles, label: "Skills" },
+      { to: "/ai",     icon: Bot,      label: "AI Studio", glow: true },
     ],
   },
   {
     label: "ACCOUNT",
     items: [
-      { to: "/profile", icon: User, label: "Profile" },
+      { to: "/profile",  icon: User,     label: "Profile" },
+      { to: "/settings", icon: Settings, label: "Settings" },
     ],
   },
 ];

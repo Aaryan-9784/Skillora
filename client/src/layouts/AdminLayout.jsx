@@ -10,6 +10,7 @@ const ADMIN_CONFIG = {
   "/admin":          { title: "Overview",          icon: LayoutDashboard },
   "/admin/users":    { title: "Users",             icon: Users },
   "/admin/revenue":  { title: "Revenue Analytics", icon: TrendingUp },
+  "/admin/settings": { title: "Platform Settings", icon: Settings },
   "/admin/profile":  { title: "Profile",           icon: User },
 };
 import { motion, AnimatePresence } from "framer-motion";
@@ -33,6 +34,12 @@ const NAV_SECTIONS = [
       { to: "/admin",          icon: LayoutDashboard, label: "Overview", end: true },
       { to: "/admin/users",    icon: Users,           label: "Users"              },
       { to: "/admin/revenue",  icon: TrendingUp,      label: "Revenue"            },
+    ],
+  },
+  {
+    label: "SYSTEM",
+    items: [
+      { to: "/admin/settings", icon: Settings,        label: "Settings"           },
     ],
   },
   {

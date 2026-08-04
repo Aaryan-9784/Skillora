@@ -271,7 +271,15 @@ const AdminRevenue = () => {
   const [chartType, setChartType] = useState("area");
   const [rightTab, setRightTab]   = useState("earners");
 
-  useEffect(() => { fetchRevenueSummary(); }, []);
+  useEffect(() => {
+    fetchRevenueSummary();
+    const handleSync = () => {
+      fetchRevenueSummary();
+      fetchRevenue(months);
+    };
+    window.addEventListener("admin:stats_refresh", handleSync);
+    return () => window.removeEventListener("admin:stats_refresh", handleSync);
+  }, [months]);
   useEffect(() => { fetchRevenue(months); }, [months]);
 
   const chartData = (revenue || []).map(r => ({

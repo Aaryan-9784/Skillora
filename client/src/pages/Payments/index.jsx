@@ -148,6 +148,16 @@ const Payments = () => {
   useEffect(() => {
     fetchInvoices();
     fetchAnalytics();
+    const handleSync = () => {
+      fetchInvoices();
+      fetchAnalytics();
+    };
+    window.addEventListener("invoice:updated",   handleSync);
+    window.addEventListener("dashboard:refresh", handleSync);
+    return () => {
+      window.removeEventListener("invoice:updated",   handleSync);
+      window.removeEventListener("dashboard:refresh", handleSync);
+    };
   }, []);
 
   useEffect(() => {

@@ -117,7 +117,18 @@ const Dashboard = () => {
   const { summary, fetchSummary, isLoading } = useDashboardStore();
   const navigate = useNavigate();
 
-  useEffect(() => { fetchSummary(); }, []);
+  useEffect(() => {
+    fetchSummary();
+    const handleSync = () => fetchSummary();
+    window.addEventListener("dashboard:refresh", handleSync);
+    window.addEventListener("invoice:updated",   handleSync);
+    window.addEventListener("project:updated",   handleSync);
+    return () => {
+      window.removeEventListener("dashboard:refresh", handleSync);
+      window.removeEventListener("invoice:updated",   handleSync);
+      window.removeEventListener("project:updated",   handleSync);
+    };
+  }, []);
 
   const s    = summary?.data || summary;
   const hour = new Date().getHours();
