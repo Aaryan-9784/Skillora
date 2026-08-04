@@ -51,6 +51,10 @@ app.use(cookieParser());
 // ── NoSQL injection sanitization ─────────────────────────
 app.use(mongoSanitize());
 
+// ── XSS sanitization ─────────────────────────────────────
+const xss = require("xss-clean");
+app.use(xss());
+
 // ── Passport (stateless) ──────────────────────────────────
 app.use(passport.initialize());
 

@@ -209,7 +209,7 @@ const createPasswordResetToken = async (email) => {
   user.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 min
   await user.save({ validateBeforeSave: false });
 
-  return resetToken; // send this via email
+  return { user, resetToken };
 };
 
 const resetPassword = async (token, newPassword) => {

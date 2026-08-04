@@ -10,7 +10,7 @@ const useAuth = () => {
 
   useEffect(() => {
     if (!isAuthenticated) fetchMe();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line
   }, []);
 
   return { user, isAuthenticated, isLoading, login, register, logout };

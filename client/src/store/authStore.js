@@ -104,10 +104,10 @@ const useAuthStore = create((set, get) => ({
       return;
     }
     set({ isLoading: true });
-    // Hard safety timeout — never hang the app more than 5s
+    // Hard safety timeout — never hang the app more than 3s
     const timeout = setTimeout(() => {
       set({ isLoading: false });
-    }, 5000);
+    }, 3000);
     try {
       const { data } = await authService.getMe();
       tokenStore.set(data.data?.accessToken ?? tokenStore.get());

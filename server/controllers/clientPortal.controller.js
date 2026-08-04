@@ -29,7 +29,7 @@ const acceptInvite = asyncHandler(async (req, res) => {
   }
 
   authService.setTokenCookies(res, accessToken, refreshToken);
-  ApiResponse.success(res, "Account activated. Welcome!");
+  ApiResponse.success(res, "Account activated. Welcome!", { accessToken, user });
 });
 
 const clientMe = asyncHandler(async (req, res) => {
@@ -40,40 +40,34 @@ const getClientInvoices = asyncHandler(async (req, res) => {
   const { status, search } = req.query;
   const filter = { clientId: req.user.clientRef, isDeleted: { $ne: true } };
   if (status) filter.status = status;
+  if (search) {
+    filter.invoiceNumber = { $regex: search, $options: "i" };
+  }
 
   const invoices = await Invoice.find(filter)
     .populate("owner",     "name email avatar")
     .populate("projectId", "title")
     .sort({ createdAt: -1 });
 
-  // Apply search client-side on small datasets
-  const result = search
-    ? invoices.filter((i) =>
-        i.invoiceNumber?.toLowerCase().includes(search.toLowerCase()) ||
-        i.projectId?.title?.toLowerCase().includes(search.toLowerCase())
-      )
-    : invoices;
-
-  ApiResponse.success(res, "Invoices fetched", { invoices: result });
+  ApiResponse.success(res, "Invoices fetched", { invoices });
 });
 
 const getClientProjects = asyncHandler(async (req, res) => {
   const { status, search } = req.query;
   const filter = { clientId: req.user.clientRef, isDeleted: { $ne: true } };
   if (status) filter.status = status;
+  if (search) {
+    filter.$or = [
+      { title:       { $regex: search, $options: "i" } },
+      { description: { $regex: search, $options: "i" } },
+    ];
+  }
 
   const projects = await Project.find(filter)
     .populate("owner", "name email avatar")
     .sort({ createdAt: -1 });
 
-  const result = search
-    ? projects.filter((p) =>
-        p.title?.toLowerCase().includes(search.toLowerCase()) ||
-        p.description?.toLowerCase().includes(search.toLowerCase())
-      )
-    : projects;
-
-  ApiResponse.success(res, "Projects fetched", { projects: result });
+  ApiResponse.success(res, "Projects fetched", { projects });
 });
 
 const getClientProfile = asyncHandler(async (req, res) => {

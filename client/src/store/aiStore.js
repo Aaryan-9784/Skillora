@@ -74,11 +74,11 @@ const useAiStore = create(
 
           const reader  = response.body.getReader();
           const decoder = new TextDecoder();
-          let   buffer  = "";
-
-          while (true) {
+          let buffer    = "";
+          let isReading = true;
+          while (isReading) {
             const { done, value } = await reader.read();
-            if (done) break;
+            if (done) { isReading = false; break; }
 
             buffer += decoder.decode(value, { stream: true });
             const lines = buffer.split("\n");

@@ -23,6 +23,15 @@ export const connectSocket = () => {
   return socket;
 };
 
+export const updateSocketToken = (newToken) => {
+  if (socket) {
+    socket.auth = { token: newToken };
+    if (socket.connected) {
+      socket.disconnect().connect();
+    }
+  }
+};
+
 export const disconnectSocket = () => {
   if (socket) { socket.disconnect(); socket = null; }
 };

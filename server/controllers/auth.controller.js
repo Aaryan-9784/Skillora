@@ -46,11 +46,16 @@ const forgotPassword = asyncHandler(async (req, res) => {
   const { email } = req.body;
   if (!email) throw ApiError.badRequest("Email is required");
 
-  const resetToken = await authService.createPasswordResetToken(email);
+  const result = await authService.createPasswordResetToken(email);
+  if (result) {
+    const { user, resetToken } = result;
+    const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+    const resetUrl  = `${clientUrl}/reset-password/${resetToken}`;
+    const emailService = require("../services/email.service");
+    emailService.sendPasswordReset(user, resetUrl);
+  }
 
-  // In production: send email with resetToken
-  // For now we return it in dev only
-  const data = process.env.NODE_ENV === "development" ? { resetToken } : {};
+  const data = process.env.NODE_ENV === "development" && result ? { resetToken: result.resetToken } : {};
   ApiResponse.success(res, "If that email exists, a reset link has been sent.", data);
 });
 

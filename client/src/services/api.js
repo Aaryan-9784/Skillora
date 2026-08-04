@@ -1,6 +1,7 @@
 import axios from "axios";
 import toast from "react-hot-toast";
 import tokenStore from "./tokenStore";
+import { updateSocketToken } from "./socketService";
 
 const api = axios.create({
   baseURL:         import.meta.env.VITE_API_URL || "/api",
@@ -85,6 +86,7 @@ api.interceptors.response.use(
 
         if (newToken) {
           tokenStore.set(newToken);
+          updateSocketToken(newToken);
           original.headers.Authorization = `Bearer ${newToken}`;
           processQueue(null, newToken);
           return api(original);

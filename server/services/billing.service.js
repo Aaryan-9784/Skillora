@@ -139,10 +139,14 @@ const verifyPayment = async (userId, { razorpay_payment_id, razorpay_subscriptio
  * Signature is in header: x-razorpay-signature
  */
 const handleWebhook = async (rawBody, signature) => {
-  const secret   = process.env.RAZORPAY_WEBHOOK_SECRET;
+  const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
+  const bodyPayload = Buffer.isBuffer(rawBody)
+    ? rawBody
+    : (typeof rawBody === "string" ? rawBody : JSON.stringify(rawBody));
+
   const expected = crypto
     .createHmac("sha256", secret)
-    .update(rawBody)
+    .update(bodyPayload)
     .digest("hex");
 
   if (expected !== signature) {

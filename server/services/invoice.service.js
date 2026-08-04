@@ -218,6 +218,22 @@ const sendInvoice = async (invoiceId, ownerId) => {
     const syncService = require("./sync.service");
     await syncService.onInvoiceSent(invoice, ownerId);
   } catch { /* sync service may not be available */ }
+
+  try {
+    const User = require("../models/User");
+    const emailService = require("./email.service");
+    const [owner, client] = await Promise.all([
+      User.findById(ownerId).select("name email"),
+      Client.findById(invoice.clientId).select("email"),
+    ]);
+    if (owner && client?.email) {
+      emailService.sendInvoice(owner, invoice, client.email);
+    }
+  } catch (err) {
+    const logger = require("../utils/logger");
+    logger.error(`Failed to send invoice email: ${err.message}`);
+  }
+
   return invoice;
 };
 
