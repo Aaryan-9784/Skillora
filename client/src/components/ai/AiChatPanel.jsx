@@ -27,8 +27,12 @@ const MessageBubble = ({ msg, isLast }) => {
     >
       {/* Avatar */}
       {isUser ? (
-        <div className="w-7 h-7 rounded-lg bg-brand flex items-center justify-center text-white text-xs font-bold shrink-0 mt-0.5">
-          {getInitials(user?.name)}
+        <div className="w-7 h-7 rounded-lg bg-brand flex items-center justify-center text-white text-xs font-bold shrink-0 mt-0.5 overflow-hidden">
+          {user?.avatar ? (
+            <img src={user.avatar} alt={user?.name} className="w-full h-full object-cover rounded-lg" />
+          ) : (
+            getInitials(user?.name)
+          )}
         </div>
       ) : (
         <div className="w-7 h-7 rounded-lg bg-gradient-brand flex items-center justify-center shrink-0 mt-0.5">

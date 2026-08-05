@@ -129,11 +129,11 @@ const Navbar = ({ onCommandPalette }) => {
 
         {/* ── BREADCRUMB NAVIGATION ── */}
         <div className="flex items-center gap-2.5 select-none text-xs">
-          <Link to="/" title="Home" className="group transition-transform hover:scale-105 active:scale-95 shrink-0">
+          <Link to="/dashboard" title="Home" className="group transition-transform hover:scale-105 active:scale-95 shrink-0">
             <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-lg"
               style={{
-                background: "linear-gradient(135deg, #3B82F6 0%, #00D4FF 100%)",
-                boxShadow: "0 0 16px rgba(59,130,246,0.45)",
+                background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)",
+                boxShadow: "0 0 16px rgba(99,91,255,0.45)",
                 border: "1px solid rgba(255,255,255,0.25)",
               }}>
               <Home size={15} className="text-white fill-white" />
@@ -184,9 +184,13 @@ const Navbar = ({ onCommandPalette }) => {
               className="flex items-center gap-2.5 px-1 py-1 rounded-xl transition-all duration-150 group cursor-pointer"
             >
               {/* Avatar */}
-              <div className="relative w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold text-white shrink-0"
-                style={{ background: "linear-gradient(135deg,#635BFF,#8579FF)", boxShadow: "0 0 12px rgba(99,91,255,0.4)" }}>
-                {getInitials(user?.name)}
+              <div className="relative w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold text-white shrink-0 overflow-hidden"
+                style={{ background: user?.avatar ? "transparent" : "linear-gradient(135deg,#635BFF,#8579FF)", boxShadow: "0 0 12px rgba(99,91,255,0.4)" }}>
+                {user?.avatar ? (
+                  <img src={user.avatar} alt={user?.name} className="w-full h-full object-cover rounded-xl" />
+                ) : (
+                  getInitials(user?.name)
+                )}
                 <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-[#0A1120]"
                   style={{ background: "#22C55E", boxShadow: "0 0 6px rgba(34,197,94,0.8)" }} />
               </div>
@@ -228,12 +232,16 @@ const Navbar = ({ onCommandPalette }) => {
                     <div className="px-4 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
                       <div className="flex items-center gap-3">
                         <div className="relative shrink-0">
-                          <div className="w-11 h-11 rounded-2xl flex items-center justify-center text-sm font-bold text-white"
+                          <div className="w-11 h-11 rounded-2xl flex items-center justify-center text-sm font-bold text-white overflow-hidden"
                             style={{
-                              background: "linear-gradient(135deg,#635BFF,#8579FF)",
+                              background: user?.avatar ? "transparent" : "linear-gradient(135deg,#635BFF,#8579FF)",
                               boxShadow: "0 0 20px rgba(99,91,255,0.45)",
                             }}>
-                            {getInitials(user?.name)}
+                            {user?.avatar ? (
+                              <img src={user.avatar} alt={user?.name} className="w-full h-full object-cover rounded-2xl" />
+                            ) : (
+                              getInitials(user?.name)
+                            )}
                           </div>
                           <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2"
                             style={{ background: "#22C55E", borderColor: "#080E1A", boxShadow: "0 0 8px rgba(34,197,94,0.7)" }} />

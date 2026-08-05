@@ -37,9 +37,13 @@ const ChatMessage = ({ msg, compact = false }) => {
     >
       {/* Avatar */}
       {isUser ? (
-        <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-bold text-white shrink-0 mt-1"
-          style={{ background: "linear-gradient(135deg,#635BFF,#8579FF)", boxShadow: "0 0 10px rgba(99,91,255,0.4)" }}>
-          {getInitials(user?.name)}
+        <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-bold text-white shrink-0 mt-1 overflow-hidden"
+          style={{ background: user?.avatar ? "transparent" : "linear-gradient(135deg,#635BFF,#8579FF)", boxShadow: "0 0 10px rgba(99,91,255,0.4)" }}>
+          {user?.avatar ? (
+            <img src={user.avatar} alt={user?.name} className="w-full h-full object-cover rounded-lg" />
+          ) : (
+            getInitials(user?.name)
+          )}
         </div>
       ) : (
         <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-1"

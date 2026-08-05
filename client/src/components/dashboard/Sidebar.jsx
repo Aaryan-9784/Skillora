@@ -255,9 +255,13 @@ const UserCard = ({ user, collapsed, onToggle, onLogout, onSettings }) => (
           {/* Avatar → Settings */}
           <Tooltip label="Settings" show>
             <button onClick={onSettings} className="w-full flex justify-center py-1.5">
-              <div className="relative w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold text-white"
-                style={{ background: "linear-gradient(135deg, #635BFF, #8B5CF6)", boxShadow: "0 0 10px rgba(99,91,255,0.4)" }}>
-                {getInitials(user?.name)}
+              <div className="relative w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold text-white overflow-hidden"
+                style={{ background: user?.avatar ? "transparent" : "linear-gradient(135deg, #635BFF, #8B5CF6)", boxShadow: "0 0 10px rgba(99,91,255,0.4)" }}>
+                {user?.avatar ? (
+                  <img src={user.avatar} alt={user?.name} className="w-full h-full object-cover rounded-xl" />
+                ) : (
+                  getInitials(user?.name)
+                )}
                 <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border-2"
                   style={{ background: "#22C55E", borderColor: "#0A1120" }} />
               </div>
