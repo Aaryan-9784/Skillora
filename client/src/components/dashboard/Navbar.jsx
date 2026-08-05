@@ -109,7 +109,10 @@ const Navbar = ({ onCommandPalette }) => {
     { icon: FileText,   label: "New Invoice", path: "/payments/new", color: "#00D4FF" },
   ];
 
-  const PROFILE_ITEMS = [];
+  const PROFILE_ITEMS = [
+    { icon: Home, label: "Home Page", action: () => navigate("/") },
+    { icon: User, label: "Profile",   action: () => navigate("/profile") },
+  ];
 
   return (
     <>
@@ -129,20 +132,7 @@ const Navbar = ({ onCommandPalette }) => {
 
         {/* ── BREADCRUMB NAVIGATION ── */}
         <div className="flex items-center gap-2.5 select-none text-xs">
-          <Link to="/dashboard" title="Home" className="group transition-transform hover:scale-105 active:scale-95 shrink-0">
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-lg"
-              style={{
-                background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)",
-                boxShadow: "0 0 16px rgba(99,91,255,0.45)",
-                border: "1px solid rgba(255,255,255,0.25)",
-              }}>
-              <Home size={15} className="text-white fill-white" />
-            </div>
-          </Link>
-
-          <span className="text-gray-500 font-bold text-sm select-none">/</span>
-
-          <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-semibold shrink-0"
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-semibold shrink-0"
             style={{
               background: "rgba(99,91,255,0.12)",
               borderColor: "rgba(99,91,255,0.25)",
@@ -151,7 +141,7 @@ const Navbar = ({ onCommandPalette }) => {
             <span>Freelancer Workspace</span>
           </div>
 
-          <span className="text-gray-500 font-bold text-sm hidden sm:inline select-none">/</span>
+          <span className="text-gray-500 font-bold text-sm select-none">/</span>
 
           <div className="flex items-center gap-1.5 font-bold text-white text-xs">
             {PageIcon && <PageIcon size={14} className="text-indigo-400 shrink-0" />}

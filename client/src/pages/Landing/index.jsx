@@ -5,9 +5,12 @@ import {
   Zap, LayoutDashboard, Users, CreditCard, Brain, CheckCircle2,
   ArrowRight, Star, TrendingUp, Shield, Clock, Globe,
   ChevronRight, Play, BarChart3, FileText, Kanban, Bot, X,
-  MessageSquarePlus, Send,
+  MessageSquarePlus, Send, User, LogOut, ChevronDown,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import useAuthStore from "../../store/authStore";
+import useClickOutside from "../../hooks/useClickOutside";
+import { getInitials } from "../../utils/helpers";
 
 // ─── Reusable fade-in wrapper ─────────────────────────────
 const FadeIn = ({ children, delay = 0, y = 20, className = "" }) => {
@@ -84,6 +87,23 @@ const NavLink = ({ href, children }) => (
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const { user, isAuthenticated, logout } = useAuthStore();
+
+  useClickOutside(dropdownRef, () => setDropdownOpen(false), { enabled: dropdownOpen });
+
+  const dashboardPath = user?.role === "admin"
+    ? "/admin"
+    : user?.role === "client"
+    ? "/client/dashboard"
+    : "/dashboard";
+
+  const profilePath = user?.role === "admin"
+    ? "/admin/profile"
+    : user?.role === "client"
+    ? "/client/profile"
+    : "/profile";
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 24);
@@ -155,43 +175,158 @@ const Navbar = () => {
 
         {/* ── Desktop right actions — right ── */}
         <div className="hidden md:flex items-center justify-end gap-6">
-          <Link to="/login">
-            <motion.span
-              whileHover={{ color: "#C084FC" }}
-              className="text-[14px] font-semibold cursor-pointer transition-colors duration-200"
-              style={{
-                color: "#fff",
-                textShadow: "0 1px 8px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.7)",
-              }}
-            >
-              Sign in
-            </motion.span>
-          </Link>
-
-          <Link to="/register">
-            <motion.button
-              whileHover={{ scale: 1.04, boxShadow: "0 0 32px rgba(139,92,246,0.6)" }}
-              whileTap={{ scale: 0.96 }}
-              className="relative h-10 px-6 rounded-full text-[14px] font-semibold text-white flex items-center gap-2 overflow-hidden cursor-pointer"
-              style={{
-                background: "linear-gradient(90deg, #4F46E5 0%, #7C3AED 45%, #EC4899 100%)",
-                boxShadow: "0 4px 18px rgba(124,58,237,0.4), inset 0 1px 0 rgba(255,255,255,0.2)",
-                letterSpacing: "0.01em",
-              }}
-            >
-              <motion.div
-                className="absolute inset-0 pointer-events-none"
+          {isAuthenticated && user ? (
+            <div className="relative" ref={dropdownRef}>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setDropdownOpen((o) => !o)}
+                className="flex items-center gap-2.5 px-3 py-1.5 rounded-2xl transition-all duration-150 group cursor-pointer"
                 style={{
-                  background: "linear-gradient(105deg,transparent 30%,rgba(255,255,255,0.18) 50%,transparent 70%)",
-                  backgroundSize: "200% 100%",
+                  background: "rgba(8, 12, 24, 0.75)",
+                  backdropFilter: "blur(16px)",
+                  WebkitBackdropFilter: "blur(16px)",
+                  border: "1px solid rgba(255, 255, 255, 0.12)",
+                  boxShadow: "0 4px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
                 }}
-                animate={{ backgroundPosition: ["200% 0", "-200% 0"] }}
-                transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
-              />
-              Get started
-              <ArrowRight size={14} strokeWidth={2.5} />
-            </motion.button>
-          </Link>
+              >
+                <div className="relative w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
+                  style={{
+                    background: user?.avatar ? "transparent" : "linear-gradient(135deg,#635BFF,#8579FF)",
+                    boxShadow: "0 0 12px rgba(99,91,255,0.5)"
+                  }}>
+                  {user?.avatar ? (
+                    <img src={user.avatar} alt={user?.name} className="w-full h-full object-cover rounded-full" />
+                  ) : (
+                    getInitials(user?.name)
+                  )}
+                  <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-[#080B16]"
+                    style={{ background: "#22C55E", boxShadow: "0 0 6px rgba(34,197,94,0.8)" }} />
+                </div>
+                <div className="flex flex-col justify-center text-left py-0.5">
+                  <p className="text-xs font-bold text-white group-hover:text-purple-200 transition-colors leading-tight truncate max-w-[120px]"
+                    style={{ textShadow: "0 1px 6px rgba(0,0,0,0.9)" }}>
+                    {user?.name}
+                  </p>
+                  <p className="text-[11px] font-semibold capitalize leading-tight mt-0.5"
+                    style={{ color: "#C4B5FD", textShadow: "0 1px 6px rgba(0,0,0,0.9)" }}>
+                    {user?.role || "user"}
+                  </p>
+                </div>
+                <motion.div animate={{ rotate: dropdownOpen ? 180 : 0 }} transition={{ duration: 0.2 }} className="ml-0.5">
+                  <ChevronDown size={14} className="text-gray-300 group-hover:text-white transition-colors" style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.8))" }} />
+                </motion.div>
+              </motion.button>
+
+              <AnimatePresence>
+                {dropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.96, y: -6 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.96, y: -6 }}
+                    transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+                    className="absolute right-0 top-[calc(100%+8px)] z-50 w-56 rounded-2xl overflow-hidden"
+                    style={{
+                      background: "linear-gradient(160deg,rgba(12,19,36,0.98) 0%,rgba(8,14,26,0.98) 100%)",
+                      border: "1px solid rgba(255,255,255,0.09)",
+                      boxShadow: "0 0 0 1px rgba(99,91,255,0.1), 0 20px 48px rgba(0,0,0,0.65)",
+                      backdropFilter: "blur(24px)",
+                    }}
+                  >
+                    <div className="absolute top-0 inset-x-0 h-px"
+                      style={{ background: "linear-gradient(90deg,transparent,rgba(99,91,255,0.6),rgba(0,212,255,0.3),transparent)" }} />
+                    <div className="py-2 px-2 space-y-1">
+                      <Link to={dashboardPath} onClick={() => setDropdownOpen(false)}>
+                        <motion.div
+                          whileHover={{ x: 2 }}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-150 cursor-pointer"
+                          style={{ color: "#9CA3AF" }}
+                          onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "#F9FAFB"; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#9CA3AF"; }}
+                        >
+                          <div className="w-7 h-7 rounded-xl flex items-center justify-center shrink-0"
+                            style={{ background: "rgba(99,91,255,0.12)", border: "1px solid rgba(99,91,255,0.2)" }}>
+                            <LayoutDashboard size={13} className="text-purple-400" />
+                          </div>
+                          <span className="font-medium">Dashboard</span>
+                        </motion.div>
+                      </Link>
+                      <Link to={profilePath} onClick={() => setDropdownOpen(false)}>
+                        <motion.div
+                          whileHover={{ x: 2 }}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-150 cursor-pointer"
+                          style={{ color: "#9CA3AF" }}
+                          onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "#F9FAFB"; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#9CA3AF"; }}
+                        >
+                          <div className="w-7 h-7 rounded-xl flex items-center justify-center shrink-0"
+                            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                            <User size={13} />
+                          </div>
+                          <span className="font-medium">Profile</span>
+                        </motion.div>
+                      </Link>
+                    </div>
+                    <div className="px-2 pb-2 pt-1" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                      <motion.button
+                        whileHover={{ x: 2 }}
+                        onClick={() => { setDropdownOpen(false); logout(); }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-red-400 hover:text-red-300 transition-all duration-150 cursor-pointer"
+                        onMouseEnter={e => e.currentTarget.style.background = "rgba(239,68,68,0.1)"}
+                        onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                      >
+                        <div className="w-7 h-7 rounded-xl flex items-center justify-center shrink-0"
+                          style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.2)" }}>
+                          <LogOut size={13} className="text-red-400" />
+                        </div>
+                        <span className="font-medium">Sign out</span>
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          ) : (
+            <>
+              <Link to="/login">
+                <motion.span
+                  whileHover={{ color: "#C084FC" }}
+                  className="text-[14px] font-semibold cursor-pointer transition-colors duration-200"
+                  style={{
+                    color: "#fff",
+                    textShadow: "0 1px 8px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.7)",
+                  }}
+                >
+                  Sign in
+                </motion.span>
+              </Link>
+
+              <Link to="/register">
+                <motion.button
+                  whileHover={{ scale: 1.04, boxShadow: "0 0 32px rgba(139,92,246,0.6)" }}
+                  whileTap={{ scale: 0.96 }}
+                  className="relative h-10 px-6 rounded-full text-[14px] font-semibold text-white flex items-center gap-2 overflow-hidden cursor-pointer"
+                  style={{
+                    background: "linear-gradient(90deg, #4F46E5 0%, #7C3AED 45%, #EC4899 100%)",
+                    boxShadow: "0 4px 18px rgba(124,58,237,0.4), inset 0 1px 0 rgba(255,255,255,0.2)",
+                    letterSpacing: "0.01em",
+                  }}
+                >
+                  <motion.div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      background: "linear-gradient(105deg,transparent 30%,rgba(255,255,255,0.18) 50%,transparent 70%)",
+                      backgroundSize: "200% 100%",
+                    }}
+                    animate={{ backgroundPosition: ["200% 0", "-200% 0"] }}
+                    transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
+                  />
+                  Get started
+                  <ArrowRight size={14} strokeWidth={2.5} />
+                </motion.button>
+              </Link>
+            </>
+          )}
         </div>
 
         {/* ── Mobile hamburger — right ── */}
@@ -277,24 +412,46 @@ const Navbar = () => {
 
               {/* Drawer footer CTAs */}
               <div className="px-4 pb-8 flex flex-col gap-3">
-                <Link to="/login" onClick={() => setMenuOpen(false)}>
-                  <motion.button
-                    whileTap={{ scale: 0.97 }}
-                    className="w-full h-11 rounded-xl text-[14px] font-medium"
-                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(203,213,225,0.85)" }}
-                  >
-                    Sign in
-                  </motion.button>
-                </Link>
-                <Link to="/register" onClick={() => setMenuOpen(false)}>
-                  <motion.button
-                    whileTap={{ scale: 0.97 }}
-                    className="w-full h-11 rounded-xl text-[14px] font-semibold text-white"
-                    style={{ background: "linear-gradient(135deg,#3B82F6,#8B5CF6,#EC4899)", boxShadow: "0 0 20px rgba(139,92,246,0.35)" }}
-                  >
-                    Get started
-                  </motion.button>
-                </Link>
+                {isAuthenticated && user ? (
+                  <Link to={dashboardPath} onClick={() => setMenuOpen(false)}>
+                    <motion.button
+                      whileTap={{ scale: 0.97 }}
+                      className="w-full h-11 rounded-xl text-[14px] font-semibold text-white flex items-center justify-center gap-2"
+                      style={{ background: "linear-gradient(135deg,#3B82F6,#8B5CF6,#EC4899)", boxShadow: "0 0 20px rgba(139,92,246,0.35)" }}
+                    >
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white overflow-hidden bg-white/20">
+                        {user?.avatar ? (
+                          <img src={user.avatar} alt={user?.name} className="w-full h-full object-cover rounded-full" />
+                        ) : (
+                          getInitials(user?.name)
+                        )}
+                      </div>
+                      <span>Go to Dashboard</span>
+                      <ArrowRight size={14} strokeWidth={2.5} />
+                    </motion.button>
+                  </Link>
+                ) : (
+                  <>
+                    <Link to="/login" onClick={() => setMenuOpen(false)}>
+                      <motion.button
+                        whileTap={{ scale: 0.97 }}
+                        className="w-full h-11 rounded-xl text-[14px] font-medium"
+                        style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(203,213,225,0.85)" }}
+                      >
+                        Sign in
+                      </motion.button>
+                    </Link>
+                    <Link to="/register" onClick={() => setMenuOpen(false)}>
+                      <motion.button
+                        whileTap={{ scale: 0.97 }}
+                        className="w-full h-11 rounded-xl text-[14px] font-semibold text-white"
+                        style={{ background: "linear-gradient(135deg,#3B82F6,#8B5CF6,#EC4899)", boxShadow: "0 0 20px rgba(139,92,246,0.35)" }}
+                      >
+                        Get started
+                      </motion.button>
+                    </Link>
+                  </>
+                )}
               </div>
             </motion.div>
           </>
@@ -306,6 +463,24 @@ const Navbar = () => {
 
 // ─── Video Demo Modal (Fullscreen continuous video & header) ─────────────
 const VideoModal = ({ isOpen, onClose }) => {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const { user, isAuthenticated, logout } = useAuthStore();
+
+  useClickOutside(dropdownRef, () => setDropdownOpen(false), { enabled: dropdownOpen });
+
+  const dashboardPath = user?.role === "admin"
+    ? "/admin"
+    : user?.role === "client"
+    ? "/client/dashboard"
+    : "/dashboard";
+
+  const profilePath = user?.role === "admin"
+    ? "/admin/profile"
+    : user?.role === "client"
+    ? "/client/profile"
+    : "/profile";
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape") onClose();
@@ -407,30 +582,145 @@ const VideoModal = ({ isOpen, onClose }) => {
           {/* Right Actions */}
           <div className="flex items-center justify-end gap-6">
             <div className="hidden md:flex items-center gap-6">
-              <Link to="/login" onClick={onClose}>
-                <span
-                  className="text-[14px] font-semibold text-white hover:text-purple-300 transition-colors cursor-pointer"
-                  style={{
-                    textShadow: "0 2px 10px rgba(0,0,0,0.95), 0 0 16px rgba(0,0,0,0.9), 0 1px 3px rgba(0,0,0,1)",
-                  }}
-                >
-                  Sign in
-                </span>
-              </Link>
+              {isAuthenticated && user ? (
+                <div className="relative" ref={dropdownRef}>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setDropdownOpen((o) => !o)}
+                    className="flex items-center gap-2.5 px-3 py-1.5 rounded-2xl transition-all duration-150 group cursor-pointer"
+                    style={{
+                      background: "rgba(8, 12, 24, 0.75)",
+                      backdropFilter: "blur(16px)",
+                      WebkitBackdropFilter: "blur(16px)",
+                      border: "1px solid rgba(255, 255, 255, 0.12)",
+                      boxShadow: "0 4px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
+                    }}
+                  >
+                    <div className="relative w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
+                      style={{
+                        background: user?.avatar ? "transparent" : "linear-gradient(135deg,#635BFF,#8579FF)",
+                        boxShadow: "0 0 12px rgba(99,91,255,0.5)"
+                      }}>
+                      {user?.avatar ? (
+                        <img src={user.avatar} alt={user?.name} className="w-full h-full object-cover rounded-full" />
+                      ) : (
+                        getInitials(user?.name)
+                      )}
+                      <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-[#080B16]"
+                        style={{ background: "#22C55E", boxShadow: "0 0 6px rgba(34,197,94,0.8)" }} />
+                    </div>
+                    <div className="flex flex-col justify-center text-left py-0.5">
+                      <p className="text-xs font-bold text-white group-hover:text-purple-200 transition-colors leading-tight truncate max-w-[120px]"
+                        style={{ textShadow: "0 1px 6px rgba(0,0,0,0.9)" }}>
+                        {user?.name}
+                      </p>
+                      <p className="text-[11px] font-semibold capitalize leading-tight mt-0.5"
+                        style={{ color: "#C4B5FD", textShadow: "0 1px 6px rgba(0,0,0,0.9)" }}>
+                        {user?.role || "user"}
+                      </p>
+                    </div>
+                    <motion.div animate={{ rotate: dropdownOpen ? 180 : 0 }} transition={{ duration: 0.2 }} className="ml-0.5">
+                      <ChevronDown size={14} className="text-gray-300 group-hover:text-white transition-colors" style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.8))" }} />
+                    </motion.div>
+                  </motion.button>
 
-              <Link to="/register" onClick={onClose}>
-                <button
-                  className="relative h-10 px-6 rounded-full text-[14px] font-semibold text-white flex items-center gap-2 overflow-hidden transition-transform active:scale-95 cursor-pointer"
-                  style={{
-                    background: "linear-gradient(90deg, #4F46E5 0%, #7C3AED 45%, #EC4899 100%)",
-                    boxShadow: "0 4px 18px rgba(124,58,237,0.4)",
-                    letterSpacing: "0.01em",
-                  }}
-                >
-                  Get started
-                  <ArrowRight size={14} strokeWidth={2.5} />
-                </button>
-              </Link>
+                  <AnimatePresence>
+                    {dropdownOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.96, y: -6 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.96, y: -6 }}
+                        transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+                        className="absolute right-0 top-[calc(100%+8px)] z-50 w-56 rounded-2xl overflow-hidden"
+                        style={{
+                          background: "linear-gradient(160deg,rgba(12,19,36,0.98) 0%,rgba(8,14,26,0.98) 100%)",
+                          border: "1px solid rgba(255,255,255,0.09)",
+                          boxShadow: "0 0 0 1px rgba(99,91,255,0.1), 0 20px 48px rgba(0,0,0,0.65)",
+                          backdropFilter: "blur(24px)",
+                        }}
+                      >
+                        <div className="absolute top-0 inset-x-0 h-px"
+                          style={{ background: "linear-gradient(90deg,transparent,rgba(99,91,255,0.6),rgba(0,212,255,0.3),transparent)" }} />
+                        <div className="py-2 px-2 space-y-1">
+                          <Link to={dashboardPath} onClick={() => { setDropdownOpen(false); onClose(); }}>
+                            <motion.div
+                              whileHover={{ x: 2 }}
+                              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-150 cursor-pointer"
+                              style={{ color: "#9CA3AF" }}
+                              onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "#F9FAFB"; }}
+                              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#9CA3AF"; }}
+                            >
+                              <div className="w-7 h-7 rounded-xl flex items-center justify-center shrink-0"
+                                style={{ background: "rgba(99,91,255,0.12)", border: "1px solid rgba(99,91,255,0.2)" }}>
+                                <LayoutDashboard size={13} className="text-purple-400" />
+                              </div>
+                              <span className="font-medium">Dashboard</span>
+                            </motion.div>
+                          </Link>
+                          <Link to={profilePath} onClick={() => { setDropdownOpen(false); onClose(); }}>
+                            <motion.div
+                              whileHover={{ x: 2 }}
+                              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-150 cursor-pointer"
+                              style={{ color: "#9CA3AF" }}
+                              onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "#F9FAFB"; }}
+                              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#9CA3AF"; }}
+                            >
+                              <div className="w-7 h-7 rounded-xl flex items-center justify-center shrink-0"
+                                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                                <User size={13} />
+                              </div>
+                              <span className="font-medium">Profile</span>
+                            </motion.div>
+                          </Link>
+                        </div>
+                        <div className="px-2 pb-2 pt-1" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                          <motion.button
+                            whileHover={{ x: 2 }}
+                            onClick={() => { setDropdownOpen(false); onClose(); logout(); }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-red-400 hover:text-red-300 transition-all duration-150 cursor-pointer"
+                            onMouseEnter={e => e.currentTarget.style.background = "rgba(239,68,68,0.1)"}
+                            onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                          >
+                            <div className="w-7 h-7 rounded-xl flex items-center justify-center shrink-0"
+                              style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.2)" }}>
+                              <LogOut size={13} className="text-red-400" />
+                            </div>
+                            <span className="font-medium">Sign out</span>
+                          </motion.button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ) : (
+                <>
+                  <Link to="/login" onClick={onClose}>
+                    <span
+                      className="text-[14px] font-semibold text-white hover:text-purple-300 transition-colors cursor-pointer"
+                      style={{
+                        textShadow: "0 2px 10px rgba(0,0,0,0.95), 0 0 16px rgba(0,0,0,0.9), 0 1px 3px rgba(0,0,0,1)",
+                      }}
+                    >
+                      Sign in
+                    </span>
+                  </Link>
+
+                  <Link to="/register" onClick={onClose}>
+                    <button
+                      className="relative h-10 px-6 rounded-full text-[14px] font-semibold text-white flex items-center gap-2 overflow-hidden transition-transform active:scale-95 cursor-pointer"
+                      style={{
+                        background: "linear-gradient(90deg, #4F46E5 0%, #7C3AED 45%, #EC4899 100%)",
+                        boxShadow: "0 4px 18px rgba(124,58,237,0.4)",
+                        letterSpacing: "0.01em",
+                      }}
+                    >
+                      Get started
+                      <ArrowRight size={14} strokeWidth={2.5} />
+                    </button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -452,6 +742,7 @@ const VideoModal = ({ isOpen, onClose }) => {
 // ─── Hero ─────────────────────────────────────────────────
 const Hero = () => {
   const [demoOpen, setDemoOpen] = useState(false);
+  const { user, isAuthenticated } = useAuthStore();
   const { scrollY } = useScroll();
   const textY   = useTransform(scrollY, [0, 400], [0, 60]);
   const opacity = useTransform(scrollY, [0, 320], [1, 0]);
@@ -538,7 +829,7 @@ const Hero = () => {
           transition={{ duration: 0.6, delay: 0.38, ease: [0.16, 1, 0.3, 1] }}
           className="flex flex-col sm:flex-row items-center gap-4"
         >
-          <Link to="/register">
+          <Link to={isAuthenticated && user ? (user?.role === "admin" ? "/admin" : user?.role === "client" ? "/client/dashboard" : "/dashboard") : "/register"}>
             <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
@@ -551,7 +842,7 @@ const Hero = () => {
             >
               {/* Inner top highlight border */}
               <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none" />
-              <span>Start Building</span>
+              <span>{isAuthenticated && user ? "Go to Dashboard" : "Start Building"}</span>
               <ArrowRight size={15} strokeWidth={2.5} className="transition-transform duration-300 group-hover:translate-x-1" />
             </motion.button>
           </Link>

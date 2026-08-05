@@ -399,20 +399,7 @@ const ClientLayout = () => {
 
         {/* ── BREADCRUMB NAVIGATION ── */}
         <div className="flex items-center gap-2.5 select-none text-xs">
-          <Link to="/client/dashboard" title="Home" className="group transition-transform hover:scale-105 active:scale-95 shrink-0">
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-lg"
-              style={{
-                background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)",
-                boxShadow: "0 0 16px rgba(99,91,255,0.45)",
-                border: "1px solid rgba(255,255,255,0.25)",
-              }}>
-              <Home size={15} className="text-white fill-white" />
-            </div>
-          </Link>
-
-          <span className="text-gray-500 font-bold text-sm select-none">/</span>
-
-          <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-semibold shrink-0"
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-semibold shrink-0"
             style={{
               background: "rgba(0,212,255,0.12)",
               borderColor: "rgba(0,212,255,0.25)",
@@ -421,7 +408,7 @@ const ClientLayout = () => {
             <span>Client Portal</span>
           </div>
 
-          <span className="text-gray-500 font-bold text-sm hidden sm:inline select-none">/</span>
+          <span className="text-gray-500 font-bold text-sm select-none">/</span>
 
           <div className="flex items-center gap-1.5 font-bold text-white text-xs">
             {PageIcon && <PageIcon size={14} className="text-cyan-400 shrink-0" />}
@@ -506,10 +493,22 @@ const ClientLayout = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="py-2 px-2">
+                    <div className="py-2 px-2 space-y-1">
+                      <motion.button whileHover={{ x: 2 }}
+                        onClick={() => { navigate("/"); setDropdownOpen(false); }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-150 cursor-pointer"
+                        style={{ color: "#9CA3AF" }}
+                        onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "#F9FAFB"; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#9CA3AF"; }}>
+                        <div className="w-7 h-7 rounded-xl flex items-center justify-center shrink-0"
+                          style={{ background: "rgba(0,212,255,0.12)", border: "1px solid rgba(0,212,255,0.2)" }}>
+                          <Home size={13} className="text-cyan-400" />
+                        </div>
+                        <span className="font-medium">Home Page</span>
+                      </motion.button>
                       <motion.button whileHover={{ x: 2 }}
                         onClick={() => { navigate("/client/profile"); setDropdownOpen(false); }}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-150"
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-150 cursor-pointer"
                         style={{ color: "#9CA3AF" }}
                         onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "#F9FAFB"; }}
                         onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#9CA3AF"; }}>
