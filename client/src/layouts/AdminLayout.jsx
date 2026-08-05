@@ -3,13 +3,12 @@ import { Outlet, NavLink, useNavigate, useLocation, Link } from "react-router-do
 import {
   LayoutDashboard, Users, TrendingUp, Settings,
   Zap, Shield, LogOut, ChevronRight, Bell,
-  ChevronDown, User, Home, Search,
+  ChevronDown, User, Home,
 } from "lucide-react";
 
 const ADMIN_CONFIG = {
   "/admin":          { title: "Overview",          icon: LayoutDashboard },
   "/admin/users":    { title: "Users",             icon: Users },
-  "/admin/revenue":  { title: "Revenue Analytics", icon: TrendingUp },
   "/admin/settings": { title: "Platform Settings", icon: Settings },
   "/admin/profile":  { title: "Profile",           icon: User },
 };
@@ -33,7 +32,6 @@ const NAV_SECTIONS = [
     items: [
       { to: "/admin",          icon: LayoutDashboard, label: "Overview", end: true },
       { to: "/admin/users",    icon: Users,           label: "Users"              },
-      { to: "/admin/revenue",  icon: TrendingUp,      label: "Revenue"            },
     ],
   },
   {
@@ -211,7 +209,7 @@ const AdminNavbar = ({ onSearch }) => {
 
   return (
     <>
-      <header className="sticky top-0 z-40 flex items-center h-16 px-6 gap-3"
+      <header className="sticky top-0 z-40 flex items-center justify-between h-16 px-6 gap-3"
         style={{
           background: "linear-gradient(90deg,rgba(9,15,28,0.94) 0%,rgba(11,18,32,0.94) 100%)",
           backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
@@ -255,21 +253,6 @@ const AdminNavbar = ({ onSearch }) => {
 
         {/* ── RIGHT ACTIONS ── */}
         <div className="flex items-center gap-3.5">
-          {/* Quick Search */}
-          <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-            onClick={onSearch}
-            className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs cursor-pointer transition-all duration-150"
-            style={{
-              background: "rgba(255,255,255,0.04)",
-              borderColor: "rgba(255,255,255,0.08)",
-              color: "#9CA3AF",
-            }}>
-            <Search size={13} className="text-purple-400" />
-            <span>Search workspace...</span>
-            <kbd className="ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-semibold text-gray-400"
-              style={{ background: "rgba(255,255,255,0.08)" }}>Ctrl K</kbd>
-          </motion.button>
-
           {/* Notifications */}
           <div className="relative">
             <motion.button whileHover={{ scale: 1.06, y: -1 }} whileTap={{ scale: 0.94 }}

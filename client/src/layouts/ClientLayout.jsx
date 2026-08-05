@@ -6,7 +6,7 @@ import {
   LogOut, Bell, ChevronRight, Zap, Menu, X,
   MessageSquare, CheckCircle2, Clock, AlertCircle,
   FolderKanban, CreditCard, Sparkles, Home,
-  Search, Command, ChevronDown,
+  Command, ChevronDown,
 } from "lucide-react";
 import useAuthStore from "../store/authStore";
 import useSocket from "../hooks/useSocket";
@@ -415,21 +415,6 @@ const ClientLayout = () => {
 
         {/* ── RIGHT ACTIONS ── */}
         <div className="flex items-center gap-3.5">
-          {/* Quick Search */}
-          <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-            onClick={() => setSearchOpen(true)}
-            className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs cursor-pointer transition-all duration-150"
-            style={{
-              background: "rgba(255,255,255,0.04)",
-              borderColor: "rgba(255,255,255,0.08)",
-              color: "#9CA3AF",
-            }}>
-            <Search size={13} className="text-cyan-400" />
-            <span>Search workspace...</span>
-            <kbd className="ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-semibold text-gray-400"
-              style={{ background: "rgba(255,255,255,0.08)" }}>Ctrl K</kbd>
-          </motion.button>
-
           {/* Notifications bell */}
           <div className="relative">
             <motion.button whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}

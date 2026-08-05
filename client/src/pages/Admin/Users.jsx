@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, Trash2, Shield, UserCheck, Users, UserCog,
@@ -168,67 +169,116 @@ const FilterDrop = ({ label, options, value, onChange, icon: Icon }) => {
 const ActionMenu = ({ user, onView, onRoleToggle, onToggleActive, onPlanChange, onDelete }) => {
   const [open, setOpen]       = useState(false);
   const [planSub, setPlanSub] = useState(false);
-  const ref = useRef(null);
-  useEffect(() => {
-    const h = e => { if (ref.current && !ref.current.contains(e.target)) { setOpen(false); setPlanSub(false); } };
-    document.addEventListener("mousedown", h);
-    return () => document.removeEventListener("mousedown", h);
-  }, []);
+  const [coords, setCoords]   = useState({ top: 0, bottom: 0, right: 0, dropUp: false });
+  const btnRef  = useRef(null);
+  const menuRef = useRef(null);
 
-  const close = fn => () => { fn(); setOpen(false); setPlanSub(false); };
+  useEffect(() => {
+    const handleScrollOrClick = (e) => {
+      if (
+        open &&
+        btnRef.current && !btnRef.current.contains(e.target) &&
+        menuRef.current && !menuRef.current.contains(e.target)
+      ) {
+        setOpen(false);
+        setPlanSub(false);
+      }
+    };
+    window.addEventListener("mousedown", handleScrollOrClick);
+    window.addEventListener("scroll", handleScrollOrClick, true);
+    return () => {
+      window.removeEventListener("mousedown", handleScrollOrClick);
+      window.removeEventListener("scroll", handleScrollOrClick, true);
+    };
+  }, [open]);
+
+  const toggleMenu = (e) => {
+    e.stopPropagation();
+    if (!open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const isUp = spaceBelow < 280 && rect.top > 280;
+      setCoords({
+        top: rect.bottom + 6,
+        bottom: window.innerHeight - rect.top + 6,
+        right: window.innerWidth - rect.right,
+        dropUp: isUp,
+      });
+    }
+    setOpen(o => !o);
+  };
+
+  const close = fn => e => {
+    if (e) e.stopPropagation();
+    setOpen(false);
+    setPlanSub(false);
+    if (fn) fn();
+  };
 
   const items = [
     { icon: Eye,       label: "View Profile",  fn: close(onView),          color: "#A78BFA" },
     { icon: Shield,    label: user.role === "admin" ? "Remove Admin" : "Make Admin", fn: close(onRoleToggle), color: "#818CF8" },
     { icon: user.isActive !== false ? Ban : CheckCircle,
                        label: user.isActive !== false ? "Suspend" : "Activate", fn: close(onToggleActive), color: user.isActive !== false ? "#FBBF24" : "#4ADE80" },
-    { icon: CreditCard,label: "Change Plan",   fn: () => setPlanSub(o => !o), color: "#38BDF8", sub: true },
+    { icon: CreditCard,label: "Change Plan",   fn: (e) => { e.stopPropagation(); setPlanSub(o => !o); }, color: "#38BDF8", sub: true },
     { icon: Trash2,    label: "Delete",        fn: close(onDelete),        color: "#F87171", danger: true },
   ];
 
   return (
-    <div className="relative" ref={ref}>
+    <div className="relative inline-block" ref={btnRef}>
       <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
-        onClick={e => { e.stopPropagation(); setOpen(o => !o); }}
-        className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
-        style={{ background: open ? "rgba(99,91,255,0.15)" : "transparent", color: open ? "#A78BFA" : "rgba(100,116,139,0.6)" }}
-        onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.07)"; e.currentTarget.style.color = "#A78BFA"; }}
-        onMouseLeave={e => { if (!open) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "rgba(100,116,139,0.6)"; } }}>
-        <MoreVertical size={15} />
+        onClick={toggleMenu}
+        className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer"
+        style={{ background: open ? "rgba(99,91,255,0.2)" : "transparent", color: open ? "#A78BFA" : "rgba(148,163,184,0.7)" }}
+        onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#A78BFA"; }}
+        onMouseLeave={e => { if (!open) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "rgba(148,163,184,0.7)"; } }}>
+        <MoreVertical size={16} />
       </motion.button>
 
-      <AnimatePresence>
-        {open && (
-          <motion.div initial={{ opacity: 0, scale: 0.9, y: -6 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: -6 }} transition={{ duration: 0.15, ease: [0.16,1,0.3,1] }}
-            className="absolute right-0 top-10 z-50 w-52 rounded-2xl overflow-hidden py-1.5"
-            style={{ background: "linear-gradient(145deg,rgba(13,17,38,0.99),rgba(8,12,28,0.99))", border: "1px solid rgba(255,255,255,0.1)", backdropFilter: "blur(28px)", boxShadow: "0 24px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(99,91,255,0.08)" }}
+      {open && createPortal(
+        <AnimatePresence>
+          <motion.div
+            ref={menuRef}
+            initial={{ opacity: 0, scale: 0.94, y: coords.dropUp ? 6 : -6 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.94, y: coords.dropUp ? 6 : -6 }}
+            transition={{ duration: 0.16, ease: [0.16,1,0.3,1] }}
+            className="fixed z-[9999] w-52 rounded-2xl overflow-hidden py-1.5"
+            style={{
+              top: coords.dropUp ? "auto" : coords.top,
+              bottom: coords.dropUp ? coords.bottom : "auto",
+              right: coords.right,
+              background: "linear-gradient(160deg,rgba(13,17,38,0.98),rgba(8,12,28,0.98))",
+              border: "1px solid rgba(255,255,255,0.12)",
+              backdropFilter: "blur(28px)",
+              boxShadow: "0 24px 80px rgba(0,0,0,0.85), 0 0 0 1px rgba(99,91,255,0.15)",
+            }}
             onClick={e => e.stopPropagation()}>
             {items.map(({ icon: Icon, label, fn, color, sub, danger }) => (
               <div key={label}>
                 <button onClick={fn}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-[12px] font-medium transition-all"
-                  style={{ color: danger ? "#F87171" : "rgba(203,213,225,0.85)" }}
-                  onMouseEnter={e => { e.currentTarget.style.background = danger ? "rgba(239,68,68,0.1)" : `${color}12`; e.currentTarget.style.color = color; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = danger ? "#F87171" : "rgba(203,213,225,0.85)"; }}>
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-[12px] font-medium transition-all cursor-pointer"
+                  style={{ color: danger ? "#F87171" : "rgba(203,213,225,0.88)" }}
+                  onMouseEnter={e => { e.currentTarget.style.background = danger ? "rgba(239,68,68,0.12)" : `${color}15`; e.currentTarget.style.color = color; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = danger ? "#F87171" : "rgba(203,213,225,0.88)"; }}>
                   <span className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
-                    style={{ background: `${color}15` }}>
-                    <Icon size={12} style={{ color }} />
+                    style={{ background: `${color}18` }}>
+                    <Icon size={13} style={{ color }} />
                   </span>
                   {label}
                   {sub && <ChevronDown size={11} className="ml-auto" style={{ transform: planSub ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />}
                 </button>
                 {sub && planSub && (
-                  <div className="mx-3 mb-1 rounded-xl overflow-hidden"
-                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                  <div className="mx-3 my-1 rounded-xl overflow-hidden"
+                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
                     {["free","pro","premium"].map(p => (
-                      <button key={p} onClick={() => { onPlanChange(p); setOpen(false); setPlanSub(false); }}
-                        className="w-full flex items-center justify-between px-3 py-2 text-[11px] font-semibold capitalize transition-all"
-                        style={{ color: user.plan === p ? "#A78BFA" : "rgba(148,163,184,0.7)" }}
-                        onMouseEnter={e => e.currentTarget.style.background = "rgba(99,91,255,0.1)"}
+                      <button key={p} onClick={(e) => { e.stopPropagation(); onPlanChange(p); setOpen(false); setPlanSub(false); }}
+                        className="w-full flex items-center justify-between px-3 py-2 text-[11px] font-semibold capitalize transition-all cursor-pointer"
+                        style={{ color: user.plan === p ? "#A78BFA" : "rgba(148,163,184,0.75)" }}
+                        onMouseEnter={e => e.currentTarget.style.background = "rgba(99,91,255,0.12)"}
                         onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                         {p}
-                        {user.plan === p && <Check size={10} style={{ color: "#A78BFA" }} />}
+                        {user.plan === p && <Check size={11} style={{ color: "#A78BFA" }} />}
                       </button>
                     ))}
                   </div>
@@ -236,8 +286,9 @@ const ActionMenu = ({ user, onView, onRoleToggle, onToggleActive, onPlanChange, 
               </div>
             ))}
           </motion.div>
-        )}
-      </AnimatePresence>
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 };
