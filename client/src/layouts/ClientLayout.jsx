@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Outlet, NavLink, useNavigate, useLocation, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -16,6 +16,8 @@ import { getInitials, relativeTime } from "../utils/helpers";
 import GlobalSearch from "../components/ui/GlobalSearch";
 import CommandPalette from "../components/ui/CommandPalette";
 import FloatingAiButton from "../components/ai/FloatingAiButton";
+import useNotificationStore from "../store/notificationStore";
+import useClickOutside from "../hooks/useClickOutside";
 
 const NAV = [
   { to: "/client/dashboard", icon: LayoutDashboard, label: "Overview", end: true },
@@ -48,18 +50,16 @@ const NOTIF_CONFIG = {
 
 // ── Notifications panel ───────────────────────────────────
 const NotificationsPanel = ({ open, onClose }) => {
-  const { notifications, unreadCount, loading, fetchNotifications, markNotificationRead, markAllNotificationsRead } = useClientPortalStore();
+  const { notifications, unreadCount, isLoading, fetchNotifications, markRead, markAllRead } = useNotificationStore();
 
   useEffect(() => {
-    if (open && notifications.length === 0) fetchNotifications();
+    if (open) fetchNotifications();
   }, [open]);
 
   return (
     <AnimatePresence>
       {open && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={onClose} />
-          <motion.div
+        <motion.div
             initial={{ opacity: 0, scale: 0.96, y: -8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: -8 }}
@@ -86,7 +86,7 @@ const NotificationsPanel = ({ open, onClose }) => {
                 )}
               </div>
               {unreadCount > 0 && (
-                <button onClick={markAllNotificationsRead}
+                <button onClick={markAllRead}
                   className="text-[11px] font-medium transition-colors"
                   style={{ color: "#635BFF" }}
                   onMouseEnter={e => e.currentTarget.style.color = "#A78BFA"}
@@ -114,7 +114,7 @@ const NotificationsPanel = ({ open, onClose }) => {
                   const cfg = NOTIF_CONFIG[n.type] || NOTIF_CONFIG.default;
                   const Icon = cfg.icon;
                   return (
-                    <button key={n._id} onClick={() => markNotificationRead(n._id)}
+                    <button key={n._id} onClick={() => markRead(n._id)}
                       className="w-full flex items-start gap-3 px-4 py-3 text-left transition-colors duration-100"
                       style={{ background: n.read ? "transparent" : "rgba(99,91,255,0.05)" }}
                       onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
@@ -138,7 +138,6 @@ const NotificationsPanel = ({ open, onClose }) => {
               )}
             </div>
           </motion.div>
-        </>
       )}
     </AnimatePresence>
   );
@@ -196,17 +195,32 @@ const NavItem = ({ to, icon: Icon, label, end, collapsed, onClick }) => (
 
 // ── Main layout ───────────────────────────────────────────
 const ClientLayout = () => {
-  const { user, logout } = useAuthStore();
+  const { user, logout }                  = useAuthStore();
+  const { unreadCount, fetchUnreadCount } = useNotificationStore();
+  const [collapsed, setCollapsed]         = useState(false);
+  const [mobileOpen, setMobileOpen]       = useState(false);
+  const [notifOpen, setNotifOpen]         = useState(false);
+  const [dropdownOpen, setDropdownOpen]   = useState(false);
+  const dropdownRef                       = useRef(null);
+  const notifRef                          = useRef(null);
+
   const navigate = useNavigate();
   const location = useLocation();
-  const [collapsed, setCollapsed]   = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [notifOpen, setNotifOpen]   = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  useClickOutside(dropdownRef, () => setDropdownOpen(false), { enabled: dropdownOpen });
+  useClickOutside(notifRef, () => setNotifOpen(false), { enabled: notifOpen });
+
+  useEffect(() => {
+    fetchUnreadCount();
+  }, []);
+
+  useEffect(() => {
+    setDropdownOpen(false);
+    setNotifOpen(false);
+  }, [location.pathname]);
+
   const [searchOpen, setSearchOpen] = useState(false);
   const [cmdOpen, setCmdOpen]       = useState(false);
-
-  const { unreadCount, fetchUnreadCount } = useClientPortalStore();
 
   useSocket();
   useSyncEvents();
@@ -416,9 +430,9 @@ const ClientLayout = () => {
         {/* ── RIGHT ACTIONS ── */}
         <div className="flex items-center gap-3.5">
           {/* Notifications bell */}
-          <div className="relative">
+          <div className="relative" ref={notifRef}>
             <motion.button whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}
-              onClick={() => setNotifOpen((o) => !o)}
+              onClick={() => { setNotifOpen((o) => !o); setDropdownOpen(false); }}
               className="relative w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-150 cursor-pointer"
               style={{ color: "#6B7280" }}
               onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.07)"; e.currentTarget.style.color = "#E5E7EB"; }}
@@ -437,9 +451,9 @@ const ClientLayout = () => {
           <div className="w-px h-5" style={{ background: "rgba(255,255,255,0.12)" }} />
 
           {/* User profile dropdown */}
-          <div className="relative">
+          <div className="relative" ref={dropdownRef}>
             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-              onClick={() => setDropdownOpen(o => !o)}
+              onClick={() => { setDropdownOpen(o => !o); setNotifOpen(false); }}
               className="flex items-center gap-2.5 px-1 py-1 rounded-xl transition-all duration-150 group cursor-pointer">
               <div className="relative w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold text-white shrink-0"
                 style={{ background: "linear-gradient(135deg,#635BFF,#A78BFA)", boxShadow: "0 0 12px rgba(99,91,255,0.4)" }}>
@@ -458,9 +472,7 @@ const ClientLayout = () => {
 
             <AnimatePresence>
               {dropdownOpen && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setDropdownOpen(false)} />
-                  <motion.div initial={{ opacity: 0, scale: 0.96, y: -8 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+                <motion.div initial={{ opacity: 0, scale: 0.96, y: -8 }} animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.96, y: -8 }} transition={{ duration: 0.18, ease: [0.16,1,0.3,1] }}
                     className="absolute right-0 top-11 z-20 w-60 rounded-2xl overflow-hidden"
                     style={{ background: "linear-gradient(160deg,rgba(12,19,36,0.99) 0%,rgba(8,14,26,0.99) 100%)", border: "1px solid rgba(255,255,255,0.09)", boxShadow: "0 0 0 1px rgba(99,91,255,0.1),0 24px 56px rgba(0,0,0,0.7)", backdropFilter: "blur(24px)" }}>
@@ -510,7 +522,6 @@ const ClientLayout = () => {
                       </motion.button>
                     </div>
                   </motion.div>
-                </>
               )}
             </AnimatePresence>
           </div>

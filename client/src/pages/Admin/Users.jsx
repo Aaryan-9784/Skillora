@@ -1,15 +1,17 @@
 import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, Trash2, Shield, UserCheck, Users, UserCog,
   TrendingUp, MoreVertical, ChevronLeft, ChevronRight,
   ArrowUpDown, Check, X, RefreshCw, Ban, CheckCircle,
   CreditCard, Download, ChevronDown, Mail, Eye,
-  Activity, Calendar, Zap, Crown,
+  Activity, Calendar, Zap, Crown, ShieldCheck, User,
 } from "lucide-react";
 import useAdminStore from "../../store/adminStore";
 import useConfirm from "../../hooks/useConfirm";
+import useAuthStore from "../../store/authStore";
 
 // ─── tokens ────────────────────────────────────────────────────────────────
 const LIMIT = 10;
@@ -52,18 +54,25 @@ const Avatar = ({ name = "", avatar, size = 36 }) => {
 const RoleBadge = ({ role }) => {
   const c = ROLE[role] || ROLE.freelancer;
   return (
-    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold tracking-wide"
+    <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold tracking-wide"
       style={{ background: c.bg, border: `1px solid ${c.border}`, color: c.color }}>
-      <span className="w-1.5 h-1.5 rounded-full" style={{ background: c.dot, boxShadow: `0 0 5px ${c.dot}` }} />
       {c.label}
     </span>
   );
 };
 
-const PlanBadge = ({ plan }) => {
+const PlanBadge = ({ plan, role }) => {
+  if (role === "admin") {
+    return (
+      <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap"
+        style={{ background: "rgba(167,139,250,0.15)", border: "1px solid rgba(167,139,250,0.3)", color: "#A78BFA" }}>
+        Full Access
+      </span>
+    );
+  }
   const c = PLAN[plan] || PLAN.free;
   return (
-    <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold"
+    <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap"
       style={{ background: c.bg, border: `1px solid ${c.border}`, color: c.color }}>
       {c.label}
     </span>
@@ -71,14 +80,8 @@ const PlanBadge = ({ plan }) => {
 };
 
 const StatusBadge = ({ active }) => (
-  <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold"
+  <span className="inline-flex items-center text-[11px] font-semibold"
     style={{ color: active !== false ? "#4ADE80" : "#FBBF24" }}>
-    <motion.span
-      animate={{ scale: [1, 1.4, 1], opacity: [1, 0.6, 1] }}
-      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-      className="w-1.5 h-1.5 rounded-full"
-      style={{ background: active !== false ? "#4ADE80" : "#FBBF24", boxShadow: `0 0 6px ${active !== false ? "#4ADE80" : "#FBBF24"}` }}
-    />
     {active !== false ? "Active" : "Suspended"}
   </span>
 );
@@ -166,12 +169,15 @@ const FilterDrop = ({ label, options, value, onChange, icon: Icon }) => {
 };
 
 // ─── Action Menu ───────────────────────────────────────────────────────────
-const ActionMenu = ({ user, onView, onRoleToggle, onToggleActive, onPlanChange, onDelete }) => {
+const ActionMenu = ({ user, currentUser, onView, onRoleToggle, onToggleActive, onPlanChange, onDelete }) => {
   const [open, setOpen]       = useState(false);
   const [planSub, setPlanSub] = useState(false);
   const [coords, setCoords]   = useState({ top: 0, bottom: 0, right: 0, dropUp: false });
   const btnRef  = useRef(null);
   const menuRef = useRef(null);
+
+  const isSelf  = currentUser?._id === user._id;
+  const isAdmin = user.role === "admin";
 
   useEffect(() => {
     const handleScrollOrClick = (e) => {
@@ -216,13 +222,39 @@ const ActionMenu = ({ user, onView, onRoleToggle, onToggleActive, onPlanChange, 
   };
 
   const items = [
-    { icon: Eye,       label: "View Profile",  fn: close(onView),          color: "#A78BFA" },
-    { icon: Shield,    label: user.role === "admin" ? "Remove Admin" : "Make Admin", fn: close(onRoleToggle), color: "#818CF8" },
-    { icon: user.isActive !== false ? Ban : CheckCircle,
-                       label: user.isActive !== false ? "Suspend" : "Activate", fn: close(onToggleActive), color: user.isActive !== false ? "#FBBF24" : "#4ADE80" },
-    { icon: CreditCard,label: "Change Plan",   fn: (e) => { e.stopPropagation(); setPlanSub(o => !o); }, color: "#38BDF8", sub: true },
-    { icon: Trash2,    label: "Delete",        fn: close(onDelete),        color: "#F87171", danger: true },
+    { icon: Eye, label: "View Profile", fn: close(onView), color: "#A78BFA" },
   ];
+
+  if (!isSelf) {
+    items.push({
+      icon: Shield,
+      label: isAdmin ? "Remove Admin" : "Make Admin",
+      fn: close(onRoleToggle),
+      color: "#818CF8",
+    });
+    items.push({
+      icon: user.isActive !== false ? Ban : CheckCircle,
+      label: user.isActive !== false ? "Suspend" : "Activate",
+      fn: close(onToggleActive),
+      color: user.isActive !== false ? "#FBBF24" : "#4ADE80",
+    });
+    if (!isAdmin) {
+      items.push({
+        icon: CreditCard,
+        label: "Change Plan",
+        fn: (e) => { e.stopPropagation(); setPlanSub(o => !o); },
+        color: "#38BDF8",
+        sub: true,
+      });
+    }
+    items.push({
+      icon: Trash2,
+      label: "Delete",
+      fn: close(onDelete),
+      color: "#F87171",
+      danger: true,
+    });
+  }
 
   return (
     <div className="relative inline-block" ref={btnRef}>
@@ -294,129 +326,191 @@ const ActionMenu = ({ user, onView, onRoleToggle, onToggleActive, onPlanChange, 
 };
 
 // ─── User Drawer ───────────────────────────────────────────────────────────
-const UserDrawer = ({ user, onClose, onRoleToggle, onToggleActive, onPlanChange, onDelete }) => {
+const UserDrawer = ({ user, currentUser, onClose, onRoleToggle, onToggleActive, onPlanChange, onDelete }) => {
+  const navigate = useNavigate();
   const roleColor = ROLE[user?.role]?.color || "#A78BFA";
+  const isSelf = currentUser?._id === user?._id;
+  const isAdmin = user?.role === "admin";
+
   return (
     <AnimatePresence>
       {user && (
         <>
           <motion.div key="overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[150]" style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)" }}
+            className="fixed inset-0 z-[150]" style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(6px)" }}
             onClick={onClose} />
           <motion.aside key="drawer"
             initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
-            transition={{ type: "spring", stiffness: 340, damping: 34 }}
-            className="fixed right-0 top-0 bottom-0 z-[160] w-80 flex flex-col overflow-hidden"
-            style={{ background: "linear-gradient(180deg,#0D1225 0%,#090D1E 100%)", borderLeft: "1px solid rgba(255,255,255,0.08)", boxShadow: "-24px 0 80px rgba(0,0,0,0.6)" }}
+            transition={{ type: "spring", stiffness: 340, damping: 32 }}
+            className="fixed right-0 top-0 bottom-0 z-[160] w-full max-w-sm sm:w-[380px] flex flex-col overflow-hidden"
+            style={{
+              background: "linear-gradient(180deg, #0D1126 0%, #070914 100%)",
+              borderLeft: "1px solid rgba(255,255,255,0.08)",
+              boxShadow: "-24px 0 80px rgba(0,0,0,0.8)"
+            }}
             onClick={e => e.stopPropagation()}>
 
-            {/* top accent */}
-            <div className="absolute inset-x-0 top-0 h-px"
-              style={{ background: `linear-gradient(90deg, transparent, ${roleColor}70, transparent)` }} />
-            <div className="absolute top-0 right-0 w-48 h-48 pointer-events-none"
-              style={{ background: `radial-gradient(circle at 100% 0%, ${roleColor}12 0%, transparent 65%)` }} />
+            {/* Top Accent */}
+            <div className="absolute inset-x-0 top-0 h-1"
+              style={{ background: `linear-gradient(90deg, transparent, ${roleColor}, #635BFF, transparent)` }} />
+            <div className="absolute top-0 right-0 w-64 h-64 pointer-events-none"
+              style={{ background: `radial-gradient(circle at 100% 0%, ${roleColor}18 0%, transparent 70%)` }} />
 
-            {/* header */}
+            {/* Header */}
             <div className="relative p-6 pb-5" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
               <button onClick={onClose}
-                className="absolute top-4 right-4 w-8 h-8 rounded-xl flex items-center justify-center transition-all"
+                className="absolute top-5 right-5 w-8 h-8 rounded-xl flex items-center justify-center transition-all cursor-pointer"
                 style={{ background: "rgba(255,255,255,0.06)", color: "rgba(148,163,184,0.7)" }}
                 onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.color = "#fff"; }}
                 onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "rgba(148,163,184,0.7)"; }}>
-                <X size={14} />
+                <X size={15} />
               </button>
+
               <div className="flex items-center gap-4">
-                <div className="relative">
-                  <Avatar name={user.name} avatar={user.avatar} size={56} />
-                  <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 flex items-center justify-center"
-                    style={{ background: user.isActive !== false ? "#4ADE80" : "#FBBF24", borderColor: "#0D1225" }} />
+                <div className="relative shrink-0">
+                  <div className="p-1 rounded-full" style={{ background: `linear-gradient(135deg, ${roleColor}60, transparent)` }}>
+                    <Avatar name={user.name} avatar={user.avatar} size={54} />
+                  </div>
+                  <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2"
+                    style={{ background: user.isActive !== false ? "#4ADE80" : "#FBBF24", borderColor: "#0D1126" }} />
                 </div>
-                <div className="min-w-0">
-                  <p className="text-[16px] font-bold text-white truncate">{user.name}</p>
-                  <p className="text-[11px] truncate mt-0.5" style={{ color: "rgba(100,116,139,0.8)" }}>{user.email}</p>
-                  <div className="flex items-center gap-2 mt-2.5">
+                <div className="min-w-0 flex-1 pr-6">
+                  <h3 className="text-[17px] font-extrabold text-white truncate leading-snug">{user.name}</h3>
+                  <p className="text-[12px] truncate mt-0.5" style={{ color: "rgba(148,163,184,0.75)" }}>{user.email}</p>
+                  <div className="flex items-center gap-2 mt-2.5 flex-wrap">
                     <RoleBadge role={user.role} />
-                    <PlanBadge plan={user.plan} />
+                    <PlanBadge plan={user.plan} role={user.role} />
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* info grid */}
-            <div className="grid grid-cols-2 gap-2.5 p-5">
-              {[
-                { icon: Calendar, label: "Joined",   value: new Date(user.createdAt).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}), color: "#635BFF" },
-                { icon: Activity, label: "Status",   value: user.isActive !== false ? "Active" : "Suspended", color: user.isActive !== false ? "#4ADE80" : "#FBBF24" },
-                { icon: Mail,     label: "Provider", value: user.provider || "local",  color: "#38BDF8" },
-                { icon: Zap,      label: "Verified", value: user.isEmailVerified ? "Yes" : "No", color: user.isEmailVerified ? "#4ADE80" : "#F87171" },
-              ].map(m => (
-                <div key={m.label} className="rounded-xl p-3"
-                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <m.icon size={10} style={{ color: m.color }} />
-                    <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(100,116,139,0.6)" }}>{m.label}</p>
-                  </div>
-                  <p className="text-[12px] font-bold" style={{ color: m.color }}>{m.value}</p>
-                </div>
-              ))}
-            </div>
+            {/* Content Body */}
+            <div className="flex-1 overflow-y-auto p-5 space-y-5">
 
-            {/* actions */}
-            <div className="flex-1 overflow-y-auto px-5 pb-6 space-y-2">
-              <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: "rgba(100,116,139,0.45)" }}>Actions</p>
-              {[
-                { icon: Shield, label: user.role === "admin" ? "Remove Admin Role" : "Grant Admin Role", fn: () => { onRoleToggle(); onClose(); }, color: "#A78BFA" },
-                { icon: user.isActive !== false ? Ban : CheckCircle, label: user.isActive !== false ? "Suspend User" : "Activate User", fn: () => { onToggleActive(); onClose(); }, color: user.isActive !== false ? "#FBBF24" : "#4ADE80" },
-              ].map(a => (
-                <motion.button key={a.label} whileHover={{ x: 4 }} whileTap={{ scale: 0.97 }}
-                  onClick={a.fn}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[13px] font-semibold text-left transition-all"
-                  style={{ background: `${a.color}0d`, border: `1px solid ${a.color}22`, color: a.color }}
-                  onMouseEnter={e => e.currentTarget.style.background = `${a.color}1a`}
-                  onMouseLeave={e => e.currentTarget.style.background = `${a.color}0d`}>
-                  <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-                    style={{ background: `${a.color}18` }}>
-                    <a.icon size={13} />
-                  </span>
-                  {a.label}
-                </motion.button>
-              ))}
-
-              {/* plan switcher */}
-              <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.08)" }}>
-                <p className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest"
-                  style={{ background: "rgba(255,255,255,0.03)", color: "rgba(100,116,139,0.55)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                  Change Plan
-                </p>
-                <div className="flex">
-                  {["free","pro","premium"].map((p, i) => (
-                    <button key={p} onClick={() => { onPlanChange(p); onClose(); }}
-                      className="flex-1 py-2.5 text-[11px] font-bold capitalize transition-all"
-                      style={{
-                        background: user.plan === p ? "rgba(99,91,255,0.2)" : "transparent",
-                        color: user.plan === p ? "#A78BFA" : "rgba(148,163,184,0.55)",
-                        borderRight: i < 2 ? "1px solid rgba(255,255,255,0.06)" : "none",
-                      }}
-                      onMouseEnter={e => { if (user.plan !== p) e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
-                      onMouseLeave={e => { if (user.plan !== p) e.currentTarget.style.background = "transparent"; }}>
-                      {p}
-                    </button>
+              {/* Account Overview Cards */}
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest mb-2.5" style={{ color: "rgba(100,116,139,0.55)" }}>Account Overview</p>
+                <div className="grid grid-cols-2 gap-2.5">
+                  {[
+                    { icon: Calendar, label: "Joined",   value: new Date(user.createdAt).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}), color: "#635BFF" },
+                    { icon: Activity, label: "Status",   value: user.isActive !== false ? "Active" : "Suspended", color: user.isActive !== false ? "#4ADE80" : "#FBBF24" },
+                    { icon: Mail,     label: "Provider", value: user.provider || "local",  color: "#38BDF8" },
+                    { icon: ShieldCheck, label: "Verified", value: user.isEmailVerified ? "Verified" : "Unverified", color: user.isEmailVerified ? "#4ADE80" : "#F87171" },
+                  ].map(m => (
+                    <div key={m.label} className="rounded-xl p-3 transition-all"
+                      style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <m.icon size={12} style={{ color: m.color }} />
+                        <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(100,116,139,0.6)" }}>{m.label}</p>
+                      </div>
+                      <p className="text-[12px] font-extrabold capitalize" style={{ color: m.color }}>{m.value}</p>
+                    </div>
                   ))}
                 </div>
               </div>
 
-              <motion.button whileHover={{ x: 4 }} whileTap={{ scale: 0.97 }}
-                onClick={() => { onDelete(); onClose(); }}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[13px] font-semibold text-left transition-all"
-                style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.18)", color: "#F87171" }}
-                onMouseEnter={e => e.currentTarget.style.background = "rgba(239,68,68,0.15)"}
-                onMouseLeave={e => e.currentTarget.style.background = "rgba(239,68,68,0.08)"}>
-                <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-                  style={{ background: "rgba(239,68,68,0.15)" }}>
-                  <Trash2 size={13} style={{ color: "#F87171" }} />
-                </span>
-                Delete User
-              </motion.button>
+              {/* Admin Privileges Card */}
+              {isAdmin && (
+                <div className="rounded-2xl p-4 relative overflow-hidden"
+                  style={{
+                    background: "linear-gradient(135deg, rgba(167,139,250,0.08) 0%, rgba(99,91,255,0.04) 100%)",
+                    border: "1px solid rgba(167,139,250,0.2)"
+                  }}>
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+                      style={{ background: "rgba(167,139,250,0.18)", color: "#A78BFA" }}>
+                      <Crown size={16} />
+                    </div>
+                    <div>
+                      <h4 className="text-[13px] font-bold text-white mb-0.5">Administrative Privileges</h4>
+                      <p className="text-[11px] leading-relaxed" style={{ color: "rgba(148,163,184,0.8)" }}>
+                        Full platform administration rights, unlimited resource access, and user control.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: "rgba(100,116,139,0.55)" }}>Actions</p>
+
+                {isSelf ? (
+                  <div className="rounded-2xl p-4 space-y-3"
+                    style={{ background: "linear-gradient(135deg, rgba(99,91,255,0.09) 0%, rgba(167,139,250,0.05) 100%)", border: "1px solid rgba(167,139,250,0.25)" }}>
+                    <div className="flex items-center gap-2 font-bold text-[13px]" style={{ color: "#A78BFA" }}>
+                      <UserCheck size={16} /> Current Active Admin
+                    </div>
+                    <p className="text-[11px] leading-relaxed" style={{ color: "rgba(148,163,184,0.85)" }}>
+                      You are signed in as this Primary Administrator. Modifying or deleting your own account is restricted to prevent platform lockout.
+                    </p>
+                    <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                      onClick={() => { navigate("/admin/profile"); onClose(); }}
+                      className="w-full py-2.5 rounded-xl text-[12px] font-bold flex items-center justify-center gap-2 text-white cursor-pointer transition-all"
+                      style={{ background: "linear-gradient(135deg, #635BFF, #8B5CF6)", boxShadow: "0 4px 16px rgba(99,91,255,0.3)" }}>
+                      <User size={13} /> Edit Profile Settings
+                    </motion.button>
+                  </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    {[
+                      { icon: Shield, label: isAdmin ? "Demote to User" : "Promote to Admin", fn: () => { onRoleToggle(); onClose(); }, color: "#818CF8" },
+                      { icon: user.isActive !== false ? Ban : CheckCircle, label: user.isActive !== false ? "Suspend Account" : "Activate Account", fn: () => { onToggleActive(); onClose(); }, color: user.isActive !== false ? "#FBBF24" : "#4ADE80" },
+                    ].map(a => (
+                      <motion.button key={a.label} whileHover={{ x: 4 }} whileTap={{ scale: 0.97 }}
+                        onClick={a.fn}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[13px] font-semibold text-left transition-all cursor-pointer"
+                        style={{ background: `${a.color}0d`, border: `1px solid ${a.color}22`, color: a.color }}
+                        onMouseEnter={e => e.currentTarget.style.background = `${a.color}1a`}
+                        onMouseLeave={e => e.currentTarget.style.background = `${a.color}0d`}>
+                        <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                          style={{ background: `${a.color}18` }}>
+                          <a.icon size={14} />
+                        </span>
+                        {a.label}
+                      </motion.button>
+                    ))}
+
+                    {!isAdmin && (
+                      <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.08)" }}>
+                        <p className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest"
+                          style={{ background: "rgba(255,255,255,0.03)", color: "rgba(100,116,139,0.55)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                          Subscription Plan
+                        </p>
+                        <div className="flex">
+                          {["free","pro","premium"].map((p, i) => (
+                            <button key={p} onClick={() => { onPlanChange(p); onClose(); }}
+                              className="flex-1 py-2.5 text-[11px] font-bold capitalize transition-all cursor-pointer"
+                              style={{
+                                background: user.plan === p ? "rgba(99,91,255,0.2)" : "transparent",
+                                color: user.plan === p ? "#A78BFA" : "rgba(148,163,184,0.55)",
+                                borderRight: i < 2 ? "1px solid rgba(255,255,255,0.06)" : "none",
+                              }}
+                              onMouseEnter={e => { if (user.plan !== p) e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
+                              onMouseLeave={e => { if (user.plan !== p) e.currentTarget.style.background = "transparent"; }}>
+                              {p}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <motion.button whileHover={{ x: 4 }} whileTap={{ scale: 0.97 }}
+                      onClick={() => { onDelete(); onClose(); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[13px] font-semibold text-left transition-all cursor-pointer"
+                      style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.18)", color: "#F87171" }}
+                      onMouseEnter={e => e.currentTarget.style.background = "rgba(239,68,68,0.15)"}
+                      onMouseLeave={e => e.currentTarget.style.background = "rgba(239,68,68,0.08)"}>
+                      <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                        style={{ background: "rgba(239,68,68,0.15)" }}>
+                        <Trash2 size={14} style={{ color: "#F87171" }} />
+                      </span>
+                      Delete Account
+                    </motion.button>
+                  </div>
+                )}
+              </div>
             </div>
           </motion.aside>
         </>
@@ -471,7 +565,8 @@ const exportCSV = users => {
 
 // ─── Main Page ─────────────────────────────────────────────────────────────
 const AdminUsers = () => {
-  const { users, total, stats, fetchUsers, fetchStats, updateUser, deleteUser, isLoading } = useAdminStore();
+  const { user: currentUser }       = useAuthStore();
+  const { users, stats, total, isLoading, fetchUsers, fetchStats, updateUser, deleteUser } = useAdminStore();
   const [search, setSearch]         = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [planFilter, setPlanFilter] = useState("");
@@ -677,13 +772,10 @@ const AdminUsers = () => {
             <table className="w-full">
               <thead>
                 <tr style={{ background: "rgba(255,255,255,0.02)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                  <th className="px-5 py-4 w-12">
-                    <input type="checkbox" checked={selected.size === users.length && users.length > 0}
-                      onChange={toggleAll} className="w-4 h-4 rounded accent-indigo-500 cursor-pointer" />
-                  </th>
+                  <SortTh label="No."    col={null}      w={60} />
                   <SortTh label="User"   col="name"      />
                   <SortTh label="Role"   col={null}      w={120} />
-                  <SortTh label="Plan"   col={null}      w={100} />
+                  <SortTh label="Plan"   col={null}      w={120} />
                   <SortTh label="Status" col={null}      w={120} />
                   <SortTh label="Joined" col="createdAt" w={140} />
                   <th className="px-5 py-4 w-14" />
@@ -725,9 +817,8 @@ const AdminUsers = () => {
                       onMouseEnter={e => e.currentTarget.style.background = "rgba(99,91,255,0.05)"}
                       onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
 
-                      <td className="px-5 py-4" onClick={e => e.stopPropagation()}>
-                        <input type="checkbox" checked={selected.has(user._id)} onChange={() => toggleSelect(user._id)}
-                          className="w-4 h-4 rounded accent-indigo-500 cursor-pointer" />
+                      <td className="px-5 py-4 text-xs font-semibold" style={{ color: "#6B7280" }}>
+                        {(page - 1) * LIMIT + i + 1}.
                       </td>
 
                       <td className="px-5 py-4">
@@ -743,7 +834,7 @@ const AdminUsers = () => {
                       </td>
 
                       <td className="px-5 py-4"><RoleBadge role={user.role} /></td>
-                      <td className="px-5 py-4"><PlanBadge plan={user.plan} /></td>
+                      <td className="px-5 py-4"><PlanBadge plan={user.plan} role={user.role} /></td>
                       <td className="px-5 py-4"><StatusBadge active={user.isActive} /></td>
 
                       <td className="px-5 py-4 text-[12px]" style={{ color: "rgba(100,116,139,0.65)" }}>
@@ -752,6 +843,7 @@ const AdminUsers = () => {
 
                       <td className="px-5 py-4" onClick={e => e.stopPropagation()}>
                         <ActionMenu user={user}
+                          currentUser={currentUser}
                           onView={() => setDrawer(user)}
                           onRoleToggle={() => handleRoleToggle(user)}
                           onToggleActive={() => handleToggleActive(user)}
@@ -781,7 +873,7 @@ const AdminUsers = () => {
                   <p className="text-[11px] truncate mb-2" style={{ color: "rgba(100,116,139,0.7)" }}>{user.email}</p>
                   <div className="flex items-center gap-2 flex-wrap">
                     <RoleBadge role={user.role} />
-                    <PlanBadge plan={user.plan} />
+                    <PlanBadge plan={user.plan} role={user.role} />
                     <StatusBadge active={user.isActive} />
                   </div>
                 </div>
@@ -834,6 +926,14 @@ const AdminUsers = () => {
           )}
         </motion.div>
       </div>
+
+      <UserDrawer user={drawer}
+        currentUser={currentUser}
+        onClose={() => setDrawer(null)}
+        onRoleToggle={() => handleRoleToggle(drawer)}
+        onToggleActive={() => handleToggleActive(drawer)}
+        onPlanChange={p => handlePlanChange(drawer, p)}
+        onDelete={() => handleDelete(drawer)} />
     </div>
   );
 };

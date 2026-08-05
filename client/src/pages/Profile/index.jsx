@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { User, Mail, Shield, Save, Check, Lock, Calendar } from "lucide-react";
+import { User, Mail, Shield, Save, Check, Lock, Calendar, Camera, Trash2 } from "lucide-react";
 import useAuthStore from "../../store/authStore";
 import api from "../../services/api";
 import toast from "react-hot-toast";
@@ -17,6 +17,10 @@ const iBlur = (e) => {
 
 const Profile = () => {
   const { user, setUser } = useAuthStore();
+  const fileInputRef = useRef(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [deletingAvatar, setDeletingAvatar]   = useState(false);
+
   const [formData, setFormData] = useState({
     name: user?.name || "",
     email: user?.email || "",
@@ -25,9 +29,50 @@ const Profile = () => {
     title: user?.title || "Senior Software Engineer",
   });
 
-  const [pwdData, setPwdData] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
+  const [pwdData, setPwdData] = useState({ newPassword: "", confirmPassword: "" });
   const [isSaving, setIsSaving] = useState(false);
   const [isChangingPwd, setIsChangingPwd] = useState(false);
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select a valid image file");
+      return;
+    }
+    setUploadingAvatar(true);
+    try {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64Image = reader.result;
+        const { data } = await api.patch("/users/profile", { avatar: base64Image });
+        setUser(data.data.user);
+        toast.success("Profile picture updated successfully!");
+        setUploadingAvatar(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to upload profile picture");
+      setUploadingAvatar(false);
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleDeleteAvatar = async (e) => {
+    if (e) e.stopPropagation();
+    setDeletingAvatar(true);
+    try {
+      const { data } = await api.patch("/users/profile", { avatar: "" });
+      setUser(data.data.user);
+      toast.success("Profile picture deleted. Default avatar set.");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to delete profile picture");
+    } finally {
+      setDeletingAvatar(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -65,9 +110,9 @@ const Profile = () => {
     }
     setIsChangingPwd(true);
     try {
-      await api.put("/auth/change-password", { currentPassword: pwdData.currentPassword, newPassword: pwdData.newPassword });
+      await api.patch("/users/change-password", { newPassword: pwdData.newPassword });
       toast.success("Password changed successfully!");
-      setPwdData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      setPwdData({ newPassword: "", confirmPassword: "" });
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to change password");
     } finally {
@@ -77,6 +122,8 @@ const Profile = () => {
 
   return (
     <div className="space-y-6 pb-12">
+      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+
       {/* Header Banner */}
       <motion.div
         initial={{ opacity: 0, y: 15 }}
@@ -91,25 +138,82 @@ const Profile = () => {
         <div className="absolute top-0 inset-x-0 h-px pointer-events-none" style={{ background: "linear-gradient(90deg,transparent,rgba(99,91,255,0.5),transparent)" }} />
 
         <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
-          <div className="relative shrink-0">
-            <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-2xl flex items-center justify-center text-2xl font-extrabold text-white"
-              style={{
-                background: "linear-gradient(135deg, #635BFF 0%, #A78BFA 100%)",
-                boxShadow: "0 0 24px rgba(99,91,255,0.5)",
-              }}>
-              {getInitials(user?.name)}
-            </div>
+          <div className="relative shrink-0 group">
+            {user?.avatar ? (
+              <img
+                src={user.avatar}
+                alt={user?.name}
+                className="w-20 h-20 sm:w-22 sm:h-22 rounded-2xl object-cover"
+                style={{ boxShadow: "0 0 24px rgba(99,91,255,0.5)" }}
+              />
+            ) : (
+              <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-2xl flex items-center justify-center text-2xl font-extrabold text-white"
+                style={{
+                  background: "linear-gradient(135deg, #635BFF 0%, #A78BFA 100%)",
+                  boxShadow: "0 0 24px rgba(99,91,255,0.5)",
+                }}>
+                {getInitials(user?.name)}
+              </div>
+            )}
             <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-[#090F1C]"
               style={{ background: "#22C55E", boxShadow: "0 0 8px rgba(34,197,94,0.8)" }} />
+
+            {/* Change / Delete Overlay */}
+            <div className="absolute inset-0 rounded-2xl flex items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+              style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(4px)" }}>
+              {uploadingAvatar || deletingAvatar ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    title="Change photo"
+                    className="flex flex-col items-center justify-center p-1.5 rounded-xl hover:bg-white/20 transition-colors text-white cursor-pointer"
+                  >
+                    <Camera size={16} />
+                    <span className="text-[9px] font-bold mt-0.5">Change</span>
+                  </button>
+                  {user?.avatar && (
+                    <button
+                      type="button"
+                      onClick={handleDeleteAvatar}
+                      title="Delete photo"
+                      className="flex flex-col items-center justify-center p-1.5 rounded-xl hover:bg-red-500/30 transition-colors text-red-400 cursor-pointer"
+                    >
+                      <Trash2 size={16} />
+                      <span className="text-[9px] font-bold mt-0.5">Delete</span>
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
           </div>
 
           <div className="flex-1 space-y-1">
-            <div className="flex items-center justify-center sm:justify-start gap-3">
+            <div className="flex items-center justify-center sm:justify-start gap-3 flex-wrap">
               <h1 className="text-2xl font-extrabold text-white">{user?.name || "User"}</h1>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold text-indigo-300 capitalize"
                 style={{ background: "rgba(99,91,255,0.2)", border: "1px solid rgba(99,91,255,0.3)" }}>
                 {user?.role || "freelancer"}
               </span>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full transition-all cursor-pointer hover:bg-white/10"
+                style={{ background: "rgba(255,255,255,0.06)", color: "#A78BFA", border: "1px solid rgba(255,255,255,0.1)" }}>
+                <Camera size={10} /> {user?.avatar ? "Change Photo" : "Upload Photo"}
+              </button>
+              {user?.avatar && (
+                <button
+                  type="button"
+                  onClick={handleDeleteAvatar}
+                  disabled={deletingAvatar}
+                  className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full transition-all cursor-pointer hover:bg-red-500/20"
+                  style={{ background: "rgba(239,68,68,0.12)", color: "#F87171", border: "1px solid rgba(239,68,68,0.25)" }}>
+                  <Trash2 size={10} /> Delete Photo
+                </button>
+              )}
             </div>
             <p className="text-sm font-medium text-gray-400">{formData.title}</p>
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 pt-1 text-xs text-gray-400">
@@ -237,20 +341,6 @@ const Profile = () => {
           </div>
 
           <form onSubmit={handlePasswordChange} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-gray-400 mb-1.5">Current Password</label>
-              <input
-                type="password"
-                placeholder="••••••••"
-                value={pwdData.currentPassword}
-                onChange={e => setPwdData({ ...pwdData, currentPassword: e.target.value })}
-                onFocus={iFocus} onBlur={iBlur}
-                className="w-full px-3.5 py-2.5 rounded-xl text-sm font-medium text-white outline-none transition-all"
-                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)" }}
-                required
-              />
-            </div>
-
             <div>
               <label className="block text-xs font-semibold text-gray-400 mb-1.5">New Password</label>
               <input

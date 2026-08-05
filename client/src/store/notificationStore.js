@@ -1,36 +1,9 @@
 import { create } from "zustand";
 import api from "../services/api";
 
-const DEMO_NOTIFICATIONS = [
-  {
-    _id: "notif-1",
-    type: "project_created",
-    title: "New Project Assigned",
-    message: "You were assigned to 'Skillora AI Platform'. Check out the milestone overview.",
-    read: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 25).toISOString(),
-  },
-  {
-    _id: "notif-2",
-    type: "payment_received",
-    title: "Invoice #INV-2026-004 Paid",
-    message: "Client Acme Corp paid ₹45,000 via Stripe.",
-    read: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
-  },
-  {
-    _id: "notif-3",
-    type: "task_due_soon",
-    title: "Task Milestone Due",
-    message: "'Design System Tokens' is due tomorrow at 5:00 PM.",
-    read: true,
-    createdAt: new Date(Date.now() - 1000 * 60 * 600).toISOString(),
-  },
-];
-
 const useNotificationStore = create((set, get) => ({
-  notifications: DEMO_NOTIFICATIONS,
-  unreadCount: DEMO_NOTIFICATIONS.filter((n) => !n.read).length,
+  notifications: [],
+  unreadCount: 0,
   isLoading: false,
 
   fetchNotifications: async () => {
@@ -38,14 +11,14 @@ const useNotificationStore = create((set, get) => ({
     try {
       const { data } = await api.get("/notifications");
       const list = data?.data?.data || data?.data || [];
-      if (list.length > 0) {
-        set({
-          notifications: list,
-          unreadCount: list.filter((n) => !n.read).length,
-        });
-      }
+      const notifList = Array.isArray(list) ? list : [];
+      set({
+        notifications: notifList,
+        unreadCount: notifList.filter((n) => !n.read).length,
+      });
     } catch (err) {
-      console.warn("Using local notification fallback:", err.message);
+      console.warn("Error fetching notifications:", err.message);
+      set({ notifications: [], unreadCount: 0 });
     } finally {
       set({ isLoading: false });
     }
@@ -56,6 +29,9 @@ const useNotificationStore = create((set, get) => ({
       const { data } = await api.get("/notifications/unread");
       if (data?.data?.count !== undefined) {
         set({ unreadCount: data.data.count });
+      } else {
+        const { notifications } = get();
+        set({ unreadCount: notifications.filter((n) => !n.read).length });
       }
     } catch (err) {
       const { notifications } = get();

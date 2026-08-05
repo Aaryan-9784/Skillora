@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Outlet, NavLink, useNavigate, useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard, Users, TrendingUp, Settings,
@@ -9,7 +9,6 @@ import {
 const ADMIN_CONFIG = {
   "/admin":          { title: "Overview",          icon: LayoutDashboard },
   "/admin/users":    { title: "Users",             icon: Users },
-  "/admin/settings": { title: "Platform Settings", icon: Settings },
   "/admin/profile":  { title: "Profile",           icon: User },
 };
 import { motion, AnimatePresence } from "framer-motion";
@@ -22,6 +21,7 @@ import FloatingAiButton from "../components/ai/FloatingAiButton";
 import NotificationsPanel from "../components/dashboard/NotificationsPanel";
 import CommandPalette from "../components/ui/CommandPalette";
 import GlobalSearch from "../components/ui/GlobalSearch";
+import useClickOutside from "../hooks/useClickOutside";
 
 const getInitials = (name = "") =>
   name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "A";
@@ -32,12 +32,6 @@ const NAV_SECTIONS = [
     items: [
       { to: "/admin",          icon: LayoutDashboard, label: "Overview", end: true },
       { to: "/admin/users",    icon: Users,           label: "Users"              },
-    ],
-  },
-  {
-    label: "SYSTEM",
-    items: [
-      { to: "/admin/settings", icon: Settings,        label: "Settings"           },
     ],
   },
   {
@@ -197,8 +191,19 @@ const AdminNavbar = ({ onSearch }) => {
   const { unreadCount, fetchUnreadCount } = useNotificationStore();
   const [dropdownOpen, setDropdownOpen]   = useState(false);
   const [notifOpen, setNotifOpen]         = useState(false);
+  const dropdownRef                       = useRef(null);
+  const notifRef                          = useRef(null);
+
   const navigate = useNavigate();
   const location = useLocation();
+
+  useClickOutside(dropdownRef, () => setDropdownOpen(false), { enabled: dropdownOpen });
+  useClickOutside(notifRef, () => setNotifOpen(false), { enabled: notifOpen });
+
+  useEffect(() => {
+    setDropdownOpen(false);
+    setNotifOpen(false);
+  }, [location.pathname]);
   const currentConfig = ADMIN_CONFIG[location.pathname] || { title: "Overview", icon: LayoutDashboard };
   const PageIcon = currentConfig.icon;
   const pageTitle = currentConfig.title;
@@ -254,9 +259,9 @@ const AdminNavbar = ({ onSearch }) => {
         {/* ── RIGHT ACTIONS ── */}
         <div className="flex items-center gap-3.5">
           {/* Notifications */}
-          <div className="relative">
+          <div className="relative" ref={notifRef}>
             <motion.button whileHover={{ scale: 1.06, y: -1 }} whileTap={{ scale: 0.94 }}
-              onClick={() => setNotifOpen(o => !o)}
+              onClick={() => { setNotifOpen(o => !o); setDropdownOpen(false); }}
               className="relative w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-150 cursor-pointer"
               style={{ color: "#6B7280" }}
               onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.07)"; e.currentTarget.style.color = "#E5E7EB"; }}
@@ -275,9 +280,9 @@ const AdminNavbar = ({ onSearch }) => {
           <div className="w-px h-5" style={{ background: "rgba(255,255,255,0.12)" }} />
 
           {/* User profile */}
-          <div className="relative">
+          <div className="relative" ref={dropdownRef}>
             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-              onClick={() => setDropdownOpen(o => !o)}
+              onClick={() => { setDropdownOpen(o => !o); setNotifOpen(false); }}
               className="flex items-center gap-2.5 px-1 py-1 rounded-xl transition-all duration-150 group cursor-pointer">
               <div className="relative w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold text-white shrink-0"
                 style={{ background: "linear-gradient(135deg,#635BFF,#8579FF)", boxShadow: "0 0 12px rgba(99,91,255,0.4)" }}>
@@ -296,9 +301,7 @@ const AdminNavbar = ({ onSearch }) => {
 
             <AnimatePresence>
               {dropdownOpen && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setDropdownOpen(false)} />
-                  <motion.div initial={{ opacity: 0, scale: 0.96, y: -8 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+                <motion.div initial={{ opacity: 0, scale: 0.96, y: -8 }} animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.96, y: -8 }} transition={{ duration: 0.18, ease: [0.16,1,0.3,1] }}
                     className="absolute right-0 top-11 z-20 w-60 rounded-2xl overflow-hidden"
                     style={{ background: "linear-gradient(160deg,rgba(12,19,36,0.99) 0%,rgba(8,14,26,0.99) 100%)", border: "1px solid rgba(255,255,255,0.09)", boxShadow: "0 0 0 1px rgba(99,91,255,0.1),0 24px 56px rgba(0,0,0,0.7)", backdropFilter: "blur(24px)" }}>
@@ -348,7 +351,6 @@ const AdminNavbar = ({ onSearch }) => {
                       </motion.button>
                     </div>
                   </motion.div>
-                </>
               )}
             </AnimatePresence>
           </div>

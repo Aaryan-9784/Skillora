@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, Bell, ChevronDown, LogOut,
@@ -13,6 +13,7 @@ import useNotificationStore from "../../store/notificationStore";
 import NotificationsPanel from "./NotificationsPanel";
 import CommandPalette from "../ui/CommandPalette";
 import useCommandPalette from "../../hooks/useCommandPalette";
+import useClickOutside from "../../hooks/useClickOutside";
 import { getInitials } from "../../utils/helpers";
 
 const PATH_CONFIG = {
@@ -70,9 +71,20 @@ const Navbar = ({ onCommandPalette }) => {
   const { unreadCount, fetchUnreadCount } = useNotificationStore();
   const [dropdownOpen, setDropdownOpen]   = useState(false);
   const [notifOpen, setNotifOpen]         = useState(false);
+  const dropdownRef                       = useRef(null);
+  const notifRef                          = useRef(null);
+
   const { isOpen: cmdOpen, open: openCmd, close: closeCmd } = useCommandPalette();
   const navigate = useNavigate();
   const location = useLocation();
+
+  useClickOutside(dropdownRef, () => setDropdownOpen(false), { enabled: dropdownOpen });
+  useClickOutside(notifRef, () => setNotifOpen(false), { enabled: notifOpen });
+
+  useEffect(() => {
+    setDropdownOpen(false);
+    setNotifOpen(false);
+  }, [location.pathname]);
 
   const currentConfig = PATH_CONFIG[location.pathname] || {
     title: location.pathname.startsWith("/projects/") ? "Project Details" :
@@ -153,8 +165,8 @@ const Navbar = ({ onCommandPalette }) => {
         <div className="flex items-center gap-3.5">
 
           {/* Notifications */}
-          <div className="relative">
-            <NavIconBtn onClick={() => setNotifOpen((o) => !o)} badge={unreadCount} title="Notifications">
+          <div className="relative" ref={notifRef}>
+            <NavIconBtn onClick={() => { setNotifOpen((o) => !o); setDropdownOpen(false); }} badge={unreadCount} title="Notifications">
               <Bell size={16} />
             </NavIconBtn>
             <NotificationsPanel open={notifOpen} onClose={() => setNotifOpen(false)} />
@@ -164,11 +176,11 @@ const Navbar = ({ onCommandPalette }) => {
           <div className="w-px h-5" style={{ background: "rgba(255,255,255,0.12)" }} />
 
           {/* User profile */}
-          <div className="relative">
+          <div className="relative" ref={dropdownRef}>
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => setDropdownOpen((o) => !o)}
+              onClick={() => { setDropdownOpen((o) => !o); setNotifOpen(false); }}
               className="flex items-center gap-2.5 px-1 py-1 rounded-xl transition-all duration-150 group cursor-pointer"
             >
               {/* Avatar */}
@@ -196,9 +208,7 @@ const Navbar = ({ onCommandPalette }) => {
             {/* Profile dropdown */}
             <AnimatePresence>
               {dropdownOpen && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setDropdownOpen(false)} />
-                  <motion.div
+                <motion.div
                     initial={{ opacity: 0, scale: 0.96, y: -8 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.96, y: -8 }}
@@ -274,7 +284,6 @@ const Navbar = ({ onCommandPalette }) => {
                       </motion.button>
                     </div>
                   </motion.div>
-                </>
               )}
             </AnimatePresence>
           </div>

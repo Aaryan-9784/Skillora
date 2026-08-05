@@ -2,10 +2,9 @@ import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   User, Mail, Shield, Lock, Eye, EyeOff,
-  Camera, ArrowLeft, Save, Key, UserCheck,
-  ShieldCheck, Clock, CheckCircle2, Calendar, Check,
+  Camera, Save, Key, UserCheck,
+  ShieldCheck, Clock, CheckCircle2, Calendar, Check, Trash2,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import useAuthStore from "../../store/authStore";
 import { getInitials } from "../../utils/helpers";
 import api from "../../services/api";
@@ -129,17 +128,16 @@ const compressImage = (file, maxWidth = 400, maxHeight = 400, quality = 0.85) =>
 // ── MAIN ADMIN PROFILE COMPONENT ───────────────────────────────────────────
 const AdminProfile = () => {
   const { user, setUser } = useAuthStore();
-  const navigate = useNavigate();
 
   const fileInputRef = useRef(null);
 
   const [name, setName]               = useState(user?.name || "");
   const [saving, setSaving]           = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [deletingAvatar, setDeletingAvatar]   = useState(false);
 
   // Password state
-  const [passwords, setPasswords]     = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
-  const [showCurrent, setShowCurrent] = useState(false);
+  const [passwords, setPasswords]     = useState({ newPassword: "", confirmPassword: "" });
   const [showNew, setShowNew]         = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [changing, setChanging]       = useState(false);
@@ -168,6 +166,22 @@ const AdminProfile = () => {
     }
   };
 
+  // Profile Image Delete Handler
+  const handleDeleteAvatar = async (e) => {
+    if (e) e.stopPropagation();
+    setDeletingAvatar(true);
+    try {
+      const { data } = await api.patch("/users/profile", { avatar: "" });
+      setUser(data.data.user);
+      toast.success("Profile picture deleted. Default avatar set.");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to delete profile picture");
+    } finally {
+      setDeletingAvatar(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   // Profile Name Update Handler
   const handleSaveProfile = async (e) => {
     e.preventDefault();
@@ -191,11 +205,6 @@ const AdminProfile = () => {
   const handleChangePassword = async (e) => {
     e.preventDefault();
 
-    if (!passwords.currentPassword) {
-      toast.error("Please enter your current password");
-      return;
-    }
-
     if (passwords.newPassword.length < 8) {
       toast.error("New password must be at least 8 characters");
       return;
@@ -209,11 +218,10 @@ const AdminProfile = () => {
     setChanging(true);
     try {
       await api.patch("/users/change-password", {
-        currentPassword: passwords.currentPassword,
         newPassword: passwords.newPassword,
       });
       toast.success("Password updated successfully!");
-      setPasswords({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      setPasswords({ newPassword: "", confirmPassword: "" });
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to update password");
     } finally {
@@ -296,15 +304,6 @@ const AdminProfile = () => {
               Manage your profile details, avatar photo, and account security
             </p>
           </div>
-
-          <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
-            onClick={() => navigate("/admin")}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white transition-all cursor-pointer"
-            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.09)", color: "#A78BFA" }}
-            onMouseEnter={e => e.currentTarget.style.background = "rgba(99,91,255,0.12)"}
-            onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}>
-            <ArrowLeft size={14} /> Back to Dashboard
-          </motion.button>
         </motion.div>
 
         {/* ── 4 USER METRIC KPI CARDS ── */}
@@ -357,23 +356,38 @@ const AdminProfile = () => {
                     <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-[#0B0F1A]"
                       style={{ background: "#22C55E", boxShadow: "0 0 8px rgba(34,197,94,0.8)" }} />
 
-                    {/* Camera Upload Button Overlay */}
-                    <button
-                      type="button"
-                      disabled={uploadingAvatar}
-                      onClick={() => fileInputRef.current?.click()}
-                      className="absolute inset-0 rounded-2xl flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer"
+                    {/* Camera Upload & Delete Overlay */}
+                    <div
+                      className="absolute inset-0 rounded-2xl flex items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                       style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(4px)" }}
                     >
-                      {uploadingAvatar ? (
+                      {uploadingAvatar || deletingAvatar ? (
                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       ) : (
                         <>
-                          <Camera size={18} className="text-white" />
-                          <span className="text-[10px] font-bold text-white mt-1">Change</span>
+                          <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            title="Change photo"
+                            className="flex flex-col items-center justify-center p-1.5 rounded-xl hover:bg-white/20 transition-colors text-white cursor-pointer"
+                          >
+                            <Camera size={16} />
+                            <span className="text-[9px] font-bold mt-0.5">Change</span>
+                          </button>
+                          {user?.avatar && (
+                            <button
+                              type="button"
+                              onClick={handleDeleteAvatar}
+                              title="Delete photo"
+                              className="flex flex-col items-center justify-center p-1.5 rounded-xl hover:bg-red-500/30 transition-colors text-red-400 cursor-pointer"
+                            >
+                              <Trash2 size={16} />
+                              <span className="text-[9px] font-bold mt-0.5">Delete</span>
+                            </button>
+                          )}
                         </>
                       )}
-                    </button>
+                    </div>
                   </div>
 
                   <div className="flex-1 min-w-0">
@@ -387,10 +401,20 @@ const AdminProfile = () => {
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full transition-all cursor-pointer"
+                        className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full transition-all cursor-pointer hover:bg-white/10"
                         style={{ background: "rgba(255,255,255,0.06)", color: "#A78BFA", border: "1px solid rgba(255,255,255,0.1)" }}>
-                        <Camera size={10} /> Upload Photo
+                        <Camera size={10} /> {user?.avatar ? "Change Photo" : "Upload Photo"}
                       </button>
+                      {user?.avatar && (
+                        <button
+                          type="button"
+                          onClick={handleDeleteAvatar}
+                          disabled={deletingAvatar}
+                          className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full transition-all cursor-pointer hover:bg-red-500/20"
+                          style={{ background: "rgba(239,68,68,0.12)", color: "#F87171", border: "1px solid rgba(239,68,68,0.25)" }}>
+                          <Trash2 size={10} /> Delete Photo
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -457,26 +481,6 @@ const AdminProfile = () => {
                 </div>
               ) : (
                 <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
-                  {/* Current Password */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-gray-300">Current Password</label>
-                    <div className="relative">
-                      <input
-                        type={showCurrent ? "text" : "password"}
-                        value={passwords.currentPassword}
-                        onChange={e => setPasswords(p => ({ ...p, currentPassword: e.target.value }))}
-                        required
-                        placeholder="Enter current password"
-                        className="w-full pl-4 pr-10 py-2.5 rounded-xl text-xs font-medium outline-none transition-all"
-                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#FFF" }}
-                      />
-                      <button type="button" onClick={() => setShowCurrent(s => !s)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white cursor-pointer">
-                        {showCurrent ? <EyeOff size={14} /> : <Eye size={14} />}
-                      </button>
-                    </div>
-                  </div>
-
                   {/* New Password */}
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-gray-300">New Password</label>

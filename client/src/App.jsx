@@ -86,7 +86,6 @@ const Settings       = lazy(() => import("./pages/Settings"));
 // Admin — direct imports (not lazy) to avoid HMR race condition with file writes
 import AdminOverview from "./pages/Admin/overview";
 import AdminUsers    from "./pages/Admin/Users";
-import AdminSettings from "./pages/Admin/Settings";
 import AdminProfile  from "./pages/Admin/Profile";
 
 // Client Portal
@@ -206,7 +205,6 @@ const App = () => {
             <Route element={<AdminLayout />}>
               <Route path="/admin"           element={<AdminOverview />} />
               <Route path="/admin/users"     element={<AdminUsers />} />
-              <Route path="/admin/settings"  element={<AdminSettings />} />
               <Route path="/admin/profile"   element={<AdminProfile />} />
             </Route>
           </Route>

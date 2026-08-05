@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import {
-  User, Phone, Building2, MapPin, Camera,
+  User, Phone, Building2, MapPin, Camera, Trash2,
   Lock, Eye, EyeOff, CheckCircle2, AlertCircle,
   Save, Shield,
 } from "lucide-react";
@@ -58,8 +58,8 @@ const ClientProfile = () => {
   const { user } = useAuthStore();
 
   const [form, setForm] = useState({ name: "", phone: "", company: "", address: "" });
-  const [pwForm, setPwForm] = useState({ current: "", next: "", confirm: "" });
-  const [showPw, setShowPw] = useState({ current: false, next: false, confirm: false });
+  const [pwForm, setPwForm] = useState({ next: "", confirm: "" });
+  const [showPw, setShowPw] = useState({ next: false, confirm: false });
   const [pwLoading, setPwLoading] = useState(false);
   const [avatarLoading, setAvatarLoading] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState(null);
@@ -114,6 +114,21 @@ const ClientProfile = () => {
     }
   };
 
+  const handleDeleteAvatar = async (e) => {
+    if (e) e.stopPropagation();
+    setAvatarLoading(true);
+    try {
+      await api.patch("/users/profile", { avatar: "" });
+      setAvatarUrl(null);
+      toast.success("Profile image deleted. Default avatar set.");
+    } catch {
+      toast.error("Failed to delete avatar");
+    } finally {
+      setAvatarLoading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
   // ── Change password ───────────────────────────────────
   const handlePassword = async (e) => {
     e.preventDefault();
@@ -121,12 +136,11 @@ const ClientProfile = () => {
     if (pwForm.next.length < 8) { toast.error("Password must be at least 8 characters"); return; }
     setPwLoading(true);
     try {
-      await api.patch("/user/change-password", {
-        currentPassword: pwForm.current,
-        newPassword:     pwForm.next,
+      await api.patch("/users/change-password", {
+        newPassword: pwForm.next,
       });
       toast.success("Password changed");
-      setPwForm({ current: "", next: "", confirm: "" });
+      setPwForm({ next: "", confirm: "" });
     } catch {
       // error toast handled by api interceptor
     } finally {
@@ -180,7 +194,7 @@ const ClientProfile = () => {
         <div className="p-6 space-y-6">
           {/* Avatar */}
           <div className="flex items-center gap-5">
-            <div className="relative">
+            <div className="relative shrink-0 group">
               <div className="w-20 h-20 rounded-2xl overflow-hidden flex items-center justify-center text-xl font-bold text-white"
                 style={{ background: avatarUrl ? "transparent" : "linear-gradient(135deg,#635BFF,#A78BFA)", boxShadow: "0 0 24px rgba(99,91,255,0.35)" }}>
                 {avatarUrl
@@ -188,24 +202,64 @@ const ClientProfile = () => {
                   : getInitials(form.name || user?.name)
                 }
               </div>
-              <button onClick={() => fileRef.current?.click()}
-                disabled={avatarLoading}
-                className="absolute -bottom-1 -right-1 w-7 h-7 rounded-xl flex items-center justify-center transition-all"
-                style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)", boxShadow: "0 0 12px rgba(99,91,255,0.5)" }}>
-                {avatarLoading
-                  ? <svg className="animate-spin w-3 h-3 text-white" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
-                  : <Camera size={12} className="text-white" />
-                }
-              </button>
+
+              {/* Hover overlay with Change & Delete */}
+              <div className="absolute inset-0 rounded-2xl flex items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(3px)" }}>
+                {avatarLoading ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => fileRef.current?.click()}
+                      title="Change photo"
+                      className="p-1.5 rounded-xl hover:bg-white/20 text-white transition-colors cursor-pointer"
+                    >
+                      <Camera size={16} />
+                    </button>
+                    {avatarUrl && (
+                      <button
+                        type="button"
+                        onClick={handleDeleteAvatar}
+                        title="Delete photo"
+                        className="p-1.5 rounded-xl hover:bg-red-500/30 text-red-400 transition-colors cursor-pointer"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+
               <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatar} />
             </div>
             <div>
               <p className="text-base font-bold text-white">{form.name || "Your Name"}</p>
               <p className="text-sm mt-0.5" style={{ color: "#6B7280" }}>{user?.email}</p>
-              <p className="text-xs mt-1 px-2 py-0.5 rounded-full inline-block"
-                style={{ background: "rgba(0,212,255,0.12)", color: "#00D4FF", border: "1px solid rgba(0,212,255,0.2)" }}>
-                Client
-              </p>
+              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                <span className="text-xs px-2 py-0.5 rounded-full inline-block"
+                  style={{ background: "rgba(0,212,255,0.12)", color: "#00D4FF", border: "1px solid rgba(0,212,255,0.2)" }}>
+                  Client
+                </span>
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full transition-all cursor-pointer hover:bg-white/10"
+                  style={{ background: "rgba(255,255,255,0.06)", color: "#A78BFA", border: "1px solid rgba(255,255,255,0.1)" }}>
+                  <Camera size={9} className="inline mr-1" /> {avatarUrl ? "Change Photo" : "Upload Photo"}
+                </button>
+                {avatarUrl && (
+                  <button
+                    type="button"
+                    onClick={handleDeleteAvatar}
+                    disabled={avatarLoading}
+                    className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full transition-all cursor-pointer hover:bg-red-500/20"
+                    style={{ background: "rgba(239,68,68,0.12)", color: "#F87171", border: "1px solid rgba(239,68,68,0.25)" }}>
+                    <Trash2 size={9} className="inline mr-1" /> Delete Photo
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -287,7 +341,6 @@ const ClientProfile = () => {
 
         <form onSubmit={handlePassword} className="p-6 space-y-4">
           {[
-            { key: "current", label: "Current Password",  placeholder: "Enter current password" },
             { key: "next",    label: "New Password",       placeholder: "Min. 8 characters" },
             { key: "confirm", label: "Confirm Password",   placeholder: "Repeat new password" },
           ].map(({ key, label, placeholder }) => (

@@ -27,9 +27,7 @@ const NotificationsPanel = ({ open, onClose }) => {
   return (
     <AnimatePresence>
       {open && (
-        <>
-          <div className="fixed inset-0 z-30" onClick={onClose} />
-          <motion.div
+        <motion.div
             initial={{ opacity: 0, scale: 0.96, y: -8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: -8 }}
@@ -164,7 +162,6 @@ const NotificationsPanel = ({ open, onClose }) => {
               )}
             </div>
           </motion.div>
-        </>
       )}
     </AnimatePresence>
   );

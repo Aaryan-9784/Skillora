@@ -25,8 +25,10 @@ const changePassword = async (userId, currentPassword, newPassword) => {
   const user = await User.findById(userId).select("+password");
   if (!user) throw ApiError.notFound("User not found");
 
-  const isMatch = await user.comparePassword(currentPassword);
-  if (!isMatch) throw ApiError.badRequest("Current password is incorrect");
+  if (currentPassword && user.password) {
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) throw ApiError.badRequest("Current password is incorrect");
+  }
 
   user.password = newPassword;
   await user.save();
