@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   FileText, Search, Filter, ChevronLeft, ChevronRight,
   Eye, AlertCircle, X, DollarSign, CheckCircle2,
-  Clock, TrendingUp, RefreshCw, Calendar, CreditCard,
+  Clock, TrendingUp, RefreshCw, Calendar, CreditCard, Download,
 } from "lucide-react";
 import useClientPortalStore from "../../store/clientPortalStore";
 import * as svc from "../../services/clientPortalService";
@@ -235,6 +235,28 @@ const ClientInvoices = () => {
   const paginated  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const STATUS_OPTS = ["all","draft","sent","viewed","paid","overdue","cancelled"];
 
+  const handleExportCSV = () => {
+    const list = filtered.length ? filtered : invoices;
+    const rows = [
+      ["Invoice Number", "Total Amount", "Currency", "Due Date", "Status", "Issue Date"],
+      ...list.map((inv) => [
+        `"${inv.invoiceNumber || ""}"`,
+        inv.total || 0,
+        `"${inv.currency || "INR"}"`,
+        `"${inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : ""}"`,
+        `"${inv.status || ""}"`,
+        `"${inv.createdAt ? new Date(inv.createdAt).toLocaleDateString() : ""}"`,
+      ]),
+    ];
+    const blob = new Blob([rows.map((r) => r.join(",")).join("\n")], { type: "text/csv;charset=utf-8;" });
+    const a = Object.assign(document.createElement("a"), {
+      href: URL.createObjectURL(blob),
+      download: `invoices_export_${new Date().toISOString().slice(0, 10)}.csv`,
+    });
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
   return (
     <div className="min-h-screen relative overflow-hidden"
       style={{ background: "radial-gradient(ellipse 100% 55% at 65% -5%,rgba(99,91,255,0.08) 0%,transparent 52%),linear-gradient(180deg,#0B0F1A 0%,#07090F 100%)" }}>
@@ -261,17 +283,29 @@ const ClientInvoices = () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={fetchInvoices}
+              title="Refresh Data"
               className="w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer"
               style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.09)", color: "rgba(148,163,184,0.75)" }}
               onMouseEnter={e => { e.currentTarget.style.background = "rgba(99,91,255,0.12)"; e.currentTarget.style.color = "#A78BFA"; }}
               onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "rgba(148,163,184,0.75)"; }}
             >
               <RefreshCw size={15} className={loading.invoices ? "animate-spin text-indigo-400" : ""} />
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={handleExportCSV}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-bold text-white cursor-pointer"
+              style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)", boxShadow: "0 0 20px rgba(99,91,255,0.3)" }}
+            >
+              <Download size={14} />
+              <span>Export CSV</span>
             </motion.button>
           </div>
         </motion.div>

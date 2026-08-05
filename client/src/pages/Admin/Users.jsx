@@ -711,13 +711,15 @@ const AdminUsers = () => {
               <RefreshCw size={14} />
             </motion.button>
 
-            <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
               onClick={() => exportCSV(users)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[12px] font-semibold transition-all"
-              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.09)", color: "rgba(148,163,184,0.75)" }}
-              onMouseEnter={e => { e.currentTarget.style.background = "rgba(99,91,255,0.12)"; e.currentTarget.style.color = "#A78BFA"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "rgba(148,163,184,0.75)"; }}>
-              <Download size={13} />Export CSV
+              className="flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-bold text-white cursor-pointer"
+              style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)", boxShadow: "0 0 20px rgba(99,91,255,0.3)" }}
+            >
+              <Download size={14} />
+              <span>Export CSV</span>
             </motion.button>
           </div>
         </motion.div>

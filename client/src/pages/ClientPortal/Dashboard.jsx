@@ -412,11 +412,12 @@ const ClientDashboard = () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => { fetchDashboard(); fetchAnalytics(); }}
+              title="Refresh Data"
               className="w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer"
               style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.09)", color: "rgba(148,163,184,0.75)" }}
               onMouseEnter={e => { e.currentTarget.style.background = "rgba(99,91,255,0.12)"; e.currentTarget.style.color = "#A78BFA"; }}
@@ -424,6 +425,30 @@ const ClientDashboard = () => {
             >
               <RefreshCw size={15} className={loading.dashboard ? "animate-spin text-indigo-400" : ""} />
             </motion.button>
+
+            <Link to="/client/projects">
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-bold text-white cursor-pointer"
+                style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)", boxShadow: "0 0 20px rgba(99,91,255,0.3)" }}
+              >
+                <FolderOpen size={14} />
+                <span>Projects</span>
+              </motion.button>
+            </Link>
+
+            <Link to="/client/invoices">
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-bold text-white cursor-pointer"
+                style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)", boxShadow: "0 0 20px rgba(99,91,255,0.3)" }}
+              >
+                <FileText size={14} />
+                <span>Invoices</span>
+              </motion.button>
+            </Link>
           </div>
         </motion.div>
 
