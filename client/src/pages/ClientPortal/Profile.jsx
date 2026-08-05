@@ -3,7 +3,8 @@ import { motion } from "framer-motion";
 import {
   User, Phone, Building2, MapPin, Camera, Trash2,
   Lock, Eye, EyeOff, CheckCircle2, AlertCircle,
-  Save, Shield,
+  Save, Shield, Mail, Key, UserCheck, ShieldCheck,
+  Calendar, Check,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import useClientPortalStore from "../../store/clientPortalStore";
@@ -11,58 +12,101 @@ import useAuthStore from "../../store/authStore";
 import api from "../../services/api";
 import { getInitials } from "../../utils/helpers";
 
-// ── Field component ───────────────────────────────────────
-const Field = ({ label, icon: Icon, children }) => (
-  <div>
-    <label className="flex items-center gap-1.5 text-xs font-semibold mb-2" style={{ color: "#9CA3AF" }}>
-      <Icon size={12} /> {label}
-    </label>
+// ── Glass Container Card (matches Admin Overview theme) ───────────────────
+const GCard = ({ children, delay, className, glow }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: delay || 0, duration: 0.45, ease: [0.16,1,0.3,1] }}
+    className={"relative overflow-hidden rounded-2xl " + (className || "")}
+    style={{
+      background: "rgba(255,255,255,0.03)", backdropFilter: "blur(16px)",
+      border: "1px solid rgba(255,255,255,0.07)",
+      boxShadow: glow ? ("0 0 50px " + glow + "10") : "0 0 30px rgba(99,91,255,0.04)",
+    }}
+  >
+    <div className="absolute inset-x-0 top-0 h-px pointer-events-none"
+      style={{ background: glow
+        ? ("linear-gradient(90deg,transparent," + glow + "50,transparent)")
+        : "linear-gradient(90deg,transparent,rgba(99,91,255,0.25),transparent)" }} />
     {children}
-  </div>
+  </motion.div>
 );
 
-const inputStyle = {
-  background: "rgba(255,255,255,0.04)",
-  border: "1px solid rgba(255,255,255,0.08)",
-  color: "#F9FAFB",
-};
+// ── Top KPI Card Component (matches Admin Overview theme) ──────────────────
+const KPICard = ({ icon: Icon, label, value, sub, color, delay }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: delay || 0, duration: 0.45, ease: [0.16,1,0.3,1] }}
+    whileHover={{ y: -4, transition: { duration: 0.18 } }}
+    className="relative overflow-hidden rounded-2xl p-5 cursor-default group"
+    style={{
+      background: "linear-gradient(145deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.015) 100%)",
+      border: "1px solid " + color + "20", backdropFilter: "blur(16px)",
+    }}
+  >
+    <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full pointer-events-none transition-all duration-500 group-hover:scale-150 opacity-60"
+      style={{ background: "radial-gradient(circle," + color + "20 0%,transparent 70%)" }} />
+    <div className="absolute inset-x-0 top-0 h-px"
+      style={{ background: "linear-gradient(90deg,transparent," + color + "50,transparent)" }} />
 
-// ── Profile completion ring ───────────────────────────────
-const CompletionRing = ({ pct }) => {
-  const r = 28;
-  const circ = 2 * Math.PI * r;
-  const dash = circ * (pct / 100);
+    <div className="flex items-center justify-between mb-3">
+      <span className="text-[12px] font-semibold" style={{ color: "rgba(148,163,184,0.75)" }}>{label}</span>
+      <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+        style={{ background: color + "16", border: "1px solid " + color + "30", boxShadow: "0 0 16px " + color + "18" }}>
+        <Icon size={17} style={{ color }} />
+      </div>
+    </div>
 
+    <p className="text-[24px] font-black text-white tracking-tight leading-none mb-1.5 truncate">{value}</p>
+    {sub && <p className="text-[11px] font-medium" style={{ color: "rgba(148,163,184,0.55)" }}>{sub}</p>}
+  </motion.div>
+);
+
+// ── Shared Input Component ────────────────────────────────────────────────
+const InputField = ({ label, icon: Icon, disabled, help, ...props }) => {
+  const [focused, setFocused] = useState(false);
   return (
-    <div className="relative w-16 h-16 flex items-center justify-center">
-      <svg width="64" height="64" className="-rotate-90">
-        <circle cx="32" cy="32" r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="4" />
-        <motion.circle cx="32" cy="32" r={r} fill="none"
-          stroke={pct === 100 ? "#22C55E" : "#635BFF"} strokeWidth="4"
-          strokeLinecap="round"
-          initial={{ strokeDasharray: `0 ${circ}` }}
-          animate={{ strokeDasharray: `${dash} ${circ}` }}
-          transition={{ duration: 1, ease: "easeOut" }}
+    <div className="space-y-1.5">
+      {label && <label className="text-xs font-bold" style={{ color: "rgba(148,163,184,0.85)" }}>{label}</label>}
+      <div className="relative">
+        {Icon && (
+          <Icon size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
+            style={{ color: focused ? "#A78BFA" : "rgba(100,116,139,0.5)" }} />
+        )}
+        <input
+          {...props}
+          disabled={disabled}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          className={`w-full ${Icon ? "pl-10" : "px-4"} py-2.5 rounded-xl text-xs font-medium outline-none transition-all duration-200`}
+          style={{
+            background: disabled ? "rgba(255,255,255,0.02)" : focused ? "rgba(99,91,255,0.1)" : "rgba(255,255,255,0.04)",
+            border: focused ? "1px solid rgba(167,139,250,0.55)" : "1px solid rgba(255,255,255,0.08)",
+            color: disabled ? "rgba(148,163,184,0.5)" : "#F9FAFB",
+            opacity: disabled ? 0.6 : 1,
+            cursor: disabled ? "not-allowed" : "text",
+            boxShadow: focused ? "0 0 0 3px rgba(99,91,255,0.12)" : "none",
+          }}
         />
-      </svg>
-      <span className="absolute text-xs font-bold" style={{ color: pct === 100 ? "#4ADE80" : "#A78BFA" }}>
-        {pct}%
-      </span>
+      </div>
+      {help && <p className="text-[11px]" style={{ color: "rgba(100,116,139,0.6)" }}>{help}</p>}
     </div>
   );
 };
 
-// ── Main component ────────────────────────────────────────
+// ── Main component ────────────────────────────────────────────────────────
 const ClientProfile = () => {
   const { profile, loading, fetchProfile, updateProfile } = useClientPortalStore();
-  const { user } = useAuthStore();
+  const { user, setUser } = useAuthStore();
 
   const [form, setForm] = useState({ name: "", phone: "", company: "", address: "" });
   const [pwForm, setPwForm] = useState({ next: "", confirm: "" });
   const [showPw, setShowPw] = useState({ next: false, confirm: false });
   const [pwLoading, setPwLoading] = useState(false);
   const [avatarLoading, setAvatarLoading] = useState(false);
+  const [deletingAvatar, setDeletingAvatar] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState(null);
+  const [saving, setSaving] = useState(false);
   const fileRef = useRef(null);
 
   useEffect(() => {
@@ -89,42 +133,87 @@ const ClientProfile = () => {
   // ── Save profile ──────────────────────────────────────
   const handleSave = async (e) => {
     e.preventDefault();
-    await updateProfile(form);
+    setSaving(true);
+    try {
+      await updateProfile(form);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ── Image compression helper ───────────────────────────
+  const compressImage = (file, maxWidth = 400, maxHeight = 400, quality = 0.85) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+        URL.revokeObjectURL(img.src);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.onerror = (err) => reject(err);
+    });
   };
 
   // ── Avatar upload ─────────────────────────────────────
   const handleAvatar = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { toast.error("Max file size is 5MB"); return; }
 
-    const fd = new FormData();
-    fd.append("avatar", file);
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select a valid image file");
+      return;
+    }
+
     setAvatarLoading(true);
     try {
-      const { data } = await api.post("/upload/avatar", fd, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      setAvatarUrl(data.data.url);
-      toast.success("Avatar updated");
-    } catch {
-      toast.error("Failed to upload avatar");
+      const base64Image = await compressImage(file);
+      const { data } = await api.patch("/client/profile", { avatar: base64Image });
+      setAvatarUrl(data.data.client?.avatar || base64Image);
+      // Sync auth store so header/sidebar update immediately
+      if (data.data.user) setUser(data.data.user);
+      toast.success("Profile picture updated successfully!");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to upload profile picture");
     } finally {
       setAvatarLoading(false);
+      if (fileRef.current) fileRef.current.value = "";
     }
   };
 
+
   const handleDeleteAvatar = async (e) => {
     if (e) e.stopPropagation();
-    setAvatarLoading(true);
+    setDeletingAvatar(true);
     try {
-      await api.patch("/users/profile", { avatar: "" });
+      const { data } = await api.patch("/client/profile", { avatar: "" });
       setAvatarUrl(null);
+      // Sync auth store so header/sidebar update immediately
+      if (data.data.user) setUser(data.data.user);
       toast.success("Profile image deleted. Default avatar set.");
     } catch {
       toast.error("Failed to delete avatar");
     } finally {
-      setAvatarLoading(false);
+      setDeletingAvatar(false);
       if (fileRef.current) fileRef.current.value = "";
     }
   };
@@ -139,260 +228,463 @@ const ClientProfile = () => {
       await api.patch("/users/change-password", {
         newPassword: pwForm.next,
       });
-      toast.success("Password changed");
+      toast.success("Password changed successfully!");
       setPwForm({ next: "", confirm: "" });
     } catch {
-      // error toast handled by api interceptor
+      toast.error("Failed to update password");
     } finally {
       setPwLoading(false);
     }
   };
 
+  // Joined Date formatting
+  const joinedDate = user?.createdAt
+    ? new Date(user.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    : "Member";
+
+  // Top KPI Cards
+  const kpis = [
+    {
+      icon: ShieldCheck,
+      label: "User Name",
+      value: form.name || user?.name || "Client",
+      sub: "Client Account",
+      color: "#635BFF",
+      delay: 0,
+    },
+    {
+      icon: UserCheck,
+      label: "Account Status",
+      value: "Active",
+      sub: "Online session verified",
+      color: "#10B981",
+      delay: 0.07,
+    },
+    {
+      icon: Key,
+      label: "Authentication",
+      value: user?.provider !== "local" ? "Google OAuth" : "Password Protected",
+      sub: "JWT Auth Token",
+      color: "#A78BFA",
+      delay: 0.14,
+    },
+    {
+      icon: Calendar,
+      label: "Member Since",
+      value: joinedDate,
+      sub: "Verified Account",
+      color: "#00D4FF",
+      delay: 0.21,
+    },
+  ];
+
   if (loading.profile && !profile) {
     return (
-      <div className="p-6 lg:p-8 max-w-3xl space-y-6">
-        {[...Array(2)].map((_, i) => (
-          <div key={i} className="rounded-2xl p-6 space-y-4"
-            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
-            <div className="skeleton h-5 w-32" />
-            <div className="skeleton h-10 w-full" />
-            <div className="skeleton h-10 w-full" />
-          </div>
-        ))}
+      <div className="min-h-screen relative overflow-hidden"
+        style={{ background: "radial-gradient(ellipse 100% 55% at 65% -5%,rgba(99,91,255,0.08) 0%,transparent 52%),linear-gradient(180deg,#0B0F1A 0%,#07090F 100%)" }}>
+        <div className="relative p-6 lg:p-8 max-w-[1400px] mx-auto space-y-6">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="rounded-2xl p-6 space-y-4"
+              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+              <div className="h-5 w-32 rounded-lg animate-pulse" style={{ background: "rgba(255,255,255,0.06)" }} />
+              <div className="h-10 w-full rounded-lg animate-pulse" style={{ background: "rgba(255,255,255,0.04)" }} />
+              <div className="h-10 w-full rounded-lg animate-pulse" style={{ background: "rgba(255,255,255,0.04)" }} />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 lg:p-8 max-w-3xl space-y-6">
+    <div className="min-h-screen relative overflow-hidden"
+      style={{ background: "radial-gradient(ellipse 100% 55% at 65% -5%,rgba(99,91,255,0.08) 0%,transparent 52%),linear-gradient(180deg,#0B0F1A 0%,#07090F 100%)" }}>
+      
+      {/* Hidden File Input for Avatar Upload */}
+      <input
+        type="file"
+        ref={fileRef}
+        onChange={handleAvatar}
+        accept="image/*"
+        className="hidden"
+      />
 
-      {/* ── Profile card ── */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-        className="rounded-2xl overflow-hidden"
-        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+      {/* Ambient background lighting */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-40 right-1/4 w-[650px] h-[650px] rounded-full"
+          style={{ background: "radial-gradient(circle,rgba(99,91,255,0.05) 0%,transparent 60%)" }} />
+      </div>
 
-        {/* Card header */}
-        <div className="flex items-center gap-3 px-6 py-4"
-          style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)" }}>
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-            style={{ background: "rgba(99,91,255,0.15)", border: "1px solid rgba(99,91,255,0.25)" }}>
-            <User size={13} style={{ color: "#A78BFA" }} />
+      <div className="relative p-6 lg:p-8 max-w-[1400px] mx-auto space-y-6">
+
+        {/* ── HEADER ── */}
+        <motion.div initial={{ opacity: 0, y: -14 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.16,1,0.3,1] }}
+          className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl lg:text-3xl font-black tracking-tight leading-tight"
+              style={{ background: "linear-gradient(135deg,#FFFFFF 30%,#A78BFA 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              Profile & Security
+            </h1>
+            <p className="text-xs lg:text-sm mt-1 font-medium" style={{ color: "rgba(148,163,184,0.7)" }}>
+              Manage your profile details, avatar photo, and account security
+            </p>
           </div>
-          <h2 className="text-sm font-semibold text-white">Profile Information</h2>
-          <div className="ml-auto flex items-center gap-3">
-            <CompletionRing pct={pct} />
-            <div>
-              <p className="text-xs font-semibold text-white">Profile {pct === 100 ? "Complete" : "Completion"}</p>
-              <p className="text-[11px]" style={{ color: "#6B7280" }}>
-                {pct === 100 ? "All fields filled" : `${fields.length - filled} field${fields.length - filled !== 1 ? "s" : ""} remaining`}
-              </p>
-            </div>
-          </div>
+        </motion.div>
+
+        {/* ── 4 USER METRIC KPI CARDS ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {kpis.map(k => <KPICard key={k.label} {...k} />)}
         </div>
 
-        <div className="p-6 space-y-6">
-          {/* Avatar */}
-          <div className="flex items-center gap-5">
-            <div className="relative shrink-0 group">
-              <div className="w-20 h-20 rounded-2xl overflow-hidden flex items-center justify-center text-xl font-bold text-white"
-                style={{ background: avatarUrl ? "transparent" : "linear-gradient(135deg,#635BFF,#A78BFA)", boxShadow: "0 0 24px rgba(99,91,255,0.35)" }}>
-                {avatarUrl
-                  ? <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover" />
-                  : getInitials(form.name || user?.name)
-                }
+        {/* ── MAIN CONTENT GRID ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          {/* LEFT COLUMN: Profile Details & Password Form */}
+          <div className="lg:col-span-2 space-y-6">
+
+            {/* Profile Information & Avatar Upload Card */}
+            <GCard delay={0.25} className="p-6" glow="#635BFF">
+              <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/[0.06]">
+                <div>
+                  <h2 className="text-base font-bold text-white">Profile Details</h2>
+                  <p className="text-xs mt-0.5" style={{ color: "rgba(148,163,184,0.65)" }}>
+                    Update your avatar photo and personal information
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  {/* Profile Completion Mini Ring */}
+                  <div className="relative w-10 h-10 flex items-center justify-center">
+                    <svg width="40" height="40" className="-rotate-90">
+                      <circle cx="20" cy="20" r="16" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
+                      <motion.circle cx="20" cy="20" r="16" fill="none"
+                        stroke={pct === 100 ? "#22C55E" : "#635BFF"} strokeWidth="3"
+                        strokeLinecap="round"
+                        initial={{ strokeDasharray: `0 ${2 * Math.PI * 16}` }}
+                        animate={{ strokeDasharray: `${2 * Math.PI * 16 * (pct / 100)} ${2 * Math.PI * 16}` }}
+                        transition={{ duration: 1, ease: "easeOut" }}
+                      />
+                    </svg>
+                    <span className="absolute text-[9px] font-bold" style={{ color: pct === 100 ? "#4ADE80" : "#A78BFA" }}>
+                      {pct}%
+                    </span>
+                  </div>
+                  <span className="text-xs font-bold px-3 py-1 rounded-full"
+                    style={{ background: "rgba(0,212,255,0.14)", color: "#22D3EE", border: "1px solid rgba(0,212,255,0.25)" }}>
+                    Client
+                  </span>
+                </div>
               </div>
 
-              {/* Hover overlay with Change & Delete */}
-              <div className="absolute inset-0 rounded-2xl flex items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
-                style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(3px)" }}>
-                {avatarLoading ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => fileRef.current?.click()}
-                      title="Change photo"
-                      className="p-1.5 rounded-xl hover:bg-white/20 text-white transition-colors cursor-pointer"
+              <div className="space-y-6">
+                {/* Avatar Banner & Image Upload Trigger */}
+                <div className="flex items-center gap-5 p-4 rounded-2xl"
+                  style={{ background: "linear-gradient(135deg,rgba(99,91,255,0.08) 0%,rgba(167,139,250,0.03) 100%)", border: "1px solid rgba(99,91,255,0.15)" }}>
+                  
+                  {/* Interactive Avatar with Upload Trigger */}
+                  <div className="relative group shrink-0">
+                    {avatarUrl ? (
+                      <img
+                        src={avatarUrl}
+                        alt={form.name}
+                        className="w-20 h-20 rounded-2xl object-cover shadow-xl border border-purple-500/30"
+                      />
+                    ) : (
+                      <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-black text-white shadow-xl"
+                        style={{ background: "linear-gradient(135deg,#635BFF 0%,#8579FF 100%)", boxShadow: "0 0 24px rgba(99,91,255,0.4)" }}>
+                        {getInitials(form.name || user?.name)}
+                      </div>
+                    )}
+                    
+                    {/* Online status dot */}
+                    <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-[#0B0F1A]"
+                      style={{ background: "#22C55E", boxShadow: "0 0 8px rgba(34,197,94,0.8)" }} />
+
+                    {/* Camera Upload & Delete Overlay */}
+                    <div
+                      className="absolute inset-0 rounded-2xl flex items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                      style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(4px)" }}
                     >
-                      <Camera size={16} />
-                    </button>
-                    {avatarUrl && (
+                      {avatarLoading || deletingAvatar ? (
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => fileRef.current?.click()}
+                            title="Change photo"
+                            className="flex flex-col items-center justify-center p-1.5 rounded-xl hover:bg-white/20 transition-colors text-white cursor-pointer"
+                          >
+                            <Camera size={16} />
+                            <span className="text-[9px] font-bold mt-0.5">Change</span>
+                          </button>
+                          {avatarUrl && (
+                            <button
+                              type="button"
+                              onClick={handleDeleteAvatar}
+                              title="Delete photo"
+                              className="flex flex-col items-center justify-center p-1.5 rounded-xl hover:bg-red-500/30 transition-colors text-red-400 cursor-pointer"
+                            >
+                              <Trash2 size={16} />
+                              <span className="text-[9px] font-bold mt-0.5">Delete</span>
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <p className="text-lg font-extrabold text-white truncate">{form.name || "Your Name"}</p>
+                    <p className="text-xs mt-0.5 truncate" style={{ color: "rgba(148,163,184,0.7)" }}>{user?.email}</p>
+                    <div className="flex items-center gap-2 mt-2.5 flex-wrap">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full"
+                        style={{ background: "rgba(0,212,255,0.15)", color: "#67E8F9", border: "1px solid rgba(0,212,255,0.3)" }}>
+                        <Shield size={9} /> Client
+                      </span>
                       <button
                         type="button"
-                        onClick={handleDeleteAvatar}
-                        title="Delete photo"
-                        className="p-1.5 rounded-xl hover:bg-red-500/30 text-red-400 transition-colors cursor-pointer"
-                      >
-                        <Trash2 size={16} />
+                        onClick={() => fileRef.current?.click()}
+                        className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full transition-all cursor-pointer hover:bg-white/10"
+                        style={{ background: "rgba(255,255,255,0.06)", color: "#A78BFA", border: "1px solid rgba(255,255,255,0.1)" }}>
+                        <Camera size={10} /> {avatarUrl ? "Change Photo" : "Upload Photo"}
                       </button>
-                    )}
-                  </>
-                )}
+                      {avatarUrl && (
+                        <button
+                          type="button"
+                          onClick={handleDeleteAvatar}
+                          disabled={deletingAvatar}
+                          className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full transition-all cursor-pointer hover:bg-red-500/20"
+                          style={{ background: "rgba(239,68,68,0.12)", color: "#F87171", border: "1px solid rgba(239,68,68,0.25)" }}>
+                          <Trash2 size={10} /> Delete Photo
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Editable Profile Form */}
+                <form onSubmit={handleSave} className="space-y-4">
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <InputField
+                      label="Full Name"
+                      icon={User}
+                      value={form.name}
+                      onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                      required
+                      placeholder="Enter full name"
+                    />
+                    <InputField
+                      label="Phone"
+                      icon={Phone}
+                      value={form.phone}
+                      onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+                      placeholder="+91 00000 00000"
+                    />
+                    <InputField
+                      label="Company"
+                      icon={Building2}
+                      value={form.company}
+                      onChange={e => setForm(f => ({ ...f, company: e.target.value }))}
+                      placeholder="Your company name"
+                    />
+                    <InputField
+                      label="Address"
+                      icon={MapPin}
+                      value={form.address}
+                      onChange={e => setForm(f => ({ ...f, address: e.target.value }))}
+                      placeholder="City, Country"
+                    />
+                  </div>
+
+                  <InputField
+                    label="Email Address"
+                    icon={Mail}
+                    value={user?.email || ""}
+                    disabled
+                    help="Email address cannot be changed."
+                  />
+
+                  <div className="pt-2">
+                    <motion.button type="submit" disabled={saving}
+                      whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                      className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer transition-all"
+                      style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)", boxShadow: "0 0 20px rgba(99,91,255,0.3)" }}>
+                      {saving ? (
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <>
+                          <Save size={14} /> Save Profile Changes
+                        </>
+                      )}
+                    </motion.button>
+                  </div>
+                </form>
+              </div>
+            </GCard>
+
+            {/* Change Password Card */}
+            <GCard delay={0.32} className="p-6">
+              <div className="flex items-center justify-between mb-5 pb-4 border-b border-white/[0.06]">
+                <div>
+                  <h2 className="text-base font-bold text-white">Change Password</h2>
+                  <p className="text-xs mt-0.5" style={{ color: "rgba(148,163,184,0.65)" }}>
+                    Update your security password for account login
+                  </p>
+                </div>
+                <Lock size={18} className="text-purple-400" />
               </div>
 
-              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatar} />
-            </div>
-            <div>
-              <p className="text-base font-bold text-white">{form.name || "Your Name"}</p>
-              <p className="text-sm mt-0.5" style={{ color: "#6B7280" }}>{user?.email}</p>
-              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                <span className="text-xs px-2 py-0.5 rounded-full inline-block"
-                  style={{ background: "rgba(0,212,255,0.12)", color: "#00D4FF", border: "1px solid rgba(0,212,255,0.2)" }}>
-                  Client
-                </span>
-                <button
-                  type="button"
-                  onClick={() => fileRef.current?.click()}
-                  className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full transition-all cursor-pointer hover:bg-white/10"
-                  style={{ background: "rgba(255,255,255,0.06)", color: "#A78BFA", border: "1px solid rgba(255,255,255,0.1)" }}>
-                  <Camera size={9} className="inline mr-1" /> {avatarUrl ? "Change Photo" : "Upload Photo"}
-                </button>
-                {avatarUrl && (
-                  <button
-                    type="button"
-                    onClick={handleDeleteAvatar}
-                    disabled={avatarLoading}
-                    className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full transition-all cursor-pointer hover:bg-red-500/20"
-                    style={{ background: "rgba(239,68,68,0.12)", color: "#F87171", border: "1px solid rgba(239,68,68,0.25)" }}>
-                    <Trash2 size={9} className="inline mr-1" /> Delete Photo
-                  </button>
-                )}
-              </div>
-            </div>
+              {user?.provider !== "local" ? (
+                <div className="p-4 rounded-xl flex items-start gap-3"
+                  style={{ background: "rgba(99,91,255,0.08)", border: "1px solid rgba(99,91,255,0.2)" }}>
+                  <Shield size={18} className="text-purple-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-bold text-white">OAuth Single Sign-On Active</p>
+                    <p className="text-[11px] mt-0.5" style={{ color: "rgba(148,163,184,0.7)" }}>
+                      Your account logs in via Google/GitHub OAuth. Password management is handled by your sign-in provider.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <form onSubmit={handlePassword} className="space-y-4 max-w-md">
+                  {/* New Password */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-gray-300">New Password</label>
+                    <div className="relative">
+                      <input
+                        type={showPw.next ? "text" : "password"}
+                        value={pwForm.next}
+                        onChange={e => setPwForm(p => ({ ...p, next: e.target.value }))}
+                        required
+                        minLength={8}
+                        placeholder="Minimum 8 characters"
+                        className="w-full pl-4 pr-10 py-2.5 rounded-xl text-xs font-medium outline-none transition-all"
+                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#FFF" }}
+                      />
+                      <button type="button" onClick={() => setShowPw(s => ({ ...s, next: !s.next }))}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white cursor-pointer">
+                        {showPw.next ? <EyeOff size={14} /> : <Eye size={14} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Confirm New Password */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-gray-300">Confirm New Password</label>
+                    <div className="relative">
+                      <input
+                        type={showPw.confirm ? "text" : "password"}
+                        value={pwForm.confirm}
+                        onChange={e => setPwForm(p => ({ ...p, confirm: e.target.value }))}
+                        required
+                        minLength={8}
+                        placeholder="Re-enter new password"
+                        className="w-full pl-4 pr-10 py-2.5 rounded-xl text-xs font-medium outline-none transition-all"
+                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#FFF" }}
+                      />
+                      <button type="button" onClick={() => setShowPw(s => ({ ...s, confirm: !s.confirm }))}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white cursor-pointer">
+                        {showPw.confirm ? <EyeOff size={14} /> : <Eye size={14} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Password strength hint */}
+                  {pwForm.next && (
+                    <div className="flex items-center gap-2 text-xs" style={{ color: pwForm.next.length >= 8 ? "#4ADE80" : "#F87171" }}>
+                      {pwForm.next.length >= 8 ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
+                      {pwForm.next.length >= 8 ? "Strong enough" : `${8 - pwForm.next.length} more characters needed`}
+                    </div>
+                  )}
+
+                  <div className="pt-2">
+                    <motion.button type="submit" disabled={pwLoading}
+                      whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                      className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer transition-all"
+                      style={{ background: "rgba(99,91,255,0.2)", border: "1px solid rgba(99,91,255,0.35)", color: "#C4B5FD" }}>
+                      {pwLoading ? (
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <>
+                          <Key size={14} /> Update Password
+                        </>
+                      )}
+                    </motion.button>
+                  </div>
+                </form>
+              )}
+            </GCard>
+
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleSave} className="space-y-4">
-            <div className="grid sm:grid-cols-2 gap-4">
-              <Field label="Full Name" icon={User}>
-                <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  placeholder="Your full name"
-                  className="w-full px-3.5 py-2.5 rounded-xl text-sm outline-none transition-all"
-                  style={inputStyle}
-                  onFocus={e => e.currentTarget.style.border = "1px solid rgba(99,91,255,0.4)"}
-                  onBlur={e => e.currentTarget.style.border = "1px solid rgba(255,255,255,0.08)"}
-                />
-              </Field>
-              <Field label="Phone" icon={Phone}>
-                <input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                  placeholder="+91 00000 00000"
-                  className="w-full px-3.5 py-2.5 rounded-xl text-sm outline-none transition-all"
-                  style={inputStyle}
-                  onFocus={e => e.currentTarget.style.border = "1px solid rgba(99,91,255,0.4)"}
-                  onBlur={e => e.currentTarget.style.border = "1px solid rgba(255,255,255,0.08)"}
-                />
-              </Field>
-              <Field label="Company" icon={Building2}>
-                <input value={form.company} onChange={(e) => setForm((f) => ({ ...f, company: e.target.value }))}
-                  placeholder="Your company name"
-                  className="w-full px-3.5 py-2.5 rounded-xl text-sm outline-none transition-all"
-                  style={inputStyle}
-                  onFocus={e => e.currentTarget.style.border = "1px solid rgba(99,91,255,0.4)"}
-                  onBlur={e => e.currentTarget.style.border = "1px solid rgba(255,255,255,0.08)"}
-                />
-              </Field>
-              <Field label="Address" icon={MapPin}>
-                <input value={form.address} onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
-                  placeholder="City, Country"
-                  className="w-full px-3.5 py-2.5 rounded-xl text-sm outline-none transition-all"
-                  style={inputStyle}
-                  onFocus={e => e.currentTarget.style.border = "1px solid rgba(99,91,255,0.4)"}
-                  onBlur={e => e.currentTarget.style.border = "1px solid rgba(255,255,255,0.08)"}
-                />
-              </Field>
-            </div>
+          {/* RIGHT COLUMN: Client Account Details Summary */}
+          <div className="space-y-6">
 
-            <div className="flex justify-end pt-2">
-              <motion.button whileTap={{ scale: 0.97 }} type="submit"
-                disabled={loading.profile}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
-                style={{
-                  background: "linear-gradient(135deg,#635BFF 0%,#8B5CF6 100%)",
-                  boxShadow: "0 0 20px rgba(99,91,255,0.35)",
-                  opacity: loading.profile ? 0.7 : 1,
-                }}>
-                {loading.profile
-                  ? <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
-                  : <Save size={14} />
-                }
-                Save Changes
-              </motion.button>
-            </div>
-          </form>
+            {/* Account Details Summary */}
+            <GCard delay={0.3} className="p-6">
+              <h2 className="text-base font-bold text-white mb-1">Account Details</h2>
+              <p className="text-xs mb-4" style={{ color: "rgba(148,163,184,0.65)" }}>
+                Personal account identity details
+              </p>
+
+              <div className="space-y-3">
+                {[
+                  { label: "Full Name", value: form.name || user?.name || "Client", icon: User, color: "#635BFF" },
+                  { label: "Email Address", value: user?.email || "—", icon: Mail, color: "#38BDF8" },
+                  { label: "Phone", value: form.phone || "Not set", icon: Phone, color: "#F59E0B" },
+                  { label: "Company", value: form.company || "Not set", icon: Building2, color: "#A78BFA" },
+                  { label: "Address", value: form.address || "Not set", icon: MapPin, color: "#10B981" },
+                  { label: "Account Role", value: "Client", icon: Shield, color: "#22D3EE" },
+                  { label: "Account Status", value: "Verified Active", icon: CheckCircle2, color: "#4ADE80" },
+                  { label: "Auth Provider", value: user?.provider || "Local Password", icon: Key, color: "#F59E0B" },
+                  { label: "Joined Date", value: joinedDate, icon: Calendar, color: "#00D4FF" },
+                ].map(({ label, value, icon: Icon, color }) => (
+                  <div key={label} className="p-3 rounded-xl flex items-center justify-between"
+                    style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                        style={{ background: color + "15", border: "1px solid " + color + "25" }}>
+                        <Icon size={13} style={{ color }} />
+                      </div>
+                      <span className="text-xs font-semibold text-gray-400 truncate">{label}</span>
+                    </div>
+                    <span className="text-xs font-bold text-white truncate ml-2">{value}</span>
+                  </div>
+                ))}
+              </div>
+            </GCard>
+
+
+            {/* Account Security Summary */}
+            <GCard delay={0.42} className="p-6">
+              <h2 className="text-base font-bold text-white mb-1">Account Protections</h2>
+              <p className="text-xs mb-4" style={{ color: "rgba(148,163,184,0.65)" }}>
+                Active security safeguards
+              </p>
+
+              <div className="space-y-2.5">
+                {[
+                  "Encrypted Password Storage (bcrypt)",
+                  "JWT Session Access Token",
+                  "Verified Client Permissions",
+                  "Active SSL/TLS Encryption",
+                ].map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-2.5 text-xs font-medium" style={{ color: "rgba(148,163,184,0.85)" }}>
+                    <div className="w-4 h-4 rounded-full flex items-center justify-center bg-purple-500/20 text-purple-300 shrink-0">
+                      <Check size={10} />
+                    </div>
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </GCard>
+
+          </div>
+
         </div>
-      </motion.div>
 
-      {/* ── Change password ── */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, delay: 0.1 }}
-        className="rounded-2xl overflow-hidden"
-        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
-
-        <div className="flex items-center gap-3 px-6 py-4"
-          style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)" }}>
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-            style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.2)" }}>
-            <Shield size={13} style={{ color: "#F87171" }} />
-          </div>
-          <h2 className="text-sm font-semibold text-white">Change Password</h2>
-        </div>
-
-        <form onSubmit={handlePassword} className="p-6 space-y-4">
-          {[
-            { key: "next",    label: "New Password",       placeholder: "Min. 8 characters" },
-            { key: "confirm", label: "Confirm Password",   placeholder: "Repeat new password" },
-          ].map(({ key, label, placeholder }) => (
-            <Field key={key} label={label} icon={Lock}>
-              <div className="relative">
-                <input
-                  type={showPw[key] ? "text" : "password"}
-                  value={pwForm[key]}
-                  onChange={(e) => setPwForm((f) => ({ ...f, [key]: e.target.value }))}
-                  placeholder={placeholder}
-                  className="w-full px-3.5 pr-10 py-2.5 rounded-xl text-sm outline-none transition-all"
-                  style={inputStyle}
-                  onFocus={e => e.currentTarget.style.border = "1px solid rgba(99,91,255,0.4)"}
-                  onBlur={e => e.currentTarget.style.border = "1px solid rgba(255,255,255,0.08)"}
-                />
-                <button type="button" onClick={() => setShowPw((s) => ({ ...s, [key]: !s[key] }))}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
-                  style={{ color: "#6B7280" }}
-                  onMouseEnter={e => e.currentTarget.style.color = "#9CA3AF"}
-                  onMouseLeave={e => e.currentTarget.style.color = "#6B7280"}>
-                  {showPw[key] ? <EyeOff size={14} /> : <Eye size={14} />}
-                </button>
-              </div>
-            </Field>
-          ))}
-
-          {/* Password strength hint */}
-          {pwForm.next && (
-            <div className="flex items-center gap-2 text-xs" style={{ color: pwForm.next.length >= 8 ? "#4ADE80" : "#F87171" }}>
-              {pwForm.next.length >= 8 ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
-              {pwForm.next.length >= 8 ? "Strong enough" : `${8 - pwForm.next.length} more characters needed`}
-            </div>
-          )}
-
-          <div className="flex justify-end pt-2">
-            <motion.button whileTap={{ scale: 0.97 }} type="submit"
-              disabled={pwLoading || !pwForm.current || !pwForm.next || !pwForm.confirm}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
-              style={{
-                background: "linear-gradient(135deg,#EF4444,#DC2626)",
-                boxShadow: "0 0 16px rgba(239,68,68,0.25)",
-                opacity: (pwLoading || !pwForm.current || !pwForm.next || !pwForm.confirm) ? 0.5 : 1,
-              }}>
-              {pwLoading
-                ? <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
-                : <Lock size={14} />
-              }
-              Update Password
-            </motion.button>
-          </div>
-        </form>
-      </motion.div>
+      </div>
     </div>
   );
 };

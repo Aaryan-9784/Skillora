@@ -141,6 +141,11 @@ const useClientPortalStore = create((set, get) => ({
     try {
       const { data } = await svc.updateProfile(form);
       set({ profile: data.data.client });
+      // Sync auth store user (name/avatar) so header/sidebar update
+      if (data.data.user) {
+        const useAuthStore = require("./authStore").default;
+        useAuthStore.getState().setUser(data.data.user);
+      }
       toast.success("Profile updated");
       return true;
     } catch {

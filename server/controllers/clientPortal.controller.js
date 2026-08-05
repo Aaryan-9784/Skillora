@@ -71,19 +71,71 @@ const getClientProjects = asyncHandler(async (req, res) => {
 });
 
 const getClientProfile = asyncHandler(async (req, res) => {
-  const client = await Client.findById(req.user.clientRef);
-  if (!client) throw ApiError.notFound("Client profile not found");
-  ApiResponse.success(res, "Profile fetched", { client });
+  let client = null;
+  if (req.user.clientRef) {
+    client = await Client.findById(req.user.clientRef);
+  }
+  // Fallback: build profile from User data if no Client document linked
+  if (!client) {
+    client = {
+      _id:     req.user._id,
+      name:    req.user.name    || "",
+      email:   req.user.email   || "",
+      phone:   req.user.phone   || "",
+      company: req.user.company || "",
+      address: req.user.address || "",
+      avatar:  req.user.avatar  || "",
+    };
+  }
+  ApiResponse.success(res, "Client profile fetched", { client });
 });
 
 const updateClientProfile = asyncHandler(async (req, res) => {
-  const { name, phone, company, address, billingInfo } = req.body;
-  const client = await Client.findByIdAndUpdate(
-    req.user.clientRef,
-    { name, phone, company, address, ...(billingInfo && { billingInfo }) },
-    { new: true, runValidators: true }
-  );
-  ApiResponse.success(res, "Profile updated", { client });
+  const { name, phone, company, address, avatar } = req.body;
+  const User = require("../models/User");
+
+  let client = null;
+  if (req.user.clientRef) {
+    client = await Client.findById(req.user.clientRef);
+  }
+
+  if (client) {
+    if (name !== undefined)    client.name    = name;
+    if (phone !== undefined)   client.phone   = phone;
+    if (company !== undefined) client.company = company;
+    if (address !== undefined) client.address = address;
+    if (avatar !== undefined)  client.avatar  = avatar;
+
+    await client.save();
+  }
+
+  // Sync avatar, name, phone, company, address to the User model so header/sidebar and user object stay in sync
+  const userUpdates = {};
+  if (name !== undefined)    userUpdates.name    = name;
+  if (avatar !== undefined)  userUpdates.avatar  = avatar;
+  if (phone !== undefined)   userUpdates.phone   = phone;
+  if (company !== undefined) userUpdates.company = company;
+  if (address !== undefined) userUpdates.address = address;
+
+  if (Object.keys(userUpdates).length > 0) {
+    await User.findByIdAndUpdate(req.user._id, userUpdates);
+  }
+
+  const updatedUser = await User.findById(req.user._id);
+
+  if (!client) {
+    client = {
+      _id:     updatedUser._id,
+      name:    updatedUser.name    || "",
+      email:   updatedUser.email   || "",
+      phone:   updatedUser.phone   || "",
+      company: updatedUser.company || "",
+      address: updatedUser.address || "",
+      avatar:  updatedUser.avatar  || "",
+    };
+  }
+
+  ApiResponse.success(res, "Client profile updated", { client, user: updatedUser });
 });
 
 const getInvoiceDetail = asyncHandler(async (req, res) => {
@@ -516,6 +568,8 @@ const getAiInsights = asyncHandler(async (req, res) => {
 
   ApiResponse.success(res, "AI insights", { insights: lines.join("\n\n") });
 });
+
+
 
 module.exports = {
   clientLogin, acceptInvite, clientMe,
