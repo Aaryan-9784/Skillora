@@ -10,6 +10,7 @@ import {
   AlertCircle, ArrowRight, TrendingUp, TrendingDown,
   Clock, CreditCard, Activity, Bell, Calendar,
   ExternalLink, Sparkles, BarChart2, FolderKanban, RefreshCw,
+  Zap, ArrowUpRight, Check, ShieldCheck,
 } from "lucide-react";
 import useClientPortalStore from "../../store/clientPortalStore";
 import useAuthStore from "../../store/authStore";
@@ -18,25 +19,82 @@ import { formatCurrency, formatDate, relativeTime } from "../../utils/helpers";
 const ChartTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="px-3 py-2.5 rounded-xl text-xs"
+    <div className="px-3.5 py-2.5 rounded-xl text-xs"
       style={{
-        background: "rgba(10,17,32,0.95)",
-        border: "1px solid rgba(255,255,255,0.1)",
-        boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
-        backdropFilter: "blur(12px)",
+        background: "rgba(6,9,22,0.97)",
+        border: "1px solid rgba(255,255,255,0.12)",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+        backdropFilter: "blur(16px)",
       }}>
-      <p className="text-xs mb-1 font-medium style={{ color: '#9CA3AF' }}">{label}</p>
+      <p className="text-[11px] mb-1 font-semibold" style={{ color: "rgba(148,163,184,0.75)" }}>{label}</p>
       {payload.map((p) => (
         <div key={p.dataKey} className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full" style={{ background: p.color }} />
-          <span className="font-semibold text-white">₹{p.value?.toLocaleString()}</span>
+          <div className="w-2 h-2 rounded-full" style={{ background: p.color || "#635BFF" }} />
+          <span className="font-bold text-white text-xs">₹{p.value?.toLocaleString()}</span>
         </div>
       ))}
     </div>
   );
 };
 
-// ── Shared ────────────────────────────────────────────────
+// ── Glass Container Card (Matches Admin Theme) ─────────────────────────────
+const GCard = ({ children, delay, className, glow }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: delay || 0, duration: 0.45, ease: [0.16,1,0.3,1] }}
+    className={"relative overflow-hidden rounded-2xl " + (className || "")}
+    style={{
+      background: "rgba(255,255,255,0.03)", backdropFilter: "blur(16px)",
+      border: "1px solid rgba(255,255,255,0.07)",
+      boxShadow: glow ? ("0 0 50px " + glow + "10") : "0 0 30px rgba(99,91,255,0.04)",
+    }}
+  >
+    <div className="absolute inset-x-0 top-0 h-px pointer-events-none"
+      style={{ background: glow
+        ? ("linear-gradient(90deg,transparent," + glow + "50,transparent)")
+        : "linear-gradient(90deg,transparent,rgba(99,91,255,0.25),transparent)" }} />
+    {children}
+  </motion.div>
+);
+
+// ── KPI Card Component (Matches Admin Theme) ────────────────────────────────
+const KPICard = ({ icon: Icon, label, value, sub, color, trend, delay = 0 }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: delay || 0, duration: 0.45, ease: [0.16,1,0.3,1] }}
+    whileHover={{ y: -4, transition: { duration: 0.18 } }}
+    className="relative overflow-hidden rounded-2xl p-5 cursor-default group"
+    style={{
+      background: "linear-gradient(145deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.015) 100%)",
+      border: "1px solid " + color + "20", backdropFilter: "blur(16px)",
+    }}
+  >
+    <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full pointer-events-none transition-all duration-500 group-hover:scale-150 opacity-60"
+      style={{ background: "radial-gradient(circle," + color + "20 0%,transparent 70%)" }} />
+    <div className="absolute inset-x-0 top-0 h-px"
+      style={{ background: "linear-gradient(90deg,transparent," + color + "50,transparent)" }} />
+
+    <div className="flex items-center justify-between mb-3">
+      <span className="text-[12px] font-semibold" style={{ color: "rgba(148,163,184,0.75)" }}>{label}</span>
+      <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+        style={{ background: color + "16", border: "1px solid " + color + "30", boxShadow: "0 0 16px " + color + "18" }}>
+        <Icon size={17} style={{ color }} />
+      </div>
+    </div>
+
+    <div className="flex items-baseline justify-between gap-2">
+      <p className="text-[26px] xl:text-[28px] font-black text-white tracking-tight leading-none mb-1.5">{value}</p>
+      {trend !== undefined && trend !== null && (
+        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5 shrink-0 ${trend >= 0 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
+          {trend >= 0 ? '↑' : '↓'} {Math.abs(trend)}%
+        </span>
+      )}
+    </div>
+    {sub && <p className="text-[11px] font-medium truncate" style={{ color: "rgba(148,163,184,0.55)" }}>{sub}</p>}
+  </motion.div>
+);
+
+// ── Shared Status Badge ────────────────────────────────────────────────────
 const STATUS_STYLE = {
   draft:     { bg: "rgba(107,114,128,0.15)", color: "#9CA3AF", dot: "#9CA3AF" },
   sent:      { bg: "rgba(59,130,246,0.15)",  color: "#60A5FA", dot: "#60A5FA" },
@@ -50,7 +108,7 @@ const StatusBadge = ({ status }) => {
   const s = STATUS_STYLE[status] || STATUS_STYLE.draft;
   return (
     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold capitalize"
-      style={{ background: s.bg, color: s.color }}>
+      style={{ background: s.bg, color: s.color, border: `1px solid ${s.color}25` }}>
       <span className="w-1.5 h-1.5 rounded-full" style={{ background: s.dot }} />
       {status}
     </span>
@@ -62,73 +120,7 @@ const GlassSkeleton = ({ className = "" }) => (
     style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }} />
 );
 
-// ── Stat KPI card ─────────────────────────────────────────
-const StatCard = ({ icon: Icon, label, value, sub, color, trend, delay = 0 }) => (
-  <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.35, delay, ease: [0.16, 1, 0.3, 1] }}
-    className="relative rounded-2xl p-5 overflow-hidden group"
-    style={{
-      background: "linear-gradient(145deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.02) 100%)",
-      border: "1px solid rgba(255,255,255,0.07)",
-    }}
-    onMouseEnter={e => {
-      e.currentTarget.style.border = `1px solid ${color}30`;
-      e.currentTarget.style.boxShadow = `0 8px 32px rgba(0,0,0,0.3), 0 0 0 1px ${color}15`;
-    }}
-    onMouseLeave={e => {
-      e.currentTarget.style.border = "1px solid rgba(255,255,255,0.07)";
-      e.currentTarget.style.boxShadow = "none";
-    }}>
-    <div className="absolute top-0 right-0 w-32 h-32 rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-      style={{ background: `radial-gradient(circle,${color}12 0%,transparent 70%)`, transform: "translate(30%,-30%)" }} />
-    <div className="flex items-start justify-between mb-4">
-      <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-        style={{ background: `${color}18`, border: `1px solid ${color}28`, boxShadow: `0 0 16px ${color}15` }}>
-        <Icon size={18} style={{ color }} />
-      </div>
-      {trend !== null && trend !== undefined && (
-        <div className="flex items-center gap-1 text-xs font-semibold"
-          style={{ color: trend >= 0 ? "#4ADE80" : "#F87171" }}>
-          {trend >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-          {Math.abs(trend)}%
-        </div>
-      )}
-    </div>
-    <p className="text-2xl font-bold text-white mb-1">{value}</p>
-    <p className="text-sm font-medium" style={{ color: "#9CA3AF" }}>{label}</p>
-    {sub && <p className="text-xs mt-1" style={{ color: "#6B7280" }}>{sub}</p>}
-  </motion.div>
-);
-
-// ── Alert banners ─────────────────────────────────────────
-const AlertBanners = ({ invoices = [], projects = [] }) => {
-  const overdueInvs   = invoices.filter((i) => i.status === "overdue");
-  const pendingInvs   = invoices.filter((i) => ["sent","viewed"].includes(i.status));
-  const upcomingDeadlines = projects.filter((p) => {
-    if (!p.deadline || p.status === "completed") return false;
-    const diff = (new Date(p.deadline) - new Date()) / (1000 * 60 * 60 * 24);
-    return diff > 0 && diff <= 7;
-  });
-
-  if (overdueInvs.length === 0 && pendingInvs.length === 0 && upcomingDeadlines.length === 0) return null;
-
-  return (
-    <div className="space-y-2 mb-6">
-      {overdueInvs.length > 0 && (
-        <div className="flex items-center justify-between p-3.5 rounded-xl text-xs font-semibold"
-          style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#F87171" }}>
-          <div className="flex items-center gap-2">
-            <AlertCircle size={15} />
-            <span>You have {overdueInvs.length} overdue invoice(s).</span>
-          </div>
-          <Link to="/client/invoices" className="underline hover:opacity-80">Pay Now</Link>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// ── Earnings chart (real API data) ────────────────────────
+// ── Revenue Overview Section ───────────────────────────────────────────────
 const EarningsSection = ({ revenueAnalytics = [], loading }) => {
   const [period, setPeriod] = useState("6m");
   const chartData = useMemo(() => {
@@ -156,39 +148,37 @@ const EarningsSection = ({ revenueAnalytics = [], loading }) => {
   const trendPct     = prevHalf > 0 ? Math.round(((currHalf - prevHalf) / prevHalf) * 100) : 0;
 
   return (
-    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, delay: 0.2 }}
-      className="rounded-2xl p-5 overflow-hidden"
-      style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
-      <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
-        <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-            style={{ background: "rgba(99,91,255,0.15)", border: "1px solid rgba(99,91,255,0.25)" }}>
-            <BarChart2 size={13} style={{ color: "#A78BFA" }} />
+    <GCard delay={0.2} glow="#635BFF" className="p-6">
+      <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+            style={{ background: "rgba(99,91,255,0.15)", border: "1px solid rgba(99,91,255,0.3)", boxShadow: "0 0 16px rgba(99,91,255,0.2)" }}>
+            <BarChart2 size={16} style={{ color: "#A78BFA" }} />
           </div>
           <div>
-            <h2 className="text-sm font-semibold text-white">Revenue Overview</h2>
-            <p className="text-xs" style={{ color: "#6B7280" }}>Paid invoices over time</p>
+            <h2 className="text-base font-bold text-white">Revenue Overview</h2>
+            <p className="text-xs font-medium" style={{ color: "rgba(148,163,184,0.65)" }}>Track your paid invoices & total spending over time</p>
           </div>
         </div>
-        <div className="flex items-end gap-4">
+        <div className="flex items-center gap-4">
           <div className="text-right">
-            <p className="text-xl font-bold text-white">₹{totalRevenue.toLocaleString()}</p>
-            <div className="flex items-center justify-end gap-1 text-xs"
+            <p className="text-2xl font-black text-white tracking-tight">₹{totalRevenue.toLocaleString()}</p>
+            <div className="flex items-center justify-end gap-1 text-xs font-bold"
               style={{ color: trendPct >= 0 ? "#4ADE80" : "#F87171" }}>
-              {trendPct >= 0 ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
+              {trendPct >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
               <span>{Math.abs(trendPct)}% vs prior period</span>
             </div>
           </div>
-          <div className="flex items-center gap-1 p-0.5 rounded-lg"
-            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.07)" }}>
+          <div className="flex items-center gap-1 p-1 rounded-xl"
+            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
             {["3m","6m","1y"].map((p) => (
               <button key={p} onClick={() => setPeriod(p)}
-                className="px-2.5 py-1 rounded-md text-xs font-medium transition-all duration-150"
+                className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer"
                 style={{
-                  background: period === p ? "rgba(99,91,255,0.25)" : "transparent",
-                  color: period === p ? "#A78BFA" : "#6B7280",
-                  border: period === p ? "1px solid rgba(99,91,255,0.3)" : "1px solid transparent",
+                  background: period === p ? "linear-gradient(135deg,rgba(99,91,255,0.35) 0%,rgba(139,92,246,0.2) 100%)" : "transparent",
+                  color: period === p ? "#EDE9FE" : "rgba(148,163,184,0.6)",
+                  border: period === p ? "1px solid rgba(99,91,255,0.4)" : "1px solid transparent",
+                  boxShadow: period === p ? "0 0 12px rgba(99,91,255,0.25)" : "none",
                 }}>{p}</button>
             ))}
           </div>
@@ -196,64 +186,65 @@ const EarningsSection = ({ revenueAnalytics = [], loading }) => {
       </div>
 
       {loading ? (
-        <div className="h-40 flex items-center justify-center">
-          <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24" style={{ color: "#635BFF" }}>
+        <div className="h-44 flex items-center justify-center">
+          <svg className="animate-spin w-6 h-6" fill="none" viewBox="0 0 24 24" style={{ color: "#635BFF" }}>
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
           </svg>
         </div>
       ) : (
         <motion.div key={period} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
-          <ResponsiveContainer width="100%" height={160}>
-            <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+          <ResponsiveContainer width="100%" height={180}>
+            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="clientRevGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%"   stopColor="#635BFF" stopOpacity={0.3} />
+                  <stop offset="0%"   stopColor="#635BFF" stopOpacity={0.35} />
                   <stop offset="100%" stopColor="#635BFF" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
-              <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#4B5563" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: "#4B5563" }} axisLine={false} tickLine={false}
+              <XAxis dataKey="label" tick={{ fontSize: 11, fill: "rgba(148,163,184,0.5)" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: "rgba(148,163,184,0.5)" }} axisLine={false} tickLine={false}
                 tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v} />
               <Tooltip content={<ChartTooltip />}
-                cursor={{ stroke: "#635BFF", strokeWidth: 1, strokeDasharray: "4 4", opacity: 0.4 }} />
-              <Area type="monotone" dataKey="revenue" stroke="#635BFF" strokeWidth={2}
+                cursor={{ stroke: "#635BFF", strokeWidth: 1.5, strokeDasharray: "4 4", opacity: 0.6 }} />
+              <Area type="monotone" dataKey="revenue" stroke="#635BFF" strokeWidth={2.5}
                 fill="url(#clientRevGrad)" dot={false}
-                activeDot={{ r: 4, fill: "#635BFF", strokeWidth: 0, filter: "drop-shadow(0 0 6px #635BFF)" }} />
+                activeDot={{ r: 5, fill: "#A78BFA", stroke: "#635BFF", strokeWidth: 2, filter: "drop-shadow(0 0 8px #635BFF)" }} />
             </AreaChart>
           </ResponsiveContainer>
         </motion.div>
       )}
-    </motion.div>
+    </GCard>
   );
 };
 
-// ── AI Insights panel ─────────────────────────────────────
+// ── AI Insights Panel ───────────────────────────────────────────────────────
 const AiInsightsPanel = ({ insights, loading, onRefresh }) => (
-  <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.35, delay: 0.25 }}
-    className="rounded-2xl overflow-hidden"
-    style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
-    <div className="flex items-center justify-between px-5 py-4"
-      style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-      <div className="flex items-center gap-2.5">
-        <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-          style={{ background: "rgba(139,92,246,0.15)", border: "1px solid rgba(139,92,246,0.25)" }}>
-          <Sparkles size={13} style={{ color: "#A78BFA" }} />
+  <GCard delay={0.35} glow="#8B5CF6">
+    <div className="flex items-center justify-between px-6 py-4"
+      style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+          style={{ background: "rgba(139,92,246,0.18)", border: "1px solid rgba(139,92,246,0.3)", boxShadow: "0 0 16px rgba(139,92,246,0.2)" }}>
+          <Sparkles size={15} style={{ color: "#A78BFA" }} />
         </div>
-        <h2 className="text-sm font-semibold text-white">AI Insights</h2>
+        <div>
+          <h2 className="text-sm font-bold text-white">Skillora AI Assistant</h2>
+          <p className="text-[11px] font-medium" style={{ color: "rgba(148,163,184,0.6)" }}>Smart project insights & financial recommendations</p>
+        </div>
       </div>
       <button onClick={onRefresh} disabled={loading}
-        className="p-1.5 rounded-lg transition-all duration-150 disabled:opacity-40"
-        style={{ color: "#6B7280" }}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 disabled:opacity-40 cursor-pointer"
+        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(148,163,184,0.8)" }}
         onMouseEnter={e => e.currentTarget.style.color = "#A78BFA"}
-        onMouseLeave={e => e.currentTarget.style.color = "#6B7280"}>
-        <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
+        onMouseLeave={e => e.currentTarget.style.color = "rgba(148,163,184,0.8)"}>
+        <RefreshCw size={12} className={loading ? "animate-spin" : ""} />
+        <span>Analyze</span>
       </button>
     </div>
 
-    <div className="p-5">
+    <div className="p-6">
       {loading ? (
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
@@ -261,27 +252,29 @@ const AiInsightsPanel = ({ insights, loading, onRefresh }) => (
           ))}
         </div>
       ) : !insights ? (
-        <div className="flex flex-col items-center py-6 gap-2">
-          <Sparkles size={24} style={{ color: "#374151" }} />
-          <p className="text-xs text-center" style={{ color: "#6B7280" }}>
-            AI insights will appear here once you have activity data.
+        <div className="flex flex-col items-center py-8 gap-3">
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)" }}>
+            <Sparkles size={22} style={{ color: "#A78BFA" }} />
+          </div>
+          <p className="text-xs text-center font-medium max-w-sm" style={{ color: "rgba(148,163,184,0.65)" }}>
+            No custom insights generated yet. Click analyze to generate project health & payment summaries.
           </p>
           <button onClick={onRefresh}
-            className="text-xs px-3 py-1.5 rounded-lg mt-1"
-            style={{ background: "rgba(99,91,255,0.15)", color: "#A78BFA", border: "1px solid rgba(99,91,255,0.25)" }}>
-            Generate insights
+            className="text-xs font-bold px-4 py-2 rounded-xl transition-all cursor-pointer"
+            style={{ background: "linear-gradient(135deg,rgba(99,91,255,0.3) 0%,rgba(139,92,246,0.2) 100%)", color: "#EDE9FE", border: "1px solid rgba(99,91,255,0.4)" }}>
+            Generate AI Insights
           </button>
         </div>
       ) : (
-        <div className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: "#D1D5DB" }}>
+        <div className="text-xs leading-relaxed whitespace-pre-wrap font-medium" style={{ color: "#D1D5DB" }}>
           {typeof insights === "string" ? insights : JSON.stringify(insights, null, 2)}
         </div>
       )}
     </div>
-  </motion.div>
+  </GCard>
 );
 
-// ── Project progress row ──────────────────────────────────
+// ── Project Progress Row ───────────────────────────────────────────────────
 const ProjectRow = ({ project, delay }) => {
   const pct = project.progress ?? 0;
   const statusColor = {
@@ -292,14 +285,14 @@ const ProjectRow = ({ project, delay }) => {
   return (
     <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3, delay, ease: [0.16, 1, 0.3, 1] }}
-      className="flex items-center gap-4 py-3"
-      style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-      <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-        style={{ background: `${statusColor}18`, border: `1px solid ${statusColor}28` }}>
-        <FolderOpen size={15} style={{ color: statusColor }} />
+      className="flex items-center gap-4 py-3.5 px-1 group cursor-pointer hover:bg-white/[0.02] rounded-xl transition-colors"
+      style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+      <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105"
+        style={{ background: `${statusColor}18`, border: `1px solid ${statusColor}30`, boxShadow: `0 0 12px ${statusColor}15` }}>
+        <FolderOpen size={16} style={{ color: statusColor }} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-white truncate">{project.title}</p>
+        <p className="text-xs font-bold text-white truncate group-hover:text-cyan-400 transition-colors">{project.title}</p>
         <div className="flex items-center gap-2 mt-1.5">
           <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
             <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }}
@@ -307,17 +300,18 @@ const ProjectRow = ({ project, delay }) => {
               className="h-full rounded-full"
               style={{ background: `linear-gradient(90deg,${statusColor},${statusColor}99)` }} />
           </div>
-          <span className="text-xs shrink-0" style={{ color: "#6B7280" }}>{pct}%</span>
+          <span className="text-[11px] font-semibold shrink-0" style={{ color: "rgba(148,163,184,0.6)" }}>{pct}%</span>
         </div>
       </div>
-      <span className="text-xs font-medium capitalize shrink-0" style={{ color: statusColor }}>
+      <span className="text-[11px] font-bold capitalize shrink-0 px-2.5 py-0.5 rounded-full"
+        style={{ background: `${statusColor}15`, color: statusColor, border: `1px solid ${statusColor}25` }}>
         {project.status?.replace("_", " ")}
       </span>
     </motion.div>
   );
 };
 
-// ── Main component ────────────────────────────────────────
+// ── Main Component ─────────────────────────────────────────────────────────
 const ClientDashboard = () => {
   const {
     invoices, projects, loading, error,
@@ -344,11 +338,10 @@ const ClientDashboard = () => {
     };
   }, []);
 
-  // ── Derived stats ─────────────────────────────────────
+  // ── Derived Stats ────────────────────────────────────────────────────────
   const outstanding    = invoices.filter((i) => ["sent","overdue","viewed"].includes(i.status));
   const totalOwed      = outstanding.reduce((s, i) => s + (i.total || 0), 0);
   const paidInvoices   = invoices.filter((i) => i.status === "paid");
-  const activeProjects = invoices.filter ? projects.filter((p) => p.status === "active") : [];
   const overdueInvs    = invoices.filter((i) => i.status === "overdue");
   const totalRevenue   = paidInvoices.reduce((s, i) => s + (i.total || 0), 0);
 
@@ -372,7 +365,7 @@ const ClientDashboard = () => {
 
   if (loading.dashboard && invoices.length === 0) {
     return (
-      <div className="p-6 lg:p-8 space-y-6">
+      <div className="p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => <GlassSkeleton key={i} className="h-32" />)}
         </div>
@@ -385,7 +378,7 @@ const ClientDashboard = () => {
       <div className="p-8 flex flex-col items-center justify-center min-h-[40vh] gap-3">
         <AlertCircle size={32} style={{ color: "#EF4444" }} />
         <p className="text-white font-semibold">Failed to load dashboard</p>
-        <button onClick={fetchDashboard} className="text-sm px-4 py-2 rounded-lg"
+        <button onClick={fetchDashboard} className="text-xs font-bold px-4 py-2 rounded-xl"
           style={{ background: "rgba(99,91,255,0.2)", color: "#A78BFA", border: "1px solid rgba(99,91,255,0.3)" }}>
           Retry
         </button>
@@ -394,86 +387,153 @@ const ClientDashboard = () => {
   }
 
   return (
-    <div className="p-6 lg:p-8 space-y-6 max-w-6xl">
-
-      {/* ── Greeting ── */}
-      <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-        <h1 className="text-xl font-bold text-white">Your Overview</h1>
-        <p className="text-sm mt-0.5" style={{ color: "#6B7280" }}>
-          Here's what's happening with your projects and invoices.
-        </p>
-      </motion.div>
-
-      {/* ── 4 stat cards ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={DollarSign}   label="Total Revenue"    value={`₹${totalRevenue.toLocaleString()}`}   color="#635BFF" delay={0}    trend={revTrend} sub={`₹${thisMonthRev.toLocaleString()} this month`} />
-        <StatCard icon={AlertCircle}  label="Outstanding"      value={`₹${totalOwed.toLocaleString()}`}      color="#EF4444" delay={0.05} sub={`${outstanding.length} pending`} />
-        <StatCard icon={FolderOpen}   label="Active Projects"  value={projects.filter(p=>p.status==="active").length} color="#22C55E" delay={0.1} sub={`${projects.length} total`} />
-        <StatCard icon={CheckCircle2} label="Paid Invoices"    value={paidInvoices.length}                   color="#00D4FF" delay={0.15} sub={overdueInvs.length > 0 ? `${overdueInvs.length} overdue` : "All clear"} />
+    <div className="min-h-screen relative overflow-hidden"
+      style={{ background: "radial-gradient(ellipse 100% 55% at 65% -5%,rgba(99,91,255,0.08) 0%,transparent 52%),linear-gradient(180deg,#0B0F1A 0%,#07090F 100%)" }}>
+      
+      {/* Background ambient lighting */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-40 right-1/4 w-[650px] h-[650px] rounded-full"
+          style={{ background: "radial-gradient(circle,rgba(99,91,255,0.05) 0%,transparent 60%)" }} />
       </div>
 
-      {/* ── Overdue alert ── */}
+      <div className="relative p-6 lg:p-8 max-w-[1400px] mx-auto space-y-6">
+
+        {/* ── Page Header ── */}
+        <motion.div initial={{ opacity: 0, y: -14 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.16,1,0.3,1] }}
+          className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl lg:text-3xl font-black tracking-tight leading-tight"
+              style={{ background: "linear-gradient(135deg,#FFFFFF 30%,#A78BFA 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              Overview
+            </h1>
+            <p className="text-xs lg:text-sm mt-1 font-medium" style={{ color: "rgba(148,163,184,0.7)" }}>
+              Key metrics, active projects, and financial insights
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => { fetchDashboard(); fetchAnalytics(); }}
+              className="w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer"
+              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.09)", color: "rgba(148,163,184,0.75)" }}
+              onMouseEnter={e => { e.currentTarget.style.background = "rgba(99,91,255,0.12)"; e.currentTarget.style.color = "#A78BFA"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "rgba(148,163,184,0.75)"; }}
+            >
+              <RefreshCw size={15} className={loading.dashboard ? "animate-spin text-indigo-400" : ""} />
+            </motion.button>
+          </div>
+        </motion.div>
+
+      {/* ── 4 KPI Cards ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <KPICard icon={FolderOpen}   label="Active Projects"    value={projects.filter(p=>p.status==="active").length} color="#22C55E" delay={0}    sub={`${projects.length} total project(s)`} />
+        <KPICard icon={DollarSign}   label="Total Revenue Paid" value={`₹${totalRevenue.toLocaleString()}`}   color="#635BFF" delay={0.05} trend={revTrend} sub={`₹${thisMonthRev.toLocaleString()} this month`} />
+        <KPICard icon={AlertCircle}  label="Outstanding Balance" value={`₹${totalOwed.toLocaleString()}`}      color="#EF4444" delay={0.1}  sub={`${outstanding.length} pending invoice(s)`} />
+        <KPICard icon={CheckCircle2} label="Paid Invoices"      value={paidInvoices.length}                   color="#00D4FF" delay={0.15} sub={overdueInvs.length > 0 ? `${overdueInvs.length} overdue` : "All clear"} />
+      </div>
+
+      {/* ── Overdue Alert Banner ── */}
       <AnimatePresence>
         {overdueInvs.length > 0 && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl"
-            style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)" }}>
-            <AlertCircle size={16} style={{ color: "#F87171" }} />
-            <p className="text-sm flex-1" style={{ color: "#FCA5A5" }}>
-              You have <span className="font-bold">{overdueInvs.length}</span> overdue invoice{overdueInvs.length > 1 ? "s" : ""} totalling{" "}
-              <span className="font-bold">₹{overdueInvs.reduce((s,i)=>s+(i.total||0),0).toLocaleString()}</span>.
+            className="flex items-center gap-3 px-4 py-3.5 rounded-2xl"
+            style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", boxShadow: "0 0 24px rgba(239,68,68,0.1)" }}>
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(239,68,68,0.2)" }}>
+              <AlertCircle size={17} style={{ color: "#F87171" }} />
+            </div>
+            <p className="text-xs font-semibold flex-1" style={{ color: "#FCA5A5" }}>
+              You have <span className="font-bold text-white">{overdueInvs.length}</span> overdue invoice{overdueInvs.length > 1 ? "s" : ""} totalling{" "}
+              <span className="font-bold text-white">₹{overdueInvs.reduce((s,i)=>s+(i.total||0),0).toLocaleString()}</span>. Please settle payment to prevent project delays.
             </p>
-            <Link to="/client/invoices" className="text-xs font-semibold flex items-center gap-1 shrink-0"
-              style={{ color: "#F87171" }}>
-              View <ArrowRight size={12} />
+            <Link to="/client/invoices" className="text-xs font-bold flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-xl transition-all"
+              style={{ background: "rgba(239,68,68,0.2)", color: "#F87171", border: "1px solid rgba(239,68,68,0.3)" }}>
+              <span>Pay Now</span> <ArrowRight size={13} />
             </Link>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ── Earnings chart (full width) ── */}
+      {/* ── Revenue Chart Section ── */}
       <EarningsSection revenueAnalytics={revenueAnalytics} loading={loading.analytics} />
 
-      {/* ── Two-column: invoices + projects ── */}
+      {/* ── Two-Column Widgets (Projects + Invoices) ── */}
       <div className="grid lg:grid-cols-2 gap-6">
 
-        {/* Recent Invoices */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, delay: 0.3 }}
-          className="rounded-2xl overflow-hidden"
-          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
-          <div className="flex items-center justify-between px-5 py-4"
-            style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-                style={{ background: "rgba(99,91,255,0.15)", border: "1px solid rgba(99,91,255,0.25)" }}>
-                <FileText size={13} style={{ color: "#A78BFA" }} />
+        {/* Projects Widget */}
+        <GCard delay={0.25} glow="#22C55E" className="p-0">
+          <div className="flex items-center justify-between px-6 py-4"
+            style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.3)" }}>
+                <FolderOpen size={15} style={{ color: "#4ADE80" }} />
               </div>
-              <h2 className="text-sm font-semibold text-white">Recent Invoices</h2>
+              <h2 className="text-sm font-bold text-white">Your Projects</h2>
             </div>
-            <Link to="/client/invoices" className="text-xs font-medium flex items-center gap-1"
-              style={{ color: "#635BFF" }}
-              onMouseEnter={e => e.currentTarget.style.color = "#A78BFA"}
-              onMouseLeave={e => e.currentTarget.style.color = "#635BFF"}>
-              View all <ArrowRight size={11} />
+            <Link to="/client/projects" className="text-xs font-bold flex items-center gap-1 transition-colors"
+              style={{ color: "#22C55E" }}
+              onMouseEnter={e => e.currentTarget.style.color = "#4ADE80"}
+              onMouseLeave={e => e.currentTarget.style.color = "#22C55E"}>
+              View all <ArrowRight size={12} />
             </Link>
           </div>
-          {recentInvoices.length === 0 ? (
+
+          {recentProjects.length === 0 ? (
             <div className="flex flex-col items-center py-12 gap-2">
-              <FileText size={28} style={{ color: "#374151" }} />
-              <p className="text-sm" style={{ color: "#6B7280" }}>No invoices yet</p>
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: "rgba(255,255,255,0.03)" }}>
+                <FolderOpen size={20} style={{ color: "rgba(148,163,184,0.4)" }} />
+              </div>
+              <p className="text-xs font-medium" style={{ color: "rgba(148,163,184,0.6)" }}>No projects active yet</p>
             </div>
           ) : (
-            <div className="divide-y" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
+            <div className="px-6 py-3">
+              {recentProjects.map((p, i) => (
+                <ProjectRow key={p._id} project={p} delay={0.25 + i * 0.05} />
+              ))}
+            </div>
+          )}
+        </GCard>
+
+        {/* Recent Invoices Widget */}
+        <GCard delay={0.3} glow="#635BFF" className="p-0">
+          <div className="flex items-center justify-between px-6 py-4"
+            style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: "rgba(99,91,255,0.15)", border: "1px solid rgba(99,91,255,0.3)" }}>
+                <FileText size={15} style={{ color: "#A78BFA" }} />
+              </div>
+              <h2 className="text-sm font-bold text-white">Recent Invoices</h2>
+            </div>
+            <Link to="/client/invoices" className="text-xs font-bold flex items-center gap-1 transition-colors"
+              style={{ color: "#8B5CF6" }}
+              onMouseEnter={e => e.currentTarget.style.color = "#A78BFA"}
+              onMouseLeave={e => e.currentTarget.style.color = "#8B5CF6"}>
+              View all <ArrowRight size={12} />
+            </Link>
+          </div>
+
+          {recentInvoices.length === 0 ? (
+            <div className="flex flex-col items-center py-12 gap-2">
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: "rgba(255,255,255,0.03)" }}>
+                <FileText size={20} style={{ color: "rgba(148,163,184,0.4)" }} />
+              </div>
+              <p className="text-xs font-medium" style={{ color: "rgba(148,163,184,0.6)" }}>No invoices generated yet</p>
+            </div>
+          ) : (
+            <div className="divide-y" style={{ borderColor: "rgba(255,255,255,0.04)" }}>
               {recentInvoices.map((inv, i) => (
                 <motion.div key={inv._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                   transition={{ delay: 0.3 + i * 0.05 }}
-                  className="flex items-center gap-3 px-5 py-3.5">
+                  className="flex items-center gap-3 px-6 py-4 hover:bg-white/[0.02] transition-colors">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-white">{inv.invoiceNumber}</p>
-                    <p className="text-xs mt-0.5" style={{ color: "#6B7280" }}>Due {formatDate(inv.dueDate)}</p>
+                    <p className="text-xs font-bold text-white">{inv.invoiceNumber}</p>
+                    <p className="text-[11px] mt-0.5" style={{ color: "rgba(148,163,184,0.55)" }}>Due {formatDate(inv.dueDate)}</p>
                   </div>
-                  <p className="text-sm font-bold text-white shrink-0">
+                  <p className="text-xs font-black text-white shrink-0">
                     {inv.currency} {inv.total?.toLocaleString()}
                   </p>
                   <StatusBadge status={inv.status} />
@@ -481,42 +541,7 @@ const ClientDashboard = () => {
               ))}
             </div>
           )}
-        </motion.div>
-
-        {/* Projects */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, delay: 0.35 }}
-          className="rounded-2xl overflow-hidden"
-          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
-          <div className="flex items-center justify-between px-5 py-4"
-            style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-                style={{ background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.25)" }}>
-                <FolderOpen size={13} style={{ color: "#4ADE80" }} />
-              </div>
-              <h2 className="text-sm font-semibold text-white">Your Projects</h2>
-            </div>
-            <Link to="/client/projects" className="text-xs font-medium flex items-center gap-1"
-              style={{ color: "#635BFF" }}
-              onMouseEnter={e => e.currentTarget.style.color = "#A78BFA"}
-              onMouseLeave={e => e.currentTarget.style.color = "#635BFF"}>
-              View all <ArrowRight size={11} />
-            </Link>
-          </div>
-          {recentProjects.length === 0 ? (
-            <div className="flex flex-col items-center py-12 gap-2">
-              <FolderOpen size={28} style={{ color: "#374151" }} />
-              <p className="text-sm" style={{ color: "#6B7280" }}>No projects yet</p>
-            </div>
-          ) : (
-            <div className="px-5 py-2">
-              {recentProjects.map((p, i) => (
-                <ProjectRow key={p._id} project={p} delay={0.35 + i * 0.05} />
-              ))}
-            </div>
-          )}
-        </motion.div>
+        </GCard>
       </div>
 
       {/* ── AI Insights ── */}
@@ -525,6 +550,7 @@ const ClientDashboard = () => {
         loading={loading.aiInsights}
         onRefresh={fetchAiInsights}
       />
+      </div>
     </div>
   );
 };

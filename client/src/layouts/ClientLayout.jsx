@@ -22,8 +22,8 @@ import useClickOutside from "../hooks/useClickOutside";
 
 const CLIENT_CONFIG = {
   "/client/dashboard": { title: "Overview", icon: LayoutDashboard },
-  "/client/invoices":  { title: "Invoices", icon: FileText },
   "/client/projects":  { title: "Projects", icon: FolderOpen },
+  "/client/invoices":  { title: "Invoices", icon: FileText },
   "/client/messages":  { title: "Messages", icon: MessageSquare },
   "/client/profile":   { title: "Profile",  icon: User },
 };
@@ -33,8 +33,8 @@ const NAV_SECTIONS = [
     label: "MAIN",
     items: [
       { to: "/client/dashboard", icon: LayoutDashboard, label: "Overview", end: true },
-      { to: "/client/invoices",  icon: FileText,        label: "Invoices" },
       { to: "/client/projects",  icon: FolderOpen,      label: "Projects" },
+      { to: "/client/invoices",  icon: FileText,        label: "Invoices" },
       { to: "/client/messages",  icon: MessageSquare,   label: "Messages" },
     ],
   },
