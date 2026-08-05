@@ -4,7 +4,7 @@
 
 ### *A Production-Grade, 100% Free Workspace for Freelancers, Admins & Clients*
 
-Manage clients, projects, tasks, invoices, payments, real-time sync, and AI-powered productivity — all in one seamless ecosystem.
+Manage clients, projects, tasks, invoices, payments, real-time sync, CSV data exports, and AI-powered productivity — all in one unified ecosystem.
 
 <br/>
 
@@ -29,17 +29,18 @@ Manage clients, projects, tasks, invoices, payments, real-time sync, and AI-powe
 
 **Skillora** is an all-in-one management platform built to unify freelancer workflows, client collaboration, and platform administration into a single high-performance application.
 
-Instead of subscribing to multiple disconnected software suites for project tracking, task boards, client communication, invoice generation, and AI assistance, Skillora integrates everything into **one synchronized workspace**.
+Instead of subscribing to multiple disconnected software suites for project tracking, task boards, client communication, invoice generation, CSV exports, and AI assistance, Skillora integrates everything into **one synchronized workspace**.
 
-> 💡 **100% Free Forever**: All features — including unlimited projects, client portals, line-item invoicing, AI prompt studios, real-time chat, and admin configuration — are completely unlocked with no paywalls or hidden tier limits.
+> 💡 **100% Free Forever**: All features — including unlimited projects, client portals, line-item invoicing, Blob-based CSV data exports, AI prompt studios, real-time chat, and admin configuration — are completely unlocked with no paywalls or hidden tier limits.
 
 ---
 
 ## 🌟 Key Features
 
 - 💼 **Freelancer OS**: Drag-and-drop Kanban boards (`@dnd-kit`), project progress metrics, client CRM, invoice generator, and technical skill matrix.
-- 👥 **Dedicated Client Portal**: Secure client interface to review project progress, approve/request changes on milestones, view/pay invoices online, and chat directly with freelancers.
-- 🛡 **Admin Command Center**: Complete oversight of registered users, revenue statistics, live activity logs, and MongoDB-persisted platform configuration (Maintenance Mode, Registration rules, Support contacts).
+- 👥 **Dedicated Client Portal**: Modernized dark glass client portal aligned with Admin UI styling (`#0B0F1A` to `#07090F` ambient lighting), priority-based navigation (**Overview** → **Projects** → **Invoices** → **Messages**), milestone approvals, online payment processing, and direct team chat.
+- 🛡 **Admin Command Center**: Complete oversight of registered users, platform revenue analytics, real-time activity logs, and MongoDB-persisted platform configuration (Maintenance Mode, Registration rules, Support contacts).
+- 📊 **One-Click CSV Exports**: Native, browser-safe Blob URL CSV exporting on **Projects**, **Invoices**, and **Users** pages with custom glowing gradient action buttons (`linear-gradient(135deg, #635BFF, #8B5CF6)`).
 - ⚡ **Real-Time Socket Synchronization**: Bi-directional updates using Socket.io so changes on one dashboard instantaneously reflect across all active sessions.
 - 🤖 **Google Gemini 1.5 Pro AI Studio**: Native AI assistance supporting Server-Sent Events (SSE) streaming for generating project breakdown structures, task checklists, and smart summaries.
 - 🔐 **Bank-Grade Authentication**: OAuth 2.0 (Google & GitHub) + JWT architecture featuring **in-memory access tokens** (`tokenStore.js`) and HttpOnly SameSite=Strict refresh cookies for maximum security against XSS & CSRF attacks.
@@ -61,14 +62,17 @@ graph TD
     B --> B3["Line-Item Invoices & PDF Export"]
     B --> B4["AI Studio & Skill Matrix"]
 
-    C --> C1["Project Progress & Milestone Tracker"]
-    C --> C2["Invoice Review & Online Payments"]
-    C --> C3["Real-time Project Chat"]
+    C --> C1["Priority Flow: Overview → Projects → Invoices → Messages"]
+    C --> C2["Project Progress & Milestone Tracker"]
+    C --> C3["One-Click Projects & Invoices CSV Export"]
+    C --> C4["Invoice Review & Online Payments"]
+    C --> C5["Real-time Project Chat"]
 
     D --> D1["Platform Stats & Global Revenue"]
-    D --> D2["User & Role Management"]
-    D --> D3["MongoDB Platform Config Settings"]
-    D --> D4["System Audit Log"]
+    D --> D2["User Control & Role Management"]
+    D --> D3["Users Management CSV Export"]
+    D --> D4["MongoDB Platform Config Settings"]
+    D --> D5["System Audit Log"]
 ```
 
 ### 1. 💼 Freelancer OS (`/dashboard`)
@@ -79,14 +83,16 @@ graph TD
 - **AI Studio**: Integrated Google Gemini 1.5 Pro AI assistant for task generation, project scoping, and invoice descriptions with live streaming responses.
 
 ### 2. 👥 Client Portal (`/client/dashboard`)
+- **Admin-Aligned Glass Theme**: Deep dark gradient background (`radial-gradient(ellipse 100% 55% at 65% -5%, rgba(99,91,255,0.08) 0%, transparent 52%), linear-gradient(180deg, #0B0F1A 0%, #07090F 100%)`), ambient lighting overlays, and max-width `1400px` container layout.
+- **Priority-Wise Navigation**: Structured in optimal priority sequence (**Overview** → **Projects** → **Invoices** → **Messages**) across sidebar, header links, and dashboard widgets.
+- **Quick Action Header & CSV Export**: One-click navigation pills to **Projects** and **Invoices** + browser-native **Export CSV** action buttons on Projects and Invoices pages.
 - **Project & Milestone Progress**: View real-time completion percentages, task statuses, and approve/request changes on milestone deliverables.
-- **Invoice Review & Payments**: Access sent invoices, view detailed line items, and process payments securely online (Stripe, PayPal, Bank Transfer).
+- **Invoice Review & Payments**: Access sent invoices, view detailed line items, and process payments securely online.
 - **Direct Client Messaging**: Real-time project discussion threads powered by Socket.io.
-- **Notifications**: Instant notification alerts when new invoices are issued, milestones are updated, or messages arrive.
 
 ### 3. 🛡 Admin Command Center (`/admin`)
 - **System Analytics**: Platform-wide metrics including total registered users, active projects, volume processed, and real-time user activity.
-- **User Control**: Search/filter users by role (`freelancer`, `client`, `admin`), update account statuses (active/suspended), or modify user roles.
+- **User Control & Export**: Search/filter users by role (`freelancer`, `client`, `admin`), update account statuses, modify roles, and export filtered user lists to CSV using glowing capsule action buttons.
 - **MongoDB Persisted Config**: Dynamic settings management (`Config` schema) controlling system maintenance mode, public registration toggles, and global support contacts.
 - **Audit Log**: System event log tracking user registrations, role updates, and administrative actions.
 
