@@ -230,6 +230,29 @@ const AdminNavbar = ({ onSearch }) => {
 
         {/* ── BREADCRUMB NAVIGATION ── */}
         <div className="flex items-center gap-2.5 select-none text-xs">
+          {/* Home Logo Button */}
+          <motion.button
+            whileHover={{ scale: 1.08, y: -1 }}
+            whileTap={{ scale: 0.92 }}
+            onClick={() => navigate("/")}
+            title="Go to Home"
+            className="relative w-8 h-8 rounded-xl flex items-center justify-center shrink-0 cursor-pointer transition-all duration-200"
+            style={{
+              background: "linear-gradient(145deg,#7C6FFF 0%,#5B52F0 100%)",
+              boxShadow: "0 0 0 1px rgba(255,255,255,0.12), 0 4px 14px rgba(99,91,255,0.45)",
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.boxShadow = "0 0 0 1px rgba(255,255,255,0.18), 0 4px 20px rgba(99,91,255,0.7)";
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.boxShadow = "0 0 0 1px rgba(255,255,255,0.12), 0 4px 14px rgba(99,91,255,0.45)";
+            }}
+          >
+            <Home size={15} className="text-white" />
+          </motion.button>
+
+          <span className="text-gray-500/40 font-bold text-sm select-none">/</span>
+
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-semibold shrink-0"
             style={{
               background: "rgba(139,92,246,0.12)",
