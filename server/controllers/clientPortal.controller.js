@@ -347,16 +347,14 @@ const verifyInvoicePayment = asyncHandler(async (req, res) => {
     refId:     invoice._id,
   });
 
-  // Emit real-time update
+  // Emit real-time update to freelancer & admin stats
   try {
-    const { getIO } = require("../config/socket");
-    const io = getIO();
-    if (io) {
-      io.to(invoice.owner.toString()).emit("invoice:updated", {
-        invoiceId: invoice._id,
-        status:    "paid",
-      });
-    }
+    const { emitToUser, broadcast } = require("../config/socket");
+    emitToUser(invoice.owner, "invoice:updated", {
+      invoiceId: invoice._id,
+      status:    "paid",
+    });
+    broadcast("admin:stats_refresh", { ts: Date.now() });
   } catch { /* socket may not be available */ }
 
   ApiResponse.success(res, "Payment successful", { invoice });
@@ -390,6 +388,15 @@ const approveMilestone = asyncHandler(async (req, res) => {
     refId:     project._id,
   });
 
+  try {
+    const { emitToUser } = require("../config/socket");
+    emitToUser(project.owner, "milestone:updated", {
+      projectId:   project._id,
+      milestoneId: milestone._id,
+      status:      "approved",
+    });
+  } catch { /* socket optional */ }
+
   ApiResponse.success(res, "Milestone approved", { milestone });
 });
 
@@ -421,6 +428,15 @@ const requestMilestoneChanges = asyncHandler(async (req, res) => {
     refId:     project._id,
   });
 
+  try {
+    const { emitToUser } = require("../config/socket");
+    emitToUser(project.owner, "milestone:updated", {
+      projectId:   project._id,
+      milestoneId: milestone._id,
+      status:      "changes_requested",
+    });
+  } catch { /* socket optional */ }
+
   ApiResponse.success(res, "Changes requested", { milestone });
 });
 
@@ -437,8 +453,6 @@ const getProjectMessages = asyncHandler(async (req, res) => {
   });
   if (!project) throw ApiError.notFound("Project not found");
 
-  // Messages stored in a simple embedded array on project (or separate model)
-  // Using Notification model as message store for simplicity — type: "system"
   const Message = require("../models/Message");
   const page  = Math.max(1, parseInt(req.query.page) || 1);
   const limit = 30;
@@ -480,16 +494,23 @@ const sendProjectMessage = asyncHandler(async (req, res) => {
 
   await message.populate("sender", "name avatar role");
 
-  // Emit real-time to freelancer
+  // Notify freelancer in DB & push real-time socket event
+  await notify({
+    recipient: project.owner,
+    type:      "system",
+    title:     `New message from ${req.user.name}`,
+    message:   content.trim().slice(0, 100),
+    link:      `/projects/${project._id}`,
+    refModel:  "Project",
+    refId:     project._id,
+  });
+
   try {
-    const { getIO } = require("../config/socket");
-    const io = getIO();
-    if (io) {
-      io.to(project.owner.toString()).emit("message:new", {
-        projectId: req.params.projectId,
-        message,
-      });
-    }
+    const { emitToUser } = require("../config/socket");
+    emitToUser(project.owner, "message:new", {
+      projectId: req.params.projectId,
+      message,
+    });
   } catch { /* socket optional */ }
 
   ApiResponse.success(res, "Message sent", { message });
