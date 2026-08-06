@@ -91,8 +91,8 @@ const NavItem = ({ to, icon: Icon, label, badge, glow, collapsed }) => (
             background: isActive ? "linear-gradient(135deg,rgba(99,91,255,0.18) 0%,rgba(139,92,246,0.08) 100%)" : "transparent",
             transition: "background 0.18s ease, box-shadow 0.18s ease",
           }}
-          onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.boxShadow = "inset 0 0 0 1px rgba(255,255,255,0.06)"; } }}
-          onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.boxShadow = "none"; } }}
+          onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; } }}
+          onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = "transparent"; } }}
         >
           {isActive && (
             <motion.span layoutId="freelancer-nav-pill"
@@ -105,7 +105,11 @@ const NavItem = ({ to, icon: Icon, label, badge, glow, collapsed }) => (
               style={{ background: "radial-gradient(ellipse at 10% 50%,rgba(99,91,255,0.15) 0%,transparent 70%)" }} />
           )}
           <span className="relative shrink-0 w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-200"
-            style={{ background: isActive ? "rgba(99,91,255,0.25)" : "rgba(255,255,255,0.04)", border: isActive ? "1px solid rgba(139,92,246,0.3)" : "1px solid rgba(255,255,255,0.06)", boxShadow: isActive ? "0 0 14px rgba(99,91,255,0.35),inset 0 1px 0 rgba(255,255,255,0.1)" : "none" }}>
+            style={{
+              background: isActive ? "rgba(99,91,255,0.25)" : "transparent",
+              border: isActive ? "1px solid rgba(139,92,246,0.3)" : "1px solid transparent",
+              boxShadow: isActive ? "0 0 14px rgba(99,91,255,0.35),inset 0 1px 0 rgba(255,255,255,0.1)" : "none"
+            }}>
             <Icon size={16} strokeWidth={isActive ? 2.2 : 2}
               style={{ color: isActive ? "#A78BFA" : "#9CA3AF", filter: isActive ? "drop-shadow(0 0 6px rgba(167,139,250,0.8))" : "none", transition: "color 0.18s,filter 0.18s" }} />
           </span>
