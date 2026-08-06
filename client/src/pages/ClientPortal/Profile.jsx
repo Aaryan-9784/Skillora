@@ -10,6 +10,7 @@ import toast from "react-hot-toast";
 import useClientPortalStore from "../../store/clientPortalStore";
 import useAuthStore from "../../store/authStore";
 import api from "../../services/api";
+import SubpageStatCard from "../../components/dashboard/SubpageStatCard";
 import { getInitials } from "../../utils/helpers";
 
 // ── Glass Container Card (matches Admin Overview theme) ───────────────────
@@ -32,35 +33,7 @@ const GCard = ({ children, delay, className, glow }) => (
   </motion.div>
 );
 
-// ── Top KPI Card Component (matches Admin Overview theme) ──────────────────
-const KPICard = ({ icon: Icon, label, value, sub, color, delay }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: delay || 0, duration: 0.45, ease: [0.16,1,0.3,1] }}
-    whileHover={{ y: -4, transition: { duration: 0.18 } }}
-    className="relative overflow-hidden rounded-2xl p-5 cursor-default group"
-    style={{
-      background: "linear-gradient(145deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.015) 100%)",
-      border: "1px solid " + color + "20", backdropFilter: "blur(16px)",
-    }}
-  >
-    <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full pointer-events-none transition-all duration-500 group-hover:scale-150 opacity-60"
-      style={{ background: "radial-gradient(circle," + color + "20 0%,transparent 70%)" }} />
-    <div className="absolute inset-x-0 top-0 h-px"
-      style={{ background: "linear-gradient(90deg,transparent," + color + "50,transparent)" }} />
 
-    <div className="flex items-center justify-between mb-3">
-      <span className="text-[12px] font-semibold" style={{ color: "rgba(148,163,184,0.75)" }}>{label}</span>
-      <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-        style={{ background: color + "16", border: "1px solid " + color + "30", boxShadow: "0 0 16px " + color + "18" }}>
-        <Icon size={17} style={{ color }} />
-      </div>
-    </div>
-
-    <p className="text-[24px] font-black text-white tracking-tight leading-none mb-1.5 truncate">{value}</p>
-    {sub && <p className="text-[11px] font-medium" style={{ color: "rgba(148,163,184,0.55)" }}>{sub}</p>}
-  </motion.div>
-);
 
 // ── Shared Input Component ────────────────────────────────────────────────
 const InputField = ({ label, icon: Icon, disabled, help, ...props }) => {
@@ -334,7 +307,7 @@ const ClientProfile = () => {
 
         {/* ── 4 USER METRIC KPI CARDS ── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {kpis.map(k => <KPICard key={k.label} {...k} />)}
+          {kpis.map(k => <SubpageStatCard key={k.label} {...k} />)}
         </div>
 
         {/* ── MAIN CONTENT GRID ── */}

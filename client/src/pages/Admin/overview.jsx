@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import { useNavigate } from "react-router-dom";
 import useAdminStore from "../../store/adminStore";
+import KPIWidget from "../../components/dashboard/KPIWidget";
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const PLAN_COLORS = { free: "#64748B", pro: "#818CF8", premium: "#F59E0B" };
@@ -76,36 +77,6 @@ const GCard = ({ children, delay, className, glow }) => (
   </motion.div>
 );
 
-// ── KPI Card Component ─────────────────────────────────────────────────────
-const KPICard = ({ icon: Icon, label, value, sub, color, spark, delay }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: delay || 0, duration: 0.45, ease: [0.16,1,0.3,1] }}
-    whileHover={{ y: -4, transition: { duration: 0.18 } }}
-    className="relative overflow-hidden rounded-2xl p-5 cursor-default group"
-    style={{
-      background: "linear-gradient(145deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.015) 100%)",
-      border: "1px solid " + color + "20", backdropFilter: "blur(16px)",
-    }}
-  >
-    <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full pointer-events-none transition-all duration-500 group-hover:scale-150 opacity-60"
-      style={{ background: "radial-gradient(circle," + color + "20 0%,transparent 70%)" }} />
-    <div className="absolute inset-x-0 top-0 h-px"
-      style={{ background: "linear-gradient(90deg,transparent," + color + "50,transparent)" }} />
-
-    <div className="flex items-center justify-between mb-3">
-      <span className="text-[12px] font-semibold" style={{ color: "rgba(148,163,184,0.75)" }}>{label}</span>
-      <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-        style={{ background: color + "16", border: "1px solid " + color + "30", boxShadow: "0 0 16px " + color + "18" }}>
-        <Icon size={17} style={{ color }} />
-      </div>
-    </div>
-
-    <p className="text-[28px] font-black text-white tracking-tight leading-none mb-1.5">{value}</p>
-    {sub && <p className="text-[11px] font-medium" style={{ color: "rgba(148,163,184,0.55)" }}>{sub}</p>}
-    {spark && spark.length > 1 && <div className="mt-2"><Spark data={spark} color={color} /></div>}
-  </motion.div>
-);
 
 // ── Plan Donut Chart ───────────────────────────────────────────────────────
 const PlanDonut = ({ plans }) => {
@@ -243,34 +214,29 @@ const AdminOverview = () => {
       icon: Users,
       label: "Total Users",
       value: fmtNum(stats?.totalUsers),
-      sub: "+" + fmtNum(stats?.newUsers) + " new this month",
-      color: "#635BFF",
-      delay: 0,
+      trendLabel: "+" + fmtNum(stats?.newUsers) + " new this month",
+      color: "brand",
     },
     {
       icon: UserCheck,
       label: "Active Users (30d)",
       value: fmtNum(stats?.activeToday),
-      sub: "Active platform accounts",
-      color: "#10B981",
-      delay: 0.07,
+      trendLabel: "Active platform accounts",
+      color: "success",
     },
     {
       icon: DollarSign,
       label: "Total Revenue",
       value: fmt(stats?.mrr),
-      sub: "All-time paid invoices",
-      color: "#F59E0B",
-      spark: revSpark,
-      delay: 0.14,
+      trendLabel: "All-time paid invoices",
+      color: "warning",
     },
     {
       icon: CreditCard,
       label: "Paid Subscribers",
       value: fmtNum(stats?.paidUsers),
-      sub: "Pro & Premium tiers",
-      color: "#00D4FF",
-      delay: 0.21,
+      trendLabel: "Pro & Premium tiers",
+      color: "cyan",
     },
   ];
 
@@ -328,7 +294,7 @@ const AdminOverview = () => {
                 <div key={i} className="rounded-2xl p-5 animate-pulse"
                   style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", minHeight: 120 }} />
               ))
-            : kpis.map(k => <KPICard key={k.label} {...k} />)
+            : kpis.map(k => <KPIWidget key={k.label} {...k} />)
           }
         </div>
 

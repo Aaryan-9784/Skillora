@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import useClientStore from "../../store/clientStore";
 import useDebounce from "../../hooks/useDebounce";
+import SubpageStatCard from "../../components/dashboard/SubpageStatCard";
 import { getInitials, formatCurrency } from "../../utils/helpers";
 
 // ─────────────────────────────────────────────────────────
@@ -556,53 +557,10 @@ const Clients = () => {
 
         {/* ── KPI METRICS CARDS ── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <motion.div whileHover={{ y: -3 }} className="relative overflow-hidden rounded-2xl p-5"
-            style={{ background: "linear-gradient(145deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.015) 100%)", border: "1px solid rgba(99,91,255,0.25)", backdropFilter: "blur(16px)" }}>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-gray-300">Total Clients</span>
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-purple-500/20 border border-purple-500/40">
-                <Users size={16} style={{ color: "#C4B5FD", filter: "drop-shadow(0 0 6px rgba(196,181,253,0.6))" }} />
-              </div>
-            </div>
-            <p className="text-2xl font-black text-white mb-1">{clients.length}</p>
-            <p className="text-[11px] text-gray-400">Active CRM directory</p>
-          </motion.div>
-
-          <motion.div whileHover={{ y: -3 }} className="relative overflow-hidden rounded-2xl p-5"
-            style={{ background: "linear-gradient(145deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.015) 100%)", border: "1px solid rgba(34,197,94,0.25)", backdropFilter: "blur(16px)" }}>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-gray-300">Active Contacts</span>
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-emerald-500/20 border border-emerald-500/40">
-                <Building2 size={16} style={{ color: "#6EE7B7", filter: "drop-shadow(0 0 6px rgba(110,231,183,0.6))" }} />
-              </div>
-            </div>
-            <p className="text-2xl font-black text-white mb-1">{clients.length}</p>
-            <p className="text-[11px] text-gray-400">Verified client accounts</p>
-          </motion.div>
-
-          <motion.div whileHover={{ y: -3 }} className="relative overflow-hidden rounded-2xl p-5"
-            style={{ background: "linear-gradient(145deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.015) 100%)", border: "1px solid rgba(0,212,255,0.25)", backdropFilter: "blur(16px)" }}>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-gray-300">Projects Linked</span>
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-cyan-500/20 border border-cyan-500/40">
-                <Folder size={16} style={{ color: "#67E8F9", filter: "drop-shadow(0 0 6px rgba(103,232,249,0.6))" }} />
-              </div>
-            </div>
-            <p className="text-2xl font-black text-white mb-1">{totalProjectsLinked}</p>
-            <p className="text-[11px] text-gray-400">Combined client projects</p>
-          </motion.div>
-
-          <motion.div whileHover={{ y: -3 }} className="relative overflow-hidden rounded-2xl p-5"
-            style={{ background: "linear-gradient(145deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.015) 100%)", border: "1px solid rgba(245,158,11,0.25)", backdropFilter: "blur(16px)" }}>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-gray-300">Total Client Value</span>
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-amber-500/20 border border-amber-500/40">
-                <DollarSign size={16} style={{ color: "#FDE68A", filter: "drop-shadow(0 0 6px rgba(253,230,138,0.6))" }} />
-              </div>
-            </div>
-            <p className="text-2xl font-black text-white mb-1">{formatCurrency(totalRevenueGenerated, "INR")}</p>
-            <p className="text-[11px] text-gray-400">Invoiced & received</p>
-          </motion.div>
+          <SubpageStatCard label="Total Clients" value={clients.length} icon={Users} subtext="Active CRM directory" color="purple" delay={0} />
+          <SubpageStatCard label="Active Contacts" value={clients.length} icon={Building2} subtext="Verified client accounts" color="green" delay={0.05} />
+          <SubpageStatCard label="Projects Linked" value={totalProjectsLinked} icon={Folder} subtext="Combined client projects" color="cyan" delay={0.1} />
+          <SubpageStatCard label="Total Client Value" value={formatCurrency(totalRevenueGenerated, "INR")} icon={DollarSign} subtext="Invoiced & received" color="amber" delay={0.15} />
         </div>
 
         {/* ── SEARCH + VIEW TOGGLE ── */}

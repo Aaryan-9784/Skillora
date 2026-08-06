@@ -9,6 +9,7 @@ import useClientPortalStore from "../../store/clientPortalStore";
 import * as svc from "../../services/clientPortalService";
 import Modal from "../../components/ui/Modal";
 import { SkeletonRow } from "../../components/ui/Skeleton";
+import SubpageStatCard from "../../components/dashboard/SubpageStatCard";
 import { formatCurrency, formatDate } from "../../utils/helpers";
 
 const PAGE_SIZE = 10;
@@ -54,35 +55,7 @@ const GCard = ({ children, delay, className, glow }) => (
   </motion.div>
 );
 
-// ── Top KPI Card Component (Matches Admin Overview theme) ──────────────────
-const KPICard = ({ icon: Icon, label, value, sub, color, delay }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: delay || 0, duration: 0.45, ease: [0.16,1,0.3,1] }}
-    whileHover={{ y: -4, transition: { duration: 0.18 } }}
-    className="relative overflow-hidden rounded-2xl p-5 cursor-default group"
-    style={{
-      background: "linear-gradient(145deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.015) 100%)",
-      border: "1px solid " + color + "20", backdropFilter: "blur(16px)",
-    }}
-  >
-    <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full pointer-events-none transition-all duration-500 group-hover:scale-150 opacity-60"
-      style={{ background: "radial-gradient(circle," + color + "20 0%,transparent 70%)" }} />
-    <div className="absolute inset-x-0 top-0 h-px"
-      style={{ background: "linear-gradient(90deg,transparent," + color + "50,transparent)" }} />
 
-    <div className="flex items-center justify-between mb-3">
-      <span className="text-[12px] font-semibold" style={{ color: "rgba(148,163,184,0.75)" }}>{label}</span>
-      <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-        style={{ background: color + "16", border: "1px solid " + color + "30", boxShadow: "0 0 16px " + color + "18" }}>
-        <Icon size={17} style={{ color }} />
-      </div>
-    </div>
-
-    <p className="text-[24px] xl:text-[28px] font-black text-white tracking-tight leading-none mb-1.5">{value}</p>
-    {sub && <p className="text-[11px] font-medium truncate" style={{ color: "rgba(148,163,184,0.55)" }}>{sub}</p>}
-  </motion.div>
-);
 
 // ── Financial Summary Bar ──────────────────────────────────────────────────
 const FinancialBar = ({ invoices }) => {
@@ -92,10 +65,10 @@ const FinancialBar = ({ invoices }) => {
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      <KPICard icon={CheckCircle2} label="Total Revenue Paid" value={`₹${paid.toLocaleString()}`} color="#22C55E" delay={0} sub={`${invoices.filter(i=>i.status==='paid').length} paid invoice(s)`} />
-      <KPICard icon={Clock}        label="Pending Amount"    value={`₹${pending.toLocaleString()}`} color="#60A5FA" delay={0.05} sub={`${invoices.filter(i=>['sent','viewed'].includes(i.status)).length} pending invoice(s)`} />
-      <KPICard icon={AlertCircle}  label="Overdue Amount"    value={`₹${overdue.toLocaleString()}`} color="#EF4444" delay={0.1} sub={`${invoices.filter(i=>i.status==='overdue').length} overdue invoice(s)`} />
-      <KPICard icon={FileText}     label="Total Invoices"    value={invoices.length}               color="#8B5CF6" delay={0.15} sub="All time records" />
+      <SubpageStatCard icon={CheckCircle2} label="Total Revenue Paid" value={`₹${paid.toLocaleString()}`} color="green" delay={0} sub={`${invoices.filter(i=>i.status==='paid').length} paid invoice(s)`} />
+      <SubpageStatCard icon={Clock}        label="Pending Amount"    value={`₹${pending.toLocaleString()}`} color="blue" delay={0.05} sub={`${invoices.filter(i=>['sent','viewed'].includes(i.status)).length} pending invoice(s)`} />
+      <SubpageStatCard icon={AlertCircle}  label="Overdue Amount"    value={`₹${overdue.toLocaleString()}`} color="red" delay={0.1} sub={`${invoices.filter(i=>i.status==='overdue').length} overdue invoice(s)`} />
+      <SubpageStatCard icon={FileText}     label="Total Invoices"    value={invoices.length}               color="purple" delay={0.15} sub="All time records" />
     </div>
   );
 };

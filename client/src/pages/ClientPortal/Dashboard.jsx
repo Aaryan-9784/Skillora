@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import useClientPortalStore from "../../store/clientPortalStore";
 import useAuthStore from "../../store/authStore";
+import KPIWidget from "../../components/dashboard/KPIWidget";
 import { formatCurrency, formatDate, relativeTime } from "../../utils/helpers";
 
 const ChartTooltip = ({ active, payload, label }) => {
@@ -54,43 +55,6 @@ const GCard = ({ children, delay, className, glow }) => (
         ? ("linear-gradient(90deg,transparent," + glow + "50,transparent)")
         : "linear-gradient(90deg,transparent,rgba(99,91,255,0.25),transparent)" }} />
     {children}
-  </motion.div>
-);
-
-// ── KPI Card Component (Matches Admin Theme) ────────────────────────────────
-const KPICard = ({ icon: Icon, label, value, sub, color, trend, delay = 0 }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: delay || 0, duration: 0.45, ease: [0.16,1,0.3,1] }}
-    whileHover={{ y: -4, transition: { duration: 0.18 } }}
-    className="relative overflow-hidden rounded-2xl p-5 cursor-default group"
-    style={{
-      background: "linear-gradient(145deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.015) 100%)",
-      border: "1px solid " + color + "20", backdropFilter: "blur(16px)",
-    }}
-  >
-    <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full pointer-events-none transition-all duration-500 group-hover:scale-150 opacity-60"
-      style={{ background: "radial-gradient(circle," + color + "20 0%,transparent 70%)" }} />
-    <div className="absolute inset-x-0 top-0 h-px"
-      style={{ background: "linear-gradient(90deg,transparent," + color + "50,transparent)" }} />
-
-    <div className="flex items-center justify-between mb-3">
-      <span className="text-[12px] font-semibold" style={{ color: "rgba(148,163,184,0.75)" }}>{label}</span>
-      <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-        style={{ background: color + "16", border: "1px solid " + color + "30", boxShadow: "0 0 16px " + color + "18" }}>
-        <Icon size={17} style={{ color }} />
-      </div>
-    </div>
-
-    <div className="flex items-baseline justify-between gap-2">
-      <p className="text-[26px] xl:text-[28px] font-black text-white tracking-tight leading-none mb-1.5">{value}</p>
-      {trend !== undefined && trend !== null && (
-        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5 shrink-0 ${trend >= 0 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
-          {trend >= 0 ? '↑' : '↓'} {Math.abs(trend)}%
-        </span>
-      )}
-    </div>
-    {sub && <p className="text-[11px] font-medium truncate" style={{ color: "rgba(148,163,184,0.55)" }}>{sub}</p>}
   </motion.div>
 );
 
@@ -454,10 +418,10 @@ const ClientDashboard = () => {
 
       {/* ── 4 KPI Cards ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard icon={FolderOpen}   label="Active Projects"    value={projects.filter(p=>p.status==="active").length} color="#22C55E" delay={0}    sub={`${projects.length} total project(s)`} />
-        <KPICard icon={DollarSign}   label="Total Revenue Paid" value={`₹${totalRevenue.toLocaleString()}`}   color="#635BFF" delay={0.05} trend={revTrend} sub={`₹${thisMonthRev.toLocaleString()} this month`} />
-        <KPICard icon={AlertCircle}  label="Outstanding Balance" value={`₹${totalOwed.toLocaleString()}`}      color="#EF4444" delay={0.1}  sub={`${outstanding.length} pending invoice(s)`} />
-        <KPICard icon={CheckCircle2} label="Paid Invoices"      value={paidInvoices.length}                   color="#00D4FF" delay={0.15} sub={overdueInvs.length > 0 ? `${overdueInvs.length} overdue` : "All clear"} />
+        <KPIWidget icon={FolderOpen}   label="Active Projects"    value={projects.filter(p=>p.status==="active").length} color="success" trendLabel={`${projects.length} total project(s)`} />
+        <KPIWidget icon={DollarSign}   label="Total Revenue Paid" value={`₹${totalRevenue.toLocaleString()}`}   color="brand" trendLabel={`₹${thisMonthRev.toLocaleString()} this month`} />
+        <KPIWidget icon={AlertCircle}  label="Outstanding Balance" value={`₹${totalOwed.toLocaleString()}`}      color="warning" trendLabel={`${outstanding.length} pending invoice(s)`} />
+        <KPIWidget icon={CheckCircle2} label="Paid Invoices"      value={paidInvoices.length}                   color="cyan" trendLabel={overdueInvs.length > 0 ? `${overdueInvs.length} overdue` : "All clear"} />
       </div>
 
       {/* ── Overdue Alert Banner ── */}

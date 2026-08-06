@@ -11,6 +11,7 @@ import {
   Activity, Percent, Zap, Award, ChevronRight, RefreshCw,
 } from "lucide-react";
 import useAdminStore from "../../store/adminStore";
+import SubpageStatCard from "../../components/dashboard/SubpageStatCard";
 
 // ─── constants ─────────────────────────────────────────────────────────────
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -61,51 +62,6 @@ const Sparkline = ({ data, color }) => (
   </ResponsiveContainer>
 );
 
-// ─── KPI Summary Card ──────────────────────────────────────────────────────
-const KPICard = ({ icon: Icon, label, value, sub, color, trend, spark, delay }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: delay || 0, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-    whileHover={{ y: -4, boxShadow: `0 20px 60px ${color}20` }}
-    className="relative overflow-hidden rounded-2xl p-5 cursor-default"
-    style={{
-      background: "rgba(255,255,255,0.03)",
-      backdropFilter: "blur(14px)",
-      border: `1px solid ${color}22`,
-      boxShadow: `0 0 40px ${color}08`,
-    }}
-  >
-    <div className="absolute inset-0 pointer-events-none"
-      style={{ background: `radial-gradient(ellipse 80% 70% at 90% 10%, ${color}12 0%, transparent 65%)` }} />
-    <div className="absolute inset-x-0 top-0 h-px"
-      style={{ background: `linear-gradient(90deg, transparent, ${color}50, transparent)` }} />
-
-    <div className="flex items-start justify-between mb-3">
-      <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-        style={{ background: `${color}18`, border: `1px solid ${color}30`, boxShadow: `0 0 16px ${color}20` }}>
-        <Icon size={17} style={{ color }} />
-      </div>
-      {trend != null && (
-        <span className="flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-full"
-          style={{
-            background: trend >= 0 ? "rgba(34,197,94,0.12)" : "rgba(239,68,68,0.12)",
-            color: trend >= 0 ? "#4ADE80" : "#F87171",
-            border: trend >= 0 ? "1px solid rgba(34,197,94,0.2)" : "1px solid rgba(239,68,68,0.2)",
-          }}>
-          {trend >= 0 ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}
-          {Math.abs(trend)}%
-        </span>
-      )}
-    </div>
-
-    <p className="text-[26px] font-black text-white tracking-tight leading-none mb-0.5">{value}</p>
-    <p className="text-[12px] font-semibold mb-3" style={{ color: "rgba(148,163,184,0.7)" }}>{label}</p>
-    {sub && <p className="text-[11px] mb-2" style={{ color: "rgba(100,116,139,0.6)" }}>{sub}</p>}
-
-    {spark?.length > 0 && <Sparkline data={spark} color={color} />}
-  </motion.div>
-);
-
 // ─── Glass Card wrapper ────────────────────────────────────────────────────
 const GlassCard = ({ children, delay, className = "" }) => (
   <motion.div
@@ -125,31 +81,6 @@ const GlassCard = ({ children, delay, className = "" }) => (
   </motion.div>
 );
 
-// ─── Metric pill ───────────────────────────────────────────────────────────
-const MetricCard = ({ icon: Icon, label, value, color, delay }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: delay || 0, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-    whileHover={{ y: -2 }}
-    className="relative overflow-hidden rounded-2xl p-4"
-    style={{
-      background: "rgba(255,255,255,0.03)",
-      backdropFilter: "blur(14px)",
-      border: `1px solid ${color}20`,
-    }}
-  >
-    <div className="absolute inset-0 pointer-events-none"
-      style={{ background: `radial-gradient(ellipse 80% 60% at 80% 20%, ${color}0e 0%, transparent 70%)` }} />
-    <div className="flex items-center gap-3 mb-2">
-      <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-        style={{ background: `${color}15`, border: `1px solid ${color}28` }}>
-        <Icon size={14} style={{ color }} />
-      </div>
-      <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "rgba(100,116,139,0.7)" }}>{label}</p>
-    </div>
-    <p className="text-xl font-black text-white tracking-tight">{value}</p>
-  </motion.div>
-);
 
 // ─── Empty State ───────────────────────────────────────────────────────────
 const EmptyState = ({ message = "No data yet" }) => (
@@ -375,12 +306,12 @@ const AdminRevenue = () => {
 
         {/* ── KPI Cards ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          {kpis.map(k => <KPICard key={k.label} {...k} />)}
+          {kpis.map(k => <SubpageStatCard key={k.label} {...k} />)}
         </div>
 
         {/* ── Advanced Metrics ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-          {advMetrics.map((m, i) => <MetricCard key={m.label} {...m} delay={0.1 + i * 0.05} />)}
+          {advMetrics.map((m, i) => <SubpageStatCard key={m.label} {...m} delay={0.1 + i * 0.05} />)}
         </div>
 
         {/* ── Main Chart + Right Panel ── */}

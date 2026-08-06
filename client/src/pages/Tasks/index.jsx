@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import useProjectStore from "../../store/projectStore";
 import KanbanBoard from "../../components/projects/KanbanBoard";
+import SubpageStatCard from "../../components/dashboard/SubpageStatCard";
 import { formatDate } from "../../utils/helpers";
 
 // ─────────────────────────────────────────────────────────
@@ -395,53 +396,10 @@ const Tasks = () => {
 
         {/* ── KPI METRICS CARDS ── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <motion.div whileHover={{ y: -3 }} className="relative overflow-hidden rounded-2xl p-5"
-            style={{ background: "linear-gradient(145deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.015) 100%)", border: "1px solid rgba(99,91,255,0.25)", backdropFilter: "blur(16px)" }}>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-gray-300">Total Tasks</span>
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-purple-500/20 border border-purple-500/40">
-                <ListTodo size={16} style={{ color: "#C4B5FD", filter: "drop-shadow(0 0 6px rgba(196,181,253,0.6))" }} />
-              </div>
-            </div>
-            <p className="text-2xl font-black text-white mb-1">{tasks.length}</p>
-            <p className="text-[11px] text-gray-400">Across all projects</p>
-          </motion.div>
-
-          <motion.div whileHover={{ y: -3 }} className="relative overflow-hidden rounded-2xl p-5"
-            style={{ background: "linear-gradient(145deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.015) 100%)", border: "1px solid rgba(245,158,11,0.25)", backdropFilter: "blur(16px)" }}>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-gray-300">To Do Queue</span>
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-amber-500/20 border border-amber-500/40">
-                <Filter size={16} style={{ color: "#FDE68A", filter: "drop-shadow(0 0 6px rgba(253,230,138,0.6))" }} />
-              </div>
-            </div>
-            <p className="text-2xl font-black text-white mb-1">{todoCount}</p>
-            <p className="text-[11px] text-gray-400">Pending tasks</p>
-          </motion.div>
-
-          <motion.div whileHover={{ y: -3 }} className="relative overflow-hidden rounded-2xl p-5"
-            style={{ background: "linear-gradient(145deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.015) 100%)", border: "1px solid rgba(0,212,255,0.25)", backdropFilter: "blur(16px)" }}>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-gray-300">In Progress</span>
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-cyan-500/20 border border-cyan-500/40">
-                <Sparkles size={16} style={{ color: "#67E8F9", filter: "drop-shadow(0 0 6px rgba(103,232,249,0.6))" }} />
-              </div>
-            </div>
-            <p className="text-2xl font-black text-white mb-1">{inProgressCount}</p>
-            <p className="text-[11px] text-gray-400">Active execution</p>
-          </motion.div>
-
-          <motion.div whileHover={{ y: -3 }} className="relative overflow-hidden rounded-2xl p-5"
-            style={{ background: "linear-gradient(145deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.015) 100%)", border: "1px solid rgba(34,197,94,0.25)", backdropFilter: "blur(16px)" }}>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-gray-300">Completed</span>
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-emerald-500/20 border border-emerald-500/40">
-                <ListTodo size={16} style={{ color: "#6EE7B7", filter: "drop-shadow(0 0 6px rgba(110,231,183,0.6))" }} />
-              </div>
-            </div>
-            <p className="text-2xl font-black text-white mb-1">{doneCount}</p>
-            <p className="text-[11px] text-gray-400">Tasks verified done</p>
-          </motion.div>
+          <SubpageStatCard label="Total Tasks" value={tasks.length} icon={ListTodo} subtext="Across all projects" color="purple" delay={0} />
+          <SubpageStatCard label="To Do Queue" value={todoCount} icon={Filter} subtext="Pending tasks" color="amber" delay={0.05} />
+          <SubpageStatCard label="In Progress" value={inProgressCount} icon={Sparkles} subtext="Active execution" color="cyan" delay={0.1} />
+          <SubpageStatCard label="Completed" value={doneCount} icon={ListTodo} subtext="Tasks verified done" color="green" delay={0.15} />
         </div>
 
         {/* ── CONTENT ── */}

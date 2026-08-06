@@ -8,6 +8,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import useInvoiceStore from "../../store/invoiceStore";
 import ConfirmDialog from "../../components/ui/ConfirmDialog";
+import SubpageStatCard from "../../components/dashboard/SubpageStatCard";
 import { formatDate, formatCurrency } from "../../utils/helpers";
 import useDebounce from "../../hooks/useDebounce";
 
@@ -98,20 +99,7 @@ const InvoiceRow = ({ inv, index, onDelete }) => {
 };
 
 // ── Metric Card ───────────────────────────────────────────
-const MetricCard = ({ icon: Icon, label, value, color, delay }) => (
-  <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
-    transition={{ delay, duration: 0.35 }}
-    whileHover={{ y: -2 }}
-    className="relative rounded-2xl p-5 overflow-hidden group"
-    style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
-    <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
-      style={{ background: `${color}18`, border: `1px solid ${color}25` }}>
-      <Icon size={18} style={{ color }} strokeWidth={1.8} />
-    </div>
-    <p className="text-2xl font-bold tracking-tight text-white mb-0.5">{value}</p>
-    <p className="text-xs text-gray-400">{label}</p>
-  </motion.div>
-);
+
 
 // ── Empty State ───────────────────────────────────────────
 const EmptyInvoices = ({ onNew }) => (
@@ -220,10 +208,10 @@ const Payments = () => {
 
         {/* Metrics */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <MetricCard icon={TrendingUp} label="Total Received" value={formatCurrency(totalPaid)} color="#22C55E" delay={0.05} />
-          <MetricCard icon={Clock} label="Pending Payments" value={pendingCount} color="#635BFF" delay={0.1} />
-          <MetricCard icon={AlertCircle} label="Overdue Invoices" value={overdueCount} color="#EF4444" delay={0.15} />
-          <MetricCard icon={FileText} label="Total Invoices" value={pagination.total || invoices.length} color="#00D4FF" delay={0.2} />
+          <SubpageStatCard icon={TrendingUp} label="Total Received" value={formatCurrency(totalPaid)} color="green" delay={0.05} />
+          <SubpageStatCard icon={Clock} label="Pending Payments" value={pendingCount} color="brand" delay={0.1} />
+          <SubpageStatCard icon={AlertCircle} label="Overdue Invoices" value={overdueCount} color="red" delay={0.15} />
+          <SubpageStatCard icon={FileText} label="Total Invoices" value={pagination.total || invoices.length} color="cyan" delay={0.2} />
         </div>
 
         {/* Controls: Search + Status Tabs */}

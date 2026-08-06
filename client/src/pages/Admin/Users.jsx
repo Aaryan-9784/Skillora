@@ -12,6 +12,7 @@ import {
 import useAdminStore from "../../store/adminStore";
 import useConfirm from "../../hooks/useConfirm";
 import useAuthStore from "../../store/authStore";
+import SubpageStatCard from "../../components/dashboard/SubpageStatCard";
 
 // ─── tokens ────────────────────────────────────────────────────────────────
 const LIMIT = 10;
@@ -86,37 +87,6 @@ const StatusBadge = ({ active }) => (
   </span>
 );
 
-// ─── KPI Card ──────────────────────────────────────────────────────────────
-const KPICard = ({ icon: Icon, label, value, color, sub, delay = 0 }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-    transition={{ delay, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-    whileHover={{ y: -5, transition: { duration: 0.2 } }}
-    className="relative overflow-hidden rounded-2xl p-5 cursor-default group"
-    style={{
-      background: `linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)`,
-      border: `1px solid ${color}25`,
-      backdropFilter: "blur(16px)",
-    }}
-  >
-    {/* corner glow */}
-    <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full pointer-events-none transition-all duration-500 group-hover:scale-150"
-      style={{ background: `radial-gradient(circle, ${color}20 0%, transparent 70%)` }} />
-    {/* top line */}
-    <div className="absolute inset-x-0 top-0 h-px"
-      style={{ background: `linear-gradient(90deg, transparent, ${color}60, transparent)` }} />
-
-    <div className="flex items-start justify-between mb-4">
-      <div className="w-11 h-11 rounded-xl flex items-center justify-center"
-        style={{ background: `${color}18`, border: `1px solid ${color}35`, boxShadow: `0 0 20px ${color}20` }}>
-        <Icon size={19} style={{ color }} />
-      </div>
-    </div>
-    <p className="text-[28px] font-black text-white tracking-tight leading-none mb-1">{value ?? "—"}</p>
-    <p className="text-[12px] font-semibold" style={{ color: "rgba(148,163,184,0.75)" }}>{label}</p>
-    {sub && <p className="text-[11px] mt-1" style={{ color: "rgba(100,116,139,0.55)" }}>{sub}</p>}
-  </motion.div>
-);
 
 // ─── Filter Dropdown ───────────────────────────────────────────────────────
 const FilterDrop = ({ label, options, value, onChange, icon: Icon }) => {
@@ -726,7 +696,7 @@ const AdminUsers = () => {
 
         {/* ── KPI Cards ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
-          {kpis.map(k => <KPICard key={k.label} {...k} />)}
+          {kpis.map(k => <SubpageStatCard key={k.label} {...k} />)}
         </div>
 
         {/* ── Bulk Bar ── */}

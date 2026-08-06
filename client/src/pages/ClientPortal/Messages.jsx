@@ -350,10 +350,10 @@ const ClientMessages = () => {
               {/* Profile Avatar */}
               <div className="relative shrink-0">
                 <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white overflow-hidden shadow-sm ring-1 ring-white/10">
-                  {partner.avatar ? (
-                    <img src={partner.avatar} alt={partner.name} className="w-full h-full object-cover rounded-full" />
+                  {partner?.avatar ? (
+                    <img src={partner.avatar} alt={partner?.name} className="w-full h-full object-cover rounded-full" />
                   ) : (
-                    getInitials(partner.name || "Skillora Team")
+                    getInitials(partner?.name || "Skillora Team")
                   )}
                 </div>
                 {presence.isOnline ? (
@@ -365,7 +365,7 @@ const ClientMessages = () => {
 
               <div className="flex flex-col justify-center">
                 <h2 className="text-sm font-semibold text-slate-100 group-hover:text-indigo-300 transition-colors leading-tight flex items-center gap-1.5">
-                  {partner.name || "Skillora Project Team"}
+                  {partner?.name || "Skillora Project Team"}
                 </h2>
                 <p className="text-xs leading-tight mt-0.5 font-normal">
                   {isTyping ? (

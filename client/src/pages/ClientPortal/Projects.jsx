@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import useClientPortalStore from "../../store/clientPortalStore";
 import { SkeletonCard } from "../../components/ui/Skeleton";
+import SubpageStatCard from "../../components/dashboard/SubpageStatCard";
 import { formatDate } from "../../utils/helpers";
 
 const STATUS_CONFIG = {
@@ -59,35 +60,7 @@ const GCard = ({ children, delay, className, glow }) => (
   </motion.div>
 );
 
-// ── Top KPI Card Component (Matches Admin Overview theme) ──────────────────
-const KPICard = ({ icon: Icon, label, value, sub, color, delay }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: delay || 0, duration: 0.45, ease: [0.16,1,0.3,1] }}
-    whileHover={{ y: -4, transition: { duration: 0.18 } }}
-    className="relative overflow-hidden rounded-2xl p-5 cursor-default group"
-    style={{
-      background: "linear-gradient(145deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.015) 100%)",
-      border: "1px solid " + color + "20", backdropFilter: "blur(16px)",
-    }}
-  >
-    <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full pointer-events-none transition-all duration-500 group-hover:scale-150 opacity-60"
-      style={{ background: "radial-gradient(circle," + color + "20 0%,transparent 70%)" }} />
-    <div className="absolute inset-x-0 top-0 h-px"
-      style={{ background: "linear-gradient(90deg,transparent," + color + "50,transparent)" }} />
 
-    <div className="flex items-center justify-between mb-3">
-      <span className="text-[12px] font-semibold" style={{ color: "rgba(148,163,184,0.75)" }}>{label}</span>
-      <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-        style={{ background: color + "16", border: "1px solid " + color + "30", boxShadow: "0 0 16px " + color + "18" }}>
-        <Icon size={17} style={{ color }} />
-      </div>
-    </div>
-
-    <p className="text-[24px] xl:text-[28px] font-black text-white tracking-tight leading-none mb-1.5">{value}</p>
-    {sub && <p className="text-[11px] font-medium truncate" style={{ color: "rgba(148,163,184,0.55)" }}>{sub}</p>}
-  </motion.div>
-);
 
 // ── Task List Inside Drawer ────────────────────────────────────────────────
 const TaskList = ({ projectId }) => {
@@ -451,10 +424,10 @@ const ClientProjects = () => {
 
       {/* Summary KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard icon={FolderOpen}   label="Active Workstreams" value={counts.active}    color="#22C55E" delay={0}    sub="Currently in development" />
-        <KPICard icon={Clock}        label="Planning Phase"     value={counts.planning}  color="#9CA3AF" delay={0.05} sub="Scope & milestone setup" />
-        <KPICard icon={CheckCircle2} label="Completed Projects" value={counts.completed} color="#60A5FA" delay={0.1}  sub="Delivered & signed off" />
-        <KPICard icon={FolderKanban} label="Total Projects"     value={projects.length}  color="#F59E0B" delay={0.15} sub="All client engagements" />
+        <SubpageStatCard icon={FolderOpen}   label="Active Workstreams" value={counts.active}    color="green" delay={0}    sub="Currently in development" />
+        <SubpageStatCard icon={Clock}        label="Planning Phase"     value={counts.planning}  color="#9CA3AF" delay={0.05} sub="Scope & milestone setup" />
+        <SubpageStatCard icon={CheckCircle2} label="Completed Projects" value={counts.completed} color="blue" delay={0.1}  sub="Delivered & signed off" />
+        <SubpageStatCard icon={FolderKanban} label="Total Projects"     value={projects.length}  color="amber" delay={0.15} sub="All client engagements" />
       </div>
 
       {/* Filter & Search Bar */}
