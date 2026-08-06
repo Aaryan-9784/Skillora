@@ -356,6 +356,9 @@ const ClientNavbar = ({ onSearch, mobileOpen, setMobileOpen }) => {
                         <div className="min-w-0 flex-1 flex flex-col justify-center text-left py-0.5">
                           <p className="text-sm font-bold truncate text-white leading-tight">{user?.name}</p>
                           <p className="text-xs text-indigo-400 font-bold capitalize leading-tight mt-0.5">Client</p>
+                          {user?.email && (
+                            <p className="text-[11px] text-gray-400 font-medium truncate leading-tight mt-1">{user.email}</p>
+                          )}
                         </div>
                       </div>
                     </div>

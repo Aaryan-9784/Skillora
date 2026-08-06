@@ -225,7 +225,7 @@ const Navbar = () => {
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.96, y: -6 }}
                     transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-                    className="absolute right-0 top-[calc(100%+8px)] z-50 w-56 rounded-2xl overflow-hidden"
+                    className="absolute right-0 top-[calc(100%+8px)] z-50 w-60 rounded-2xl overflow-hidden"
                     style={{
                       background: "linear-gradient(160deg,rgba(12,19,36,0.98) 0%,rgba(8,14,26,0.98) 100%)",
                       border: "1px solid rgba(255,255,255,0.09)",
@@ -235,6 +235,29 @@ const Navbar = () => {
                   >
                     <div className="absolute top-0 inset-x-0 h-px"
                       style={{ background: "linear-gradient(90deg,transparent,rgba(99,91,255,0.6),rgba(0,212,255,0.3),transparent)" }} />
+                    <div className="px-4 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                      <div className="flex items-center gap-3">
+                        <div className="relative shrink-0">
+                          <div className="w-11 h-11 rounded-2xl flex items-center justify-center text-sm font-bold text-white overflow-hidden"
+                            style={{ background: user?.avatar ? "transparent" : "linear-gradient(135deg,#635BFF,#8579FF)", boxShadow: "0 0 20px rgba(99,91,255,0.45)" }}>
+                            {user?.avatar ? (
+                              <img src={user.avatar} alt={user?.name} className="w-full h-full object-cover rounded-2xl" />
+                            ) : (
+                              getInitials(user?.name)
+                            )}
+                          </div>
+                          <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2"
+                            style={{ background: "#22C55E", borderColor: "#080E1A", boxShadow: "0 0 8px rgba(34,197,94,0.7)" }} />
+                        </div>
+                        <div className="min-w-0 flex-1 flex flex-col justify-center text-left py-0.5">
+                          <p className="text-sm font-bold truncate text-white leading-tight">{user?.name}</p>
+                          <p className="text-xs text-indigo-400 font-bold capitalize leading-tight mt-0.5">{user?.role || "user"}</p>
+                          {user?.email && (
+                            <p className="text-[11px] text-gray-400 font-medium truncate leading-tight mt-1">{user.email}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                     <div className="py-2 px-2 space-y-1">
                       <Link to={dashboardPath} onClick={() => setDropdownOpen(false)}>
                         <motion.div

@@ -44,9 +44,9 @@ const KPIWidget = ({ label, value, icon: Icon, trendLabel, color = "brand" }) =>
         style={{ background: `linear-gradient(90deg, transparent 0%, ${g.from} 40%, ${g.to} 60%, transparent 100%)` }} />
 
       <div className="p-5">
-        {/* Top row: icon */}
-        <div className="flex items-start justify-between mb-5">
-          <div className="relative">
+        {/* Top row: icon on left, trend label on right */}
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <div className="relative shrink-0">
             <div className="w-11 h-11 rounded-2xl flex items-center justify-center"
               style={{
                 background: `linear-gradient(135deg, ${g.bg}, rgba(255,255,255,0.03))`,
@@ -58,6 +58,13 @@ const KPIWidget = ({ label, value, icon: Icon, trendLabel, color = "brand" }) =>
             <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
               style={{ boxShadow: `0 0 0 4px ${g.bg}` }} />
           </div>
+
+          {trendLabel && (
+            <span className="text-[11px] font-medium px-2.5 py-1 rounded-lg whitespace-nowrap shrink-0"
+              style={{ color: "#E2E8F0", background: "rgba(255, 255, 255, 0.08)", border: "1px solid rgba(255, 255, 255, 0.12)" }}>
+              {trendLabel}
+            </span>
+          )}
         </div>
 
         {/* Value */}
@@ -72,16 +79,10 @@ const KPIWidget = ({ label, value, icon: Icon, trendLabel, color = "brand" }) =>
           {value}
         </p>
 
-        {/* Label row */}
-        <div className="flex items-center justify-between mt-1">
-          <p className="text-[13px] font-medium" style={{ color: "#6B7280" }}>{label}</p>
-          {trendLabel && (
-            <span className="text-[11px] px-2 py-0.5 rounded-lg"
-              style={{ color: "#4B5563", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
-              {trendLabel}
-            </span>
-          )}
-        </div>
+        {/* Label */}
+        <p className="text-[13px] font-medium" style={{ color: "rgba(156, 163, 175, 0.9)" }}>
+          {label}
+        </p>
       </div>
     </div>
   );
