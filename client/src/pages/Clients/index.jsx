@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, Users, Search, Mail, Building2,
   Phone, Trash2, Pencil, LayoutGrid, List,
-  ExternalLink, FolderKanban, DollarSign,
+  ExternalLink, Folder, DollarSign, X,
 } from "lucide-react";
 import useClientStore from "../../store/clientStore";
 import useDebounce from "../../hooks/useDebounce";
@@ -395,34 +395,30 @@ const ClientModal = ({ isOpen, onClose, title, children }) => (
     {isOpen && (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          className="absolute inset-0" style={{ background: "rgba(4,8,18,0.8)", backdropFilter: "blur(10px)" }}
+          className="absolute inset-0 bg-black/70 backdrop-blur-md"
           onClick={onClose} />
         <motion.div
-          initial={{ opacity: 0, scale: 0.96, y: -10 }}
+          initial={{ opacity: 0, scale: 0.95, y: 12 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.96 }}
+          exit={{ opacity: 0, scale: 0.95, y: 12 }}
           transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="relative w-full max-w-lg rounded-2xl overflow-hidden z-10"
+          className="relative w-full max-w-lg rounded-3xl overflow-hidden z-10 shadow-2xl"
           style={{
-            background: "linear-gradient(160deg,rgba(13,20,40,0.99) 0%,rgba(8,14,28,0.99) 100%)",
-            border: "1px solid rgba(255,255,255,0.09)",
-            boxShadow: "0 0 0 1px rgba(99,91,255,0.15), 0 32px 64px rgba(0,0,0,0.7)",
+            background: "rgba(11,15,26,0.96)",
+            backdropFilter: "blur(24px)",
+            border: "1px solid rgba(255,255,255,0.12)",
+            boxShadow: "0 25px 60px rgba(0,0,0,0.8), 0 0 50px rgba(99,91,255,0.15)",
           }}
         >
-          <div className="absolute top-0 inset-x-0 h-px"
-            style={{ background: "linear-gradient(90deg,transparent,rgba(99,91,255,0.6),rgba(0,212,255,0.4),transparent)" }} />
-          <div className="flex items-center justify-between px-6 py-4"
-            style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-            <h2 className="text-base font-semibold" style={{ color: "#F9FAFB" }}>{title}</h2>
-            <button onClick={onClose}
-              className="w-7 h-7 rounded-lg flex items-center justify-center text-sm transition-colors"
-              style={{ color: "#6B7280" }}
-              onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.07)"; e.currentTarget.style.color = "#E5E7EB"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#6B7280"; }}>
-              ✕
+          <div className="absolute top-0 inset-x-0 h-px pointer-events-none"
+            style={{ background: "linear-gradient(90deg,transparent,rgba(99,91,255,0.4),transparent)" }} />
+          <div className="flex items-center justify-between p-6 border-b border-white/10">
+            <h2 className="text-lg font-black tracking-tight text-white">{title}</h2>
+            <button onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-all cursor-pointer">
+              <X size={16} />
             </button>
           </div>
-          <div className="px-6 py-5">{children}</div>
+          <div className="p-6">{children}</div>
         </motion.div>
       </div>
     )}
@@ -437,37 +433,38 @@ const ConfirmDelete = ({ open, onConfirm, onCancel }) => (
     {open && (
       <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          className="absolute inset-0" style={{ background: "rgba(4,8,18,0.8)", backdropFilter: "blur(10px)" }}
+          className="absolute inset-0 bg-black/70 backdrop-blur-md"
           onClick={onCancel} />
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
+          initial={{ opacity: 0, scale: 0.95, y: 12 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 12 }}
           transition={{ duration: 0.18 }}
-          className="relative w-full max-w-sm rounded-2xl p-6 z-10"
+          className="relative w-full max-w-sm rounded-3xl p-6 z-10 shadow-2xl"
           style={{
-            background: "rgba(13,20,40,0.99)",
-            border: "1px solid rgba(239,68,68,0.2)",
-            boxShadow: "0 0 0 1px rgba(239,68,68,0.1), 0 24px 48px rgba(0,0,0,0.6)",
+            background: "rgba(11,15,26,0.96)",
+            backdropFilter: "blur(24px)",
+            border: "1px solid rgba(239,68,68,0.3)",
+            boxShadow: "0 25px 60px rgba(0,0,0,0.8), 0 0 40px rgba(239,68,68,0.15)",
           }}
         >
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
+          <div className="w-10 h-10 rounded-2xl flex items-center justify-center mb-4 border border-red-500/30"
             style={{ background: "rgba(239,68,68,0.12)" }}>
             <Trash2 size={18} style={{ color: "#EF4444" }} />
           </div>
-          <h3 className="text-base font-semibold mb-1" style={{ color: "#F9FAFB" }}>Delete client</h3>
-          <p className="text-sm mb-5" style={{ color: "#6B7280" }}>
+          <h3 className="text-base font-black tracking-tight text-white mb-1">Delete client</h3>
+          <p className="text-xs font-medium text-slate-400 mb-6">
             This will permanently delete the client. This action cannot be undone.
           </p>
           <div className="flex gap-3">
             <button onClick={onCancel}
-              className="flex-1 py-2.5 rounded-xl text-sm font-medium transition-all"
+              className="flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer"
               style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "#9CA3AF" }}>
               Cancel
             </button>
             <button onClick={onConfirm}
-              className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
-              style={{ background: "linear-gradient(135deg,#EF4444,#DC2626)", boxShadow: "0 0 12px rgba(239,68,68,0.3)" }}>
+              className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white transition-all cursor-pointer"
+              style={{ background: "linear-gradient(135deg,#EF4444,#DC2626)", boxShadow: "0 0 16px rgba(239,68,68,0.4)" }}>
               Delete
             </button>
           </div>
@@ -482,6 +479,7 @@ const ConfirmDelete = ({ open, onConfirm, onCancel }) => (
 // ─────────────────────────────────────────────────────────
 const Clients = () => {
   const { clients, fetchClients, createClient, updateClient, deleteClient, isLoading } = useClientStore();
+  const location = useLocation();
   const [search, setSearch]       = useState("");
   const [modal, setModal]         = useState(null);
   const [saving, setSaving]       = useState(false);
@@ -491,6 +489,12 @@ const Clients = () => {
   const debouncedSearch = useDebounce(search);
 
   useEffect(() => { fetchClients({ search: debouncedSearch }); }, [debouncedSearch]);
+
+  useEffect(() => {
+    if (location.state?.openAddModal) {
+      setModal("create");
+    }
+  }, [location.state]);
 
   const handleSubmit = async (form) => {
     setSaving(true);
@@ -503,27 +507,35 @@ const Clients = () => {
 
   const hasSearch = !!search;
 
+  const totalProjectsLinked = clients.reduce((acc, c) => acc + (c.totalProjects || 0), 0);
+  const totalRevenueGenerated = clients.reduce((acc, c) => acc + (c.totalSpent || 0), 0);
+
   return (
-    <div className="min-h-screen p-6 lg:p-8"
-      style={{
-        background: "radial-gradient(ellipse at 25% 0%, rgba(99,91,255,0.07) 0%, transparent 55%), radial-gradient(ellipse at 75% 100%, rgba(0,212,255,0.04) 0%, transparent 55%)",
-      }}>
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen relative overflow-hidden"
+      style={{ background: "radial-gradient(ellipse 100% 55% at 65% -5%,rgba(99,91,255,0.08) 0%,transparent 52%),linear-gradient(180deg,#0B0F1A 0%,#07090F 100%)" }}>
+      
+      {/* Ambient background lighting */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-40 right-1/4 w-[650px] h-[650px] rounded-full"
+          style={{ background: "radial-gradient(circle,rgba(99,91,255,0.05) 0%,transparent 60%)" }} />
+      </div>
+
+      <div className="relative p-6 lg:p-8 max-w-[1400px] mx-auto space-y-6">
 
         {/* ── HEADER ── */}
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-          className="flex flex-wrap items-start justify-between gap-4 mb-8">
+          className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight"
+            <h1 className="text-2xl lg:text-3xl font-black tracking-tight leading-tight"
               style={{
-                background: "linear-gradient(135deg, #FFFFFF 0%, #C4B5FD 100%)",
+                background: "linear-gradient(135deg, #FFFFFF 30%, #A78BFA 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
               }}>
-              Clients
+              Client Management
             </h1>
-            <p className="text-sm mt-1" style={{ color: "#6B7280" }}>
-              {isLoading ? "Loading…" : clients.length === 0 ? "No clients yet" : `${clients.length} client${clients.length !== 1 ? "s" : ""}`}
+            <p className="text-xs lg:text-sm mt-1 font-medium" style={{ color: "rgba(148,163,184,0.7)" }}>
+              Manage client relationships, contact profiles, linked projects & billing history
             </p>
           </div>
 
@@ -531,7 +543,7 @@ const Clients = () => {
             whileHover={{ scale: 1.04, boxShadow: "0 0 28px rgba(99,91,255,0.55)" }}
             whileTap={{ scale: 0.96 }}
             onClick={() => setModal("create")}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer transition-all"
             style={{
               background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)",
               boxShadow: "0 0 20px rgba(99,91,255,0.35)",
@@ -541,6 +553,57 @@ const Clients = () => {
             Add Client
           </motion.button>
         </motion.div>
+
+        {/* ── KPI METRICS CARDS ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <motion.div whileHover={{ y: -3 }} className="relative overflow-hidden rounded-2xl p-5"
+            style={{ background: "linear-gradient(145deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.015) 100%)", border: "1px solid rgba(99,91,255,0.25)", backdropFilter: "blur(16px)" }}>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-semibold text-gray-300">Total Clients</span>
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-purple-500/20 border border-purple-500/40">
+                <Users size={16} style={{ color: "#C4B5FD", filter: "drop-shadow(0 0 6px rgba(196,181,253,0.6))" }} />
+              </div>
+            </div>
+            <p className="text-2xl font-black text-white mb-1">{clients.length}</p>
+            <p className="text-[11px] text-gray-400">Active CRM directory</p>
+          </motion.div>
+
+          <motion.div whileHover={{ y: -3 }} className="relative overflow-hidden rounded-2xl p-5"
+            style={{ background: "linear-gradient(145deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.015) 100%)", border: "1px solid rgba(34,197,94,0.25)", backdropFilter: "blur(16px)" }}>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-semibold text-gray-300">Active Contacts</span>
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-emerald-500/20 border border-emerald-500/40">
+                <Building2 size={16} style={{ color: "#6EE7B7", filter: "drop-shadow(0 0 6px rgba(110,231,183,0.6))" }} />
+              </div>
+            </div>
+            <p className="text-2xl font-black text-white mb-1">{clients.length}</p>
+            <p className="text-[11px] text-gray-400">Verified client accounts</p>
+          </motion.div>
+
+          <motion.div whileHover={{ y: -3 }} className="relative overflow-hidden rounded-2xl p-5"
+            style={{ background: "linear-gradient(145deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.015) 100%)", border: "1px solid rgba(0,212,255,0.25)", backdropFilter: "blur(16px)" }}>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-semibold text-gray-300">Projects Linked</span>
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-cyan-500/20 border border-cyan-500/40">
+                <Folder size={16} style={{ color: "#67E8F9", filter: "drop-shadow(0 0 6px rgba(103,232,249,0.6))" }} />
+              </div>
+            </div>
+            <p className="text-2xl font-black text-white mb-1">{totalProjectsLinked}</p>
+            <p className="text-[11px] text-gray-400">Combined client projects</p>
+          </motion.div>
+
+          <motion.div whileHover={{ y: -3 }} className="relative overflow-hidden rounded-2xl p-5"
+            style={{ background: "linear-gradient(145deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.015) 100%)", border: "1px solid rgba(245,158,11,0.25)", backdropFilter: "blur(16px)" }}>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-semibold text-gray-300">Total Client Value</span>
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-amber-500/20 border border-amber-500/40">
+                <DollarSign size={16} style={{ color: "#FDE68A", filter: "drop-shadow(0 0 6px rgba(253,230,138,0.6))" }} />
+              </div>
+            </div>
+            <p className="text-2xl font-black text-white mb-1">{formatCurrency(totalRevenueGenerated, "INR")}</p>
+            <p className="text-[11px] text-gray-400">Invoiced & received</p>
+          </motion.div>
+        </div>
 
         {/* ── SEARCH + VIEW TOGGLE ── */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}

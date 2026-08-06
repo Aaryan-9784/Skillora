@@ -26,28 +26,38 @@ const Modal = ({ isOpen, onClose, title, description, children, size = "md", foo
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="absolute inset-0 bg-navy/50 backdrop-blur-sm"
+            transition={{ duration: 0.2 }}
+            className="absolute inset-0 bg-black/70 backdrop-blur-md"
           />
 
-          {/* Panel — ref attached here */}
+          {/* Panel */}
           <motion.div
             ref={panelRef}
-            initial={{ opacity: 0, scale: 0.96, y: 8 }}
+            initial={{ opacity: 0, scale: 0.95, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 8 }}
+            exit={{ opacity: 0, scale: 0.95, y: 12 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className={`relative w-full ${sizes[size]} card-glass z-10 overflow-hidden`}
+            className={`relative w-full ${sizes[size]} rounded-3xl z-10 overflow-hidden shadow-2xl`}
+            style={{
+              background: "rgba(11,15,26,0.96)",
+              backdropFilter: "blur(24px)",
+              border: "1px solid rgba(255,255,255,0.12)",
+              boxShadow: "0 25px 60px rgba(0,0,0,0.8), 0 0 50px rgba(99,91,255,0.15)",
+            }}
           >
+            {/* Top Shimmer Line */}
+            <div className="absolute inset-x-0 top-0 h-px pointer-events-none"
+              style={{ background: "linear-gradient(90deg,transparent,rgba(99,91,255,0.4),transparent)" }} />
+
             {/* Header */}
-            <div className="flex items-start justify-between p-6 border-b border-surface-border dark:border-dark-border">
+            <div className="flex items-start justify-between p-6 border-b border-white/10">
               <div>
-                <h2 className="text-lg font-semibold text-ink dark:text-slate-100">{title}</h2>
-                {description && <p className="text-sm text-ink-secondary mt-0.5">{description}</p>}
+                <h2 className="text-lg font-black tracking-tight text-white">{title}</h2>
+                {description && <p className="text-xs font-medium text-slate-400 mt-1">{description}</p>}
               </div>
               <button
                 onClick={onClose}
-                className="ml-4 p-1.5 rounded-lg text-ink-muted hover:bg-surface-secondary hover:text-ink transition-colors dark:hover:bg-dark-muted"
+                className="ml-4 p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
               >
                 <X size={16} />
               </button>

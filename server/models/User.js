@@ -20,6 +20,8 @@ const userSchema = new Schema(
     freelancerRef:   { type: Schema.Types.ObjectId, ref: "User", default: null },
     isEmailVerified: { type: Boolean, default: false },
     isActive:        { type: Boolean, default: true },
+    isOnline:        { type: Boolean, default: false },
+    lastSeen:        { type: Date,    default: Date.now },
 
     // Platform tier (100% Free for all users)
     plan: { type: String, default: "free" },

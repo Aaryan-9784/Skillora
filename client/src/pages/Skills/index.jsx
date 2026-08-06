@@ -1,11 +1,88 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Sparkles, Pencil, Trash2, Trophy, Zap, Target, TrendingUp } from "lucide-react";
+import { Plus, Sparkles, Pencil, Trash2, Trophy, Zap, Target, TrendingUp, ChevronDown, X } from "lucide-react";
 import useSkillStore from "../../store/skillStore";
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis,
   ResponsiveContainer, Tooltip,
 } from "recharts";
+
+// ─────────────────────────────────────────────────────────
+// CUSTOM DARK GLASS DROPDOWN
+// ─────────────────────────────────────────────────────────
+const CustomDropdown = ({ value, onChange, options }) => {
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  const selected = options.find((o) => o.value === value) || options[0];
+
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  return (
+    <div className="relative w-full" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full h-10 px-3.5 rounded-xl text-xs font-semibold text-white flex items-center justify-between gap-2.5 transition-all duration-150 cursor-pointer"
+        style={{
+          background: "rgba(255,255,255,0.04)",
+          border: open ? "1px solid rgba(99,91,255,0.45)" : "1px solid rgba(255,255,255,0.09)",
+          boxShadow: open ? "0 0 0 3px rgba(99,91,255,0.12)" : "none",
+        }}
+      >
+        <span className="flex items-center gap-2 truncate">
+          {selected?.emoji && <span>{selected.emoji}</span>}
+          <span>{selected?.label || value}</span>
+        </span>
+        <ChevronDown size={13} className={`transition-transform duration-200 text-slate-400 shrink-0 ${open ? "rotate-180 text-indigo-400" : ""}`} />
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 6 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 6 }}
+            transition={{ duration: 0.15 }}
+            className="absolute left-0 top-11 z-50 w-full p-1.5 rounded-xl border border-slate-700/80 shadow-2xl space-y-0.5 backdrop-blur-xl max-h-48 overflow-y-auto"
+            style={{ background: "rgba(13,21,38,0.96)" }}
+          >
+            {options.map((o) => {
+              const isSel = o.value === value;
+              return (
+                <button
+                  key={o.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(o.value);
+                    setOpen(false);
+                  }}
+                  className={`w-full px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-between text-left transition-all cursor-pointer ${
+                    isSel ? "bg-indigo-600/30 text-white font-bold border border-indigo-500/40" : "hover:bg-white/10 text-slate-300"
+                  }`}
+                >
+                  <span className="flex items-center gap-2 truncate">
+                    {o.emoji && <span>{o.emoji}</span>}
+                    <span>{o.label}</span>
+                  </span>
+                  {isSel && <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0 ml-2" />}
+                </button>
+              );
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 // ─────────────────────────────────────────────────────────
 // CONSTANTS
@@ -304,14 +381,7 @@ const SkillForm = ({ initial = {}, onSubmit, onClose, loading }) => {
       </div>
       <div>
         <label style={lStyle}>Category</label>
-        <select name="category" value={form.category} onChange={set}
-          style={{ ...iStyle, cursor: "pointer" }} onFocus={iFocus} onBlur={iBlur}>
-          {CATEGORIES.map(c => (
-            <option key={c.value} value={c.value} style={{ background: "#0D1526", color: "#F9FAFB" }}>
-              {c.emoji} {c.label}
-            </option>
-          ))}
-        </select>
+        <CustomDropdown value={form.category} onChange={(val) => setForm(f => ({ ...f, category: val }))} options={CATEGORIES} />
       </div>
 
       {/* Level slider */}
@@ -341,14 +411,14 @@ const SkillForm = ({ initial = {}, onSubmit, onClose, loading }) => {
 
       <div className="flex gap-3 pt-2">
         <button type="button" onClick={onClose}
-          className="flex-1 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
+          className="flex-1 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer"
           style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "#9CA3AF" }}
           onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.08)"}
           onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}>
           Cancel
         </button>
         <motion.button type="submit" whileTap={{ scale: 0.97 }} disabled={loading}
-          className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white"
+          className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white cursor-pointer"
           style={{
             background: loading ? "rgba(99,91,255,0.5)" : "linear-gradient(135deg,#635BFF,#8B5CF6)",
             boxShadow: loading ? "none" : "0 0 16px rgba(99,91,255,0.35)",
@@ -368,34 +438,30 @@ const SkillModal = ({ isOpen, onClose, title, children }) => (
     {isOpen && (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          className="absolute inset-0" style={{ background: "rgba(4,8,18,0.8)", backdropFilter: "blur(10px)" }}
+          className="absolute inset-0 bg-black/70 backdrop-blur-md"
           onClick={onClose} />
         <motion.div
-          initial={{ opacity: 0, scale: 0.96, y: -10 }}
+          initial={{ opacity: 0, scale: 0.95, y: 12 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.96 }}
+          exit={{ opacity: 0, scale: 0.95, y: 12 }}
           transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="relative w-full max-w-md rounded-2xl overflow-hidden z-10"
+          className="relative w-full max-w-md rounded-3xl overflow-hidden z-10 shadow-2xl"
           style={{
-            background: "linear-gradient(160deg,rgba(13,20,40,0.99) 0%,rgba(8,14,28,0.99) 100%)",
-            border: "1px solid rgba(255,255,255,0.09)",
-            boxShadow: "0 0 0 1px rgba(99,91,255,0.15), 0 32px 64px rgba(0,0,0,0.7)",
+            background: "rgba(11,15,26,0.96)",
+            backdropFilter: "blur(24px)",
+            border: "1px solid rgba(255,255,255,0.12)",
+            boxShadow: "0 25px 60px rgba(0,0,0,0.8), 0 0 50px rgba(99,91,255,0.15)",
           }}
         >
-          <div className="absolute top-0 inset-x-0 h-px"
-            style={{ background: "linear-gradient(90deg,transparent,rgba(99,91,255,0.6),rgba(0,212,255,0.4),transparent)" }} />
-          <div className="flex items-center justify-between px-6 py-4"
-            style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-            <h2 className="text-base font-semibold" style={{ color: "#F9FAFB" }}>{title}</h2>
-            <button onClick={onClose}
-              className="w-7 h-7 rounded-lg flex items-center justify-center text-sm transition-colors"
-              style={{ color: "#6B7280" }}
-              onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.07)"; e.currentTarget.style.color = "#E5E7EB"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#6B7280"; }}>
-              ✕
+          <div className="absolute top-0 inset-x-0 h-px pointer-events-none"
+            style={{ background: "linear-gradient(90deg,transparent,rgba(99,91,255,0.4),transparent)" }} />
+          <div className="flex items-center justify-between p-6 border-b border-white/10">
+            <h2 className="text-lg font-black tracking-tight text-white">{title}</h2>
+            <button onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-all cursor-pointer">
+              <X size={16} />
             </button>
           </div>
-          <div className="px-6 py-5">{children}</div>
+          <div className="p-6">{children}</div>
         </motion.div>
       </div>
     )}
@@ -463,28 +529,31 @@ const Skills = () => {
   const radarData = skills.slice(0, 8).map(s => ({ subject: s.name, level: s.level }));
 
   return (
-    <div className="min-h-screen p-6 lg:p-8"
-      style={{
-        background: "radial-gradient(ellipse at 25% 0%, rgba(99,91,255,0.07) 0%, transparent 55%), radial-gradient(ellipse at 75% 100%, rgba(245,158,11,0.04) 0%, transparent 55%)",
-      }}>
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen relative overflow-hidden"
+      style={{ background: "radial-gradient(ellipse 100% 55% at 65% -5%,rgba(99,91,255,0.08) 0%,transparent 52%),linear-gradient(180deg,#0B0F1A 0%,#07090F 100%)" }}>
+      
+      {/* Ambient background lighting */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-40 right-1/4 w-[650px] h-[650px] rounded-full"
+          style={{ background: "radial-gradient(circle,rgba(99,91,255,0.05) 0%,transparent 60%)" }} />
+      </div>
+
+      <div className="relative p-6 lg:p-8 max-w-[1400px] mx-auto space-y-6">
 
         {/* ── HEADER ── */}
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-          className="flex flex-wrap items-start justify-between gap-4 mb-8">
+          className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight"
+            <h1 className="text-2xl lg:text-3xl font-black tracking-tight leading-tight"
               style={{
-                background: "linear-gradient(135deg, #FFFFFF 0%, #C4B5FD 100%)",
+                background: "linear-gradient(135deg, #FFFFFF 30%, #A78BFA 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
               }}>
-              Skills
+              Skills & Competencies
             </h1>
-            <p className="text-sm mt-1" style={{ color: "#6B7280" }}>
-              {skills.length === 0
-                ? "Start building your skill portfolio"
-                : `${skills.length} skill${skills.length !== 1 ? "s" : ""} tracked`}
+            <p className="text-xs lg:text-sm mt-1 font-medium" style={{ color: "rgba(148,163,184,0.7)" }}>
+              Track skill mastery levels, competency XP, radar analysis & growth goals
             </p>
           </div>
 
@@ -492,7 +561,7 @@ const Skills = () => {
             whileHover={{ scale: 1.04, boxShadow: "0 0 28px rgba(99,91,255,0.55)" }}
             whileTap={{ scale: 0.96 }}
             onClick={() => setModal({})}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer transition-all"
             style={{
               background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)",
               boxShadow: "0 0 20px rgba(99,91,255,0.35)",

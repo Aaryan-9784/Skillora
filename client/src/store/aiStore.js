@@ -19,6 +19,7 @@ const useAiStore = create(
       history:     [],
 
       clearChat: () => set({ messages: [WELCOME], error: null }),
+      loadSession: (sessionMessages) => set({ messages: sessionMessages, isStreaming: false, error: null }),
 
       addUserMessage: (content) => {
         const msg = { id: Date.now().toString(), role: "user", content, ts: Date.now() };
@@ -30,7 +31,7 @@ const useAiStore = create(
        * Send a message and stream the response.
        * Uses fetch directly (not axios) for SSE streaming.
        */
-      sendMessage: async (content, feature = "chat", projectId) => {
+      sendMessage: async (content, feature = "chat", projectId = null, model = "gemini-1.5-pro") => {
         if (!content.trim() || get().isStreaming) return;
 
         // Add user message
@@ -64,7 +65,7 @@ const useAiStore = create(
               ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
             credentials: "include",
-            body: JSON.stringify({ messages: history, feature, projectId }),
+            body: JSON.stringify({ messages: history, feature, projectId, model }),
           });
 
           if (!response.ok) {

@@ -176,92 +176,121 @@ const Payments = () => {
   const overdueCount = invoices.filter(i => i.status === "overdue").length;
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Payments & Invoices</h1>
-          <p className="text-xs text-gray-400 mt-1">Manage billing, track payments, and generate invoices.</p>
-        </div>
-
-        <button
-          onClick={() => navigate("/payments/new")}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white transition-transform hover:scale-105 active:scale-95 shadow-lg cursor-pointer shrink-0"
-          style={{
-            background: "linear-gradient(135deg, #635BFF 0%, #00D4FF 100%)",
-            boxShadow: "0 0 20px rgba(99,91,255,0.35)",
-          }}
-        >
-          <Plus size={16} /> Create Invoice
-        </button>
+    <div className="min-h-screen relative overflow-hidden"
+      style={{ background: "radial-gradient(ellipse 100% 55% at 65% -5%,rgba(99,91,255,0.08) 0%,transparent 52%),linear-gradient(180deg,#0B0F1A 0%,#07090F 100%)" }}>
+      
+      {/* Ambient background lighting */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-40 right-1/4 w-[650px] h-[650px] rounded-full"
+          style={{ background: "radial-gradient(circle,rgba(99,91,255,0.05) 0%,transparent 60%)" }} />
       </div>
 
-      {/* Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard icon={TrendingUp} label="Total Received" value={formatCurrency(totalPaid)} color="#22C55E" delay={0.05} />
-        <MetricCard icon={Clock} label="Pending Payments" value={pendingCount} color="#635BFF" delay={0.1} />
-        <MetricCard icon={AlertCircle} label="Overdue Invoices" value={overdueCount} color="#EF4444" delay={0.15} />
-        <MetricCard icon={FileText} label="Total Invoices" value={pagination.total || invoices.length} color="#00D4FF" delay={0.2} />
-      </div>
+      <div className="relative p-6 lg:p-8 max-w-[1400px] mx-auto space-y-6">
 
-      {/* Controls: Search + Status Tabs */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white/[0.02] p-2.5 rounded-2xl border border-white/[0.06]">
-        {/* Status Filter Tabs */}
-        <div className="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0" style={{ scrollbarWidth: "none" }}>
-          {["all", "draft", "sent", "viewed", "paid", "overdue"].map((status) => (
-            <button
-              key={status}
-              onClick={() => handleTabChange(status)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold capitalize transition-all shrink-0 cursor-pointer ${
-                activeTab === status
-                  ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/30"
-                  : "text-gray-400 hover:text-white hover:bg-white/[0.04]"
-              }`}
-            >
-              {status}
-            </button>
-          ))}
-        </div>
-
-        {/* Search Bar */}
-        <div className="relative min-w-[220px]">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search invoice number..."
-            className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500/50"
-          />
-          {search && (
-            <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white">
-              <X size={12} />
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Invoices List */}
-      <div className="bg-white/[0.02] rounded-2xl border border-white/[0.06] p-4 min-h-[300px]">
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20 text-gray-500 gap-3">
-            <RefreshCw size={24} className="animate-spin text-indigo-400" />
-            <p className="text-xs">Loading invoices...</p>
+        {/* Header */}
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+          className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl lg:text-3xl font-black tracking-tight leading-tight"
+              style={{
+                background: "linear-gradient(135deg, #FFFFFF 30%, #A78BFA 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}>
+              Payments & Invoices
+            </h1>
+            <p className="text-xs lg:text-sm mt-1 font-medium" style={{ color: "rgba(148,163,184,0.7)" }}>
+              Manage client billing, track incoming payments, and issue professional invoices
+            </p>
           </div>
-        ) : invoices.length === 0 ? (
-          <EmptyInvoices onNew={() => navigate("/payments/new")} />
-        ) : (
-          <div className="divide-y divide-white/[0.04]">
-            {invoices.map((inv, idx) => (
-              <InvoiceRow
-                key={inv._id}
-                inv={inv}
-                index={idx}
-                onDelete={(i) => setDeleteModal(i)}
-              />
+
+          <motion.button
+            whileHover={{ scale: 1.04, boxShadow: "0 0 28px rgba(99,91,255,0.55)" }}
+            whileTap={{ scale: 0.96 }}
+            onClick={() => navigate("/payments/new")}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer transition-all shrink-0"
+            style={{
+              background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)",
+              boxShadow: "0 0 20px rgba(99,91,255,0.35)",
+              border: "1px solid rgba(255,255,255,0.15)",
+            }}>
+            <Plus size={16} /> Create Invoice
+          </motion.button>
+        </motion.div>
+
+        {/* Metrics */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <MetricCard icon={TrendingUp} label="Total Received" value={formatCurrency(totalPaid)} color="#22C55E" delay={0.05} />
+          <MetricCard icon={Clock} label="Pending Payments" value={pendingCount} color="#635BFF" delay={0.1} />
+          <MetricCard icon={AlertCircle} label="Overdue Invoices" value={overdueCount} color="#EF4444" delay={0.15} />
+          <MetricCard icon={FileText} label="Total Invoices" value={pagination.total || invoices.length} color="#00D4FF" delay={0.2} />
+        </div>
+
+        {/* Controls: Search + Status Tabs */}
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3 rounded-2xl"
+          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", backdropFilter: "blur(16px)" }}>
+          {/* Status Filter Tabs */}
+          <div className="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0" style={{ scrollbarWidth: "none" }}>
+            {["all", "draft", "sent", "viewed", "paid", "overdue"].map((status) => (
+              <button
+                key={status}
+                onClick={() => handleTabChange(status)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition-all shrink-0 cursor-pointer ${
+                  activeTab === status
+                    ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/30"
+                    : "text-gray-400 hover:text-white hover:bg-white/[0.04]"
+                }`}
+              >
+                {status}
+              </button>
             ))}
           </div>
-        )}
+
+          {/* Search Bar */}
+          <div className="relative min-w-[220px]">
+            <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search invoice number..."
+              className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-9 pr-8 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500/50"
+            />
+            {search && (
+              <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white cursor-pointer">
+                <X size={12} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Invoices List Card */}
+        <div className="relative overflow-hidden rounded-2xl p-6 min-h-[300px]"
+          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", backdropFilter: "blur(16px)" }}>
+          <div className="absolute inset-x-0 top-0 h-px pointer-events-none"
+            style={{ background: "linear-gradient(90deg,transparent,rgba(99,91,255,0.25),transparent)" }} />
+          
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-20 text-gray-500 gap-3">
+              <RefreshCw size={24} className="animate-spin text-indigo-400" />
+              <p className="text-xs font-semibold">Loading invoices...</p>
+            </div>
+          ) : invoices.length === 0 ? (
+            <EmptyInvoices onNew={() => navigate("/payments/new")} />
+          ) : (
+            <div className="divide-y divide-white/[0.04]">
+              {invoices.map((inv, idx) => (
+                <InvoiceRow
+                  key={inv._id}
+                  inv={inv}
+                  index={idx}
+                  onDelete={(i) => setDeleteModal(i)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
       </div>
 
       {/* Delete Modal */}

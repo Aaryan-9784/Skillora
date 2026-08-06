@@ -275,8 +275,7 @@ const ClientNavbar = ({ onSearch, mobileOpen, setMobileOpen }) => {
 
           <span className="text-gray-500 font-bold text-sm select-none">/</span>
 
-          <div className="flex items-center gap-1.5 font-bold text-white text-xs">
-            {PageIcon && <PageIcon size={14} className="text-cyan-400 shrink-0" />}
+          <div className="flex items-center font-bold text-white text-xs">
             <span>{pageTitle}</span>
           </div>
         </div>
@@ -321,7 +320,7 @@ const ClientNavbar = ({ onSearch, mobileOpen, setMobileOpen }) => {
               </div>
               <div className="hidden sm:flex flex-col justify-center text-left py-0.5">
                 <p className="text-xs font-bold text-white group-hover:text-cyan-300 transition-colors leading-tight">{user?.name}</p>
-                <p className="text-[10px] font-medium text-cyan-400 capitalize leading-tight mt-0.5">Client</p>
+                <p className="text-[10px] font-bold text-indigo-400 capitalize leading-tight mt-0.5">Client</p>
               </div>
               <motion.div animate={{ rotate: dropdownOpen ? 180 : 0 }} transition={{ duration: 0.2 }} className="ml-0.5">
                 <ChevronDown size={13} className="text-gray-400 group-hover:text-white transition-colors" />
@@ -352,7 +351,7 @@ const ClientNavbar = ({ onSearch, mobileOpen, setMobileOpen }) => {
                         </div>
                         <div className="min-w-0 flex-1 flex flex-col justify-center text-left py-0.5">
                           <p className="text-sm font-bold truncate text-white leading-tight">{user?.name}</p>
-                          <p className="text-xs text-cyan-400 font-medium capitalize leading-tight mt-0.5">Client</p>
+                          <p className="text-xs text-indigo-400 font-bold capitalize leading-tight mt-0.5">Client</p>
                         </div>
                       </div>
                     </div>
@@ -523,7 +522,7 @@ const ClientLayout = () => {
         <ClientNavbar onSearch={() => setSearchOpen(true)} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
         <motion.main key="main" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25, ease: [0.16,1,0.3,1] }}
-          className="flex-1 overflow-y-auto">
+          className={`flex-1 ${location.pathname === "/client/messages" ? "overflow-hidden flex flex-col min-h-0" : "overflow-y-auto"}`}>
           <Outlet />
         </motion.main>
       </div>

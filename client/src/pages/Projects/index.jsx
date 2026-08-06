@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Plus, FolderKanban, Search, LayoutGrid, List,
+  Plus, Folder, Search, LayoutGrid, List,
   Trash2, Pencil, Calendar, DollarSign, ArrowRight,
   Sparkles, ChevronDown, ExternalLink,
 } from "lucide-react";
@@ -75,7 +75,7 @@ const SkeletonCard = () => (
 // ─────────────────────────────────────────────────────────
 // EMPTY STATE
 // ─────────────────────────────────────────────────────────
-const EmptyState = ({ hasSearch, onNew, onAI }) => (
+const EmptyState = ({ hasSearch, onNew }) => (
   <motion.div
     initial={{ opacity: 0, y: 16 }}
     animate={{ opacity: 1, y: 0 }}
@@ -100,7 +100,7 @@ const EmptyState = ({ hasSearch, onNew, onAI }) => (
           boxShadow: "0 0 48px rgba(99,91,255,0.15), inset 0 1px 0 rgba(255,255,255,0.08)",
         }}
       >
-        <FolderKanban size={40} style={{ color: "#635BFF" }} strokeWidth={1.4} />
+        <Folder size={40} style={{ color: "#635BFF" }} strokeWidth={1.4} />
       </motion.div>
 
       {/* Orbiting dots */}
@@ -144,39 +144,20 @@ const EmptyState = ({ hasSearch, onNew, onAI }) => (
         </p>
 
         {/* CTAs */}
-        <div className="flex flex-col sm:flex-row items-center gap-3">
-          <motion.button
-            whileHover={{ scale: 1.04, boxShadow: "0 0 32px rgba(99,91,255,0.5)" }}
-            whileTap={{ scale: 0.96 }}
-            onClick={onNew}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white"
-            style={{
-              background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)",
-              boxShadow: "0 0 20px rgba(99,91,255,0.35)",
-              border: "1px solid rgba(255,255,255,0.15)",
-            }}
-          >
-            <Plus size={16} strokeWidth={2.5} />
-            Create your first project
-          </motion.button>
-
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={onAI}
-            className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-medium transition-all duration-150"
-            style={{
-              background: "rgba(139,92,246,0.1)",
-              border: "1px solid rgba(139,92,246,0.25)",
-              color: "#A78BFA",
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = "rgba(139,92,246,0.18)"}
-            onMouseLeave={e => e.currentTarget.style.background = "rgba(139,92,246,0.1)"}
-          >
-            <Sparkles size={14} />
-            Generate with AI
-          </motion.button>
-        </div>
+        <motion.button
+          whileHover={{ scale: 1.04, boxShadow: "0 0 32px rgba(99,91,255,0.5)" }}
+          whileTap={{ scale: 0.96 }}
+          onClick={onNew}
+          className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white"
+          style={{
+            background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)",
+            boxShadow: "0 0 20px rgba(99,91,255,0.35)",
+            border: "1px solid rgba(255,255,255,0.15)",
+          }}
+        >
+          <Plus size={16} strokeWidth={2.5} />
+          Create your first project
+        </motion.button>
 
         {/* Hint */}
         <p className="mt-6 text-xs flex items-center gap-1.5" style={{ color: "#374151" }}>
@@ -383,16 +364,11 @@ const ProjectForm = ({ onSubmit, onClose, loading }) => {
       </div>
       <div>
         <label style={labelStyle}>Status</label>
-        <select name="status" value={form.status} onChange={set}
-          style={{ ...inputStyle, cursor: "pointer" }} onFocus={focusStyle} onBlur={blurStyle}>
-          {STATUS_OPTIONS.slice(1).map((o) => (
-            <option key={o.value} value={o.value} style={{ background: "#0D1526" }}>{o.label}</option>
-          ))}
-        </select>
+        <CustomDropdown value={form.status} onChange={(val) => setForm((f) => ({ ...f, status: val }))} options={STATUS_OPTIONS.slice(1)} />
       </div>
       <div className="flex gap-3 pt-2">
         <button type="button" onClick={onClose}
-          className="flex-1 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
+          className="flex-1 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer"
           style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "#9CA3AF" }}
           onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.08)"}
           onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}>
@@ -400,7 +376,7 @@ const ProjectForm = ({ onSubmit, onClose, loading }) => {
         </button>
         <motion.button type="submit" whileTap={{ scale: 0.97 }}
           disabled={loading}
-          className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-150"
+          className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-150 cursor-pointer"
           style={{
             background: loading ? "rgba(99,91,255,0.5)" : "linear-gradient(135deg,#635BFF,#8B5CF6)",
             boxShadow: loading ? "none" : "0 0 16px rgba(99,91,255,0.35)",
@@ -413,26 +389,75 @@ const ProjectForm = ({ onSubmit, onClose, loading }) => {
 };
 
 // ─────────────────────────────────────────────────────────
-// STYLED DROPDOWN
+// CUSTOM DARK GLASS DROPDOWN
 // ─────────────────────────────────────────────────────────
-const StyledSelect = ({ value, onChange, options }) => (
-  <div className="relative">
-    <select value={value} onChange={onChange}
-      className="appearance-none h-9 pl-3 pr-8 rounded-xl text-xs font-medium outline-none transition-all duration-150 cursor-pointer"
-      style={{
-        background: "rgba(255,255,255,0.04)",
-        border: "1px solid rgba(255,255,255,0.08)",
-        color: value ? "#E5E7EB" : "#6B7280",
-      }}
-      onFocus={e => { e.target.style.border = "1px solid rgba(99,91,255,0.4)"; e.target.style.boxShadow = "0 0 0 3px rgba(99,91,255,0.1)"; }}
-      onBlur={e => { e.target.style.border = "1px solid rgba(255,255,255,0.08)"; e.target.style.boxShadow = "none"; }}>
-      {options.map((o) => (
-        <option key={o.value} value={o.value} style={{ background: "#0D1526", color: "#F9FAFB" }}>{o.label}</option>
-      ))}
-    </select>
-    <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "#4B5563" }} />
-  </div>
-);
+const CustomDropdown = ({ value, onChange, options }) => {
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  const selected = options.find((o) => o.value === value) || options[0];
+
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="h-9 px-3.5 rounded-xl text-xs font-semibold text-white flex items-center justify-between gap-2.5 transition-all duration-150 cursor-pointer"
+        style={{
+          background: "rgba(255,255,255,0.04)",
+          border: open ? "1px solid rgba(99,91,255,0.45)" : "1px solid rgba(255,255,255,0.09)",
+          boxShadow: open ? "0 0 0 3px rgba(99,91,255,0.12)" : "none",
+        }}
+      >
+        <span>{selected?.label}</span>
+        <ChevronDown size={13} className={`transition-transform duration-200 text-slate-400 ${open ? "rotate-180 text-indigo-400" : ""}`} />
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 6 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 6 }}
+            transition={{ duration: 0.15 }}
+            className="absolute left-0 top-11 z-50 w-44 p-1.5 rounded-xl border border-slate-700/80 shadow-2xl space-y-0.5 backdrop-blur-xl"
+            style={{ background: "rgba(13,21,38,0.96)" }}
+          >
+            {options.map((o) => {
+              const isSel = o.value === value;
+              return (
+                <button
+                  key={o.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(o.value);
+                    setOpen(false);
+                  }}
+                  className={`w-full px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-between text-left transition-all cursor-pointer ${
+                    isSel ? "bg-indigo-600/30 text-white font-bold border border-indigo-500/40" : "hover:bg-white/10 text-slate-300"
+                  }`}
+                >
+                  <span>{o.label}</span>
+                  {isSel && <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" />}
+                </button>
+              );
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 // ─────────────────────────────────────────────────────────
 // MAIN PAGE
@@ -476,27 +501,36 @@ const Projects = () => {
 
   const hasSearch = !!(search || statusFilter);
 
+  const totalBudget = projects.reduce((acc, p) => acc + (p.budget || 0), 0);
+  const activeCount = projects.filter(p => p.status === "active").length;
+  const completedCount = projects.filter(p => p.status === "completed").length;
+
   return (
-    <div className="min-h-screen p-6 lg:p-8"
-      style={{
-        background: "radial-gradient(ellipse at 25% 0%, rgba(99,91,255,0.07) 0%, transparent 55%), radial-gradient(ellipse at 75% 100%, rgba(0,212,255,0.04) 0%, transparent 55%)",
-      }}>
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen relative overflow-hidden"
+      style={{ background: "radial-gradient(ellipse 100% 55% at 65% -5%,rgba(99,91,255,0.08) 0%,transparent 52%),linear-gradient(180deg,#0B0F1A 0%,#07090F 100%)" }}>
+      
+      {/* Ambient background lighting */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-40 right-1/4 w-[650px] h-[650px] rounded-full"
+          style={{ background: "radial-gradient(circle,rgba(99,91,255,0.05) 0%,transparent 60%)" }} />
+      </div>
+
+      <div className="relative p-6 lg:p-8 max-w-[1400px] mx-auto space-y-6">
 
         {/* ── HEADER ── */}
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-          className="flex flex-wrap items-start justify-between gap-4 mb-8">
+          className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight"
+            <h1 className="text-2xl lg:text-3xl font-black tracking-tight leading-tight"
               style={{
-                background: "linear-gradient(135deg, #FFFFFF 0%, #C4B5FD 100%)",
+                background: "linear-gradient(135deg, #FFFFFF 30%, #A78BFA 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
               }}>
-              Projects
+              Projects Management
             </h1>
-            <p className="text-sm mt-1" style={{ color: "#6B7280" }}>
-              {isLoading ? "Loading…" : projects.length === 0 ? "No projects yet" : `${projects.length} project${projects.length !== 1 ? "s" : ""}`}
+            <p className="text-xs lg:text-sm mt-1 font-medium" style={{ color: "rgba(148,163,184,0.7)" }}>
+              Manage client deliverables, track milestones, budget & progress
             </p>
           </div>
 
@@ -504,7 +538,7 @@ const Projects = () => {
             whileHover={{ scale: 1.04, boxShadow: "0 0 28px rgba(99,91,255,0.55)" }}
             whileTap={{ scale: 0.96 }}
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer transition-all"
             style={{
               background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)",
               boxShadow: "0 0 20px rgba(99,91,255,0.35)",
@@ -514,6 +548,57 @@ const Projects = () => {
             New Project
           </motion.button>
         </motion.div>
+
+        {/* ── KPI METRICS CARDS ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <motion.div whileHover={{ y: -3 }} className="relative overflow-hidden rounded-2xl p-5"
+            style={{ background: "linear-gradient(145deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.015) 100%)", border: "1px solid rgba(99,91,255,0.25)", backdropFilter: "blur(16px)" }}>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-semibold text-gray-300">Total Projects</span>
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-purple-500/20 border border-purple-500/40">
+                <Folder size={16} style={{ color: "#C4B5FD", filter: "drop-shadow(0 0 6px rgba(196,181,253,0.6))" }} />
+              </div>
+            </div>
+            <p className="text-2xl font-black text-white mb-1">{projects.length}</p>
+            <p className="text-[11px] text-gray-400">Workspace portfolio</p>
+          </motion.div>
+
+          <motion.div whileHover={{ y: -3 }} className="relative overflow-hidden rounded-2xl p-5"
+            style={{ background: "linear-gradient(145deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.015) 100%)", border: "1px solid rgba(34,197,94,0.25)", backdropFilter: "blur(16px)" }}>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-semibold text-gray-300">Active Work</span>
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-emerald-500/20 border border-emerald-500/40">
+                <Sparkles size={16} style={{ color: "#6EE7B7", filter: "drop-shadow(0 0 6px rgba(110,231,183,0.6))" }} />
+              </div>
+            </div>
+            <p className="text-2xl font-black text-white mb-1">{activeCount}</p>
+            <p className="text-[11px] text-gray-400">In execution</p>
+          </motion.div>
+
+          <motion.div whileHover={{ y: -3 }} className="relative overflow-hidden rounded-2xl p-5"
+            style={{ background: "linear-gradient(145deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.015) 100%)", border: "1px solid rgba(0,212,255,0.25)", backdropFilter: "blur(16px)" }}>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-semibold text-gray-300">Completed</span>
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-cyan-500/20 border border-cyan-500/40">
+                <Calendar size={16} style={{ color: "#67E8F9", filter: "drop-shadow(0 0 6px rgba(103,232,249,0.6))" }} />
+              </div>
+            </div>
+            <p className="text-2xl font-black text-white mb-1">{completedCount}</p>
+            <p className="text-[11px] text-gray-400">Delivered projects</p>
+          </motion.div>
+
+          <motion.div whileHover={{ y: -3 }} className="relative overflow-hidden rounded-2xl p-5"
+            style={{ background: "linear-gradient(145deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.015) 100%)", border: "1px solid rgba(245,158,11,0.25)", backdropFilter: "blur(16px)" }}>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-semibold text-gray-300">Total Budget Value</span>
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-amber-500/20 border border-amber-500/40">
+                <DollarSign size={16} style={{ color: "#FDE68A", filter: "drop-shadow(0 0 6px rgba(253,230,138,0.6))" }} />
+              </div>
+            </div>
+            <p className="text-2xl font-black text-white mb-1">{formatCurrency(totalBudget, "INR")}</p>
+            <p className="text-[11px] text-gray-400">Combined budget</p>
+          </motion.div>
+        </div>
 
         {/* ── FILTER BAR ── */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}
@@ -544,10 +629,10 @@ const Projects = () => {
           </div>
 
           {/* Status filter */}
-          <StyledSelect value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} options={STATUS_OPTIONS} />
+          <CustomDropdown value={statusFilter} onChange={(val) => setStatusFilter(val)} options={STATUS_OPTIONS} />
 
           {/* Sort */}
-          <StyledSelect value={sort} onChange={(e) => setSort(e.target.value)} options={SORT_OPTIONS} />
+          <CustomDropdown value={sort} onChange={(val) => setSort(val)} options={SORT_OPTIONS} />
 
           {/* View toggle */}
           <div className="ml-auto flex items-center gap-0.5 p-1 rounded-xl"
@@ -575,7 +660,7 @@ const Projects = () => {
             {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : filtered.length === 0 ? (
-          <EmptyState hasSearch={hasSearch} onNew={() => setShowModal(true)} onAI={() => {}} />
+          <EmptyState hasSearch={hasSearch} onNew={() => setShowModal(true)} />
         ) : view === "grid" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             <AnimatePresence>

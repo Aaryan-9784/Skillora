@@ -83,14 +83,19 @@ const EarningsChart = () => {
   const thisMonthRev = s?.revenue?.thisMonth || 0;
 
   // Generate dynamic period data based on true database revenue summary
+  const hasRealData = totalRevenue > 0 || thisMonthRev > 0;
+  
   const data = (ALL_DATA[period] || ALL_DATA["6m"]).map((d, index, arr) => {
+    if (!hasRealData) {
+      return { ...d, revenue: 0, expenses: 0 };
+    }
     if (index === arr.length - 1 && thisMonthRev > 0) {
       return { ...d, revenue: thisMonthRev };
     }
     return d;
   });
 
-  const total = totalRevenue > 0 ? totalRevenue : data.reduce((sum, item) => sum + (item.revenue || 0), 0);
+  const total = totalRevenue;
   const dataKey = metric === "Revenue" ? "revenue" : metric === "Expenses" ? "expenses" : "revenue";
   const lineColor = metric === "Expenses" ? "#F59E0B" : "#635BFF";
   const glowColor = metric === "Expenses" ? "rgba(245,158,11,0.3)" : "rgba(99,91,255,0.3)";
@@ -120,9 +125,8 @@ const EarningsChart = () => {
             <p className="text-2xl font-bold text-right" style={{ color: "#F9FAFB" }}>
               ${total.toLocaleString()}
             </p>
-            <p className="text-xs text-right flex items-center justify-end gap-1" style={{ color: "#22C55E" }}>
-              <span>↑ 18%</span>
-              <span style={{ color: "#6B7280" }}>vs last period</span>
+            <p className="text-xs text-right text-slate-400">
+              vs last period
             </p>
           </div>
 

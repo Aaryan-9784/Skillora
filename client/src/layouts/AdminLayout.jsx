@@ -264,8 +264,7 @@ const AdminNavbar = ({ onSearch }) => {
 
           <span className="text-gray-500 font-bold text-sm select-none">/</span>
 
-          <div className="flex items-center gap-1.5 font-bold text-white text-xs">
-            {PageIcon && <PageIcon size={14} className="text-purple-400 shrink-0" />}
+          <div className="flex items-center font-bold text-white text-xs">
             <span>{pageTitle}</span>
           </div>
         </div>

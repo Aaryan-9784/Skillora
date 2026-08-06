@@ -11,6 +11,7 @@ const TITLE_MAP = {
   "/projects": "Projects & Kanban — Skillora",
   "/tasks": "Tasks — Skillora",
   "/clients": "Client CRM — Skillora",
+  "/messages": "Project Messages — Skillora",
   "/payments": "Invoices & Payments — Skillora",
   "/payments/new": "Create Invoice — Skillora",
   "/skills": "Skill Matrix — Skillora",
@@ -80,8 +81,8 @@ const InvoiceBuilder = lazy(() => import("./pages/Payments/InvoiceBuilder"));
 const InvoiceDetail  = lazy(() => import("./pages/Payments/InvoiceDetail"));
 const Skills         = lazy(() => import("./pages/Skills"));
 const AI             = lazy(() => import("./pages/AI"));
-const Profile        = lazy(() => import("./pages/Profile"));
-const Settings       = lazy(() => import("./pages/Settings"));
+const Messages         = lazy(() => import("./pages/Messages"));
+const Profile          = lazy(() => import("./pages/Profile"));
 
 // Admin — direct imports (not lazy) to avoid HMR race condition with file writes
 import AdminOverview from "./pages/Admin/overview";
@@ -190,13 +191,13 @@ const App = () => {
               <Route path="/tasks"           element={<Tasks />} />
               <Route path="/clients"         element={<Clients />} />
               <Route path="/clients/:id"     element={<ClientDetail />} />
+              <Route path="/messages"        element={<Messages />} />
               <Route path="/payments"        element={<Payments />} />
               <Route path="/payments/new"    element={<InvoiceBuilder />} />
               <Route path="/payments/:id"    element={<InvoiceDetail />} />
               <Route path="/skills"          element={<Skills />} />
               <Route path="/ai"              element={<AI />} />
               <Route path="/profile"         element={<Profile />} />
-              <Route path="/settings"        element={<Settings />} />
             </Route>
           </Route>
 

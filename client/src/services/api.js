@@ -6,7 +6,7 @@ import { updateSocketToken } from "./socketService";
 const api = axios.create({
   baseURL:         import.meta.env.VITE_API_URL || "/api",
   withCredentials: true,
-  timeout:         15000,
+  timeout:         30000,
 });
 
 // ── Request: attach in-memory access token ────────────────
@@ -103,10 +103,14 @@ api.interceptors.response.use(
       }
     }
 
-    // ── Show toast for non-auth errors only ───────────────
+    // ── Handle non-auth errors & timeouts ───────────────
     if (status !== 401 && status !== 403) {
-      const message = error.response?.data?.message || "Something went wrong";
-      toast.error(message);
+      if (error.code === "ECONNABORTED" || error.message?.includes("timeout")) {
+        console.warn("[API] Request timeout exceeded for:", original?.url);
+      } else {
+        const message = error.response?.data?.message || "Something went wrong";
+        toast.error(message);
+      }
     }
 
     return Promise.reject(error);

@@ -5,6 +5,7 @@ import { getSocket } from "../services/socketService";
 import useAuthStore from "../store/authStore";
 import useNotificationStore from "../store/notificationStore";
 import useClientPortalStore from "../store/clientPortalStore";
+import useChatStore from "../store/chatStore";
 import tokenStore from "../services/tokenStore";
 
 const useSyncEvents = () => {
@@ -12,14 +13,30 @@ const useSyncEvents = () => {
   const { fetchUnreadCount }          = useNotificationStore();
   const navigate                      = useNavigate();
 
-  // Client portal store — only accessed when user is a client
   const clientStore = useClientPortalStore();
+  const chatStore   = useChatStore();
 
   useEffect(() => {
     const socket = getSocket();
     if (!socket) return;
 
     const isClient = user?.role === "client";
+
+    const onChatMessageNew = ({ message }) => {
+      chatStore.appendMessage(message);
+    };
+
+    const onChatTyping = ({ conversationId, userName }) => {
+      chatStore.setTyping(conversationId, userName, true);
+    };
+
+    const onChatStopTyping = ({ conversationId }) => {
+      chatStore.setTyping(conversationId, "", false);
+    };
+
+    const onPresenceUpdate = ({ userId, isOnline, lastSeen }) => {
+      chatStore.updatePresence(userId, isOnline, lastSeen);
+    };
 
     // ── Freelancer / shared events ──────────────────────
     const onNotification = (notification) => {
@@ -89,6 +106,10 @@ const useSyncEvents = () => {
     socket.on("admin:stats_refresh", onAdminStatsRefresh);
     socket.on("message:new",         onMessageNew);
     socket.on("milestone:updated",   onMilestoneUpdated);
+    socket.on("chat:message_new",    onChatMessageNew);
+    socket.on("chat:typing",         onChatTyping);
+    socket.on("chat:stop_typing",    onChatStopTyping);
+    socket.on("presence:update",     onPresenceUpdate);
 
     return () => {
       socket.off("notification",        onNotification);
@@ -100,6 +121,10 @@ const useSyncEvents = () => {
       socket.off("admin:stats_refresh", onAdminStatsRefresh);
       socket.off("message:new",         onMessageNew);
       socket.off("milestone:updated",   onMilestoneUpdated);
+      socket.off("chat:message_new",    onChatMessageNew);
+      socket.off("chat:typing",         onChatTyping);
+      socket.off("chat:stop_typing",    onChatStopTyping);
+      socket.off("presence:update",     onPresenceUpdate);
     };
   }, [user?.role]);
 };

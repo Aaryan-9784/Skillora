@@ -24,6 +24,8 @@ const adminRoutes        = require("./routes/admin.routes");
 const billingRoutes      = require("./routes/billing.routes");
 const uploadRoutes       = require("./routes/upload.routes");
 const clientPortalRoutes = require("./routes/clientPortal.routes");
+const chatRoutes         = require("./routes/chat.routes");
+const meetingRoutes      = require("./routes/meeting.routes");
 
 const app = express();
 
@@ -86,6 +88,9 @@ app.use("/api/admin",         adminRoutes);
 app.use("/api/billing",       billingRoutes);
 app.use("/api/upload",        uploadRoutes);
 app.use("/api/client",        clientPortalRoutes);
+app.use("/api/chat",          chatRoutes);
+app.use("/api/meetings",      meetingRoutes);
+app.use("/api/calls",         meetingRoutes);
 
 // ── 404 ───────────────────────────────────────────────────
 app.use((req, res) =>
