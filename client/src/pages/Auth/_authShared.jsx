@@ -20,8 +20,8 @@ export const AuthInput = ({ label, icon: Icon, error, suffix, labelRight, ...pro
       {(label || labelRight) && (
         <div className="flex items-center justify-between">
           {label && (
-            <label className="block text-[10px] font-bold tracking-[0.18em] uppercase"
-              style={{ color: "rgba(203,213,225,0.85)" }}>
+            <label className="block text-[11px] font-bold tracking-[0.14em] uppercase"
+              style={{ fontFamily: "'Sora', 'Inter', sans-serif", color: "#CBD5E1" }}>
               {label}
             </label>
           )}
@@ -32,15 +32,15 @@ export const AuthInput = ({ label, icon: Icon, error, suffix, labelRight, ...pro
         style={{
           background: focused
             ? "rgba(255,255,255,0.12)"
-            : "rgba(255,255,255,0.08)",
+            : "rgba(255,255,255,0.06)",
           border: error
-            ? "1px solid rgba(239,68,68,0.5)"
+            ? "1px solid rgba(239,68,68,0.6)"
             : focused
-            ? "1px solid rgba(99,91,255,0.65)"
-            : "1px solid rgba(255,255,255,0.18)",
+            ? "1px solid rgba(139,92,246,0.7)"
+            : "1px solid rgba(255,255,255,0.14)",
           backdropFilter: "blur(16px)",
           boxShadow: focused && !error
-            ? "0 0 0 3px rgba(99,91,255,0.12), 0 2px 20px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.1)"
+            ? "0 0 0 3px rgba(139,92,246,0.2), 0 2px 20px rgba(0,0,0,0.25)"
             : "inset 0 1px 0 rgba(255,255,255,0.06)",
         }}>
         {/* focus top glow line */}
@@ -49,21 +49,21 @@ export const AuthInput = ({ label, icon: Icon, error, suffix, labelRight, ...pro
             <motion.div initial={{ scaleX: 0, opacity: 0 }} animate={{ scaleX: 1, opacity: 1 }}
               exit={{ scaleX: 0, opacity: 0 }} transition={{ duration: 0.25 }}
               className="absolute top-0 inset-x-0 h-px rounded-t-2xl pointer-events-none"
-              style={{ background: "linear-gradient(90deg,transparent,rgba(99,91,255,0.8),rgba(139,92,246,0.6),transparent)" }} />
+              style={{ background: "linear-gradient(90deg,transparent,rgba(167,139,250,0.9),rgba(56,189,248,0.7),transparent)" }} />
           )}
         </AnimatePresence>
         {Icon && (
           <div className="pl-4 shrink-0">
-            <Icon size={13} style={{ color: focused ? "rgba(167,139,250,1)" : "rgba(148,163,184,0.8)", transition: "color 0.3s" }} />
+            <Icon size={14} style={{ color: focused ? "#A78BFA" : "#94A3B8", transition: "color 0.3s" }} />
           </div>
         )}
         <input {...props}
           onFocus={e => { setFocused(true); props.onFocus?.(e); }}
           onBlur={e  => { setFocused(false); props.onBlur?.(e); }}
-          className="flex-1 bg-transparent px-3.5 py-3.5 text-[13px] outline-none placeholder-shown:opacity-100"
+          className="flex-1 bg-transparent px-3.5 py-3.5 text-[13.5px] font-medium outline-none placeholder:text-slate-400/80"
           style={{
-            color: "#F1F5F9",
-            caretColor: "#818CF8",
+            color: "#F8FAFC",
+            caretColor: "#A78BFA",
             letterSpacing: "0.01em",
           }}
         />
@@ -72,7 +72,7 @@ export const AuthInput = ({ label, icon: Icon, error, suffix, labelRight, ...pro
       <AnimatePresence>
         {error && (
           <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
-            className="flex items-center gap-1.5 text-[11px]" style={{ color: "rgba(248,113,113,0.95)" }}>
+            className="flex items-center gap-1.5 text-[11px] font-medium" style={{ color: "#F87171" }}>
             <AlertCircle size={10} />{error}
           </motion.p>
         )}
@@ -103,8 +103,8 @@ export const RoleToggle = ({ value, onChange, options }) => {
       />
       {options.map((opt) => (
         <button key={opt.value} type="button" onClick={() => onChange(opt.value)}
-          className="relative flex-1 py-2.5 rounded-xl text-[13px] font-semibold transition-colors duration-200 z-10"
-          style={{ color: value === opt.value ? "#fff" : "rgba(203,213,225,0.8)" }}>
+          className="relative flex-1 py-2.5 rounded-xl text-[13px] font-bold transition-colors duration-200 z-10"
+          style={{ fontFamily: "'Sora', 'Inter', sans-serif", color: value === opt.value ? "#fff" : "#94A3B8" }}>
           {opt.label}
         </button>
       ))}
@@ -117,7 +117,7 @@ export const OAuthButtons = ({ apiBase, role = "freelancer", label = "or sign in
   <div className="space-y-3">
     <div className="flex items-center gap-3">
       <div className="flex-1 h-px" style={{ background: "linear-gradient(to right,transparent,rgba(255,255,255,0.2),transparent)" }} />
-      <span className="text-[11px] tracking-[0.06em] shrink-0" style={{ color: "rgba(203,213,225,0.7)" }}>{label}</span>
+      <span className="text-[11px] font-bold uppercase tracking-[0.1em] shrink-0" style={{ fontFamily: "'Sora', 'Inter', sans-serif", color: "#94A3B8" }}>{label}</span>
       <div className="flex-1 h-px" style={{ background: "linear-gradient(to left,transparent,rgba(255,255,255,0.2),transparent)" }} />
     </div>
     <div className="grid grid-cols-2 gap-2.5">
@@ -146,12 +146,13 @@ export const OAuthButtons = ({ apiBase, role = "freelancer", label = "or sign in
           href={href}
           whileHover={{ y: -2, scale: 1.02 }}
           whileTap={{ scale: 0.97 }}
-          className="relative flex items-center justify-center gap-2.5 h-11 rounded-2xl text-[13px] font-semibold overflow-hidden"
+          className="relative flex items-center justify-center gap-2.5 h-11 rounded-2xl text-[13px] font-bold overflow-hidden"
           style={{
-            background: "rgba(255,255,255,0.09)",
-            border: "1px solid rgba(255,255,255,0.2)",
+            fontFamily: "'Sora', 'Inter', sans-serif",
+            background: "rgba(255,255,255,0.07)",
+            border: "1px solid rgba(255,255,255,0.16)",
             backdropFilter: "blur(16px)",
-            color: "rgba(226,232,240,0.95)",
+            color: "#F1F5F9",
             textDecoration: "none",
             transition: "all 0.25s ease",
           }}
@@ -162,10 +163,10 @@ export const OAuthButtons = ({ apiBase, role = "freelancer", label = "or sign in
             e.currentTarget.style.color = textColor;
           }}
           onMouseLeave={e => {
-            e.currentTarget.style.background = "rgba(255,255,255,0.09)";
-            e.currentTarget.style.border = "1px solid rgba(255,255,255,0.2)";
+            e.currentTarget.style.background = "rgba(255,255,255,0.07)";
+            e.currentTarget.style.border = "1px solid rgba(255,255,255,0.16)";
             e.currentTarget.style.boxShadow = "none";
-            e.currentTarget.style.color = "rgba(226,232,240,0.95)";
+            e.currentTarget.style.color = "#F1F5F9";
           }}
         >
           <div className="absolute inset-x-0 top-0 h-px pointer-events-none"

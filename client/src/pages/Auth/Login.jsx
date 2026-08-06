@@ -111,27 +111,27 @@ const Login = () => {
             </Link>
           </motion.div>
 
-          <div className="space-y-8 max-w-[460px]">
+            <div className="space-y-8 max-w-[460px]">
             <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
-              className="text-[10px] font-bold tracking-[0.3em] uppercase"
-              style={{ color: "#A5B4FC", textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>
+              className="text-[11px] font-extrabold tracking-[0.3em] uppercase"
+              style={{ fontFamily: "'Sora', 'Inter', sans-serif", color: "#A78BFA", textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>
               Freelancer OS
             </motion.p>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
               whileHover={{ y: -4 }} transition={{ duration: 0.7, delay: 0.25, ease: [0.16,1,0.3,1] }}
               className="space-y-5" style={{ cursor: "default" }}>
-              <h1 className="font-bold leading-[1.1] text-white"
-                style={{ fontSize: "clamp(2.2rem,3.2vw,3rem)", letterSpacing: "-0.03em", textShadow: "0 4px 16px rgba(0,0,0,0.9)" }}>
+              <h1 className="font-extrabold leading-[1.1] text-white"
+                style={{ fontFamily: "'Sora', 'Inter', sans-serif", fontSize: "clamp(2.4rem,3.5vw,3.2rem)", letterSpacing: "-0.035em", textShadow: "0 4px 16px rgba(0,0,0,0.9)" }}>
                 Welcome back.<br />
                 Let's get you{" "}
                 <span style={{
-                  background: "linear-gradient(135deg,#818CF8 0%,#C4B5FD 40%,#38BDF8 100%)",
+                  background: "linear-gradient(135deg,#A78BFA 0%,#818CF8 50%,#38BDF8 100%)",
                   WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-                  filter: "drop-shadow(0 0 20px rgba(129,140,248,0.5))",
+                  filter: "drop-shadow(0 0 25px rgba(167,139,250,0.55))",
                 }}>back to work.</span>
               </h1>
-              <p className="text-[14px] leading-[1.75] font-medium"
-                style={{ color: "#CBD5E1", maxWidth: "36ch", textShadow: "0 2px 8px rgba(0,0,0,0.9)" }}>
+              <p className="text-[15px] leading-[1.7] font-medium"
+                style={{ color: "#94A3B8", maxWidth: "36ch", textShadow: "0 2px 8px rgba(0,0,0,0.9)" }}>
                 Continue managing your clients, projects, and growth — all in one place.
               </p>
             </motion.div>
@@ -140,8 +140,8 @@ const Login = () => {
               className="flex items-center gap-8" style={{ cursor: "default" }}>
               {[{ value: "10K+", label: "Freelancers" },{ value: "₹2M+", label: "Revenue tracked" },{ value: "50K+", label: "Invoices sent" }].map(s => (
                 <div key={s.label}>
-                  <p className="text-[18px] font-bold text-white" style={{ letterSpacing: "-0.02em", textShadow: "0 2px 8px rgba(0,0,0,0.9)" }}>{s.value}</p>
-                  <p className="text-[11px] font-medium" style={{ color: "#94A3B8", textShadow: "0 1px 6px rgba(0,0,0,0.8)" }}>{s.label}</p>
+                  <p className="text-[20px] font-extrabold text-white" style={{ fontFamily: "'Sora', 'Inter', sans-serif", letterSpacing: "-0.02em", textShadow: "0 2px 8px rgba(0,0,0,0.9)" }}>{s.value}</p>
+                  <p className="text-[12px] font-medium" style={{ color: "#94A3B8", textShadow: "0 1px 6px rgba(0,0,0,0.8)" }}>{s.label}</p>
                 </div>
               ))}
             </motion.div>
@@ -164,7 +164,7 @@ const Login = () => {
             {/* mobile logo */}
             <div className="mb-8 lg:hidden">
               <Link to="/" style={{ textDecoration: "none" }}>
-                <span style={{ fontFamily: "'Sora','Inter',sans-serif", fontSize: 24, fontWeight: 800,
+                <span style={{ fontFamily: "'Sora','Inter',sans-serif", fontSize: 26, fontWeight: 800,
                   letterSpacing: "-0.04em", color: "#fff", lineHeight: 1, cursor: "pointer" }}>
                   Skillora
                 </span>
@@ -175,16 +175,17 @@ const Login = () => {
               {/* header */}
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 }} className="mb-7">
-                <h2 className="font-bold text-white mb-1.5"
-                  style={{ fontSize: "1.65rem", letterSpacing: "-0.025em",
-                    background: "linear-gradient(135deg,#FFFFFF 40%,rgba(196,181,253,0.9) 100%)",
+                <h2 className="font-extrabold text-white mb-1.5"
+                  style={{ fontFamily: "'Sora', 'Inter', sans-serif", fontSize: "1.75rem", letterSpacing: "-0.03em",
+                    background: "linear-gradient(135deg,#FFFFFF 30%,#C4B5FD 70%,#818CF8 100%)",
                     WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
                   Welcome back
                 </h2>
-                <p className="text-[13px]" style={{ color: "rgba(148,163,184,0.85)" }}>Sign in to continue</p>
+                <p className="text-[13px] font-medium" style={{ color: "#94A3B8" }}>Sign in to continue</p>
               </motion.div>
 
-              {/* error */}              <AnimatePresence>
+              {/* error */}
+              <AnimatePresence>
                 {errors?.general && (
                   <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
                     className="flex items-start gap-2.5 p-3.5 mb-5 rounded-2xl"
@@ -209,19 +210,19 @@ const Login = () => {
                     placeholder="••••••••" value={form.password} onChange={handleChange}
                     error={errors?.password} required autoComplete="current-password"
                     labelRight={
-                      <Link to="/forgot-password" className="text-[11px] font-medium transition-colors duration-200"
-                        style={{ color: "rgba(129,140,248,0.65)" }}
-                        onMouseEnter={e => e.currentTarget.style.color = "rgba(167,139,250,1)"}
-                        onMouseLeave={e => e.currentTarget.style.color = "rgba(129,140,248,0.65)"}>
+                      <Link to="/forgot-password" className="text-[12px] font-semibold transition-colors duration-200"
+                        style={{ fontFamily: "'Sora', 'Inter', sans-serif", color: "#A78BFA" }}
+                        onMouseEnter={e => e.currentTarget.style.color = "#C4B5FD"}
+                        onMouseLeave={e => e.currentTarget.style.color = "#A78BFA"}>
                         Forgot password?
                       </Link>
                     }
                     suffix={
                       <motion.button type="button" whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.9 }}
                         onClick={() => setShowPw(s => !s)}
-                        style={{ color: "rgba(75,85,99,0.7)", transition: "color 0.25s" }}
-                        onMouseEnter={e => e.currentTarget.style.color = "rgba(167,139,250,0.9)"}
-                        onMouseLeave={e => e.currentTarget.style.color = "rgba(75,85,99,0.7)"}>
+                        style={{ color: "#94A3B8", transition: "color 0.25s" }}
+                        onMouseEnter={e => e.currentTarget.style.color = "#A78BFA"}
+                        onMouseLeave={e => e.currentTarget.style.color = "#94A3B8"}>
                         {showPw ? <EyeOff size={13} /> : <Eye size={13} />}
                       </motion.button>
                     }
@@ -247,15 +248,14 @@ const Login = () => {
               {/* trust */}
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.55 }}
                 className="mt-5 flex items-center justify-center gap-1.5">
-                <ShieldCheck size={11} style={{ color: "rgba(74,222,128,0.85)" }} />
-                <span className="text-[11px]" style={{ color: "rgba(148,163,184,0.75)" }}>Secure login · End-to-end encrypted</span>
+                <ShieldCheck size={12} style={{ color: "#4ADE80" }} />
+                <span className="text-[11px] font-medium" style={{ color: "#94A3B8" }}>Secure login · End-to-end encrypted</span>
               </motion.div>
 
-              <p className="mt-4 text-center text-[13px]" style={{ color: "rgba(148,163,184,0.85)" }}>
+              <p className="mt-4 text-center text-[13px] font-medium" style={{ color: "#94A3B8" }}>
                 Don't have an account?{" "}
-                <Link to="/register" className="font-semibold"
-                  style={{ background: "linear-gradient(135deg,rgba(129,140,248,0.95),rgba(56,189,248,0.85))",
-                    WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                <Link to="/register" className="font-bold hover:underline"
+                  style={{ fontFamily: "'Sora', 'Inter', sans-serif", color: "#A78BFA" }}>
                   Sign up free
                 </Link>
               </p>

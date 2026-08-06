@@ -149,22 +149,22 @@ const Register = () => {
 
           <div className="space-y-10 max-w-[500px]">
             <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
-              className="text-[10px] font-bold tracking-[0.3em] uppercase"
-              style={{ color: "#A5B4FC", textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>Freelancer OS</motion.p>
+              className="text-[11px] font-extrabold tracking-[0.3em] uppercase"
+              style={{ fontFamily: "'Sora', 'Inter', sans-serif", color: "#A78BFA", textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>Freelancer OS</motion.p>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
               whileHover={{ y: -4 }} transition={{ duration: 0.7, delay: 0.25, ease: [0.16,1,0.3,1] }}
               className="space-y-5" style={{ cursor: "default" }}>
-              <h1 className="font-bold leading-[1.1] text-white"
-                style={{ fontSize: "clamp(2.2rem,3.2vw,3rem)", letterSpacing: "-0.03em", textShadow: "0 4px 16px rgba(0,0,0,0.9)" }}>
+              <h1 className="font-extrabold leading-[1.1] text-white"
+                style={{ fontFamily: "'Sora', 'Inter', sans-serif", fontSize: "clamp(2.4rem,3.5vw,3.2rem)", letterSpacing: "-0.035em", textShadow: "0 4px 16px rgba(0,0,0,0.9)" }}>
                 Run your freelance business<br />with{" "}
                 <span style={{
-                  background: "linear-gradient(135deg,#818CF8 0%,#C4B5FD 40%,#38BDF8 100%)",
+                  background: "linear-gradient(135deg,#A78BFA 0%,#818CF8 50%,#38BDF8 100%)",
                   WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-                  filter: "drop-shadow(0 0 20px rgba(129,140,248,0.5))",
+                  filter: "drop-shadow(0 0 25px rgba(167,139,250,0.55))",
                 }}>clarity &amp; control.</span>
               </h1>
-              <p className="text-[14px] leading-[1.75] font-medium"
-                style={{ color: "#CBD5E1", maxWidth: "38ch", textShadow: "0 2px 8px rgba(0,0,0,0.9)" }}>
+              <p className="text-[15px] leading-[1.7] font-medium"
+                style={{ color: "#94A3B8", maxWidth: "38ch", textShadow: "0 2px 8px rgba(0,0,0,0.9)" }}>
                 Manage clients, projects, invoices, and growth — all in one intelligent workspace.
               </p>
             </motion.div>
@@ -191,8 +191,8 @@ const Register = () => {
                   </div>
                 ))}
               </div>
-              <span className="text-[12px] font-medium" style={{ color: "#E2E8F0", textShadow: "0 1px 6px rgba(0,0,0,0.8)" }}>
-                Trusted by <span style={{ color: "#C4B5FD", fontWeight: 700 }}>10,000+</span> freelancers
+              <span className="text-[12px] font-medium" style={{ color: "#94A3B8", textShadow: "0 1px 6px rgba(0,0,0,0.8)" }}>
+                Trusted by <span style={{ fontFamily: "'Sora', 'Inter', sans-serif", color: "#C4B5FD", fontWeight: 700 }}>10,000+</span> freelancers
               </span>
             </motion.div>
           </div>
@@ -214,7 +214,7 @@ const Register = () => {
             {/* mobile logo */}
             <div className="mb-8 lg:hidden">
               <Link to="/" style={{ textDecoration: "none" }}>
-                <span style={{ fontFamily: "'Sora','Inter',sans-serif", fontSize: 24, fontWeight: 800,
+                <span style={{ fontFamily: "'Sora','Inter',sans-serif", fontSize: 26, fontWeight: 800,
                   letterSpacing: "-0.04em", color: "#fff", lineHeight: 1, cursor: "pointer" }}>
                   Skillora
                 </span>
@@ -225,18 +225,16 @@ const Register = () => {
               {/* header */}
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 }} className="mb-7">
-                <h2 className="font-bold text-white mb-1.5"
-                  style={{ fontSize: "1.65rem", letterSpacing: "-0.025em",
-                    background: "linear-gradient(135deg,#FFFFFF 40%,rgba(196,181,253,0.9) 100%)",
+                <h2 className="font-extrabold text-white mb-1.5"
+                  style={{ fontFamily: "'Sora', 'Inter', sans-serif", fontSize: "1.75rem", letterSpacing: "-0.03em",
+                    background: "linear-gradient(135deg,#FFFFFF 30%,#C4B5FD 70%,#818CF8 100%)",
                     WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
                   Create your account
                 </h2>
-                <p className="text-[13px]" style={{ color: "rgba(148,163,184,0.85)" }}>
+                <p className="text-[13px] font-medium" style={{ color: "#94A3B8" }}>
                   Start your journey today. Free forever.
                 </p>
               </motion.div>
-
-
 
               {/* error */}
               <AnimatePresence>
@@ -274,9 +272,9 @@ const Register = () => {
                       suffix={
                         <motion.button type="button" whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.9 }}
                           onClick={() => setShowPw(s => !s)}
-                          style={{ color: "rgba(75,85,99,0.7)", transition: "color 0.25s" }}
-                          onMouseEnter={e => e.currentTarget.style.color = "rgba(167,139,250,0.9)"}
-                          onMouseLeave={e => e.currentTarget.style.color = "rgba(75,85,99,0.7)"}>
+                          style={{ color: "#94A3B8", transition: "color 0.25s" }}
+                          onMouseEnter={e => e.currentTarget.style.color = "#A78BFA"}
+                          onMouseLeave={e => e.currentTarget.style.color = "#94A3B8"}>
                           {showPw ? <EyeOff size={13} /> : <Eye size={13} />}
                         </motion.button>
                       }
@@ -306,20 +304,19 @@ const Register = () => {
               {/* footer */}
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.55 }}
                 className="mt-6 space-y-3">
-                <p className="text-center text-[11px]" style={{ color: "rgba(148,163,184,0.75)" }}>
+                <p className="text-center text-[11px] font-medium" style={{ color: "#94A3B8" }}>
                   By signing up, you agree to our{" "}
-                  <a href="#" style={{ color: "rgba(129,140,248,0.7)" }}
-                    onMouseEnter={e => e.currentTarget.style.color = "rgba(167,139,250,1)"}
-                    onMouseLeave={e => e.currentTarget.style.color = "rgba(129,140,248,0.7)"}>Terms</a>{" "}and{" "}
-                  <a href="#" style={{ color: "rgba(129,140,248,0.7)" }}
-                    onMouseEnter={e => e.currentTarget.style.color = "rgba(167,139,250,1)"}
-                    onMouseLeave={e => e.currentTarget.style.color = "rgba(129,140,248,0.7)"}>Privacy Policy</a>.
+                  <a href="#" className="font-semibold" style={{ color: "#A78BFA" }}
+                    onMouseEnter={e => e.currentTarget.style.color = "#C4B5FD"}
+                    onMouseLeave={e => e.currentTarget.style.color = "#A78BFA"}>Terms</a>{" "}and{" "}
+                  <a href="#" className="font-semibold" style={{ color: "#A78BFA" }}
+                    onMouseEnter={e => e.currentTarget.style.color = "#C4B5FD"}
+                    onMouseLeave={e => e.currentTarget.style.color = "#A78BFA"}>Privacy Policy</a>.
                 </p>
-                <p className="text-center text-[13px]" style={{ color: "rgba(148,163,184,0.85)" }}>
+                <p className="text-center text-[13px] font-medium" style={{ color: "#94A3B8" }}>
                   Already have an account?{" "}
-                  <Link to="/login" className="font-semibold"
-                    style={{ background: "linear-gradient(135deg,rgba(129,140,248,0.95),rgba(56,189,248,0.85))",
-                      WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                  <Link to="/login" className="font-bold hover:underline"
+                    style={{ fontFamily: "'Sora', 'Inter', sans-serif", color: "#A78BFA" }}>
                     Sign in
                   </Link>
                 </p>
