@@ -41,7 +41,7 @@ const createTask = asyncHandler(async (req, res) => {
 });
 
 const getTasksByProject = asyncHandler(async (req, res) => {
-  const result = await projectService.getTasksByProject(req.params.id, req.user._id, req.query);
+  const result = await projectService.getTasksByProject(req.params.id, req.user, req.query);
   ApiResponse.success(res, "Tasks fetched", result);
 });
 

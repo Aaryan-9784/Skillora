@@ -199,17 +199,16 @@ const Profile = () => {
     }
     setSaving(true);
     try {
-      const res = await api.put("/auth/me", {
+      const { data } = await api.patch("/users/profile", {
         name: formData.name.trim(),
         phone: formData.phone,
         bio: formData.bio,
         title: formData.title,
       });
-      setUser(res.data?.data?.user || { ...user, ...formData });
+      setUser(data.data.user);
       toast.success("Profile updated successfully");
     } catch (err) {
-      setUser({ ...user, ...formData });
-      toast.success("Profile saved successfully");
+      toast.error(err.response?.data?.message || "Failed to update profile");
     } finally {
       setSaving(false);
     }

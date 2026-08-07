@@ -135,11 +135,21 @@ const createTask = async (ownerId, data) => {
   return task;
 };
 
-const getTasksByProject = async (projectId, ownerId, reqQuery = {}) => {
-  const project = await Project.findOne({ _id: projectId, owner: ownerId }).lean();
+const getTasksByProject = async (projectId, userOrId, reqQuery = {}) => {
+  const userId = typeof userOrId === "object" ? userOrId._id : userOrId;
+  const clientRef = typeof userOrId === "object" ? userOrId.clientRef : null;
+
+  const projectFilter = { _id: projectId };
+  if (clientRef) {
+    projectFilter.$or = [{ owner: userId }, { clientId: clientRef }];
+  } else {
+    projectFilter.owner = userId;
+  }
+
+  const project = await Project.findOne(projectFilter).lean();
   if (!project) throw ApiError.notFound("Project not found");
 
-  const baseQuery = Task.find({ projectId });
+  const baseQuery = Task.find({ projectId, isDeleted: { $ne: true } });
   return new QueryBuilder(baseQuery, reqQuery)
     .filter()
     .search(["title", "description"])

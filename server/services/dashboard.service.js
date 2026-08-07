@@ -1,10 +1,7 @@
 const Project      = require("../models/Project");
 const Task         = require("../models/Task");
 const Invoice      = require("../models/Invoice");
-const Payment      = require("../models/Payment");
-const Client       = require("../models/Client");
 const Notification = require("../models/Notification");
-const { cacheGet, cacheSet } = require("../config/redis");
 
 /**
  * Single-call dashboard summary.

@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, Folder, Search, LayoutGrid, List,
   Trash2, Pencil, Calendar, DollarSign, ArrowRight,
-  Sparkles, ChevronDown, ExternalLink,
+  Sparkles, ChevronDown, ExternalLink, FolderKanban,
 } from "lucide-react";
 import useProjectStore from "../../store/projectStore";
 import Modal from "../../components/ui/Modal";

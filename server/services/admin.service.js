@@ -1,7 +1,6 @@
 const User    = require("../models/User");
 const Project = require("../models/Project");
 const Invoice = require("../models/Invoice");
-const Payment = require("../models/Payment");
 const AiLog   = require("../models/AiLog");
 const Config  = require("../models/Config");
 const ApiError = require("../utils/ApiError");

@@ -8,7 +8,7 @@ const getProfile = async (userId) => {
 };
 
 const updateProfile = async (userId, updates) => {
-  const allowed = ["name", "avatar"];
+  const allowed = ["name", "avatar", "phone", "title", "bio", "company", "address", "preferences"];
   const filtered = Object.fromEntries(
     Object.entries(updates).filter(([k]) => allowed.includes(k))
   );

@@ -14,7 +14,7 @@ const DURATION_OPTIONS = [
 const parseCustomDateTime = (dateText, timeText) => {
   if (!dateText) return "";
   let yyyy, mm, dd;
-  const dParts = dateText.split(/[\/\-\.]/);
+  const dParts = dateText.split(/[-/.]/);
   if (dParts.length === 3) {
     if (dParts[0].length === 4) {
       [yyyy, mm, dd] = dParts;

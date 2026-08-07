@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, Users, Search, Mail, Building2,
   Phone, Trash2, Pencil, LayoutGrid, List,
-  ExternalLink, Folder, DollarSign, X,
+  ExternalLink, Folder, DollarSign, X, FolderKanban,
 } from "lucide-react";
 import useClientStore from "../../store/clientStore";
 import useDebounce from "../../hooks/useDebounce";

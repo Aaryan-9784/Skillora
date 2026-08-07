@@ -158,6 +158,7 @@ const streamChat = async ({ userId, messages, feature = "chat", projectId, res }
 
   let fullResponse = "";
   let tokensUsed   = { prompt: 0, completion: 0, total: 0 };
+  const lastMessage = Array.isArray(messages) && messages.length > 0 ? messages[messages.length - 1] : null;
 
   try {
     const genAI = getClient();
@@ -173,7 +174,6 @@ const streamChat = async ({ userId, messages, feature = "chat", projectId, res }
 
     // Split history (all but last) from the current prompt
     const history     = messages.slice(0, -1);
-    const lastMessage = messages[messages.length - 1];
 
     const geminiHistory = toGeminiHistory(history, systemCtx);
 

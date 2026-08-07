@@ -9,6 +9,11 @@ const userSchema = new Schema(
     email:    { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, select: false, minlength: 8 },
     avatar:   { type: String, default: "" },
+    phone:    { type: String, default: "" },
+    title:    { type: String, default: "" },
+    bio:      { type: String, default: "" },
+    company:  { type: String, default: "" },
+    address:  { type: String, default: "" },
 
     // OAuth
     provider:   { type: String, enum: ["local", "google", "github"], default: "local" },

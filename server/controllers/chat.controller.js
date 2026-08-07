@@ -34,8 +34,12 @@ const getProjectConversation = asyncHandler(async (req, res) => {
     if (project?.owner && project.owner._id.toString() !== req.user._id.toString()) {
       participants.push(project.owner._id);
     }
-    if (project?.clientId?.userRef && project.clientId.userRef.toString() !== req.user._id.toString()) {
-      participants.push(project.clientId.userRef);
+    if (project?.clientId) {
+      const User = require("../models/User");
+      const clientUser = await User.findOne({ clientRef: project.clientId._id || project.clientId, role: "client" });
+      if (clientUser && clientUser._id.toString() !== req.user._id.toString()) {
+        participants.push(clientUser._id);
+      }
     }
 
     conversation = await Conversation.create({

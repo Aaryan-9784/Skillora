@@ -1,4 +1,3 @@
-const passport    = require("passport");
 const asyncHandler = require("../utils/asyncHandler");
 const ApiResponse  = require("../utils/ApiResponse");
 const ApiError     = require("../utils/ApiError");
