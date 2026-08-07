@@ -31,6 +31,10 @@ const getFreelancers = asyncHandler(async (req, res) => {
     ];
   }
 
+  if (skill) {
+    filter.skills = skill;
+  }
+
   const freelancers = await User.find(filter)
     .populate("skills", "name category")
     .select("name email avatar title bio company hourlyRate averageRating totalReviews totalEarnings skills portfolioItems createdAt")

@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Mic } from "lucide-react";
+import toast from "react-hot-toast";
 import useAiStore from "../../store/aiStore";
 
 const SLASH_COMMANDS = [
@@ -24,6 +25,7 @@ const SLASH_PROMPTS = {
 const AIInputBar = () => {
   const { sendMessage, isStreaming } = useAiStore();
   const [input, setInput]     = useState("");
+  const [slash, setSlash]     = useState([]);
   const [focused, setFocused] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const inputRef = useRef(null);

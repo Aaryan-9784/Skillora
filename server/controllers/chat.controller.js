@@ -5,7 +5,7 @@ const Conversation   = require("../models/Conversation");
 const Message        = require("../models/Message");
 const Project        = require("../models/Project");
 const notify         = require("../utils/notify");
-const { emitToUser, getIO } = require("../config/socket");
+const { getIO } = require("../config/socket");
 
 // Get or Create single project conversation
 const getProjectConversation = asyncHandler(async (req, res) => {

@@ -27,6 +27,7 @@ const SLASH_COMMANDS = [
 const WidgetInputBar = () => {
   const { sendMessage, isStreaming } = useAiStore();
   const [input, setInput] = useState("");
+  const [slashHints, setSlashHints] = useState([]);
   const [focused, setFocused] = useState(false);
   const [webSearchEnabled, setWebSearch] = useState(false);
   const [attachedFile, setAttachedFile] = useState(null);
