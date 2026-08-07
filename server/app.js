@@ -26,6 +26,10 @@ const uploadRoutes       = require("./routes/upload.routes");
 const clientPortalRoutes = require("./routes/clientPortal.routes");
 const chatRoutes         = require("./routes/chat.routes");
 const meetingRoutes      = require("./routes/meeting.routes");
+const escrowRoutes       = require("./routes/escrow.routes");
+const reviewRoutes       = require("./routes/review.routes");
+const submissionRoutes   = require("./routes/submission.routes");
+const disputeRoutes      = require("./routes/dispute.routes");
 
 const app = express();
 
@@ -88,6 +92,10 @@ app.use("/api/client",        clientPortalRoutes);
 app.use("/api/chat",          chatRoutes);
 app.use("/api/meetings",      meetingRoutes);
 app.use("/api/calls",         meetingRoutes);
+app.use("/api/escrow",        escrowRoutes);
+app.use("/api/reviews",       reviewRoutes);
+app.use("/api/submissions",   submissionRoutes);
+app.use("/api/disputes",      disputeRoutes);
 
 // ── 404 ───────────────────────────────────────────────────
 app.use((req, res) =>

@@ -192,28 +192,31 @@ const ProfileTab = ({ user, setUser }) => {
       <SectionCard title="Profile Information" description="Your public identity on Skillora">
         <div className="flex items-start gap-5 mb-6">
           {/* Avatar */}
-          <div className="relative shrink-0 group">
+          <div className="relative shrink-0 group w-[72px] h-[72px] rounded-2xl overflow-hidden">
             {user?.avatar ? (
               <img
                 src={user.avatar}
                 alt={user.name}
-                className="rounded-2xl object-cover"
-                style={{ width: 72, height: 72, boxShadow: "0 0 20px rgba(99,91,255,0.3)" }}
+                className="w-full h-full rounded-2xl object-cover"
+                style={{ boxShadow: "0 0 20px rgba(99,91,255,0.3)" }}
               />
             ) : (
-              <div className="rounded-2xl flex items-center justify-center text-xl font-bold text-white"
+              <div
+                className="w-full h-full rounded-2xl flex items-center justify-center text-xl font-bold text-white"
                 style={{
-                  width: 72, height: 72,
                   background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)",
                   boxShadow: "0 0 20px rgba(99,91,255,0.45)",
-                }}>
+                }}
+              >
                 {getInitials(user?.name)}
               </div>
             )}
-            
+
             {/* Overlay */}
-            <div className="absolute inset-0 rounded-2xl flex items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
-              style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(3px)" }}>
+            <div
+              className="absolute inset-0 rounded-2xl flex items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 overflow-hidden"
+              style={{ background: "rgba(0,0,0,0.72)", backdropFilter: "blur(3px)" }}
+            >
               {uploadingAvatar || deletingAvatar ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
@@ -222,18 +225,18 @@ const ProfileTab = ({ user, setUser }) => {
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     title="Change photo"
-                    className="p-1.5 rounded-xl hover:bg-white/20 text-white transition-colors cursor-pointer"
+                    className="w-7 h-7 rounded-xl bg-purple-600/80 hover:bg-purple-500 text-white flex items-center justify-center transition-all cursor-pointer shadow-lg border border-purple-400/30"
                   >
-                    <Camera size={16} />
+                    <Camera size={14} />
                   </button>
                   {user?.avatar && (
                     <button
                       type="button"
                       onClick={handleDeleteAvatar}
                       title="Delete photo"
-                      className="p-1.5 rounded-xl hover:bg-red-500/30 text-red-400 transition-colors cursor-pointer"
+                      className="w-7 h-7 rounded-xl bg-rose-600/80 hover:bg-rose-500 text-white flex items-center justify-center transition-all cursor-pointer shadow-lg border border-rose-400/30"
                     >
-                      <Trash2 size={16} />
+                      <Trash2 size={14} />
                     </button>
                   )}
                 </>

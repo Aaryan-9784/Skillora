@@ -41,6 +41,23 @@ const userSchema = new Schema(
     // Skills (denormalized array of refs for fast profile reads)
     skills: [{ type: Schema.Types.ObjectId, ref: "Skill" }],
 
+    // Freelancer Marketplace Profile
+    hourlyRate:      { type: Number, default: 0, min: 0 },
+    averageRating:   { type: Number, default: 0, min: 0, max: 5 },
+    totalReviews:    { type: Number, default: 0, min: 0 },
+    totalEarnings:   { type: Number, default: 0, min: 0 },
+    isPublicProfile: { type: Boolean, default: true },
+    portfolioItems: [
+      {
+        title:       { type: String, required: true },
+        description: { type: String, default: "" },
+        image:       { type: String, default: "" },
+        link:        { type: String, default: "" },
+        tags:        [{ type: String }],
+        createdAt:   { type: Date, default: Date.now }
+      }
+    ],
+
     // Preferences (denormalized — avoids extra collection for simple settings)
     preferences: {
       currency:      { type: String, default: "USD" },

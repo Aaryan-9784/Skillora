@@ -3,7 +3,7 @@ import { Outlet, NavLink, useNavigate, useLocation, Link } from "react-router-do
 import {
   LayoutDashboard, Users, TrendingUp, Settings,
   Zap, Shield, LogOut, ChevronRight, Bell,
-  ChevronDown, User, Home,
+  ChevronDown, User, Home, Scale,
 } from "lucide-react";
 
 const ADMIN_CONFIG = {

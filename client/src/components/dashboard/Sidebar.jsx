@@ -5,6 +5,7 @@ import {
   LayoutDashboard, Folder, ListTodo,
   Users, CreditCard, Sparkles, Settings, Zap,
   ChevronRight, Bot, LogOut, User, MessageSquare,
+  ShoppingBag, UserCheck,
 } from "lucide-react";
 import useAuthStore from "../../store/authStore";
 import { getInitials } from "../../utils/helpers";
@@ -24,6 +25,13 @@ const NAV_SECTIONS = [
       { to: "/clients",  icon: Users,         label: "Clients" },
       { to: "/messages", icon: MessageSquare, label: "Messages" },
       { to: "/payments", icon: CreditCard,    label: "Payments" },
+    ],
+  },
+  {
+    label: "MARKETPLACE",
+    items: [
+      { to: "/marketplace", icon: ShoppingBag, label: "Explore Jobs" },
+      { to: "/freelancers", icon: UserCheck,   label: "Freelancers" },
     ],
   },
   {

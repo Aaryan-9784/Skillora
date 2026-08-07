@@ -10,6 +10,8 @@ const configSchema = new Schema(
     allowRegistrations:  { type: Boolean, default: true },
     maxAiRequestsPerDay: { type: Number, default: 50, min: 0 },
     defaultPlan:         { type: String, default: "free" },
+    defaultCommissionPercentage: { type: Number, default: 10, min: 0, max: 100 },
+    autoApproveDays:     { type: Number, default: 14, min: 1 },
   },
   { timestamps: true }
 );

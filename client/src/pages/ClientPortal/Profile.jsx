@@ -356,55 +356,59 @@ const ClientProfile = () => {
                   
                   {/* Interactive Avatar with Upload Trigger */}
                   <div className="relative group shrink-0">
-                    {avatarUrl ? (
-                      <img
-                        src={avatarUrl}
-                        alt={form.name}
-                        className="w-20 h-20 rounded-2xl object-cover shadow-xl border border-purple-500/30"
-                      />
-                    ) : (
-                      <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-black text-white shadow-xl"
-                        style={{ background: "linear-gradient(135deg,#635BFF 0%,#8579FF 100%)", boxShadow: "0 0 24px rgba(99,91,255,0.4)" }}>
-                        {getInitials(form.name || user?.name)}
-                      </div>
-                    )}
-                    
-                    {/* Online status dot */}
-                    <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-[#0B0F1A]"
-                      style={{ background: "#22C55E", boxShadow: "0 0 8px rgba(34,197,94,0.8)" }} />
-
-                    {/* Camera Upload & Delete Overlay */}
-                    <div
-                      className="absolute inset-0 rounded-2xl flex items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                      style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(4px)" }}
-                    >
-                      {avatarLoading || deletingAvatar ? (
-                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <div className="w-20 h-20 rounded-2xl overflow-hidden relative">
+                      {avatarUrl ? (
+                        <img
+                          src={avatarUrl}
+                          alt={form.name}
+                          className="w-20 h-20 rounded-2xl object-cover shadow-xl border border-purple-500/30"
+                        />
                       ) : (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => fileRef.current?.click()}
-                            title="Change photo"
-                            className="flex flex-col items-center justify-center p-1.5 rounded-xl hover:bg-white/20 transition-colors text-white cursor-pointer"
-                          >
-                            <Camera size={16} />
-                            <span className="text-[9px] font-bold mt-0.5">Change</span>
-                          </button>
-                          {avatarUrl && (
+                        <div
+                          className="w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-black text-white shadow-xl"
+                          style={{ background: "linear-gradient(135deg,#635BFF 0%,#8579FF 100%)", boxShadow: "0 0 24px rgba(99,91,255,0.4)" }}
+                        >
+                          {getInitials(form.name || user?.name)}
+                        </div>
+                      )}
+
+                      {/* Camera Upload & Delete Overlay */}
+                      <div
+                        className="absolute inset-0 rounded-2xl flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200 overflow-hidden"
+                        style={{ background: "rgba(0,0,0,0.72)", backdropFilter: "blur(4px)" }}
+                      >
+                        {avatarLoading || deletingAvatar ? (
+                          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        ) : (
+                          <>
                             <button
                               type="button"
-                              onClick={handleDeleteAvatar}
-                              title="Delete photo"
-                              className="flex flex-col items-center justify-center p-1.5 rounded-xl hover:bg-red-500/30 transition-colors text-red-400 cursor-pointer"
+                              onClick={() => fileRef.current?.click()}
+                              title="Change photo"
+                              className="w-8 h-8 rounded-xl bg-purple-600/80 hover:bg-purple-500 text-white flex items-center justify-center transition-all cursor-pointer shadow-lg border border-purple-400/30"
                             >
-                              <Trash2 size={16} />
-                              <span className="text-[9px] font-bold mt-0.5">Delete</span>
+                              <Camera size={15} />
                             </button>
-                          )}
-                        </>
-                      )}
+                            {avatarUrl && (
+                              <button
+                                type="button"
+                                onClick={handleDeleteAvatar}
+                                title="Delete photo"
+                                className="w-8 h-8 rounded-xl bg-rose-600/80 hover:bg-rose-500 text-white flex items-center justify-center transition-all cursor-pointer shadow-lg border border-rose-400/30"
+                              >
+                                <Trash2 size={15} />
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
+
+                    {/* Online status dot */}
+                    <span
+                      className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-[#0B0F1A] z-10"
+                      style={{ background: "#22C55E", boxShadow: "0 0 8px rgba(34,197,94,0.8)" }}
+                    />
                   </div>
 
                   <div className="flex-1 min-w-0">

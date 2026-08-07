@@ -16,6 +16,11 @@ import KanbanBoard from "../../components/projects/KanbanBoard";
 import { formatDate, formatCurrency } from "../../utils/helpers";
 import api from "../../services/api";
 import toast from "react-hot-toast";
+import useAuthStore from "../../store/authStore";
+import EscrowStatusCard from "../../components/projects/EscrowStatusCard";
+import DeliverableReviewCard from "../../components/projects/DeliverableReviewCard";
+import WorkSubmissionModal from "../../components/projects/WorkSubmissionModal";
+import ReviewModal from "../../components/projects/ReviewModal";
 
 const TASK_PRIORITIES = [
   { value: "low", label: "Low" }, { value: "medium", label: "Medium" },
@@ -48,8 +53,11 @@ const ProjectDetail = () => {
   const { id } = useParams();
   const { currentProject, tasks, fetchProject, fetchTasks, createTask, updateProject, isLoading } = useProjectStore();
   const { sendMessage } = useAiStore();
+  const { user } = useAuthStore();
   const [tab, setTab]             = useState("kanban");
   const [taskModal, setTaskModal] = useState(false);
+  const [submitModal, setSubmitModal] = useState(false);
+  const [reviewModal, setReviewModal] = useState(false);
   const [addingTask, setAddingTask] = useState(false);
   const [aiLoading, setAiLoading]   = useState(false);
 
@@ -71,7 +79,6 @@ const ProjectDetail = () => {
     try {
       const { data } = await api.get(`/projects/${id}/ai-tasks`);
       const suggested = data.data.tasks || [];
-      // Bulk create suggested tasks
       await Promise.all(
         suggested.map((t) => createTask({ ...t, projectId: id }))
       );
@@ -87,20 +94,21 @@ const ProjectDetail = () => {
   if (!currentProject) return null;
 
   const p = currentProject;
+  const userRole = user?.role || "freelancer";
   const TABS = [
     { id: "kanban",  label: "Kanban",   icon: CheckSquare, count: tasks.length },
     { id: "overview", label: "Overview", icon: DollarSign },
   ];
 
   return (
-    <div className="p-6 lg:p-8 max-w-7xl mx-auto">
-      <Link to="/projects" className="flex items-center gap-1.5 text-sm text-ink-secondary hover:text-ink mb-6 transition-colors">
+    <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+      <Link to="/projects" className="flex items-center gap-1.5 text-sm text-ink-secondary hover:text-ink transition-colors">
         <ArrowLeft size={14} /> Back to projects
       </Link>
 
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-        className="flex flex-wrap items-start justify-between gap-4 mb-6">
+        className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 mb-1">
             <h1 className="text-2xl font-bold text-ink dark:text-slate-100 truncate">{p.title}</h1>
@@ -108,7 +116,15 @@ const ProjectDetail = () => {
           </div>
           {p.description && <p className="text-sm text-ink-secondary line-clamp-2">{p.description}</p>}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {userRole === "freelancer" && (
+            <Button size="sm" variant="outline" onClick={() => setSubmitModal(true)}>
+              Submit Work
+            </Button>
+          )}
+          <Button size="sm" variant="outline" onClick={() => setReviewModal(true)}>
+            Leave Review
+          </Button>
           <Button variant="secondary" size="sm" icon={<Pencil size={13} />}>Edit</Button>
           <Button variant="secondary" size="sm" icon={<Sparkles size={13} />} loading={aiLoading} onClick={handleAiTasks}>
             AI Tasks
@@ -116,6 +132,12 @@ const ProjectDetail = () => {
           <Button size="sm" icon={<Plus size={14} />} onClick={() => setTaskModal(true)}>Add Task</Button>
         </div>
       </motion.div>
+
+      {/* Escrow Vault Card */}
+      <EscrowStatusCard projectId={id} userRole={userRole} onRefresh={() => fetchProject(id)} />
+
+      {/* Deliverable Review Card */}
+      <DeliverableReviewCard projectId={id} userRole={userRole} onApproved={() => fetchProject(id)} />
 
       {/* Meta row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
@@ -172,6 +194,23 @@ const ProjectDetail = () => {
       <Modal isOpen={taskModal} onClose={() => setTaskModal(false)} title="New Task">
         <TaskForm projectId={id} onSubmit={handleAddTask} onClose={() => setTaskModal(false)} loading={addingTask} />
       </Modal>
+
+      {submitModal && (
+        <WorkSubmissionModal
+          projectId={id}
+          onClose={() => setSubmitModal(false)}
+          onSuccess={() => fetchProject(id)}
+        />
+      )}
+
+      {reviewModal && (
+        <ReviewModal
+          projectId={id}
+          revieweeId={userRole === "client" ? (p.assignedFreelancer || p.owner) : (p.clientUser || p.owner)}
+          onClose={() => setReviewModal(false)}
+          onSuccess={() => fetchProject(id)}
+        />
+      )}
     </div>
   );
 };

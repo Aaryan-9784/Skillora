@@ -96,6 +96,10 @@ const ClientProjects  = lazy(() => import("./pages/ClientPortal/Projects"));
 import ClientMessages from "./pages/ClientPortal/Messages";
 const ClientProfile   = lazy(() => import("./pages/ClientPortal/Profile"));
 
+// Marketplace + Directory
+const MarketplacePage          = lazy(() => import("./pages/Marketplace"));
+const FreelancersDirectoryPage = lazy(() => import("./pages/Freelancers"));
+
 const PageLoader = () => <Spinner size="lg" className="min-h-screen" />;
 
 // Simple error boundary to catch lazy-load failures gracefully
@@ -198,6 +202,8 @@ const App = () => {
               <Route path="/skills"          element={<Skills />} />
               <Route path="/ai"              element={<AI />} />
               <Route path="/profile"         element={<Profile />} />
+              <Route path="/marketplace"     element={<MarketplacePage />} />
+              <Route path="/freelancers"     element={<FreelancersDirectoryPage />} />
             </Route>
           </Route>
 
