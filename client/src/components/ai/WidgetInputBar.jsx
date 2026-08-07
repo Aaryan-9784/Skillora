@@ -30,7 +30,56 @@ const WidgetInputBar = () => {
   const [focused, setFocused] = useState(false);
   const [webSearchEnabled, setWebSearch] = useState(false);
   const [attachedFile, setAttachedFile] = useState(null);
-  const [slashHints, setSlashHints] = useState([]);
+  const [isListening, setIsListening] = useState(false);
+
+  const handleVoiceInput = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast.error("Speech recognition is not supported in this browser.");
+      return;
+    }
+
+    if (isListening) {
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = "en-US";
+      recognition.interimResults = false;
+      recognition.continuous = false;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        toast.success("Listening... Speak into your microphone");
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        if (transcript) {
+          setInput((prev) => (prev ? `${prev} ${transcript}` : transcript));
+          toast.success("Voice transcribed successfully!");
+        }
+        setIsListening(false);
+      };
+
+      recognition.onerror = (err) => {
+        console.error("Speech recognition error:", err);
+        setIsListening(false);
+        toast.error("Voice input error. Please try again.");
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognition.start();
+    } catch (err) {
+      setIsListening(false);
+      toast.error("Could not access microphone.");
+    }
+  };
   
   const inputRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -172,11 +221,15 @@ const WidgetInputBar = () => {
         {/* Mic / Voice Button */}
         <button
           type="button"
-          onClick={() => toast.success("Voice input active")}
-          className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-slate-800/80 transition-all cursor-pointer shrink-0"
-          title="Voice input"
+          onClick={handleVoiceInput}
+          className={`p-1.5 rounded-full transition-all cursor-pointer shrink-0 ${
+            isListening
+              ? "bg-red-500/30 text-red-400 border border-red-500/50 animate-pulse shadow-sm shadow-red-500/30"
+              : "text-slate-400 hover:text-white hover:bg-slate-800/80"
+          }`}
+          title={isListening ? "Listening... Click to stop" : "Voice input"}
         >
-          <Mic size={16} />
+          <Mic size={16} className={isListening ? "animate-bounce" : ""} />
         </button>
 
         {/* Text Input Field */}

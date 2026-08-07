@@ -25,8 +25,56 @@ const AIInputBar = () => {
   const { sendMessage, isStreaming } = useAiStore();
   const [input, setInput]     = useState("");
   const [focused, setFocused] = useState(false);
-  const [slash, setSlash]     = useState([]);
+  const [isListening, setIsListening] = useState(false);
   const inputRef = useRef(null);
+
+  const handleVoiceInput = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast.error("Speech recognition is not supported in this browser.");
+      return;
+    }
+
+    if (isListening) {
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = "en-US";
+      recognition.interimResults = false;
+      recognition.continuous = false;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        toast.success("Listening... Speak into your microphone");
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        if (transcript) {
+          setInput((prev) => (prev ? `${prev} ${transcript}` : transcript));
+          toast.success("Voice transcribed successfully!");
+        }
+        setIsListening(false);
+      };
+
+      recognition.onerror = () => {
+        setIsListening(false);
+        toast.error("Voice input error. Please try again.");
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognition.start();
+    } catch (err) {
+      setIsListening(false);
+      toast.error("Could not access microphone.");
+    }
+  };
 
   const handleChange = (e) => {
     const val = e.target.value;
@@ -123,11 +171,17 @@ const AIInputBar = () => {
             <div className="flex-1" />
 
             {/* Mic */}
-            <button className="w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-150"
-              style={{ color: "#374151" }}
-              onMouseEnter={e => { e.currentTarget.style.color = "#6B7280"; e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
-              onMouseLeave={e => { e.currentTarget.style.color = "#374151"; e.currentTarget.style.background = "transparent"; }}>
-              <Mic size={13} />
+            <button
+              type="button"
+              onClick={handleVoiceInput}
+              title={isListening ? "Listening... Click to stop" : "Voice input"}
+              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-150 cursor-pointer ${
+                isListening ? "bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse" : ""
+              }`}
+              style={isListening ? {} : { color: "#374151" }}
+              onMouseEnter={e => { if (!isListening) { e.currentTarget.style.color = "#6B7280"; e.currentTarget.style.background = "rgba(255,255,255,0.05)"; } }}
+              onMouseLeave={e => { if (!isListening) { e.currentTarget.style.color = "#374151"; e.currentTarget.style.background = "transparent"; } }}>
+              <Mic size={13} className={isListening ? "animate-bounce" : ""} />
             </button>
 
             {/* Send */}
