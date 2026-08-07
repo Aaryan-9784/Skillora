@@ -31,7 +31,6 @@ const NAV_SECTIONS = [
     label: "MARKETPLACE",
     items: [
       { to: "/marketplace", icon: ShoppingBag, label: "Explore Jobs" },
-      { to: "/freelancers", icon: UserCheck,   label: "Freelancers" },
     ],
   },
   {

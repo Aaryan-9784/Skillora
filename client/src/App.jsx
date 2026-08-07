@@ -15,7 +15,6 @@ const TITLE_MAP = {
   "/payments": "Payments — Skillora",
   "/payments/new": "Create Invoice — Skillora",
   "/marketplace": "Explore Jobs — Skillora",
-  "/freelancers": "Freelancers Directory — Skillora",
   "/skills": "Skill Matrix — Skillora",
   "/profile": "My Profile — Skillora",
   "/admin": "Admin Dashboard — Skillora",
@@ -201,7 +200,6 @@ const App = () => {
               <Route path="/skills"          element={<Skills />} />
               <Route path="/profile"         element={<Profile />} />
               <Route path="/marketplace"     element={<MarketplacePage />} />
-              <Route path="/freelancers"     element={<FreelancersDirectoryPage />} />
             </Route>
           </Route>
 
