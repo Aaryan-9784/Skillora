@@ -21,7 +21,7 @@ import NotificationsPanel from "../components/dashboard/NotificationsPanel";
 import useClickOutside from "../hooks/useClickOutside";
 
 const CLIENT_CONFIG = {
-  "/client/dashboard": { title: "Overview", icon: LayoutDashboard },
+  "/client/dashboard": { title: "Dashboard", icon: LayoutDashboard },
   "/client/projects":  { title: "Projects", icon: FolderOpen },
   "/client/invoices":  { title: "Invoices", icon: FileText },
   "/client/messages":  { title: "Messages", icon: MessageSquare },
@@ -32,7 +32,7 @@ const NAV_SECTIONS = [
   {
     label: "MAIN",
     items: [
-      { to: "/client/dashboard", icon: LayoutDashboard, label: "Overview", end: true },
+      { to: "/client/dashboard", icon: LayoutDashboard, label: "Dashboard", end: true },
       { to: "/client/projects",  icon: FolderOpen,      label: "Projects" },
       { to: "/client/invoices",  icon: FileText,        label: "Invoices" },
       { to: "/client/messages",  icon: MessageSquare,   label: "Messages" },
@@ -490,7 +490,7 @@ const ClientLayout = () => {
                     Skillora
                   </p>
                   <p className="text-[9.5px] font-bold tracking-[0.16em] uppercase mt-1 text-purple-400">
-                    CLIENT WORKSPACE
+                    CLIENT PORTAL
                   </p>
                 </motion.div>
               )}

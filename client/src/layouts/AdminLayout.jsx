@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 const ADMIN_CONFIG = {
-  "/admin":          { title: "Overview",          icon: LayoutDashboard },
+  "/admin":          { title: "Dashboard",         icon: LayoutDashboard },
   "/admin/users":    { title: "Users",             icon: Users },
   "/admin/ai":       { title: "AI Studio",         icon: Bot },
   "/admin/profile":  { title: "Profile",           icon: User },
@@ -31,7 +31,7 @@ const NAV_SECTIONS = [
   {
     label: "MAIN",
     items: [
-      { to: "/admin",          icon: LayoutDashboard, label: "Overview", end: true },
+      { to: "/admin",          icon: LayoutDashboard, label: "Dashboard", end: true },
       { to: "/admin/users",    icon: Users,           label: "Users"              },
     ],
   },
@@ -475,7 +475,7 @@ const AdminLayout = () => {
                     Skillora
                   </p>
                   <p className="text-[9.5px] font-bold tracking-[0.16em] uppercase mt-1 text-purple-400">
-                    ADMIN WORKSPACE
+                    ADMIN PORTAL
                   </p>
                 </motion.div>
               )}

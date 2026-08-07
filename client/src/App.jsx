@@ -8,25 +8,24 @@ const TITLE_MAP = {
   "/register": "Create Account — Skillora",
   "/forgot-password": "Reset Password — Skillora",
   "/dashboard": "Dashboard — Skillora",
-  "/projects": "Projects & Kanban — Skillora",
+  "/projects": "Projects — Skillora",
   "/tasks": "Tasks — Skillora",
-  "/clients": "Client CRM — Skillora",
-  "/messages": "Project Messages — Skillora",
-  "/payments": "Invoices & Payments — Skillora",
+  "/clients": "Clients — Skillora",
+  "/messages": "Messages — Skillora",
+  "/payments": "Payments — Skillora",
   "/payments/new": "Create Invoice — Skillora",
+  "/marketplace": "Explore Jobs — Skillora",
+  "/freelancers": "Freelancers Directory — Skillora",
   "/skills": "Skill Matrix — Skillora",
   "/profile": "My Profile — Skillora",
-  "/settings": "Account Settings — Skillora",
-  "/admin": "Admin Command Center — Skillora",
+  "/admin": "Admin Dashboard — Skillora",
   "/admin/users": "User Management — Skillora",
   "/admin/ai": "AI Studio — Skillora Admin",
-  "/admin/revenue": "Revenue Analytics — Skillora",
-  "/admin/settings": "Platform Configuration — Skillora",
   "/admin/profile": "Admin Profile — Skillora",
-  "/client/dashboard": "Client Portal — Skillora",
+  "/client/dashboard": "Client Dashboard — Skillora",
   "/client/invoices": "Client Invoices — Skillora",
   "/client/projects": "Client Projects — Skillora",
-  "/client/messages": "Project Messages — Skillora",
+  "/client/messages": "Client Messages — Skillora",
   "/client/profile": "Client Profile — Skillora",
 };
 
@@ -40,7 +39,7 @@ const TitleUpdater = () => {
     } else if (path.startsWith("/projects/")) {
       document.title = "Project Details — Skillora";
     } else if (path.startsWith("/clients/")) {
-      document.title = "Client Profile — Skillora";
+      document.title = "Client Details — Skillora";
     } else if (path.startsWith("/payments/")) {
       document.title = "Invoice Details — Skillora";
     } else {
@@ -81,8 +80,8 @@ const InvoiceBuilder = lazy(() => import("./pages/Payments/InvoiceBuilder"));
 const InvoiceDetail  = lazy(() => import("./pages/Payments/InvoiceDetail"));
 const Skills         = lazy(() => import("./pages/Skills"));
 const AI             = lazy(() => import("./pages/AI"));
-const Messages         = lazy(() => import("./pages/Messages"));
-const Profile          = lazy(() => import("./pages/Profile"));
+const Messages       = lazy(() => import("./pages/Messages"));
+const Profile        = lazy(() => import("./pages/Profile"));
 
 // Admin — direct imports (not lazy) to avoid HMR race condition with file writes
 import AdminOverview from "./pages/Admin/overview";

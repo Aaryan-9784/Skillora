@@ -259,7 +259,7 @@ const AdminOverview = () => {
           <div>
             <h1 className="text-2xl lg:text-3xl font-black tracking-tight leading-tight"
               style={{ background: "linear-gradient(135deg,#FFFFFF 30%,#A78BFA 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              Platform Overview
+              Admin Dashboard
             </h1>
             <p className="text-xs lg:text-sm mt-1 font-medium" style={{ color: "rgba(148,163,184,0.7)" }}>
               Key metrics and real-time activity across your platform

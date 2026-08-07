@@ -33,7 +33,7 @@ const QUICK_ACTIONS = [
   { id: "payments",  icon: CreditCard,      label: "Go to Payments",   shortcut: "M", path: "/payments",  color: "#00D4FF" },
   { id: "dashboard", icon: LayoutDashboard, label: "Go to Dashboard",  shortcut: "D", path: "/dashboard", color: "#8B5CF6" },
   { id: "ai",        icon: Sparkles,        label: "Open AI Assistant",shortcut: "A", path: "/admin/ai",  color: "#EC4899" },
-  { id: "settings",  icon: Settings,        label: "Settings",         shortcut: "S", path: "/settings",  color: "#6B7280" },
+  { id: "profile",   icon: User,            label: "Go to Profile",    shortcut: "P", path: "/profile",   color: "#6B7280" },
 ];
 
 const AI_SUGGESTIONS = [

@@ -6,6 +6,7 @@ import {
   CheckSquare, Users, CreditCard, Sparkles,
   FolderPlus, ListPlus, UserPlus, FileText, Home,
   ChevronRight, LayoutDashboard, Settings, Bot, MessageSquare,
+  ShoppingBag, UserCheck,
 } from "lucide-react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import useAuthStore from "../../store/authStore";
@@ -25,9 +26,10 @@ const PATH_CONFIG = {
   "/payments":     { title: "Payments",        icon: CreditCard },
   "/invoices":     { title: "Payments",        icon: CreditCard },
   "/payments/new": { title: "New Invoice",     icon: FileText },
+  "/marketplace":  { title: "Explore Jobs",    icon: ShoppingBag },
+  "/freelancers":  { title: "Freelancers",     icon: UserCheck },
   "/skills":       { title: "Skills",          icon: Sparkles },
   "/profile":      { title: "Profile",         icon: User },
-  "/settings":     { title: "Settings",        icon: Settings },
 };
 
 // ─── MAIN NAVBAR ───────────────────────────────────────────────────────────

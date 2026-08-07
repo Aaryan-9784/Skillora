@@ -22,7 +22,7 @@ const PlanGate = ({ requires, children }) => {
         <p className="text-sm font-semibold text-white">
           Requires {requires.charAt(0).toUpperCase() + requires.slice(1)} plan
         </p>
-        <Link to="/settings?tab=billing" className="btn-primary btn-sm">
+        <Link to="/profile" className="btn-primary btn-sm">
           Upgrade now
         </Link>
       </div>
