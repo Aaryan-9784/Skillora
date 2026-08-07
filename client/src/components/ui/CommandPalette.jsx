@@ -32,7 +32,7 @@ const QUICK_ACTIONS = [
   { id: "clients",   icon: Users,           label: "Go to Clients",    shortcut: "C", path: "/clients",   color: "#F59E0B" },
   { id: "payments",  icon: CreditCard,      label: "Go to Payments",   shortcut: "M", path: "/payments",  color: "#00D4FF" },
   { id: "dashboard", icon: LayoutDashboard, label: "Go to Dashboard",  shortcut: "D", path: "/dashboard", color: "#8B5CF6" },
-  { id: "ai",        icon: Sparkles,        label: "Open AI Assistant",shortcut: "A", path: "/ai",        color: "#EC4899" },
+  { id: "ai",        icon: Sparkles,        label: "Open AI Assistant",shortcut: "A", path: "/admin/ai",  color: "#EC4899" },
   { id: "settings",  icon: Settings,        label: "Settings",         shortcut: "S", path: "/settings",  color: "#6B7280" },
 ];
 
@@ -529,7 +529,7 @@ const CommandPalette = ({ isOpen, onClose }) => {
     onClose();
 
     if (item.prompt) {
-      navigate("/ai", { state: { prompt: item.prompt } });
+      navigate("/admin/ai", { state: { prompt: item.prompt } });
       return;
     }
     if (item.path) {
@@ -552,7 +552,7 @@ const CommandPalette = ({ isOpen, onClose }) => {
     if (e.key === "Enter" && isAiMode && selectableItems.length === 0 && query.length > 1) {
       e.preventDefault();
       const rawPrompt = query.slice(1).trim();
-      if (rawPrompt) { onClose(); navigate("/ai", { state: { prompt: rawPrompt } }); }
+      if (rawPrompt) { onClose(); navigate("/admin/ai", { state: { prompt: rawPrompt } }); }
     }
   }, [selected, selectableItems, isAiMode, query, onClose, executeItem, navigate]);
 

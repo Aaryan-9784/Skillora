@@ -15,11 +15,11 @@ const TITLE_MAP = {
   "/payments": "Invoices & Payments — Skillora",
   "/payments/new": "Create Invoice — Skillora",
   "/skills": "Skill Matrix — Skillora",
-  "/ai": "AI Studio — Skillora",
   "/profile": "My Profile — Skillora",
   "/settings": "Account Settings — Skillora",
   "/admin": "Admin Command Center — Skillora",
   "/admin/users": "User Management — Skillora",
+  "/admin/ai": "AI Studio — Skillora Admin",
   "/admin/revenue": "Revenue Analytics — Skillora",
   "/admin/settings": "Platform Configuration — Skillora",
   "/admin/profile": "Admin Profile — Skillora",
@@ -200,7 +200,6 @@ const App = () => {
               <Route path="/payments/new"    element={<InvoiceBuilder />} />
               <Route path="/payments/:id"    element={<InvoiceDetail />} />
               <Route path="/skills"          element={<Skills />} />
-              <Route path="/ai"              element={<AI />} />
               <Route path="/profile"         element={<Profile />} />
               <Route path="/marketplace"     element={<MarketplacePage />} />
               <Route path="/freelancers"     element={<FreelancersDirectoryPage />} />
@@ -212,6 +211,7 @@ const App = () => {
             <Route element={<AdminLayout />}>
               <Route path="/admin"           element={<AdminOverview />} />
               <Route path="/admin/users"     element={<AdminUsers />} />
+              <Route path="/admin/ai"        element={<AI />} />
               <Route path="/admin/profile"   element={<AdminProfile />} />
             </Route>
           </Route>

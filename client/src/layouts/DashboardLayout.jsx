@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import { motion } from "framer-motion";
 import Sidebar from "../components/dashboard/Sidebar";
 import Navbar from "../components/dashboard/Navbar";
@@ -15,18 +15,6 @@ const DashboardLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [cmdOpen, setCmdOpen]     = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const location = useLocation();
-  const isAiPage = location.pathname.startsWith("/ai");
-
-  useEffect(() => {
-    const handler = (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") { e.preventDefault(); setSearchOpen((o) => !o); }
-      if ((e.metaKey || e.ctrlKey) && e.key === "p") { e.preventDefault(); setCmdOpen((o) => !o); }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, []);
-
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: "#080E1A" }}>
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} />
@@ -41,7 +29,7 @@ const DashboardLayout = () => {
       </div>
       <GlobalSearch isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
       <CommandPalette isOpen={cmdOpen} onClose={() => setCmdOpen(false)} />
-      {!isAiPage && <FloatingAiButton />}
+      <FloatingAiButton />
     </div>
   );
 };

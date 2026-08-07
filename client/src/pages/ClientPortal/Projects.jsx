@@ -770,7 +770,7 @@ const ClientProjects = () => {
               style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)", boxShadow: "0 0 20px rgba(99,91,255,0.4)" }}
             >
               <Plus size={16} />
-              <span>Post New Project</span>
+              <span>New Project</span>
             </motion.button>
           </div>
         </motion.div>

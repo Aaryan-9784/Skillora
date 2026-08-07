@@ -37,7 +37,6 @@ const NAV_SECTIONS = [
   {
     label: "GROWTH",
     items: [
-      { to: "/ai",     icon: Bot,      label: "AI Studio", glow: true },
       { to: "/skills", icon: Sparkles, label: "Skills" },
     ],
   },

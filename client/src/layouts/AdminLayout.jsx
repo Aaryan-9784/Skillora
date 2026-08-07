@@ -3,12 +3,13 @@ import { Outlet, NavLink, useNavigate, useLocation, Link } from "react-router-do
 import {
   LayoutDashboard, Users, TrendingUp, Settings,
   Zap, Shield, LogOut, ChevronRight, Bell,
-  ChevronDown, User, Home, Scale,
+  ChevronDown, User, Home, Scale, Bot,
 } from "lucide-react";
 
 const ADMIN_CONFIG = {
   "/admin":          { title: "Overview",          icon: LayoutDashboard },
   "/admin/users":    { title: "Users",             icon: Users },
+  "/admin/ai":       { title: "AI Studio",         icon: Bot },
   "/admin/profile":  { title: "Profile",           icon: User },
 };
 import { motion, AnimatePresence } from "framer-motion";
@@ -32,6 +33,12 @@ const NAV_SECTIONS = [
     items: [
       { to: "/admin",          icon: LayoutDashboard, label: "Overview", end: true },
       { to: "/admin/users",    icon: Users,           label: "Users"              },
+    ],
+  },
+  {
+    label: "GROWTH",
+    items: [
+      { to: "/admin/ai",       icon: Bot,             label: "AI Studio"          },
     ],
   },
   {
@@ -399,6 +406,8 @@ const AdminNavbar = ({ onSearch }) => {
 const AdminLayout = () => {
   const { logout, user } = useAuthStore();
   const navigate         = useNavigate();
+  const location         = useLocation();
+  const isAiPage         = location.pathname.startsWith("/admin/ai");
   const [collapsed, setCollapsed]   = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [cmdOpen, setCmdOpen]       = useState(false);
@@ -507,7 +516,7 @@ const AdminLayout = () => {
 
       <GlobalSearch isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
       <CommandPalette isOpen={cmdOpen} onClose={() => setCmdOpen(false)} />
-      <FloatingAiButton />
+      {!isAiPage && <FloatingAiButton />}
     </div>
   );
 };
