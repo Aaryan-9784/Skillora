@@ -42,9 +42,6 @@ app.use(cors({
   methods:     ["GET","POST","PUT","PATCH","DELETE","OPTIONS"],
 }));
 
-// ── Razorpay webhook (raw body BEFORE json parser) ───────
-app.use("/api/billing/webhook", express.raw({ type: "application/json" }));
-
 // ── Request parsing ───────────────────────────────────────
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));

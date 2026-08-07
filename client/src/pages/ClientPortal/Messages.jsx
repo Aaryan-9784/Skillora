@@ -186,28 +186,35 @@ const ClientMessages = () => {
       <div className="relative p-6 lg:p-8 max-w-[1400px] w-full mx-auto flex flex-col space-y-4 pb-16 min-h-0">
 
         {/* ── Page Header ── */}
-        <motion.div initial={{ opacity: 0, y: -14 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: [0.16,1,0.3,1] }}
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
           className="flex flex-wrap items-center justify-between gap-4 shrink-0">
           <div>
             <h1 className="text-2xl lg:text-3xl font-black tracking-tight leading-tight"
-              style={{ background: "linear-gradient(135deg,#FFFFFF 30%,#A78BFA 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              Messages
+              style={{
+                background: "linear-gradient(135deg, #FFFFFF 30%, #A78BFA 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}>
+              Messages & Real-Time Chat
             </h1>
             <p className="text-xs lg:text-sm mt-1 font-medium" style={{ color: "rgba(148,163,184,0.7)" }}>
               Direct communication thread with your project team and freelancers
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setShowSchedule(true)}
-              className="px-4 py-2.5 rounded-full text-xs font-bold text-white flex items-center gap-2 cursor-pointer transition-all"
-              style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)", boxShadow: "0 0 20px rgba(99,91,255,0.3)" }}
-            >
-              <Calendar size={14} /> Schedule Meeting
-            </button>
-          </div>
+          <motion.button
+            whileHover={{ scale: 1.04, boxShadow: "0 0 28px rgba(99,91,255,0.55)" }}
+            whileTap={{ scale: 0.96 }}
+            onClick={() => setShowSchedule(true)}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer transition-all shrink-0"
+            style={{
+              background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)",
+              boxShadow: "0 0 20px rgba(99,91,255,0.35)",
+              border: "1px solid rgba(255,255,255,0.15)",
+            }}
+          >
+            <Calendar size={15} strokeWidth={2.5} /> Schedule Meeting
+          </motion.button>
         </motion.div>
 
         {/* ── Main 2-Column WhatsApp Web Layout Container ── */}
