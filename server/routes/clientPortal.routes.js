@@ -40,8 +40,13 @@ router.get("/invoices/:id",                getInvoiceDetail);
 router.post("/invoices/:id/pay",           initiateInvoicePayment);
 router.post("/invoices/:id/pay/verify",    verifyInvoicePayment);
 
-// Projects
+const proposalController = require("../controllers/proposal.controller");
+
+// Projects & Proposals
 router.get("/projects",                                                    getClientProjects);
+router.post("/projects",                                                   proposalController.postClientProject);
+router.get("/projects/:projectId/proposals",                              proposalController.getProjectProposals);
+router.patch("/proposals/:proposalId/respond",                            proposalController.respondToProposal);
 router.post("/projects/:id/milestones/:milestoneId/approve",               approveMilestone);
 router.post("/projects/:id/milestones/:milestoneId/request-changes",       requestMilestoneChanges);
 

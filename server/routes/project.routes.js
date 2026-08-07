@@ -8,7 +8,14 @@ const { protect }    = require("../middlewares/auth.middleware");
 const { validateProject, validateTask } = require("../validators/project.validator");
 const { checkLimit } = require("../middlewares/planGate");
 
+const proposalController = require("../controllers/proposal.controller");
+
 router.use(protect);
+
+// Marketplace & Proposals
+router.get("/explore",                  proposalController.getOpenProjects);
+router.post("/:projectId/proposals",    proposalController.submitProposal);
+router.get("/proposals/my",             proposalController.getMyProposals);
 
 // Projects
 router.route("/")

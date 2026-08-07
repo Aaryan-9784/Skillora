@@ -20,10 +20,13 @@ export const getInvoiceDetail = (id)           => api.get(`/client/invoices/${id
 export const initiatePayment  = (id)           => api.post(`/client/invoices/${id}/pay`);
 export const verifyPayment    = (id, data)     => api.post(`/client/invoices/${id}/pay/verify`, data);
 
-// ── Projects ──────────────────────────────────────────────
-export const getProjects      = (params = {}) => api.get("/client/projects", { params });
-export const approveMilestone = (projectId, milestoneId)          => api.post(`/client/projects/${projectId}/milestones/${milestoneId}/approve`);
-export const requestChanges   = (projectId, milestoneId, feedback) => api.post(`/client/projects/${projectId}/milestones/${milestoneId}/request-changes`, { feedback });
+// ── Projects & Proposals ──────────────────────────────────
+export const getProjects         = (params = {}) => api.get("/client/projects", { params });
+export const postProject          = (data)        => api.post("/client/projects", data);
+export const getProjectProposals  = (projectId)   => api.get(`/client/projects/${projectId}/proposals`);
+export const respondToProposal    = (proposalId, action) => api.patch(`/client/proposals/${proposalId}/respond`, { action });
+export const approveMilestone    = (projectId, milestoneId)          => api.post(`/client/projects/${projectId}/milestones/${milestoneId}/approve`);
+export const requestChanges      = (projectId, milestoneId, feedback) => api.post(`/client/projects/${projectId}/milestones/${milestoneId}/request-changes`, { feedback });
 
 // ── Project tasks (read-only via freelancer API) ──────────
 export const getProjectTasks  = (projectId) => api.get(`/projects/${projectId}/tasks`);

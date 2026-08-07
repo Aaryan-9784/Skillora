@@ -3,16 +3,22 @@ const { Schema, model } = mongoose;
 
 const projectSchema = new Schema(
   {
-    owner:    { type: Schema.Types.ObjectId, ref: "User",   required: true },
-    clientId: { type: Schema.Types.ObjectId, ref: "Client", default: null },
+    owner:              { type: Schema.Types.ObjectId, ref: "User",   required: true },
+    clientId:           { type: Schema.Types.ObjectId, ref: "Client", default: null },
+    clientUser:         { type: Schema.Types.ObjectId, ref: "User",   default: null },
+    assignedFreelancer: { type: Schema.Types.ObjectId, ref: "User",   default: null },
+    createdByRole:      { type: String, enum: ["freelancer", "client"], default: "freelancer" },
 
     title:       { type: String, required: true, trim: true, maxlength: 200 },
     description: { type: String, default: "", maxlength: 5000 },
     status: {
       type:    String,
-      enum:    ["planning", "active", "on_hold", "completed", "cancelled"],
+      enum:    ["open", "planning", "active", "on_hold", "completed", "cancelled"],
       default: "planning",
     },
+    category:       { type: String, trim: true, default: "General" },
+    requiredSkills: [{ type: String, trim: true }],
+    proposalsCount: { type: Number, default: 0 },
 
     // Financials
     budget:   { type: Number, default: 0, min: 0 },
@@ -50,8 +56,12 @@ const projectSchema = new Schema(
 
 // ── Indexes ───────────────────────────────────────────────
 projectSchema.index({ owner: 1, status: 1 });
+projectSchema.index({ status: 1, createdAt: -1 });
+projectSchema.index({ category: 1, status: 1 });
 projectSchema.index({ owner: 1, createdAt: -1 });
 projectSchema.index({ clientId: 1 });
+projectSchema.index({ clientUser: 1 });
+projectSchema.index({ assignedFreelancer: 1 });
 projectSchema.index({ owner: 1, isDeleted: 1 });
 projectSchema.index({ title: "text", description: "text" });
 projectSchema.index({ deadline: 1 }, { sparse: true });

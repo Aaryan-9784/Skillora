@@ -5,9 +5,45 @@ import toast from "react-hot-toast";
 const useProjectStore = create((set, get) => ({
   projects:       [],
   currentProject: null,
+  openProjects:   [],
+  myProposals:    [],
   tasks:          [],
   isLoading:      false,
   pagination:     { total: 0, page: 1, pages: 1 },
+
+  fetchOpenProjects: async (params = {}) => {
+    set({ isLoading: true });
+    try {
+      const { data } = await api.get("/projects/explore", { params });
+      set({ openProjects: data.data.data || [] });
+    } catch (err) {
+      toast.error("Failed to load open projects");
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  submitProposal: async (projectId, proposalData) => {
+    try {
+      const { data } = await api.post(`/projects/${projectId}/proposals`, proposalData);
+      toast.success("Proposal submitted successfully!");
+      get().fetchOpenProjects();
+      get().fetchMyProposals();
+      return data.data.proposal;
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to submit proposal");
+      throw err;
+    }
+  },
+
+  fetchMyProposals: async () => {
+    try {
+      const { data } = await api.get("/projects/proposals/my");
+      set({ myProposals: data.data.proposals || [] });
+    } catch (err) {
+      console.error("Failed to load proposals:", err);
+    }
+  },
 
   fetchProjects: async (params = {}) => {
     set({ isLoading: true });

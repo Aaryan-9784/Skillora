@@ -108,7 +108,7 @@ const useClientPortalStore = create((set, get) => ({
     }
   },
 
-  // ── Projects ──────────────────────────────────────────
+  // ── Projects & Proposals ──────────────────────────────────
   fetchProjects: async (params = {}) => {
     get()._setLoading("projects", true);
     get()._setError("projects", null);
@@ -119,6 +119,41 @@ const useClientPortalStore = create((set, get) => ({
       get()._setError("projects", e.message);
     } finally {
       get()._setLoading("projects", false);
+    }
+  },
+
+  postProject: async (projectData) => {
+    try {
+      const { data } = await svc.postProject(projectData);
+      const newProj = data.data.project;
+      set((s) => ({ projects: [newProj, ...s.projects] }));
+      toast.success("Project posted for proposals!");
+      return newProj;
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to post project");
+      throw err;
+    }
+  },
+
+  fetchProposalsForProject: async (projectId) => {
+    try {
+      const { data } = await svc.getProjectProposals(projectId);
+      return data.data.proposals || [];
+    } catch (err) {
+      toast.error("Failed to load proposals");
+      return [];
+    }
+  },
+
+  respondToProposal: async (proposalId, action) => {
+    try {
+      const { data } = await svc.respondToProposal(proposalId, action);
+      toast.success(`Proposal ${action === "approve" ? "approved & freelancer hired" : "rejected"}!`);
+      get().fetchProjects();
+      return data.data.proposal;
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to update proposal");
+      throw err;
     }
   },
 
