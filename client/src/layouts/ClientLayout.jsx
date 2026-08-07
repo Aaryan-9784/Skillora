@@ -268,14 +268,9 @@ const ClientNavbar = ({ onSearch, mobileOpen, setMobileOpen }) => {
 
           <span className="text-gray-500/40 font-bold text-sm select-none">/</span>
 
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-semibold shrink-0"
-            style={{
-              background: "rgba(0,212,255,0.12)",
-              borderColor: "rgba(0,212,255,0.25)",
-              color: "#22D3EE",
-            }}>
-            <span>Client Portal</span>
-          </div>
+          <span className="font-bold text-xs text-[#22D3EE] shrink-0 select-none">
+            Client Portal
+          </span>
 
           <span className="text-gray-500 font-bold text-sm select-none">/</span>
 

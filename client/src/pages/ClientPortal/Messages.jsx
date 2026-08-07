@@ -1,49 +1,59 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  MessageSquare, Send, Paperclip, Search, Sparkles,
-  Phone, Video, Calendar, Mic, FileText, Image as ImageIcon,
-  Clock, CheckCheck, Circle, RefreshCw, X, Play, Volume2,
-  CheckCircle2, Info, MoreVertical
+  MessageSquare, Video, Phone, Send, Search, Paperclip, Mic,
+  MoreVertical, Calendar, RefreshCw, X, FileText, CheckCheck, Users, Plus
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import useAuthStore from "../../store/authStore";
 import useChatStore from "../../store/chatStore";
 import { useWebRTC } from "../../hooks/useWebRTC";
-import VoiceRecorder from "../../components/chat/VoiceRecorder";
 import CallModal from "../../components/chat/CallModal";
+import VoiceRecorder from "../../components/chat/VoiceRecorder";
 import ScheduleMeetingModal from "../../components/chat/ScheduleMeetingModal";
-import { getInitials, relativeTime } from "../../utils/helpers";
-import api from "../../services/api";
 import toast from "react-hot-toast";
 
-const GCard = ({ children, delay, className, glow }) => (
+const GCard = ({ children, delay = 0, className = "", glow = "#635BFF" }) => (
   <motion.div
-    initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: delay || 0, duration: 0.45, ease: [0.16,1,0.3,1] }}
-    className={"relative overflow-hidden rounded-2xl " + (className || "")}
-    style={{
-      background: "rgba(255,255,255,0.03)", backdropFilter: "blur(16px)",
-      border: "1px solid rgba(255,255,255,0.07)",
-      boxShadow: glow ? ("0 0 50px " + glow + "10") : "0 0 30px rgba(99,91,255,0.04)",
-    }}
+    initial={{ opacity: 0, y: 16 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.4, delay, ease: [0.16, 1, 0.3, 1] }}
+    className={`relative rounded-3xl border border-slate-800/80 bg-[#0B101F]/80 backdrop-blur-xl shadow-2xl overflow-hidden ${className}`}
   >
-    <div className="absolute inset-x-0 top-0 h-px pointer-events-none"
-      style={{ background: glow
-        ? ("linear-gradient(90deg,transparent," + glow + "50,transparent)")
-        : "linear-gradient(90deg,transparent,rgba(99,91,255,0.25),transparent)" }} />
+    <div
+      className="absolute -top-24 -right-24 w-48 h-48 rounded-full pointer-events-none blur-3xl opacity-20"
+      style={{ background: glow }}
+    />
     {children}
   </motion.div>
 );
 
+const relativeTime = (dateStr) => {
+  if (!dateStr) return "Just now";
+  const date = new Date(dateStr);
+  const diffSec = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (diffSec < 60) return "Just now";
+  if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
+  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
+  return `${Math.floor(diffSec / 86400)}d ago`;
+};
+
+const getInitials = (name = "") =>
+  name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "U";
+
 const ClientMessages = () => {
-  const { user } = useAuthStore();
+  const user = useAuthStore((state) => state.user);
   const {
-    activeConversation, messages, typingUsers, onlinePresence,
-    fetchProjectConversation, sendMessage, appendMessage
+    activeConversation,
+    messages,
+    onlinePresence,
+    fetchProjectConversation,
+    sendMessage,
+    isTyping,
   } = useChatStore();
 
   const [inputText, setInputText]           = useState("");
-  const [showVoiceRecorder, setShowVoice]   = useState(false);
+  const [showVoiceRecorder, setShowVoice]  = useState(false);
   const [showScheduleModal, setShowSchedule]= useState(false);
   const [uploadingFile, setUploadingFile]   = useState(false);
   const [searchOpen, setSearchOpen]         = useState(false);
@@ -64,11 +74,11 @@ const ClientMessages = () => {
 
   const dbParticipants = (activeConversation?.participants || []).filter(p => (p._id || p) !== user?._id).map((p) => ({
     id: p._id || p,
-    name: p.name || p.email || "Freelancer Partner",
-    role: p.role === "freelancer" ? "Freelancer Lead" : "Project Member",
+    name: p.name || p.email || "Freelancer Lead",
+    role: p.role === "freelancer" ? "Freelancer Lead" : "Project Team",
     avatar: p.avatar || "",
     isOnline: true,
-    lastMsg: messages.length > 0 ? (messages[messages.length - 1].content || "Sent an attachment") : "Project Chat Room Ready",
+    lastMsg: messages.length > 0 ? (messages[messages.length - 1].content || "Sent an attachment") : "Project conversation ready",
     time: messages.length > 0 ? relativeTime(messages[messages.length - 1].createdAt) : "Just now",
     badge: "Team",
   }));
@@ -119,9 +129,38 @@ const ClientMessages = () => {
     setInputText("");
 
     try {
-      await sendMessage(activeConversation._id, text);
-    } catch {
-      toast.error("Failed to send message");
+      await sendMessage({ conversationId: activeConversation._id, content: text });
+    } catch (err) {
+      toast.error(err.message || "Failed to send message");
+    }
+  };
+
+  const handleSendVoiceNote = async (audioBlob) => {
+    if (!activeConversation?._id) return;
+    try {
+      setUploadingFile(true);
+      const formData = new FormData();
+      formData.append("file", audioBlob, "voice-note.webm");
+      formData.append("conversationId", activeConversation._id);
+
+      const res = await fetch("/api/upload/chat-attachment", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message);
+
+      await sendMessage({
+        conversationId: activeConversation._id,
+        content: "🎤 Voice Note",
+        attachments: [{ fileType: "audio", url: data.data.url, fileName: "voice-note.webm" }],
+      });
+      setShowVoice(false);
+      toast.success("Voice note sent");
+    } catch (err) {
+      toast.error(err.message || "Failed to send voice note");
+    } finally {
+      setUploadingFile(false);
     }
   };
 
@@ -129,52 +168,37 @@ const ClientMessages = () => {
     const file = e.target.files?.[0];
     if (!file || !activeConversation?._id) return;
 
-    setUploadingFile(true);
-    const formData = new FormData();
-    formData.append("file", file);
-
     try {
-      const { data } = await api.post("/chat/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      setUploadingFile(true);
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("conversationId", activeConversation._id);
 
-      await sendMessage(activeConversation._id, "", [data.data.attachment], "media");
-      toast.success("Attachment sent!");
-    } catch {
-      toast.error("Failed to upload attachment");
+      const res = await fetch("/api/upload/chat-attachment", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message);
+
+      const fileType = file.type.startsWith("image/") ? "image" : file.type.startsWith("audio/") ? "audio" : "document";
+
+      await sendMessage({
+        conversationId: activeConversation._id,
+        content: `📎 Shared file: ${file.name}`,
+        attachments: [{ fileType, url: data.data.url, fileName: file.name }],
+      });
+      toast.success("Attachment sent");
+    } catch (err) {
+      toast.error(err.message || "Failed to upload file");
     } finally {
       setUploadingFile(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
-
-  const handleSendVoiceNote = async (audioBlob, durationSec) => {
-    if (!activeConversation?._id) return;
-    setShowVoice(false);
-
-    const formData = new FormData();
-    formData.append("file", audioBlob, "voicenote.webm");
-
-    try {
-      const { data } = await api.post("/chat/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      const attachment = {
-        ...data.data.attachment,
-        duration: durationSec,
-      };
-
-      await sendMessage(activeConversation._id, "🎙 Voice Note", [attachment], "voice_note");
-      toast.success("Voice note sent!");
-    } catch {
-      toast.error("Failed to send voice note");
-    }
-  };
-
-  const isTyping = typingUsers[activeConversation?._id]?.length > 0;
 
   return (
-    <div className="h-full flex-1 flex flex-col min-h-0 relative overflow-hidden"
+    <div className="relative min-h-screen text-slate-100 flex flex-col font-sans"
       style={{ background: "radial-gradient(ellipse 100% 55% at 65% -5%,rgba(99,91,255,0.08) 0%,transparent 52%),linear-gradient(180deg,#0B0F1A 0%,#07090F 100%)" }}>
       
       {/* Background ambient lighting */}
@@ -198,7 +222,7 @@ const ClientMessages = () => {
               Messages & Real-Time Chat
             </h1>
             <p className="text-xs lg:text-sm mt-1 font-medium" style={{ color: "rgba(148,163,184,0.7)" }}>
-              Direct communication thread with your project team and freelancers
+              Direct communication thread with your clients and project team
             </p>
           </div>
 
@@ -217,7 +241,7 @@ const ClientMessages = () => {
           </motion.button>
         </motion.div>
 
-        {/* ── Main 2-Column WhatsApp Web Layout Container ── */}
+        {/* ── Main 2-Column WhatsApp Web Layout Container (100% Identical to Freelancer Messages) ── */}
         <GCard delay={0.15} glow="#635BFF" className="h-[520px] lg:h-[560px] flex p-0 overflow-hidden shadow-2xl shrink-0">
         
         {/* ── Left Sidebar: Users / Contacts List ── */}
@@ -278,346 +302,361 @@ const ClientMessages = () => {
             </div>
           </div>
 
-          {/* Contacts Search Bar */}
-          <div className="p-3 border-b border-slate-800/60 bg-[#111b21]/60">
-            <div className="relative flex items-center">
-              <Search size={14} className="absolute left-3 text-slate-400 pointer-events-none" />
+          {/* Search Contacts Bar */}
+          <div className="p-3 border-b border-slate-800 bg-[#111b21]/60">
+            <div className="relative">
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
+                placeholder="Search chats or team..."
                 value={contactSearch}
                 onChange={(e) => setContactSearch(e.target.value)}
-                placeholder="Search chats or team..."
-                className="w-full pl-9 pr-8 py-2 rounded-xl bg-slate-900/90 border border-white/10 text-white text-xs placeholder-slate-400 focus:border-indigo-500 outline-none transition-all"
+                className="w-full pl-9 pr-4 py-2 rounded-xl bg-[#202c33] border border-slate-700/50 text-xs text-white placeholder-slate-400 outline-none focus:border-indigo-500 transition-all"
               />
-              {contactSearch && (
-                <button onClick={() => setContactSearch("")} className="absolute right-2.5 text-slate-400 hover:text-white p-1 cursor-pointer">
-                  <X size={12} />
-                </button>
-              )}
             </div>
           </div>
 
           {/* Contacts & Users List */}
           <div className="flex-1 overflow-y-auto p-2 space-y-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-            {filteredContacts.map((contact) => {
-              const isSelected = selectedContactId === contact.id;
-              return (
-                <button
-                  key={contact.id}
-                  onClick={() => setSelectedContactId(contact.id)}
-                  className={`w-full p-2.5 rounded-xl flex items-center gap-3 transition-all text-left cursor-pointer ${
-                    isSelected
-                      ? "bg-indigo-600/20 border-l-4 border-indigo-500 text-white shadow-md shadow-indigo-500/10"
-                      : "hover:bg-white/5 text-slate-300"
-                  }`}
-                >
-                  <div className="relative shrink-0">
-                    <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-white overflow-hidden ring-1 ring-white/10">
-                      {contact.avatar ? (
-                        <img src={contact.avatar} alt={contact.name} className="w-full h-full object-cover rounded-full" />
-                      ) : (
-                        getInitials(contact.name)
-                      )}
-                    </div>
-                    {contact.isOnline ? (
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-[#111b21] absolute bottom-0 right-0" />
-                    ) : (
-                      <span className="w-2.5 h-2.5 rounded-full bg-slate-500 border-2 border-[#111b21] absolute bottom-0 right-0" />
-                    )}
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-bold text-white truncate">{contact.name}</h4>
-                      <span className="text-[10px] text-slate-400 font-medium shrink-0 ml-1">{contact.time}</span>
-                    </div>
-                    <div className="flex items-center justify-between mt-0.5">
-                      <p className="text-[11px] text-slate-400 truncate max-w-[140px]">{contact.lastMsg}</p>
-                      {contact.badge && (
-                        <span className="text-[9px] font-extrabold bg-indigo-500 text-white px-1.5 py-0.5 rounded-md shrink-0">
-                          {contact.badge}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* ── Right Panel: Chat Area ── */}
-        <div className="flex-1 flex flex-col min-w-0 bg-[#0B1120]/40 relative overflow-hidden">
-          
-          {/* Authentic WhatsApp / Instagram Web Style Header Bar */}
-          <div className="h-16 px-4 lg:px-6 flex items-center justify-between border-b border-slate-800 shrink-0 bg-[#111b21]/90 backdrop-blur-md">
-            
-            {/* User Profile & Status */}
-            <div className="flex items-center gap-3 cursor-pointer group">
-              {/* Profile Avatar */}
-              <div className="relative shrink-0">
-                <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white overflow-hidden shadow-sm ring-1 ring-white/10">
-                  {partner?.avatar ? (
-                    <img src={partner.avatar} alt={partner?.name} className="w-full h-full object-cover rounded-full" />
-                  ) : (
-                    getInitials(partner?.name || "Skillora Team")
-                  )}
+            {filteredContacts.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-3 shadow-lg">
+                  <Users size={20} />
                 </div>
-                {presence.isOnline ? (
-                  <span className="w-3 h-3 rounded-full bg-emerald-500 border-2 border-[#111b21] absolute bottom-0 right-0 shadow-sm" />
-                ) : (
-                  <span className="w-3 h-3 rounded-full bg-slate-500 border-2 border-[#111b21] absolute bottom-0 right-0" />
-                )}
-              </div>
-
-              <div className="flex flex-col justify-center">
-                <h2 className="text-sm font-semibold text-slate-100 group-hover:text-indigo-300 transition-colors leading-tight flex items-center gap-1.5">
-                  {partner?.name || "Skillora Project Team"}
-                </h2>
-                <p className="text-xs leading-tight mt-0.5 font-normal">
-                  {isTyping ? (
-                    <span className="text-emerald-400 font-medium animate-pulse">typing...</span>
-                  ) : presence.isOnline ? (
-                    <span className="text-emerald-400 font-medium">online</span>
-                  ) : (
-                    <span className="text-slate-400">offline</span>
-                  )}
-                </p>
-              </div>
-            </div>
-
-            {/* Action Buttons (Video, Voice, Search, More Options) */}
-            <div className="flex items-center gap-1 text-slate-300">
-              <button
-                onClick={() => startCall("video")}
-                className="p-2.5 rounded-full hover:bg-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer"
-                title="Video call"
-              >
-                <Video size={18} />
-              </button>
-              <button
-                onClick={() => startCall("voice")}
-                className="p-2.5 rounded-full hover:bg-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer"
-                title="Voice call"
-              >
-                <Phone size={18} />
-              </button>
-              <button
-                onClick={() => { setSearchOpen(prev => !prev); setSearchQuery(""); }}
-                className={`p-2.5 rounded-full transition-colors cursor-pointer ${searchOpen ? "bg-white/15 text-white" : "hover:bg-white/10 text-slate-300 hover:text-white"}`}
-                title="Search messages"
-              >
-                <Search size={18} />
-              </button>
-
-              {/* More Options Dropdown */}
-              <div className="relative" ref={moreMenuRef}>
-                <button
-                  onClick={() => setMoreMenuOpen(prev => !prev)}
-                  className={`p-2.5 rounded-full transition-colors cursor-pointer ${moreMenuOpen ? "bg-white/15 text-white" : "hover:bg-white/10 text-slate-300 hover:text-white"}`}
-                  title="More options"
-                >
-                  <MoreVertical size={18} />
-                </button>
-
-                <AnimatePresence>
-                  {moreMenuOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.95, y: 4 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.95, y: 4 }}
-                      transition={{ duration: 0.15 }}
-                      className="absolute right-0 top-11 z-50 w-56 bg-[#182229] border border-slate-700/60 rounded-2xl shadow-2xl p-1.5 backdrop-blur-xl"
-                    >
-                      <button
-                        onClick={() => { setMoreMenuOpen(false); setShowSchedule(true); }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-200 hover:bg-white/10 rounded-xl transition-all text-left cursor-pointer"
-                      >
-                        <Calendar size={15} className="text-indigo-400" />
-                        <span>Schedule Meeting</span>
-                      </button>
-                      <button
-                        onClick={() => { setMoreMenuOpen(false); setShowVoice(true); }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-200 hover:bg-white/10 rounded-xl transition-all text-left cursor-pointer"
-                      >
-                        <Mic size={15} className="text-purple-400" />
-                        <span>Voice Note</span>
-                      </button>
-                      <button
-                        onClick={() => { setMoreMenuOpen(false); fileInputRef.current?.click(); }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-200 hover:bg-white/10 rounded-xl transition-all text-left cursor-pointer"
-                      >
-                        <Paperclip size={15} className="text-cyan-400" />
-                        <span>Share Attachment</span>
-                      </button>
-                      <div className="h-px bg-white/10 my-1" />
-                      <button
-                        onClick={() => { setMoreMenuOpen(false); fetchProjectConversation("65a000000000000000000001"); toast.success("Refreshed messages"); }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-200 hover:bg-white/10 rounded-xl transition-all text-left cursor-pointer"
-                      >
-                        <RefreshCw size={15} className="text-emerald-400" />
-                        <span>Refresh Chat</span>
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
-          </div>
-
-          {/* Expandable Search Input Bar */}
-          <AnimatePresence>
-            {searchOpen && (
-              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                className="px-4 py-2 bg-[#182229] border-b border-slate-800 flex items-center gap-2 overflow-hidden shrink-0">
-                <Search size={15} className="text-slate-400 shrink-0" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search in conversation..."
-                  autoFocus
-                  className="flex-1 bg-transparent text-xs text-white placeholder-slate-400 outline-none"
-                />
-                {searchQuery && (
-                  <button onClick={() => setSearchQuery("")} className="text-slate-400 hover:text-white p-1 cursor-pointer">
-                    <X size={14} />
-                  </button>
-                )}
-                <button onClick={() => { setSearchOpen(false); setSearchQuery(""); }} className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 ml-1 cursor-pointer">
-                  Close
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Messages Feed */}
-          <div className={`flex-1 ${messages.length > 0 ? "p-6 space-y-4 overflow-y-auto" : "flex flex-col items-center justify-center p-6 overflow-hidden"} [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden`} style={{ background: "rgba(11,17,32,0.4)", scrollbarWidth: "none", msOverflowStyle: "none" }}>
-            {messages.length === 0 ? (
-              <div className="w-full h-full flex flex-col items-center justify-center text-center p-4 text-slate-400 my-auto">
-                <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-3.5 shadow-lg shadow-indigo-500/10">
-                  <MessageSquare size={22} className="text-indigo-400" />
-                </div>
-                <p className="text-sm font-extrabold text-white tracking-tight">Project Chat Room Ready</p>
-                <p className="text-xs mt-1.5 text-slate-400 max-w-sm leading-relaxed">
-                  Send a message, voice note, or schedule a video call with your project team.
+                <h4 className="text-xs font-bold text-white mb-1">No Project Contacts</h4>
+                <p className="text-[11px] text-slate-400 mb-4 leading-relaxed max-w-[180px]">
+                  Project team chat will appear here automatically when active.
                 </p>
               </div>
             ) : (
-              (searchQuery.trim() ? messages.filter(m => m.text?.toLowerCase().includes(searchQuery.toLowerCase())) : messages).map((msg) => {
-                const isMe = (msg.sender?._id || msg.sender) === user?._id;
+              filteredContacts.map((contact) => {
+                const isSelected = selectedContactId === contact.id || partner;
                 return (
-                  <motion.div
-                    key={msg._id || msg.id}
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
+                  <button
+                    key={contact.id}
+                    onClick={() => setSelectedContactId(contact.id)}
+                    className={`w-full p-2.5 rounded-xl flex items-center gap-3 transition-all text-left cursor-pointer ${
+                      isSelected
+                        ? "bg-indigo-600/20 border-l-4 border-indigo-500 text-white shadow-md shadow-indigo-500/10"
+                        : "hover:bg-white/5 text-slate-300"
+                    }`}
                   >
-                    <div className="flex items-center gap-1.5 mb-1 px-1">
-                      <span className="text-[10px] font-bold text-white/80">{msg.sender?.name || (isMe ? "You" : "Team")}</span>
-                      <span className="text-[10px] font-medium text-slate-500">• {relativeTime(msg.createdAt)}</span>
+                    <div className="relative shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-white overflow-hidden ring-1 ring-white/10">
+                        {contact.avatar ? (
+                          <img src={contact.avatar} alt={contact.name} className="w-full h-full object-cover rounded-full" />
+                        ) : (
+                          getInitials(contact.name)
+                        )}
+                      </div>
+                      {contact.isOnline ? (
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-[#111b21] absolute bottom-0 right-0" />
+                      ) : (
+                        <span className="w-2.5 h-2.5 rounded-full bg-slate-500 border-2 border-[#111b21] absolute bottom-0 right-0" />
+                      )}
                     </div>
 
-                    <div
-                      className={`max-w-[75%] px-4 py-3 rounded-2xl text-xs font-medium leading-relaxed ${
-                        isMe ? "text-white rounded-tr-xs" : "text-gray-200 rounded-tl-xs"
-                      }`}
-                      style={
-                        isMe ? {
-                          background: "linear-gradient(135deg,#635BFF 0%,#8B5CF6 100%)",
-                          boxShadow: "0 4px 20px rgba(99,91,255,0.3)",
-                          border: "1px solid rgba(255,255,255,0.15)",
-                        } : {
-                          background: "rgba(255,255,255,0.04)",
-                          border: "1px solid rgba(255,255,255,0.08)",
-                        }
-                      }
-                    >
-                      {msg.content && <p>{msg.content}</p>}
-
-                      {/* Attachments rendering */}
-                      {msg.attachments?.map((att, idx) => (
-                        <div key={idx} className="mt-2 pt-2 border-t border-white/10">
-                          {att.fileType === "image" ? (
-                            <img src={att.url} alt={att.fileName} className="max-w-xs rounded-xl border border-white/10" />
-                          ) : att.fileType === "audio" ? (
-                            <audio controls src={att.url} className="h-8 max-w-xs" />
-                          ) : (
-                            <a href={att.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-indigo-200 underline">
-                              <FileText size={14} /> {att.fileName}
-                            </a>
-                          )}
-                        </div>
-                      ))}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-bold text-white truncate">{contact.name}</h4>
+                        <span className="text-[10px] text-slate-400 font-medium shrink-0 ml-1">{contact.time}</span>
+                      </div>
+                      <div className="flex items-center justify-between mt-0.5">
+                        <p className="text-[11px] text-slate-400 truncate max-w-[140px]">{contact.lastMsg}</p>
+                        {contact.badge && (
+                          <span className="text-[9px] font-extrabold bg-indigo-500 text-white px-1.5 py-0.5 rounded-md shrink-0">
+                            {contact.badge}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </motion.div>
+                  </button>
                 );
               })
             )}
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Input Controls Bar */}
-          <div className="p-4 border-t border-white/[0.07] shrink-0" style={{ background: "rgba(6,9,22,0.4)" }}>
-            {showVoiceRecorder ? (
-              <VoiceRecorder onSendVoiceNote={handleSendVoiceNote} onCancel={() => setShowVoice(false)} />
-            ) : (
-              <form onSubmit={handleSendText} className="flex items-center gap-3">
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-                
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadingFile}
-                  className="p-3 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 transition-all cursor-pointer shrink-0"
-                  title="Attach file"
-                >
-                  <Paperclip size={15} />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setShowVoice(true)}
-                  className="p-3 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 transition-all cursor-pointer shrink-0"
-                  title="Record Voice Note"
-                >
-                  <Mic size={15} />
-                </button>
-
-                <input
-                  type="text"
-                  placeholder="Write a message to your project team…"
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                  className="flex-1 px-4 py-3 rounded-xl text-xs font-medium text-white placeholder-gray-500 outline-none transition-all"
-                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
-                />
-
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  type="submit"
-                  disabled={!inputText.trim()}
-                  className="px-5 py-3 rounded-xl text-xs font-bold text-white flex items-center gap-2 disabled:opacity-40 transition-all cursor-pointer shrink-0"
-                  style={{
-                    background: "linear-gradient(135deg,#635BFF 0%,#8B5CF6 100%)",
-                    boxShadow: "0 0 20px rgba(99,91,255,0.4)",
-                    border: "1px solid rgba(255,255,255,0.15)",
-                  }}
-                >
-                  <span>Send</span>
-                  <Send size={13} />
-                </motion.button>
-              </form>
-            )}
           </div>
         </div>
-      </GCard>
+
+        {/* ── Right Panel: Chat Area (100% Identical to Freelancer Messages) ── */}
+        <div className="flex-1 flex flex-col min-w-0 bg-[#0B1120]/40 relative overflow-hidden">
+          {!partner ? (
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-[#0B1120]/60 relative">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-indigo-600/20 to-purple-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shadow-2xl mb-6"
+              >
+                <MessageSquare size={36} />
+              </motion.div>
+              <h2 className="text-2xl font-black text-white tracking-tight mb-2">
+                Skillora Web Messaging
+              </h2>
+              <p className="text-xs lg:text-sm text-slate-400 max-w-md leading-relaxed">
+                Select a client conversation from the left sidebar to start chatting, send voice notes, or launch WebRTC video calls in real-time.
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Header Bar */}
+              <div className="h-16 px-4 lg:px-6 flex items-center justify-between border-b border-slate-800 shrink-0 bg-[#111b21]/90 backdrop-blur-md">
+                
+                {/* User Profile & Status */}
+                <div className="flex items-center gap-3 cursor-pointer group">
+                  <div className="relative shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white overflow-hidden shadow-sm ring-1 ring-white/10">
+                      {partner?.avatar ? (
+                        <img src={partner.avatar} alt={partner?.name} className="w-full h-full object-cover rounded-full" />
+                      ) : (
+                        getInitials(partner?.name || "Freelancer Lead")
+                      )}
+                    </div>
+                    {presence.isOnline ? (
+                      <span className="w-3 h-3 rounded-full bg-emerald-500 border-2 border-[#111b21] absolute bottom-0 right-0 shadow-sm" />
+                    ) : (
+                      <span className="w-3 h-3 rounded-full bg-slate-500 border-2 border-[#111b21] absolute bottom-0 right-0" />
+                    )}
+                  </div>
+
+                  <div className="flex flex-col justify-center">
+                    <h2 className="text-sm font-semibold text-slate-100 group-hover:text-indigo-300 transition-colors leading-tight flex items-center gap-1.5">
+                      {partner?.name || "Skillora Project Team"}
+                    </h2>
+                    <p className="text-xs leading-tight mt-0.5 font-normal">
+                      {isTyping ? (
+                        <span className="text-emerald-400 font-medium animate-pulse">typing...</span>
+                      ) : presence.isOnline ? (
+                        <span className="text-emerald-400 font-medium">online</span>
+                      ) : (
+                        <span className="text-slate-400">offline</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Action Buttons (Video, Voice, Search, More Options) */}
+                <div className="flex items-center gap-1 text-slate-300">
+                  <button
+                    onClick={() => startCall("video")}
+                    className="p-2.5 rounded-full hover:bg-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                    title="Video call"
+                  >
+                    <Video size={18} />
+                  </button>
+                  <button
+                    onClick={() => startCall("voice")}
+                    className="p-2.5 rounded-full hover:bg-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                    title="Voice call"
+                  >
+                    <Phone size={18} />
+                  </button>
+                  <button
+                    onClick={() => { setSearchOpen(prev => !prev); setSearchQuery(""); }}
+                    className={`p-2.5 rounded-full transition-colors cursor-pointer ${searchOpen ? "bg-white/15 text-white" : "hover:bg-white/10 text-slate-300 hover:text-white"}`}
+                    title="Search messages"
+                  >
+                    <Search size={18} />
+                  </button>
+
+                  {/* More Options Dropdown */}
+                  <div className="relative" ref={moreMenuRef}>
+                    <button
+                      onClick={() => setMoreMenuOpen(prev => !prev)}
+                      className={`p-2.5 rounded-full transition-colors cursor-pointer ${moreMenuOpen ? "bg-white/15 text-white" : "hover:bg-white/10 text-slate-300 hover:text-white"}`}
+                      title="More options"
+                    >
+                      <MoreVertical size={18} />
+                    </button>
+
+                    <AnimatePresence>
+                      {moreMenuOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.95, y: 4 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95, y: 4 }}
+                          transition={{ duration: 0.15 }}
+                          className="absolute right-0 top-11 z-50 w-56 bg-[#182229] border border-slate-700/60 rounded-2xl shadow-2xl p-1.5 backdrop-blur-xl"
+                        >
+                          <button
+                            onClick={() => { setMoreMenuOpen(false); setShowSchedule(true); }}
+                            className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-200 hover:bg-white/10 rounded-xl transition-all text-left cursor-pointer"
+                          >
+                            <Calendar size={15} className="text-indigo-400" />
+                            <span>Schedule Meeting</span>
+                          </button>
+                          <button
+                            onClick={() => { setMoreMenuOpen(false); setShowVoice(true); }}
+                            className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-200 hover:bg-white/10 rounded-xl transition-all text-left cursor-pointer"
+                          >
+                            <Mic size={15} className="text-purple-400" />
+                            <span>Voice Note</span>
+                          </button>
+                          <button
+                            onClick={() => { setMoreMenuOpen(false); fileInputRef.current?.click(); }}
+                            className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-200 hover:bg-white/10 rounded-xl transition-all text-left cursor-pointer"
+                          >
+                            <Paperclip size={15} className="text-cyan-400" />
+                            <span>Share Attachment</span>
+                          </button>
+                          <div className="h-px bg-white/10 my-1" />
+                          <button
+                            onClick={() => { setMoreMenuOpen(false); fetchProjectConversation(); toast.success("Refreshed messages"); }}
+                            className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-200 hover:bg-white/10 rounded-xl transition-all text-left cursor-pointer"
+                          >
+                            <RefreshCw size={15} className="text-emerald-400" />
+                            <span>Refresh Chat</span>
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
+              </div>
+
+              {/* Expandable Search Input Bar */}
+              <AnimatePresence>
+                {searchOpen && (
+                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                    className="px-4 py-2 bg-[#182229] border-b border-slate-800 flex items-center gap-2 overflow-hidden shrink-0">
+                    <Search size={15} className="text-slate-400 shrink-0" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search in conversation..."
+                      autoFocus
+                      className="flex-1 bg-transparent text-xs text-white placeholder-slate-400 outline-none"
+                    />
+                    {searchQuery && (
+                      <button onClick={() => setSearchQuery("")} className="text-slate-400 hover:text-white p-1 cursor-pointer">
+                        <X size={14} />
+                      </button>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Messages Container Area */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#0b141a]/40 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                {messages.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-center p-6">
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-3 shadow-lg">
+                      <MessageSquare size={22} />
+                    </div>
+                    <h3 className="text-sm font-bold text-white mb-1">Project Chat Room Ready</h3>
+                    <p className="text-xs text-slate-400 max-w-sm leading-relaxed">
+                      Send a message, voice note, or schedule a video call with your project team.
+                    </p>
+                  </div>
+                ) : (
+                  messages.map((msg) => {
+                    const isMe = (msg.sender?._id || msg.sender) === user?._id;
+                    return (
+                      <motion.div
+                        key={msg._id || msg.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
+                      >
+                        <div
+                          className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-xs shadow-md ${
+                            isMe
+                              ? "bg-indigo-600 text-white rounded-tr-none"
+                              : "bg-[#202c33] text-slate-100 rounded-tl-none border border-white/5"
+                          }`}
+                        >
+                          {msg.content && <p className="leading-relaxed whitespace-pre-wrap">{msg.content}</p>}
+
+                          {/* Attachments rendering */}
+                          {msg.attachments?.map((att, idx) => (
+                            <div key={idx} className="mt-2 pt-2 border-t border-white/10">
+                              {att.fileType === "image" ? (
+                                <img src={att.url} alt={att.fileName} className="max-w-xs rounded-xl border border-white/10" />
+                              ) : att.fileType === "audio" ? (
+                                <audio controls src={att.url} className="h-8 max-w-xs" />
+                              ) : (
+                                <a href={att.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-indigo-200 underline">
+                                  <FileText size={14} /> {att.fileName}
+                                </a>
+                              )}
+                            </div>
+                          ))}
+
+                          <div className={`flex items-center gap-1.5 mt-1 text-[10px] ${isMe ? "text-indigo-200 justify-end" : "text-slate-400"}`}>
+                            <span>{relativeTime(msg.createdAt)}</span>
+                            {isMe && <CheckCheck size={13} className="text-indigo-200" />}
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Message Input Footer */}
+              <div className="p-3 bg-[#111b21] border-t border-slate-800 shrink-0">
+                {showVoiceRecorder ? (
+                  <VoiceRecorder onSendVoiceNote={handleSendVoiceNote} onCancel={() => setShowVoice(false)} />
+                ) : (
+                  <form onSubmit={handleSendText} className="flex items-center gap-2">
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingFile}
+                      className="p-2.5 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer shrink-0"
+                      title="Attach file"
+                    >
+                      <Paperclip size={18} />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowVoice((v) => !v)}
+                      className={`p-2.5 rounded-full transition-colors cursor-pointer shrink-0 ${
+                        showVoiceRecorder ? "bg-purple-600 text-white" : "hover:bg-white/10 text-slate-400 hover:text-white"
+                      }`}
+                      title="Voice note"
+                    >
+                      <Mic size={18} />
+                    </button>
+
+                    <input
+                      type="text"
+                      placeholder="Write a message to your project team..."
+                      value={inputText}
+                      onChange={(e) => setInputText(e.target.value)}
+                      className="flex-1 px-4 py-3 rounded-xl text-xs font-medium text-white placeholder-gray-500 outline-none transition-all"
+                      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+                    />
+
+                    <motion.button
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      type="submit"
+                      disabled={!inputText.trim()}
+                      className="px-5 py-3 rounded-xl text-xs font-bold text-white flex items-center gap-2 disabled:opacity-40 transition-all cursor-pointer shrink-0"
+                      style={{
+                        background: "linear-gradient(135deg,#635BFF 0%,#8B5CF6 100%)",
+                        boxShadow: "0 0 20px rgba(99,91,255,0.4)",
+                        border: "1px solid rgba(255,255,255,0.15)",
+                      }}
+                    >
+                      <span>Send</span>
+                      <Send size={13} />
+                    </motion.button>
+                  </form>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+        </GCard>
       </div>
 
       {/* WebRTC Video/Voice Call Modal Overlay */}

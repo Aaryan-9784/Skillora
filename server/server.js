@@ -41,7 +41,9 @@ const start = async () => {
 
   process.on("unhandledRejection", (err) => {
     logger.error(`Unhandled rejection: ${err.message}`);
-    server.close(() => process.exit(1));
+    if (err.code !== "ECONNRESET" && err.code !== "EPIPE") {
+      // Don't crash server on transient socket resets
+    }
   });
 };
 

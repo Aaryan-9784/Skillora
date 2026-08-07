@@ -249,7 +249,7 @@ const Sidebar = ({ collapsed, onToggle }) => {
                   Skillora
                 </p>
                 <p className="text-[9.5px] font-bold tracking-[0.16em] uppercase mt-1 text-purple-400">
-                  FREELANCER WORKSPACE
+                  FREELANCER PORTAL
                 </p>
               </motion.div>
             )}

@@ -93,7 +93,7 @@ import AdminProfile  from "./pages/Admin/Profile";
 const ClientDashboard = lazy(() => import("./pages/ClientPortal/Dashboard"));
 const ClientInvoices  = lazy(() => import("./pages/ClientPortal/Invoices"));
 const ClientProjects  = lazy(() => import("./pages/ClientPortal/Projects"));
-const ClientMessages  = lazy(() => import("./pages/ClientPortal/Messages"));
+import ClientMessages from "./pages/ClientPortal/Messages";
 const ClientProfile   = lazy(() => import("./pages/ClientPortal/Profile"));
 
 const PageLoader = () => <Spinner size="lg" className="min-h-screen" />;
