@@ -34,7 +34,7 @@ const AIHeader = ({ tab, onTabChange }) => {
               style={{ background: "#22C55E", borderColor: "#080E1A", boxShadow: "0 0 6px rgba(34,197,94,0.8)" }} />
           </div>
           <div>
-            <p className="text-sm font-bold tracking-tight" style={{ color: "#F9FAFB" }}>Skillora AI</p>
+            <p className="text-sm font-bold tracking-tight" style={{ color: "#F9FAFB" }}>Skillora AI Studio</p>
             <p className="text-[10px] flex items-center gap-1" style={{ color: "#635BFF" }}>
               <Zap size={8} />Gemini 1.5 Pro
             </p>

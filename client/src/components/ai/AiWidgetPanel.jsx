@@ -12,14 +12,16 @@ import { useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Trash2, Minimize2 } from "lucide-react";
 import useAiStore from "../../store/aiStore";
+import useAuthStore from "../../store/authStore";
 import ChatMessage from "./ChatMessage";
-import WidgetQuickActions from "./WidgetQuickActions";
 import WidgetInputBar from "./WidgetInputBar";
 
 const AiWidgetPanel = ({ onClose }) => {
   const { messages, isStreaming, clearChat } = useAiStore();
-  const bottomRef      = useRef(null);
-  const showQuickActions = messages.length <= 1 && !isStreaming;
+  const { user } = useAuthStore();
+  const bottomRef = useRef(null);
+  const isEmptyChat = messages.length <= 1 && !isStreaming;
+  const firstName = user?.name ? user.name.split(" ")[0] : "Aryan";
 
   // Auto-scroll on new messages
   useEffect(() => {
@@ -31,49 +33,63 @@ const AiWidgetPanel = ({ onClose }) => {
       className="flex flex-col overflow-hidden"
       style={{
         height: "520px",
-        borderRadius: "20px",
-        background: "rgba(8,14,26,0.92)",
-        border: "1px solid rgba(255,255,255,0.09)",
-        backdropFilter: "blur(24px)",
+        borderRadius: "24px",
+        background: "rgba(9, 13, 22, 0.95)",
+        border: "1px solid rgba(255, 255, 255, 0.1)",
+        backdropFilter: "blur(28px)",
         boxShadow:
-          "0 0 0 1px rgba(99,91,255,0.12), 0 32px 64px rgba(0,0,0,0.6), 0 0 80px rgba(99,91,255,0.08)",
+          "0 0 0 1px rgba(99, 91, 255, 0.15), 0 32px 64px rgba(0, 0, 0, 0.7), 0 0 80px rgba(99, 91, 255, 0.1)",
       }}
     >
       {/* Top shimmer line */}
       <div
-        className="absolute top-0 inset-x-0 h-px rounded-t-[20px] pointer-events-none"
+        className="absolute top-0 inset-x-0 h-px rounded-t-[24px] pointer-events-none"
         style={{
           background:
-            "linear-gradient(90deg, transparent 0%, rgba(99,91,255,0.7) 40%, rgba(139,92,246,0.5) 60%, transparent 100%)",
+            "linear-gradient(90deg, transparent 0%, rgba(99,91,255,0.8) 40%, rgba(168,85,247,0.6) 60%, transparent 100%)",
         }}
       />
 
       {/* ── Header ── */}
       <WidgetHeader onClose={onClose} onClear={clearChat} isStreaming={isStreaming} />
 
-      {/* ── Messages ── */}
+      {/* ── Main Chat Area ── */}
       <div
-        className="flex-1 overflow-y-auto px-4 py-3 space-y-4"
+        className="flex-1 overflow-y-auto px-4 py-3 flex flex-col"
         style={{ scrollbarWidth: "none" }}
       >
-        <AnimatePresence initial={false}>
-          {messages.map((msg) => (
-            <ChatMessage key={msg.id} msg={msg} compact />
-          ))}
-        </AnimatePresence>
+        {isEmptyChat ? (
+          /* Simple Clean Centered State matching Image 2 */
+          <div className="flex-1 flex flex-col items-center justify-center text-center p-6 space-y-4 my-auto">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.25 }}
+              className="w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30"
+            >
+              <Sparkles size={24} />
+            </motion.div>
 
-        {/* Quick actions on fresh chat */}
-        {showQuickActions && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <WidgetQuickActions />
-          </motion.div>
+            <motion.h2
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25, delay: 0.05 }}
+              className="text-xl font-extrabold text-white tracking-tight leading-snug"
+            >
+              What can I help with today, {firstName}?
+            </motion.h2>
+          </div>
+        ) : (
+          /* Active Chat Stream */
+          <div className="space-y-4 flex-1">
+            <AnimatePresence initial={false}>
+              {messages.filter(m => m.id !== "welcome").map((msg) => (
+                <ChatMessage key={msg.id} msg={msg} compact />
+              ))}
+            </AnimatePresence>
+            <div ref={bottomRef} />
+          </div>
         )}
-
-        <div ref={bottomRef} />
       </div>
 
       {/* ── Input ── */}
@@ -140,21 +156,11 @@ const WidgetHeader = ({ onClose, onClear, isStreaming }) => (
             WebkitTextFillColor: "transparent",
           }}
         >
-          Skillora AI
+          Skillora AI Studio
         </h2>
-        <div className="flex items-center gap-1.5 mt-1">
-          <span
-            className="flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full"
-            style={{
-              background: "rgba(34,197,94,0.12)",
-              color: "#22C55E",
-              border: "1px solid rgba(34,197,94,0.2)",
-            }}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            {isStreaming ? "Thinking…" : "Online"}
-          </span>
-        </div>
+        <p className="text-[10px] font-medium text-slate-400 mt-1 leading-none">
+          {isStreaming ? "Thinking…" : "Intelligent Workspace Assistant"}
+        </p>
       </div>
     </div>
 
