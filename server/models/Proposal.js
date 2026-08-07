@@ -41,7 +41,7 @@ const proposalSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "approved", "rejected", "withdrawn"],
+      enum: ["pending", "shortlisted", "approved", "rejected", "withdrawn"],
       default: "pending",
     },
     attachments: [

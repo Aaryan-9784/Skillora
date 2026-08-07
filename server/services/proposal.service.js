@@ -181,6 +181,19 @@ const respondToProposal = async (clientUserId, proposalId, action) => {
       refModel: "Project",
       refId: proposal.project._id,
     });
+  } else if (action === "shortlist") {
+    proposal.status = "shortlisted";
+    await proposal.save();
+
+    await notify({
+      recipient: proposal.freelancer,
+      type: "proposal_shortlisted",
+      title: "Proposal Shortlisted! ⭐",
+      message: `Your proposal for "${proposal.project.title}" has been shortlisted by the client.`,
+      link: `/projects`,
+      refModel: "Project",
+      refId: proposal.project._id,
+    });
   } else if (action === "reject") {
     proposal.status = "rejected";
     await proposal.save();
