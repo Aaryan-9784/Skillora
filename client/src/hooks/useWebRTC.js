@@ -42,6 +42,7 @@ export const useWebRTC = (targetUserId, defaultCallType = "video") => {
   }, [localStream]);
 
   useEffect(() => {
+    const socket = getSocket();
     if (!socket) return;
 
     const onIncoming = ({ callerId, offer, callType, projectId }) => {
@@ -86,9 +87,14 @@ export const useWebRTC = (targetUserId, defaultCallType = "video") => {
       socket.off("call:rejected",      onRejected);
       socket.off("call:ended",         onEnded);
     };
-  }, [socket, endCallCleanup]);
+  }, [endCallCleanup]);
 
   const startCall = async (type = defaultCallType) => {
+    const socket = getSocket();
+    if (!socket) {
+      alert("Socket connection not established. Please refresh or try again.");
+      return;
+    }
     setCallState("calling");
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -104,7 +110,7 @@ export const useWebRTC = (targetUserId, defaultCallType = "video") => {
 
       pc.ontrack = (e) => setRemoteStream(e.streams[0]);
       pc.onicecandidate = (e) => {
-        if (e.candidate) socket.emit("call:ice_candidate", { targetUserId, candidate: e.candidate });
+        if (e.candidate && targetUserId) socket.emit("call:ice_candidate", { targetUserId, candidate: e.candidate });
       };
 
       const offer = await pc.createOffer();
@@ -118,7 +124,8 @@ export const useWebRTC = (targetUserId, defaultCallType = "video") => {
   };
 
   const acceptCall = async () => {
-    if (!incomingCall) return;
+    const socket = getSocket();
+    if (!incomingCall || !socket) return;
     setCallState("connected");
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -149,13 +156,15 @@ export const useWebRTC = (targetUserId, defaultCallType = "video") => {
   };
 
   const rejectCall = () => {
-    if (incomingCall) socket.emit("call:reject", { callerId: incomingCall.callerId });
+    const socket = getSocket();
+    if (incomingCall && socket) socket.emit("call:reject", { callerId: incomingCall.callerId });
     endCallCleanup();
   };
 
   const endCall = () => {
+    const socket = getSocket();
     const target = targetUserId || incomingCall?.callerId;
-    if (target) socket.emit("call:end", { targetUserId: target });
+    if (target && socket) socket.emit("call:end", { targetUserId: target });
     endCallCleanup();
   };
 

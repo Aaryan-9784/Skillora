@@ -179,7 +179,7 @@ const uploadAttachment = asyncHandler(async (req, res) => {
   else if (req.file.mimetype.includes("zip")) fileType = "zip";
 
   const attachment = {
-    url:       req.file.path || `/uploads/${req.file.filename}`,
+    url:       `/uploads/${req.file.filename}`,
     fileName:  req.file.originalname,
     fileType,
     sizeBytes: req.file.size,

@@ -1,10 +1,11 @@
-const express      = require("express");
-const helmet       = require("helmet");
-const cors         = require("cors");
-const morgan       = require("morgan");
-const cookieParser = require("cookie-parser");
+const path          = require("path");
+const express       = require("express");
+const helmet        = require("helmet");
+const cors          = require("cors");
+const morgan        = require("morgan");
+const cookieParser  = require("cookie-parser");
 const mongoSanitize = require("express-mongo-sanitize");
-const passport     = require("./config/passport");
+const passport      = require("./config/passport");
 
 const errorMiddleware = require("./middlewares/error.middleware");
 const { apiLimiter }  = require("./middlewares/rateLimiter");
@@ -96,6 +97,9 @@ app.use("/api/escrow",        escrowRoutes);
 app.use("/api/reviews",       reviewRoutes);
 app.use("/api/submissions",   submissionRoutes);
 app.use("/api/disputes",      disputeRoutes);
+
+// Serve static uploads
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // ── 404 ───────────────────────────────────────────────────
 app.use((req, res) =>

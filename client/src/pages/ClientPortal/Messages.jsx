@@ -14,17 +14,21 @@ import ScheduleMeetingModal from "../../components/chat/ScheduleMeetingModal";
 import api from "../../services/api";
 import toast from "react-hot-toast";
 
-const GCard = ({ children, delay = 0, className = "", glow = "#635BFF" }) => (
+const GCard = ({ children, delay, className, glow }) => (
   <motion.div
-    initial={{ opacity: 0, y: 16 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.4, delay, ease: [0.16, 1, 0.3, 1] }}
-    className={`relative rounded-3xl border border-slate-800/80 bg-[#0B101F]/80 backdrop-blur-xl shadow-2xl overflow-hidden ${className}`}
+    initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: delay || 0, duration: 0.45, ease: [0.16,1,0.3,1] }}
+    className={"relative overflow-hidden rounded-2xl " + (className || "")}
+    style={{
+      background: "rgba(255,255,255,0.03)", backdropFilter: "blur(16px)",
+      border: "1px solid rgba(255,255,255,0.07)",
+      boxShadow: glow ? ("0 0 50px " + glow + "10") : "0 0 30px rgba(99,91,255,0.04)",
+    }}
   >
-    <div
-      className="absolute -top-24 -right-24 w-48 h-48 rounded-full pointer-events-none blur-3xl opacity-20"
-      style={{ background: glow }}
-    />
+    <div className="absolute inset-x-0 top-0 h-px pointer-events-none"
+      style={{ background: glow
+        ? ("linear-gradient(90deg,transparent," + glow + "50,transparent)")
+        : "linear-gradient(90deg,transparent,rgba(99,91,255,0.25),transparent)" }} />
     {children}
   </motion.div>
 );
@@ -98,61 +102,12 @@ const ClientMessages = () => {
     isMuted, isVideoOff, isScreenSharing, callDuration
   } = useWebRTC(partner?._id || partner, "video");
 
-  const handleInitiateCall = async (callType) => {
-    const projId = activeConversation?.projectId || activeConversation?.project;
-    if (!projId) {
-      toast((t) => (
-        <div className="flex flex-col gap-2 p-1">
-          <p className="font-bold text-xs text-white">📅 Schedule Meeting Required</p>
-          <p className="text-[11px] text-slate-300">
-            Voice & video calls are permitted only after scheduling a meeting.
-          </p>
-          <button
-            onClick={() => {
-              toast.dismiss(t.id);
-              setShowSchedule(true);
-            }}
-            className="mt-1 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-all cursor-pointer"
-          >
-            Schedule Meeting Now
-          </button>
-        </div>
-      ), { duration: 5000, style: { background: "#0F172A", border: "1px solid rgba(99,91,255,0.4)" } });
+  const handleInitiateCall = (callType) => {
+    if (!partner?._id && !partner) {
+      toast.error("No project contact available to call.");
       return;
     }
-
-    try {
-      const res = await api.get(`/meetings/project/${projId}`);
-      const activeMeetings = (res.data?.data?.meetings || []).filter(
-        (m) => ["scheduled", "ongoing", "completed"].includes(m.status)
-      );
-
-      if (activeMeetings.length === 0) {
-        toast((t) => (
-          <div className="flex flex-col gap-2 p-1">
-            <p className="font-bold text-xs text-white">📅 Schedule Meeting Required</p>
-            <p className="text-[11px] text-slate-300">
-              Voice & video calls are enabled only after confirming a scheduled meeting.
-            </p>
-            <button
-              onClick={() => {
-                toast.dismiss(t.id);
-                setShowSchedule(true);
-              }}
-              className="mt-1 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-all cursor-pointer"
-            >
-              Schedule Meeting Now
-            </button>
-          </div>
-        ), { duration: 5000, style: { background: "#0F172A", border: "1px solid rgba(99,91,255,0.4)" } });
-        return;
-      }
-
-      startCall(callType);
-    } catch (err) {
-      toast.error("Please schedule a meeting before starting voice or video calls.");
-      setShowSchedule(true);
-    }
+    startCall(callType);
   };
 
   useEffect(() => {
@@ -193,30 +148,32 @@ const ClientMessages = () => {
     }
   };
 
-  const handleSendVoiceNote = async (audioBlob) => {
+  const handleSendVoiceNote = async (audioBlob, durationSec = 0) => {
     if (!activeConversation?._id) return;
+    setShowVoice(false);
     try {
       setUploadingFile(true);
       const formData = new FormData();
       formData.append("file", audioBlob, "voice-note.webm");
-      formData.append("conversationId", activeConversation._id);
 
-      const res = await fetch("/api/upload/chat-attachment", {
-        method: "POST",
-        body: formData,
+      const { data } = await api.post("/chat/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.message);
+
+      const attachment = {
+        ...data.data.attachment,
+        duration: durationSec,
+      };
 
       await sendMessage({
         conversationId: activeConversation._id,
-        content: "🎤 Voice Note",
-        attachments: [{ fileType: "audio", url: data.data.url, fileName: "voice-note.webm" }],
+        content: "🎙 Voice Note",
+        attachments: [attachment],
+        type: "voice_note",
       });
-      setShowVoice(false);
-      toast.success("Voice note sent");
+      toast.success("Voice note sent!");
     } catch (err) {
-      toast.error(err.message || "Failed to send voice note");
+      toast.error(err.response?.data?.message || err.message || "Failed to send voice note");
     } finally {
       setUploadingFile(false);
     }
@@ -230,25 +187,22 @@ const ClientMessages = () => {
       setUploadingFile(true);
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("conversationId", activeConversation._id);
 
-      const res = await fetch("/api/upload/chat-attachment", {
-        method: "POST",
-        body: formData,
+      const { data } = await api.post("/chat/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.message);
 
-      const fileType = file.type.startsWith("image/") ? "image" : file.type.startsWith("audio/") ? "audio" : "document";
+      const attachment = data.data.attachment;
 
       await sendMessage({
         conversationId: activeConversation._id,
         content: `📎 Shared file: ${file.name}`,
-        attachments: [{ fileType, url: data.data.url, fileName: file.name }],
+        attachments: [attachment],
+        type: attachment.fileType === "audio" ? "voice_note" : "media",
       });
-      toast.success("Attachment sent");
+      toast.success("Attachment sent!");
     } catch (err) {
-      toast.error(err.message || "Failed to upload file");
+      toast.error(err.response?.data?.message || err.message || "Failed to upload file");
     } finally {
       setUploadingFile(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -256,7 +210,7 @@ const ClientMessages = () => {
   };
 
   return (
-    <div className="relative min-h-screen text-slate-100 flex flex-col font-sans"
+    <div className="h-full flex-1 flex flex-col min-h-0 relative overflow-hidden"
       style={{ background: "radial-gradient(ellipse 100% 55% at 65% -5%,rgba(99,91,255,0.08) 0%,transparent 52%),linear-gradient(180deg,#0B0F1A 0%,#07090F 100%)" }}>
       
       {/* Background ambient lighting */}

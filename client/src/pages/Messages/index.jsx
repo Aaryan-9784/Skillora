@@ -121,61 +121,12 @@ const Messages = () => {
     isMuted, isVideoOff, isScreenSharing, callDuration
   } = useWebRTC(partner?._id || partner, "video");
 
-  const handleInitiateCall = async (callType) => {
-    const projId = activeConversation?.projectId || activeConversation?.project;
-    if (!projId) {
-      toast((t) => (
-        <div className="flex flex-col gap-2 p-1">
-          <p className="font-bold text-xs text-white">📅 Schedule Meeting Required</p>
-          <p className="text-[11px] text-slate-300">
-            Voice & video calls are permitted only after scheduling a meeting.
-          </p>
-          <button
-            onClick={() => {
-              toast.dismiss(t.id);
-              setShowSchedule(true);
-            }}
-            className="mt-1 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-all cursor-pointer"
-          >
-            Schedule Meeting Now
-          </button>
-        </div>
-      ), { duration: 5000, style: { background: "#0F172A", border: "1px solid rgba(99,91,255,0.4)" } });
+  const handleInitiateCall = (callType) => {
+    if (!partner?._id && !partner) {
+      toast.error("No client contact available to call.");
       return;
     }
-
-    try {
-      const res = await api.get(`/meetings/project/${projId}`);
-      const activeMeetings = (res.data?.data?.meetings || []).filter(
-        (m) => ["scheduled", "ongoing", "completed"].includes(m.status)
-      );
-
-      if (activeMeetings.length === 0) {
-        toast((t) => (
-          <div className="flex flex-col gap-2 p-1">
-            <p className="font-bold text-xs text-white">📅 Schedule Meeting Required</p>
-            <p className="text-[11px] text-slate-300">
-              Voice & video calls are enabled only after confirming a scheduled meeting.
-            </p>
-            <button
-              onClick={() => {
-                toast.dismiss(t.id);
-                setShowSchedule(true);
-              }}
-              className="mt-1 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-all cursor-pointer"
-            >
-              Schedule Meeting Now
-            </button>
-          </div>
-        ), { duration: 5000, style: { background: "#0F172A", border: "1px solid rgba(99,91,255,0.4)" } });
-        return;
-      }
-
-      startCall(callType);
-    } catch (err) {
-      toast.error("Please schedule a meeting before starting voice or video calls.");
-      setShowSchedule(true);
-    }
+    startCall(callType);
   };
 
   useEffect(() => {
@@ -211,7 +162,7 @@ const Messages = () => {
     setInputText("");
 
     try {
-      await sendMessage(activeConversation._id, text);
+      await sendMessage({ conversationId: activeConversation._id, content: text });
     } catch {
       toast.error("Failed to send message");
     }
@@ -230,21 +181,30 @@ const Messages = () => {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      await sendMessage(activeConversation._id, "", [data.data.attachment], "media");
+      const attachment = data.data.attachment;
+
+      await sendMessage({
+        conversationId: activeConversation._id,
+        content: `📎 Shared file: ${file.name}`,
+        attachments: [attachment],
+        type: attachment.fileType === "audio" ? "voice_note" : "media",
+      });
       toast.success("Attachment sent!");
     } catch {
       toast.error("Failed to upload attachment");
     } finally {
       setUploadingFile(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
-  const handleSendVoiceNote = async (audioBlob, durationSec) => {
+  const handleSendVoiceNote = async (audioBlob, durationSec = 0) => {
     if (!activeConversation?._id) return;
     setShowVoice(false);
 
+    setUploadingFile(true);
     const formData = new FormData();
-    formData.append("file", audioBlob, "voicenote.webm");
+    formData.append("file", audioBlob, "voice-note.webm");
 
     try {
       const { data } = await api.post("/chat/upload", formData, {
@@ -256,10 +216,17 @@ const Messages = () => {
         duration: durationSec,
       };
 
-      await sendMessage(activeConversation._id, "🎙 Voice Note", [attachment], "voice_note");
+      await sendMessage({
+        conversationId: activeConversation._id,
+        content: "🎙 Voice Note",
+        attachments: [attachment],
+        type: "voice_note",
+      });
       toast.success("Voice note sent!");
     } catch {
       toast.error("Failed to send voice note");
+    } finally {
+      setUploadingFile(false);
     }
   };
 
@@ -657,6 +624,24 @@ const Messages = () => {
                           }`}
                         >
                           {msg.content && <p className="leading-relaxed whitespace-pre-wrap">{msg.content}</p>}
+
+                          {/* Attachments rendering */}
+                          {msg.attachments?.map((att, idx) => (
+                            <div key={idx} className="mt-2 pt-2 border-t border-white/10">
+                              {att.fileType === "image" ? (
+                                <a href={att.url} target="_blank" rel="noreferrer">
+                                  <img src={att.url} alt={att.fileName || "Attachment"} className="max-w-xs rounded-xl border border-white/10 hover:opacity-90 transition-opacity" />
+                                </a>
+                              ) : att.fileType === "audio" || msg.type === "voice_note" ? (
+                                <audio controls src={att.url} className="h-8 max-w-xs" />
+                              ) : (
+                                <a href={att.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-indigo-200 underline">
+                                  <FileText size={14} /> {att.fileName || "Download Attachment"}
+                                </a>
+                              )}
+                            </div>
+                          ))}
+
                           <div className={`flex items-center gap-1.5 mt-1 text-[10px] ${isMe ? "text-indigo-200 justify-end" : "text-slate-400"}`}>
                             <span>{relativeTime(msg.createdAt)}</span>
                             {isMe && <CheckCheck size={13} className="text-indigo-200" />}
@@ -669,15 +654,18 @@ const Messages = () => {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Message Input Footer */}
+                {/* Message Input Footer */}
               <div className="p-3 bg-[#111b21] border-t border-slate-800 shrink-0">
-                <form onSubmit={handleSendText} className="flex items-center gap-2">
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileUpload}
-                    className="hidden"
-                  />
+                {showVoiceRecorder ? (
+                  <VoiceRecorder onSendVoiceNote={handleSendVoiceNote} onCancel={() => setShowVoice(false)} />
+                ) : (
+                  <form onSubmit={handleSendText} className="flex items-center gap-2">
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
@@ -724,6 +712,7 @@ const Messages = () => {
                     <Send size={13} />
                   </motion.button>
                 </form>
+              )}
               </div>
             </>
           )}

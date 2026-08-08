@@ -524,7 +524,7 @@ const ClientLayout = () => {
         <ClientNavbar onSearch={() => setSearchOpen(true)} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
         <motion.main key="main" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25, ease: [0.16,1,0.3,1] }}
-          className={`flex-1 ${location.pathname === "/client/messages" ? "overflow-hidden flex flex-col min-h-0" : "overflow-y-auto"}`}>
+          className="flex-1 overflow-y-auto">
           <Outlet />
         </motion.main>
       </div>
