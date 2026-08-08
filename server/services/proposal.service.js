@@ -36,7 +36,7 @@ const postClientProject = async (clientUser, data) => {
  * Freelancer gets all open client projects from the marketplace.
  */
 const getOpenProjects = async (reqQuery = {}) => {
-  const filter = { status: "open", isDeleted: { $ne: true } };
+  const filter = { status: { $in: ["open", "planning"] }, isDeleted: { $ne: true } };
 
   if (reqQuery.category && reqQuery.category !== "All") {
     filter.category = reqQuery.category;
@@ -55,9 +55,10 @@ const getOpenProjects = async (reqQuery = {}) => {
     .filter()
     .search(["title", "description", "category"])
     .sort("-createdAt")
-    .paginate(15)
+    .paginate(20)
     .lean()
     .populate("clientUser", "name email company avatar")
+    .populate("owner", "name email company avatar")
     .populate("clientId", "name company avatar")
     .exec();
 };

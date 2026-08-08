@@ -356,7 +356,12 @@ const Projects = () => {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl lg:text-3xl font-black tracking-tight leading-tight"
-              style={{ background: "linear-gradient(135deg, #FFFFFF 30%, #A78BFA 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              style={{
+                background: "linear-gradient(135deg, #FFFFFF 0%, #DDD6FE 40%, #A78BFA 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                filter: "drop-shadow(0 2px 12px rgba(167,139,250,0.25))",
+              }}>
               Freelancer Projects & Marketplace
             </h1>
             <p className="text-xs lg:text-sm mt-1 font-medium text-slate-400">

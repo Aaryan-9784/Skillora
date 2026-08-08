@@ -15,112 +15,8 @@ import KPIWidget from "../../components/dashboard/KPIWidget";
 import { formatCurrency, getInitials } from "../../utils/helpers";
 
 // ─────────────────────────────────────────────────────────
-// DEMO / SAMPLE MARKETPLACE JOBS DATA (In Rupees ₹)
+// MARKETPLACE CATEGORIES & OPTIONS
 // ─────────────────────────────────────────────────────────
-const DEMO_JOBS = [
-  {
-    _id: "demo-1",
-    title: "Full-Stack SaaS Platform Redesign (Next.js 14 & Node)",
-    clientName: "Apex Digital Labs",
-    clientRating: 4.9,
-    category: "Web Development",
-    budget: 280000,
-    currency: "INR",
-    type: "Fixed Price",
-    deadline: "2026-09-15",
-    proposalsCount: 6,
-    verified: true,
-    description:
-      "We are looking for an experienced full-stack developer to revamp our SaaS dashboard. Requires React/Next.js 14, Tailwind CSS, REST APIs, and Stripe payment integration. Must deliver responsive UI with high performance.",
-    requiredSkills: ["React", "Next.js", "Node.js", "Tailwind CSS", "Stripe API"],
-    postedAt: "2 hours ago",
-  },
-  {
-    _id: "demo-2",
-    title: "AI-Powered Customer Support Chatbot & RAG Workflow",
-    clientName: "FinTech Velocity",
-    clientRating: 5.0,
-    category: "AI & Data",
-    budget: 225000,
-    currency: "INR",
-    type: "Fixed Price",
-    deadline: "2026-09-10",
-    proposalsCount: 12,
-    verified: true,
-    description:
-      "Build a custom RAG AI chatbot trained on company documentation using OpenAI GPT-4 APIs, LangChain, and Vector DB (Pinecone/Qdrant). Needs web widget integration and analytics dashboard.",
-    requiredSkills: ["Python", "OpenAI API", "LangChain", "Vector DB", "React"],
-    postedAt: "5 hours ago",
-  },
-  {
-    _id: "demo-3",
-    title: "Cross-Platform Mobile App for Expense Tracking (React Native)",
-    clientName: "VentureWorks Inc.",
-    clientRating: 4.8,
-    category: "Mobile Apps",
-    budget: 350000,
-    currency: "INR",
-    type: "Fixed Price",
-    deadline: "2026-10-01",
-    proposalsCount: 9,
-    verified: true,
-    description:
-      "Looking for a React Native specialist to build an iOS & Android app for expense tracking and invoice scanning. Must include OCR receipt scanning, offline sync, and PDF invoice export.",
-    requiredSkills: ["React Native", "Expo", "TypeScript", "Node.js", "Firebase"],
-    postedAt: "1 day ago",
-  },
-  {
-    _id: "demo-4",
-    title: "Dark-Mode Design System & Web App UI/UX Redesign",
-    clientName: "Neuron Studio",
-    clientRating: 4.9,
-    category: "UI/UX Design",
-    budget: 150000,
-    currency: "INR",
-    type: "Fixed Price",
-    deadline: "2026-09-05",
-    proposalsCount: 14,
-    verified: true,
-    description:
-      "Redesign our desktop & mobile application design system in Figma. Deliver clean dark-mode UI components, micro-animations specification, and developer handoff guidelines.",
-    requiredSkills: ["Figma", "UI/UX", "Design Systems", "Prototyping", "Tailwind CSS"],
-    postedAt: "1 day ago",
-  },
-  {
-    _id: "demo-5",
-    title: "Technical Content & API Documentation Writing",
-    clientName: "CloudScale Systems",
-    clientRating: 4.7,
-    category: "Writing & Content",
-    budget: 85000,
-    currency: "INR",
-    type: "Fixed Price",
-    deadline: "2026-08-30",
-    proposalsCount: 4,
-    verified: true,
-    description:
-      "Seeking a technical writer to document REST & GraphQL APIs, author developer onboarding guides, and write 4 technical blog posts on cloud infrastructure scaling.",
-    requiredSkills: ["Technical Writing", "API Docs", "Markdown", "Developer Experience"],
-    postedAt: "2 days ago",
-  },
-  {
-    _id: "demo-6",
-    title: "DevOps CI/CD Automation & Kubernetes Migration",
-    clientName: "OmniTech Solutions",
-    clientRating: 5.0,
-    category: "Web Development",
-    budget: 260000,
-    currency: "INR",
-    type: "Fixed Price",
-    deadline: "2026-09-20",
-    proposalsCount: 7,
-    verified: true,
-    description:
-      "Migrate existing Dockerized microservices to AWS EKS (Kubernetes), configure GitHub Actions CI/CD pipelines, and implement Prometheus/Grafana monitoring alerts.",
-    requiredSkills: ["AWS", "Kubernetes", "Docker", "GitHub Actions", "Terraform"],
-    postedAt: "3 days ago",
-  },
-];
 
 const CATEGORIES = [
   "All",
@@ -143,6 +39,92 @@ const DELIVERY_OPTIONS = [
   { id: "14", label: "14 Days (2 Weeks)" },
   { id: "30", label: "30 Days (1 Month)" },
 ];
+
+// ─────────────────────────────────────────────────────────
+// CUSTOM CATEGORY DROPDOWN (Dark Glass Menu)
+// ─────────────────────────────────────────────────────────
+const CustomCategoryDropdown = ({ value, onChange, counts }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useClickOutside(ref, () => setOpen(false), { enabled: open });
+
+  const currentCount = counts[value] || counts["All"] || 0;
+
+  return (
+    <div className="relative shrink-0" ref={ref}>
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-200 transition-all cursor-pointer select-none"
+        style={{
+          background: "rgba(255,255,255,0.05)",
+          border: "1px solid rgba(255,255,255,0.1)",
+          boxShadow: open ? "0 0 16px rgba(99,91,255,0.25)" : "none",
+        }}
+      >
+        <Filter size={13} className="text-purple-400" />
+        <span>{value === "All" ? "All Categories" : value}</span>
+        <span className="px-1.5 py-0.5 rounded-md text-[10px] font-extrabold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+          {currentCount}
+        </span>
+        <ChevronDown size={13} className={`text-slate-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+      </motion.button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: -6 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: -6 }}
+            transition={{ duration: 0.15 }}
+            className="absolute left-0 sm:left-auto sm:right-0 top-11 z-30 w-52 rounded-xl overflow-hidden py-1.5"
+            style={{
+              background: "linear-gradient(160deg, rgba(15,23,42,0.98) 0%, rgba(10,16,30,0.98) 100%)",
+              border: "1px solid rgba(255,255,255,0.12)",
+              boxShadow: "0 12px 32px rgba(0,0,0,0.6), 0 0 16px rgba(99,91,255,0.15)",
+              backdropFilter: "blur(20px)",
+            }}
+          >
+            {CATEGORIES.map((cat) => {
+              const active = cat === value;
+              const count = counts[cat] || 0;
+              return (
+                <button
+                  type="button"
+                  key={cat}
+                  onClick={() => {
+                    onChange(cat);
+                    setOpen(false);
+                  }}
+                  className="w-full flex items-center justify-between px-3.5 py-2 text-xs font-semibold text-left transition-colors cursor-pointer"
+                  style={{
+                    color: active ? "#A78BFA" : "#CBD5E1",
+                    background: active ? "rgba(99,91,255,0.15)" : "transparent",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!active) e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!active) e.currentTarget.style.background = "transparent";
+                  }}
+                >
+                  <span>{cat === "All" ? "All Categories" : cat}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="px-1.5 py-0.5 rounded-md text-[10px] font-extrabold bg-white/5 text-gray-400">
+                      {count}
+                    </span>
+                    {active && <Check size={13} className="text-purple-400" />}
+                  </div>
+                </button>
+              );
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 // ─────────────────────────────────────────────────────────
 // CUSTOM SORT DROPDOWN (Dark Glass Menu)
@@ -322,14 +304,11 @@ export default function MarketplacePage() {
     try {
       setLoading(true);
       const res = await api.get("/projects/explore");
-      const fetched = res.data?.data?.projects || res.data?.projects || [];
-      if (fetched.length > 0) {
-        setProjects(fetched);
-      } else {
-        setProjects(DEMO_JOBS);
-      }
+      const fetched = res.data?.data?.projects || res.data?.projects || (Array.isArray(res.data?.data) ? res.data.data : []);
+      setProjects(fetched);
     } catch (err) {
-      setProjects(DEMO_JOBS);
+      console.error("Failed to fetch database projects:", err);
+      setProjects([]);
     } finally {
       setLoading(false);
     }
@@ -423,10 +402,15 @@ export default function MarketplacePage() {
           className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl lg:text-3xl font-black tracking-tight leading-tight"
-              style={{ background: "linear-gradient(135deg, #FFFFFF 30%, #A78BFA 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              style={{
+                background: "linear-gradient(135deg, #FFFFFF 0%, #DDD6FE 40%, #A78BFA 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                filter: "drop-shadow(0 2px 12px rgba(167,139,250,0.25))",
+              }}>
               Explore Jobs
             </h1>
-            <p className="text-xs lg:text-sm mt-1 font-medium" style={{ color: "rgba(148,163,184,0.7)" }}>
+            <p className="text-xs lg:text-sm mt-1 font-medium text-slate-400">
               Browse active client contracts, submit custom proposals, and secure project milestones
             </p>
           </div>
@@ -450,79 +434,52 @@ export default function MarketplacePage() {
           />
           <KPIWidget
             label="Avg Contract Value"
-            value="₹2,25,000"
+            value={projects.length > 0 ? formatCurrency(Math.round(projects.reduce((acc, p) => acc + (p.budget || 0), 0) / projects.length), "INR") : "₹0"}
             icon={TrendingUp}
-            trendLabel="Based on market budget"
+            trendLabel="Based on live database contracts"
             color="cyan"
           />
         </div>
 
-        {/* ── FILTER TOOLBAR ── */}
-        <div className="flex flex-col space-y-3">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-3">
-            {/* Search Input */}
-            <div className="relative w-full md:w-96">
-              <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by project title, tech stack, or skills..."
-                className="w-full pl-10 pr-10 py-2.5 rounded-xl text-xs font-medium text-white transition-all outline-none"
-                style={{
-                  background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.09)",
-                }}
-                onFocus={(e) => {
-                  e.target.style.border = "1px solid rgba(99,91,255,0.5)";
-                  e.target.style.boxShadow = "0 0 0 3px rgba(99,91,255,0.12)";
-                }}
-                onBlur={(e) => {
-                  e.target.style.border = "1px solid rgba(255,255,255,0.09)";
-                  e.target.style.boxShadow = "none";
-                }}
-              />
-              {search && (
-                <button onClick={() => setSearch("")} className="absolute right-3 top-3 text-slate-400 hover:text-white cursor-pointer">
-                  <X size={14} />
-                </button>
-              )}
-            </div>
-
-            {/* Custom Sort Dropdown */}
-            <div className="flex items-center gap-2 self-end md:self-auto">
-              <CustomSortDropdown value={sortBy} onChange={setSortBy} />
-            </div>
+        {/* ── FILTER TOOLBAR (Compact Search + Category Dropdown + Sort Dropdown) ── */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+          {/* Search Input */}
+          <div className="relative w-full md:w-96">
+            <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by project title, tech stack, or skills..."
+              className="w-full pl-10 pr-10 py-2.5 rounded-xl text-xs font-medium text-white transition-all outline-none"
+              style={{
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.09)",
+              }}
+              onFocus={(e) => {
+                e.target.style.border = "1px solid rgba(99,91,255,0.5)";
+                e.target.style.boxShadow = "0 0 0 3px rgba(99,91,255,0.12)";
+              }}
+              onBlur={(e) => {
+                e.target.style.border = "1px solid rgba(255,255,255,0.09)";
+                e.target.style.boxShadow = "none";
+              }}
+            />
+            {search && (
+              <button onClick={() => setSearch("")} className="absolute right-3 top-3 text-slate-400 hover:text-white cursor-pointer">
+                <X size={14} />
+              </button>
+            )}
           </div>
 
-          {/* Category Tabs */}
-          <div className="flex items-center gap-2 overflow-x-auto pt-1 pb-1" style={{ scrollbarWidth: "none" }}>
-            {CATEGORIES.map((cat) => {
-              const active = selectedCategory === cat;
-              const count = categoryCounts[cat] || 0;
-              return (
-                <motion.button
-                  key={cat}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setSelectedCategory(cat)}
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-150 flex items-center gap-2 cursor-pointer"
-                  style={{
-                    background: active
-                      ? "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)"
-                      : "rgba(255,255,255,0.04)",
-                    color: active ? "#FFFFFF" : "#9CA3AF",
-                    border: active ? "1px solid rgba(139,92,246,0.3)" : "1px solid rgba(255,255,255,0.07)",
-                    boxShadow: active ? "0 0 16px rgba(99,91,255,0.35)" : "none",
-                  }}
-                >
-                  <span>{cat}</span>
-                  <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-extrabold ${active ? "bg-white/20 text-white" : "bg-white/5 text-gray-400"}`}>
-                    {count}
-                  </span>
-                </motion.button>
-              );
-            })}
+          {/* Custom Dropdowns Group: Category Dropdown + Sort Dropdown */}
+          <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
+            <CustomCategoryDropdown
+              value={selectedCategory}
+              onChange={setSelectedCategory}
+              counts={categoryCounts}
+            />
+            <CustomSortDropdown value={sortBy} onChange={setSortBy} />
           </div>
         </div>
 
@@ -568,33 +525,44 @@ export default function MarketplacePage() {
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05, duration: 0.3 }}
-                  className="rounded-2xl p-6 flex flex-col justify-between group transition-all duration-200 cursor-pointer"
+                  className="relative rounded-2xl p-6 flex flex-col justify-between group transition-all duration-300 cursor-pointer overflow-hidden"
                   style={{
-                    background: "linear-gradient(145deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.015) 100%)",
-                    backdropFilter: "blur(16px)",
-                    border: "1px solid rgba(255,255,255,0.07)",
-                    boxShadow: "0 4px 24px rgba(0,0,0,0.3)",
-                    minHeight: "340px",
+                    background: "linear-gradient(150deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.015) 100%)",
+                    backdropFilter: "blur(20px)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    boxShadow: "0 4px 24px rgba(0,0,0,0.35)",
+                    minHeight: "350px",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "rgba(99,91,255,0.35)";
-                    e.currentTarget.style.boxShadow = "0 8px 32px rgba(99,91,255,0.18)";
+                    e.currentTarget.style.borderColor = "rgba(99,91,255,0.4)";
+                    e.currentTarget.style.boxShadow = "0 12px 40px rgba(99,91,255,0.2), inset 0 1px 0 rgba(255,255,255,0.1)";
+                    e.currentTarget.style.transform = "translateY(-4px)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)";
-                    e.currentTarget.style.boxShadow = "0 4px 24px rgba(0,0,0,0.3)";
+                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
+                    e.currentTarget.style.boxShadow = "0 4px 24px rgba(0,0,0,0.35)";
+                    e.currentTarget.style.transform = "translateY(0)";
                   }}
                   onClick={() => setDetailProject(project)}
                 >
-                  <div className="space-y-3">
-                    {/* Top Header: Category Badge on left, Budget Badge on right */}
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg"
-                        style={{ background: "rgba(99,91,255,0.14)", color: "#A78BFA", border: "1px solid rgba(99,91,255,0.2)" }}>
+                  {/* Top Ambient Accent Glow Line on Hover */}
+                  <div className="absolute top-0 inset-x-0 h-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                    style={{ background: "linear-gradient(90deg, transparent, #635BFF 40%, #8B5CF6 60%, transparent)" }} />
+
+                  {/* Corner Glow Blob */}
+                  <div className="absolute -top-12 -right-12 w-36 h-36 rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                    style={{ background: "radial-gradient(circle, rgba(99,91,255,0.15) 0%, transparent 70%)" }} />
+
+                  <div className="space-y-3.5 relative z-10">
+                    {/* Top Header: Category Badge on left, Budget display on right */}
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-xl"
+                        style={{ background: "rgba(99,91,255,0.15)", color: "#C4B5FD", border: "1px solid rgba(99,91,255,0.25)" }}>
                         {project.category || "General"}
                       </span>
                       <div className="text-right shrink-0">
-                        <p className="text-base font-extrabold text-emerald-400 leading-none">
+                        <p className="text-lg font-black text-emerald-400 leading-none"
+                          style={{ filter: "drop-shadow(0 2px 8px rgba(34,197,94,0.25))" }}>
                           {formattedBudget}
                         </p>
                         <p className="text-[11px] font-semibold text-slate-400 mt-1">
@@ -607,38 +575,40 @@ export default function MarketplacePage() {
                     <div>
                       <h3 className="font-extrabold text-base text-white group-hover:text-purple-300 transition-colors line-clamp-2 leading-snug flex items-center justify-between gap-2">
                         <span>{project.title}</span>
-                        <ArrowUpRight size={16} className="text-gray-500 group-hover:text-purple-400 opacity-0 group-hover:opacity-100 transition-all shrink-0" />
+                        <ArrowUpRight size={17} className="text-slate-500 group-hover:text-purple-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0" />
                       </h3>
-                      <p className="text-xs text-gray-400 mt-2 line-clamp-2 leading-relaxed font-normal">
+                      <p className="text-xs text-slate-400 mt-2 line-clamp-2 leading-relaxed font-normal">
                         {project.description}
                       </p>
                     </div>
 
-                    {/* Clean Inline Key Details: Proposals & Escrow */}
-                    <div className="flex items-center gap-3 text-[11px] font-medium text-gray-400 pt-0.5">
-                      <span className="flex items-center gap-1">
+                    {/* Micro-Badges: Proposals & Escrow */}
+                    <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                      <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold"
+                        style={{ background: "rgba(99,91,255,0.12)", color: "#C4B5FD", border: "1px solid rgba(99,91,255,0.2)" }}>
                         <Send size={11} className="text-purple-400" />
-                        <strong className="text-slate-200">{project.proposalsCount || 6} proposals</strong>
+                        <span>{project.proposalsCount || 6} proposals</span>
                       </span>
-                      <span>·</span>
-                      <span className="flex items-center gap-1">
+
+                      <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold"
+                        style={{ background: "rgba(34,197,94,0.12)", color: "#4ADE80", border: "1px solid rgba(34,197,94,0.2)" }}>
                         <ShieldCheck size={11} className="text-emerald-400" />
-                        <strong className="text-emerald-400">100% Escrow</strong>
+                        <span>100% Escrow</span>
                       </span>
                     </div>
 
                     {/* Skills Tags */}
                     {skills.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 pt-1">
+                      <div className="flex flex-wrap gap-1.5 pt-0.5">
                         {visibleSkills.map((sk, i) => (
-                          <span key={i} className="text-[10px] font-medium px-2 py-0.5 rounded-md"
-                            style={{ background: "rgba(255,255,255,0.04)", color: "#CBD5E1", border: "1px solid rgba(255,255,255,0.07)" }}>
+                          <span key={i} className="text-[10px] font-semibold px-2.5 py-1 rounded-lg transition-colors"
+                            style={{ background: "rgba(255,255,255,0.04)", color: "#CBD5E1", border: "1px solid rgba(255,255,255,0.08)" }}>
                             {sk}
                           </span>
                         ))}
                         {extraSkills > 0 && (
-                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-md"
-                            style={{ background: "rgba(99,91,255,0.1)", color: "#C4B5FD", border: "1px solid rgba(99,91,255,0.2)" }}>
+                          <span className="text-[10px] font-semibold px-2.5 py-1 rounded-lg"
+                            style={{ background: "rgba(99,91,255,0.12)", color: "#C4B5FD", border: "1px solid rgba(99,91,255,0.2)" }}>
                             +{extraSkills} more
                           </span>
                         )}
@@ -646,35 +616,35 @@ export default function MarketplacePage() {
                     )}
                   </div>
 
-                  {/* Footer Action Buttons: View Details & Submit Proposal */}
-                  <div className="pt-3.5 space-y-3 mt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-                    <div className="flex items-center justify-between text-xs text-gray-400">
+                  {/* Footer Client Profile & Action Buttons */}
+                  <div className="pt-3.5 space-y-3 mt-3 relative z-10" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+                    <div className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-extrabold text-white shrink-0"
-                          style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)", boxShadow: "0 0 10px rgba(99,91,255,0.3)" }}>
+                        <div className="w-7 h-7 rounded-xl flex items-center justify-center text-[10px] font-black text-white shrink-0"
+                          style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)", boxShadow: "0 0 12px rgba(99,91,255,0.4)" }}>
                           {initials}
                         </div>
-                        <div className="flex items-center gap-1">
-                          <span className="font-bold text-gray-200">{project.clientName || "Verified Client"}</span>
-                          <CheckCircle size={12} className="text-emerald-400 shrink-0" />
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold text-slate-200">{project.clientName || "Verified Client"}</span>
+                          <CheckCircle size={13} className="text-emerald-400 shrink-0" />
                         </div>
                         {project.clientRating && (
-                          <span className="flex items-center text-[10px] text-amber-400 font-bold ml-0.5 px-1.5 py-0.5 rounded"
+                          <span className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold text-amber-300"
                             style={{ background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.2)" }}>
-                            <Star size={10} className="fill-amber-400 text-amber-400 mr-0.5" />
-                            {project.clientRating}
+                            <Star size={10} className="fill-amber-400 text-amber-400" />
+                            <span>{project.clientRating}</span>
                           </span>
                         )}
                       </div>
-                      <span className="text-[10px] text-gray-500 font-medium">{project.postedAt || "Recently"}</span>
+                      <span className="text-[10px] text-slate-500 font-medium">{project.postedAt || "Recently"}</span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2" onClick={(e) => e.stopPropagation()}>
+                    <div className="grid grid-cols-2 gap-2.5" onClick={(e) => e.stopPropagation()}>
                       <motion.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => setDetailProject(project)}
-                        className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                        className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer"
                         style={{
                           background: "rgba(255,255,255,0.05)",
                           color: "#CBD5E1",
@@ -689,7 +659,7 @@ export default function MarketplacePage() {
                         whileTap={{ scale: isApplied ? 1 : 0.98 }}
                         disabled={isApplied}
                         onClick={() => handleOpenProposal(project)}
-                        className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                        className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold text-white transition-all cursor-pointer"
                         style={{
                           background: isApplied
                             ? "rgba(34,197,94,0.15)"

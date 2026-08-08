@@ -368,13 +368,14 @@ const Tasks = () => {
           <div>
             <h1 className="text-2xl lg:text-3xl font-black tracking-tight leading-tight"
               style={{
-                background: "linear-gradient(135deg, #FFFFFF 30%, #A78BFA 100%)",
+                background: "linear-gradient(135deg, #FFFFFF 0%, #DDD6FE 40%, #A78BFA 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
+                filter: "drop-shadow(0 2px 12px rgba(167,139,250,0.25))",
               }}>
               Kanban Task Workflow
             </h1>
-            <p className="text-xs lg:text-sm mt-1 font-medium" style={{ color: "rgba(148,163,184,0.7)" }}>
+            <p className="text-xs lg:text-sm mt-1 font-medium text-slate-400">
               Organize sprint tasks, track progress across Kanban columns & manage deliverables
             </p>
           </div>

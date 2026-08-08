@@ -218,10 +218,11 @@ const ClientMessages = () => {
                 background: "linear-gradient(135deg, #FFFFFF 30%, #A78BFA 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
+                filter: "drop-shadow(0 2px 12px rgba(167,139,250,0.2))",
               }}>
               Messages & Real-Time Chat
             </h1>
-            <p className="text-xs lg:text-sm mt-1 font-medium" style={{ color: "rgba(148,163,184,0.7)" }}>
+            <p className="text-xs lg:text-sm mt-1 font-medium text-slate-400">
               Direct communication thread with your clients and project team
             </p>
           </div>

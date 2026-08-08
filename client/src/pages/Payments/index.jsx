@@ -184,10 +184,11 @@ const Payments = () => {
                 background: "linear-gradient(135deg, #FFFFFF 30%, #A78BFA 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
+                filter: "drop-shadow(0 2px 12px rgba(167,139,250,0.2))",
               }}>
               Payments & Invoices
             </h1>
-            <p className="text-xs lg:text-sm mt-1 font-medium" style={{ color: "rgba(148,163,184,0.7)" }}>
+            <p className="text-xs lg:text-sm mt-1 font-medium text-slate-400">
               Manage client billing, track incoming payments, and issue professional invoices
             </p>
           </div>
