@@ -35,47 +35,46 @@ const KPIWidget = ({ label, value, icon: Icon, trendLabel, color = "brand" }) =>
       <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"
         style={{ background: `radial-gradient(circle, ${g.glow} 0%, transparent 65%)` }} />
 
-      {/* Bottom-left subtle glow */}
-      <div className="absolute -bottom-6 -left-6 w-24 h-24 rounded-full pointer-events-none opacity-20"
-        style={{ background: `radial-gradient(circle, ${g.glow} 0%, transparent 70%)` }} />
-
       {/* Top border line */}
       <div className="absolute top-0 inset-x-0 h-[1.5px] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
         style={{ background: `linear-gradient(90deg, transparent 0%, ${g.from} 40%, ${g.to} 60%, transparent 100%)` }} />
 
-      <div className="p-5">
-        {/* Top row: icon */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="relative shrink-0">
-            <div className="w-11 h-11 rounded-2xl flex items-center justify-center"
-              style={{
-                background: `linear-gradient(135deg, ${g.bg}, rgba(255,255,255,0.03))`,
-                border: `1px solid ${g.ring}`,
-                boxShadow: `0 0 20px ${g.glow}, inset 0 1px 0 rgba(255,255,255,0.1)`,
-              }}>
-              <Icon size={19} style={{ color: g.from }} strokeWidth={1.7} />
-            </div>
-            <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-              style={{ boxShadow: `0 0 0 4px ${g.bg}` }} />
+      <div className="p-5 flex flex-col justify-between h-full min-h-[120px] space-y-2">
+        {/* Top row: Label + Icon */}
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+            {label}
+          </span>
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+            style={{
+              background: `linear-gradient(135deg, ${g.bg}, rgba(255,255,255,0.03))`,
+              border: `1px solid ${g.ring}`,
+              boxShadow: `0 0 14px ${g.glow}`,
+            }}>
+            <Icon size={17} style={{ color: g.from }} strokeWidth={1.8} />
           </div>
         </div>
 
-        {/* Value */}
-        <p
-          className="text-3xl font-extrabold tracking-tight leading-none mb-2"
-          style={{
-            background: `linear-gradient(135deg, #FFFFFF 30%, ${g.from} 100%)`,
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-          }}
-        >
-          {value}
-        </p>
+        {/* Middle: Value */}
+        <div className="pt-0.5">
+          <p
+            className="text-2xl font-black tracking-tight leading-none"
+            style={{
+              background: `linear-gradient(135deg, #FFFFFF 40%, ${g.from} 100%)`,
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            }}
+          >
+            {value}
+          </p>
+        </div>
 
-        {/* Label */}
-        <p className="text-[13px] font-medium" style={{ color: "rgba(156, 163, 175, 0.9)" }}>
-          {label}
-        </p>
+        {/* Bottom: Subtext / TrendLabel */}
+        {trendLabel && (
+          <p className="text-[11px] font-medium text-slate-400">
+            {trendLabel}
+          </p>
+        )}
       </div>
     </div>
   );

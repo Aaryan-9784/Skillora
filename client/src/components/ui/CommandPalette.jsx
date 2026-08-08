@@ -13,7 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, FolderKanban, CheckSquare, Users, CreditCard,
   Sparkles, ArrowRight, Clock, Zap, BarChart2, FileText,
-  LayoutDashboard, Settings, Lightbulb, X,
+  LayoutDashboard, Settings, Lightbulb, X, User,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import useClickOutside from "../../hooks/useClickOutside";

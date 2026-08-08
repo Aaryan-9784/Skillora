@@ -23,20 +23,15 @@ const NAV_SECTIONS = [
     label: "BUSINESS",
     items: [
       { to: "/clients",  icon: Users,         label: "Clients" },
-      { to: "/messages", icon: MessageSquare, label: "Messages" },
       { to: "/payments", icon: CreditCard,    label: "Payments" },
-    ],
-  },
-  {
-    label: "MARKETPLACE",
-    items: [
-      { to: "/marketplace", icon: ShoppingBag, label: "Explore Jobs" },
+      { to: "/messages", icon: MessageSquare, label: "Messages" },
     ],
   },
   {
     label: "GROWTH",
     items: [
-      { to: "/skills", icon: Sparkles, label: "Skills" },
+      { to: "/marketplace", icon: ShoppingBag, label: "Explore Jobs" },
+      { to: "/skills",      icon: Sparkles,    label: "Skills" },
     ],
   },
   {

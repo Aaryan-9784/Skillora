@@ -55,6 +55,16 @@
   h1 { @apply text-4xl font-bold tracking-tight; }
   h2 { @apply text-3xl font-semibold tracking-tight; }
   h3 { @apply text-2xl font-medium; }
+
+  /* Hide native number input spinners */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
 }
 
 @layer components {

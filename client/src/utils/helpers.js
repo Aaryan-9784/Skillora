@@ -3,9 +3,10 @@ export const formatDate = (date) => {
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(new Date(date));
 };
 
-export const formatCurrency = (amount, currency = "USD") => {
+export const formatCurrency = (amount, currency = "INR") => {
   if (!amount && amount !== 0) return "—";
-  return new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 0 }).format(amount);
+  const locale = currency === "INR" ? "en-IN" : "en-US";
+  return new Intl.NumberFormat(locale, { style: "currency", currency, maximumFractionDigits: 0 }).format(amount);
 };
 
 export const capitalize = (str) => {
