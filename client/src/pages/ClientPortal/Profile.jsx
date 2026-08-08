@@ -161,9 +161,14 @@ const ClientProfile = () => {
     try {
       const base64Image = await compressImage(file);
       const { data } = await api.patch("/client/profile", { avatar: base64Image });
-      setAvatarUrl(data.data.client?.avatar || base64Image);
+      const newAvatar = data.data.client?.avatar || data.data.user?.avatar || base64Image;
+      setAvatarUrl(newAvatar);
       // Sync auth store so header/sidebar update immediately
-      if (data.data.user) setUser(data.data.user);
+      if (data.data.user) {
+        setUser(data.data.user);
+      } else if (user) {
+        setUser({ ...user, avatar: newAvatar });
+      }
       toast.success("Profile picture updated successfully!");
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to upload profile picture");
@@ -181,7 +186,11 @@ const ClientProfile = () => {
       const { data } = await api.patch("/client/profile", { avatar: "" });
       setAvatarUrl(null);
       // Sync auth store so header/sidebar update immediately
-      if (data.data.user) setUser(data.data.user);
+      if (data.data.user) {
+        setUser(data.data.user);
+      } else if (user) {
+        setUser({ ...user, avatar: "" });
+      }
       toast.success("Profile image deleted. Default avatar set.");
     } catch {
       toast.error("Failed to delete avatar");

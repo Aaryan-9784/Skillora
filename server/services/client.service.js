@@ -4,24 +4,56 @@ const Invoice      = require("../models/Invoice");
 const ApiError     = require("../utils/ApiError");
 const QueryBuilder = require("../utils/queryBuilder");
 
+const User         = require("../models/User");
+
 const createClient = async (ownerId, data) => {
   return Client.create({ ...data, owner: ownerId });
 };
 
 const getClients = async (ownerId, reqQuery = {}) => {
   const baseQuery = Client.find({ owner: ownerId });
-  return new QueryBuilder(baseQuery, reqQuery)
+  const result = await new QueryBuilder(baseQuery, reqQuery)
     .filter()
     .search(["name", "company", "email"])
     .sort("-createdAt")
     .paginate(20)
     .lean()
     .exec();
+
+  if (result.data && result.data.length > 0) {
+    const emails = result.data.map((c) => c.email?.toLowerCase()).filter(Boolean);
+    const users = await User.find({ email: { $in: emails } }).select("email avatar name").lean();
+    const userMap = new Map(users.map((u) => [u.email.toLowerCase(), u]));
+
+    result.data = result.data.map((c) => {
+      const userMatch = userMap.get(c.email?.toLowerCase());
+      if (userMatch && userMatch.avatar) {
+        if (c.avatar !== userMatch.avatar) {
+          Client.findByIdAndUpdate(c._id, { avatar: userMatch.avatar }).catch(() => {});
+        }
+        return { ...c, avatar: userMatch.avatar, name: userMatch.name || c.name };
+      }
+      return c;
+    });
+  }
+
+  return result;
 };
 
 const getClientById = async (clientId, ownerId) => {
   const client = await Client.findOne({ _id: clientId, owner: ownerId }).lean();
   if (!client) throw ApiError.notFound("Client not found");
+
+  if (client.email) {
+    const userMatch = await User.findOne({ email: client.email.toLowerCase() }).select("avatar name").lean();
+    if (userMatch && userMatch.avatar) {
+      if (client.avatar !== userMatch.avatar) {
+        Client.findByIdAndUpdate(clientId, { avatar: userMatch.avatar }).catch(() => {});
+      }
+      client.avatar = userMatch.avatar;
+    }
+  }
+
   return client;
 };
 

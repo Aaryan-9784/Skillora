@@ -18,6 +18,21 @@ const updateProfile = async (userId, updates) => {
     runValidators: true,
   });
   if (!user) throw ApiError.notFound("User not found");
+
+  if (filtered.avatar !== undefined || filtered.name !== undefined || filtered.phone !== undefined || filtered.company !== undefined) {
+    const Client = require("../models/Client");
+    const clientUpdates = {};
+    if (filtered.avatar !== undefined) clientUpdates.avatar = filtered.avatar;
+    if (filtered.name !== undefined) clientUpdates.name = filtered.name;
+    if (filtered.phone !== undefined) clientUpdates.phone = filtered.phone;
+    if (filtered.company !== undefined) clientUpdates.company = filtered.company;
+
+    await Client.updateMany(
+      { $or: [{ owner: user._id }, { email: user.email }, ...(user.clientRef ? [{ _id: user.clientRef }] : [])] },
+      clientUpdates
+    );
+  }
+
   return user;
 };
 

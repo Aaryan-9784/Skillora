@@ -165,20 +165,42 @@ const respondToProposal = async (clientUserId, proposalId, action) => {
       { status: "rejected" }
     );
 
-    // Update project: assign freelancer, set status active, set owner to freelancer for active workspace view
+    // Update project: assign freelancer, set clientUser, set status active
     await Project.findByIdAndUpdate(proposal.project._id, {
       assignedFreelancer: proposal.freelancer,
-      owner: proposal.freelancer,
+      clientUser: clientUserId,
       status: "active",
       budget: proposal.bidAmount,
     });
+
+    // Establish Chat Conversation connection between Client & Freelancer
+    const Conversation = require("../models/Conversation");
+    let conversation = await Conversation.findOne({ projectId: proposal.project._id });
+    if (!conversation) {
+      conversation = await Conversation.create({
+        type: "project",
+        projectId: proposal.project._id,
+        participants: [clientUserId, proposal.freelancer],
+        lastMessage: {
+          text: `Project "${proposal.project.title}" started. Connection established!`,
+          sender: clientUserId,
+          createdAt: new Date(),
+        },
+      });
+    } else {
+      const partSet = new Set(conversation.participants.map((p) => p.toString()));
+      partSet.add(clientUserId.toString());
+      partSet.add(proposal.freelancer.toString());
+      conversation.participants = Array.from(partSet);
+      await conversation.save();
+    }
 
     await notify({
       recipient: proposal.freelancer,
       type: "proposal_approved",
       title: "Proposal Approved! 🎉",
-      message: `Your proposal for "${proposal.project.title}" has been accepted! You can now start working on it.`,
-      link: `/projects/${proposal.project._id}`,
+      message: `Your proposal for "${proposal.project.title}" has been accepted! You can now start working and chatting with the client.`,
+      link: `/messages`,
       refModel: "Project",
       refId: proposal.project._id,
     });

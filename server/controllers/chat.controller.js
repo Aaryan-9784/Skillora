@@ -18,10 +18,16 @@ const getProjectConversation = asyncHandler(async (req, res) => {
 
   // Fallback to active project if specific ID not provided or not found
   if (!project) {
-    if (req.user.clientRef) {
-      project = await Project.findOne({ clientId: req.user.clientRef, isDeleted: { $ne: true } }).populate("clientId owner");
+    if (req.user.role === "client" || req.user.clientRef) {
+      project = await Project.findOne({
+        $or: [{ owner: req.user._id }, { clientUser: req.user._id }, { clientId: req.user.clientRef }],
+        isDeleted: { $ne: true }
+      }).sort({ updatedAt: -1 }).populate("clientId owner assignedFreelancer clientUser");
     } else {
-      project = await Project.findOne({ owner: req.user._id, isDeleted: { $ne: true } }).populate("clientId owner");
+      project = await Project.findOne({
+        $or: [{ owner: req.user._id }, { assignedFreelancer: req.user._id }],
+        isDeleted: { $ne: true }
+      }).sort({ updatedAt: -1 }).populate("clientId owner assignedFreelancer clientUser");
     }
   }
 
@@ -31,25 +37,54 @@ const getProjectConversation = asyncHandler(async (req, res) => {
 
   if (!conversation) {
     const participants = [req.user._id];
-    if (project?.owner && project.owner._id.toString() !== req.user._id.toString()) {
-      participants.push(project.owner._id);
+    if (project?.assignedFreelancer) {
+      const freelancerId = project.assignedFreelancer._id || project.assignedFreelancer;
+      if (freelancerId.toString() !== req.user._id.toString()) {
+        participants.push(freelancerId);
+      }
     }
-    if (project?.clientId) {
-      const User = require("../models/User");
-      const clientUser = await User.findOne({ clientRef: project.clientId._id || project.clientId, role: "client" });
-      if (clientUser && clientUser._id.toString() !== req.user._id.toString()) {
-        participants.push(clientUser._id);
+    if (project?.clientUser) {
+      const clientId = project.clientUser._id || project.clientUser;
+      if (clientId.toString() !== req.user._id.toString()) {
+        participants.push(clientId);
+      }
+    }
+    if (project?.owner && project.owner._id.toString() !== req.user._id.toString()) {
+      if (!participants.some(p => p.toString() === project.owner._id.toString())) {
+        participants.push(project.owner._id);
       }
     }
 
     conversation = await Conversation.create({
       type: project ? "project" : "direct",
       projectId: targetProjectId,
-      participants,
+      participants: Array.from(new Set(participants.map(p => p.toString()))),
     });
+  } else {
+    // Ensure both client and freelancer are participants in existing conversation
+    let modified = false;
+    const existing = conversation.participants.map(p => p.toString());
+    
+    if (project?.assignedFreelancer) {
+      const fId = (project.assignedFreelancer._id || project.assignedFreelancer).toString();
+      if (!existing.includes(fId)) {
+        conversation.participants.push(fId);
+        modified = true;
+      }
+    }
+    if (project?.clientUser) {
+      const cId = (project.clientUser._id || project.clientUser).toString();
+      if (!existing.includes(cId)) {
+        conversation.participants.push(cId);
+        modified = true;
+      }
+    }
+    if (modified) {
+      await conversation.save();
+    }
   }
 
-  await conversation.populate("participants", "name avatar role isOnline lastSeen");
+  await conversation.populate("participants", "name avatar role isOnline lastSeen email");
   ApiResponse.success(res, "Conversation fetched", { conversation });
 });
 

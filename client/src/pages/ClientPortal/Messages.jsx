@@ -11,6 +11,7 @@ import { useWebRTC } from "../../hooks/useWebRTC";
 import CallModal from "../../components/chat/CallModal";
 import VoiceRecorder from "../../components/chat/VoiceRecorder";
 import ScheduleMeetingModal from "../../components/chat/ScheduleMeetingModal";
+import api from "../../services/api";
 import toast from "react-hot-toast";
 
 const GCard = ({ children, delay = 0, className = "", glow = "#635BFF" }) => (
@@ -96,6 +97,63 @@ const ClientMessages = () => {
     localStream, remoteStream, callState, incomingCall,
     isMuted, isVideoOff, isScreenSharing, callDuration
   } = useWebRTC(partner?._id || partner, "video");
+
+  const handleInitiateCall = async (callType) => {
+    const projId = activeConversation?.projectId || activeConversation?.project;
+    if (!projId) {
+      toast((t) => (
+        <div className="flex flex-col gap-2 p-1">
+          <p className="font-bold text-xs text-white">📅 Schedule Meeting Required</p>
+          <p className="text-[11px] text-slate-300">
+            Voice & video calls are permitted only after scheduling a meeting.
+          </p>
+          <button
+            onClick={() => {
+              toast.dismiss(t.id);
+              setShowSchedule(true);
+            }}
+            className="mt-1 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-all cursor-pointer"
+          >
+            Schedule Meeting Now
+          </button>
+        </div>
+      ), { duration: 5000, style: { background: "#0F172A", border: "1px solid rgba(99,91,255,0.4)" } });
+      return;
+    }
+
+    try {
+      const res = await api.get(`/meetings/project/${projId}`);
+      const activeMeetings = (res.data?.data?.meetings || []).filter(
+        (m) => ["scheduled", "ongoing", "completed"].includes(m.status)
+      );
+
+      if (activeMeetings.length === 0) {
+        toast((t) => (
+          <div className="flex flex-col gap-2 p-1">
+            <p className="font-bold text-xs text-white">📅 Schedule Meeting Required</p>
+            <p className="text-[11px] text-slate-300">
+              Voice & video calls are enabled only after confirming a scheduled meeting.
+            </p>
+            <button
+              onClick={() => {
+                toast.dismiss(t.id);
+                setShowSchedule(true);
+              }}
+              className="mt-1 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-all cursor-pointer"
+            >
+              Schedule Meeting Now
+            </button>
+          </div>
+        ), { duration: 5000, style: { background: "#0F172A", border: "1px solid rgba(99,91,255,0.4)" } });
+        return;
+      }
+
+      startCall(callType);
+    } catch (err) {
+      toast.error("Please schedule a meeting before starting voice or video calls.");
+      setShowSchedule(true);
+    }
+  };
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -343,7 +401,8 @@ const ClientMessages = () => {
                     }`}
                   >
                     <div className="relative shrink-0">
-                      <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-white overflow-hidden ring-1 ring-white/10">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white overflow-hidden ring-1 ring-white/15 shadow-md shadow-indigo-600/20"
+                        style={{ background: contact.avatar ? "transparent" : "linear-gradient(135deg,#635BFF 0%,#8579FF 100%)" }}>
                         {contact.avatar ? (
                           <img src={contact.avatar} alt={contact.name} className="w-full h-full object-cover rounded-full" />
                         ) : (
@@ -404,7 +463,8 @@ const ClientMessages = () => {
                 {/* User Profile & Status */}
                 <div className="flex items-center gap-3 cursor-pointer group">
                   <div className="relative shrink-0">
-                    <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white overflow-hidden shadow-sm ring-1 ring-white/10">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white overflow-hidden ring-1 ring-white/15 shadow-md shadow-indigo-600/20"
+                      style={{ background: partner?.avatar ? "transparent" : "linear-gradient(135deg,#635BFF 0%,#8579FF 100%)" }}>
                       {partner?.avatar ? (
                         <img src={partner.avatar} alt={partner?.name} className="w-full h-full object-cover rounded-full" />
                       ) : (
@@ -437,16 +497,16 @@ const ClientMessages = () => {
                 {/* Action Buttons (Video, Voice, Search, More Options) */}
                 <div className="flex items-center gap-1 text-slate-300">
                   <button
-                    onClick={() => startCall("video")}
+                    onClick={() => handleInitiateCall("video")}
                     className="p-2.5 rounded-full hover:bg-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer"
-                    title="Video call"
+                    title="Video call (Requires Scheduled Meeting)"
                   >
                     <Video size={18} />
                   </button>
                   <button
-                    onClick={() => startCall("voice")}
+                    onClick={() => handleInitiateCall("voice")}
                     className="p-2.5 rounded-full hover:bg-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer"
-                    title="Voice call"
+                    title="Voice call (Requires Scheduled Meeting)"
                   >
                     <Phone size={18} />
                   </button>

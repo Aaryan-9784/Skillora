@@ -94,22 +94,7 @@ const updateClientProfile = asyncHandler(async (req, res) => {
   const { name, phone, company, address, avatar } = req.body;
   const User = require("../models/User");
 
-  let client = null;
-  if (req.user.clientRef) {
-    client = await Client.findById(req.user.clientRef);
-  }
-
-  if (client) {
-    if (name !== undefined)    client.name    = name;
-    if (phone !== undefined)   client.phone   = phone;
-    if (company !== undefined) client.company = company;
-    if (address !== undefined) client.address = address;
-    if (avatar !== undefined)  client.avatar  = avatar;
-
-    await client.save();
-  }
-
-  // Sync avatar, name, phone, company, address to the User model so header/sidebar and user object stay in sync
+  // Sync to User model
   const userUpdates = {};
   if (name !== undefined)    userUpdates.name    = name;
   if (avatar !== undefined)  userUpdates.avatar  = avatar;
@@ -122,6 +107,26 @@ const updateClientProfile = asyncHandler(async (req, res) => {
   }
 
   const updatedUser = await User.findById(req.user._id);
+
+  // Sync to all Client model instances linked to this user/email
+  const clientUpdates = {};
+  if (name !== undefined)    clientUpdates.name    = name;
+  if (phone !== undefined)   clientUpdates.phone   = phone;
+  if (company !== undefined) clientUpdates.company = company;
+  if (address !== undefined) clientUpdates.address = address;
+  if (avatar !== undefined)  clientUpdates.avatar  = avatar;
+
+  if (Object.keys(clientUpdates).length > 0) {
+    await Client.updateMany(
+      { $or: [{ owner: req.user._id }, { email: req.user.email }, ...(req.user.clientRef ? [{ _id: req.user.clientRef }] : [])] },
+      clientUpdates
+    );
+  }
+
+  let client = req.user.clientRef ? await Client.findById(req.user.clientRef) : null;
+  if (!client) {
+    client = await Client.findOne({ $or: [{ owner: req.user._id }, { email: req.user.email }] });
+  }
 
   if (!client) {
     client = {
