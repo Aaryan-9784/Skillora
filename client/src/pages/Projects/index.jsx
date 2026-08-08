@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import useProjectStore from "../../store/projectStore";
 import Modal from "../../components/ui/Modal";
+import Select from "../../components/ui/Select";
 import SubpageStatCard from "../../components/dashboard/SubpageStatCard";
 import { formatDate, formatCurrency } from "../../utils/helpers";
 import toast from "react-hot-toast";
@@ -214,15 +215,16 @@ const ApplyProposalModal = ({ project, onClose }) => {
                   placeholder="1500" className="w-full px-3 py-2.5 rounded-xl text-xs bg-slate-900/80 border border-slate-700/80 text-white outline-none focus:border-indigo-500" />
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">Currency</label>
-                <select value={currency} onChange={(e) => setCurrency(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-xl text-xs bg-slate-900/80 border border-slate-700/80 text-white outline-none focus:border-indigo-500">
-                  <option value="USD">USD ($)</option>
-                  <option value="INR">INR (₹)</option>
-                  <option value="EUR">EUR (€)</option>
-                </select>
-              </div>
+              <Select
+                label="Currency"
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                options={[
+                  { value: "USD", label: "USD ($)" },
+                  { value: "INR", label: "INR (₹)" },
+                  { value: "EUR", label: "EUR (€)" },
+                ]}
+              />
 
               <div>
                 <label className="block text-xs font-bold text-slate-300 mb-1.5">Est. Days *</label>

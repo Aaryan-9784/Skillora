@@ -1,4 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
+import { createPortal } from "react-dom";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FolderOpen, Search, Filter, Calendar,
@@ -6,21 +8,26 @@ import {
   Clock, ChevronRight, ListTodo, Circle,
   CheckCircle2, Loader2, RefreshCw, FolderKanban,
   LayoutGrid, ArrowUpRight, BarChart2, Download,
-  Plus, Users, DollarSign, Send, Check, ShieldCheck, Tag, Sparkles
+  Plus, Users, DollarSign, Send, Check, ShieldCheck, Tag, Sparkles,
+  MessageSquare, ArrowRight
 } from "lucide-react";
 import useClientPortalStore from "../../store/clientPortalStore";
 import { SkeletonCard } from "../../components/ui/Skeleton";
 import SubpageStatCard from "../../components/dashboard/SubpageStatCard";
+import Select from "../../components/ui/Select";
+import Input from "../../components/ui/Input";
+import Modal from "../../components/ui/Modal";
+import DatePicker from "../../components/ui/DatePicker";
 import { formatDate } from "../../utils/helpers";
 import toast from "react-hot-toast";
 
 const STATUS_CONFIG = {
-  open:      { color: "#38BDF8", bg: "rgba(56,189,248,0.15)",  label: "Open for Proposals" },
-  planning:  { color: "#9CA3AF", bg: "rgba(107,114,128,0.15)", label: "Planning" },
-  active:    { color: "#22C55E", bg: "rgba(34,197,94,0.15)",   label: "Active" },
-  on_hold:   { color: "#F59E0B", bg: "rgba(245,158,11,0.15)",  label: "On Hold" },
-  completed: { color: "#60A5FA", bg: "rgba(59,130,246,0.15)",  label: "Completed" },
-  cancelled: { color: "#EF4444", bg: "rgba(239,68,68,0.15)",   label: "Cancelled" },
+  open:      { color: "#38BDF8", bg: "rgba(56,189,248,0.18)",  label: "Open for Bids" },
+  planning:  { color: "#9CA3AF", bg: "rgba(156,163,175,0.18)", label: "Planning" },
+  active:    { color: "#22C55E", bg: "rgba(34,197,94,0.18)",   label: "Active" },
+  on_hold:   { color: "#F59E0B", bg: "rgba(245,158,11,0.18)",  label: "On Hold" },
+  completed: { color: "#60A5FA", bg: "rgba(96,165,250,0.18)",  label: "Completed" },
+  cancelled: { color: "#EF4444", bg: "rgba(239,68,68,0.18)",   label: "Cancelled" },
 };
 
 const TASK_STATUS = {
@@ -45,30 +52,55 @@ const CATEGORIES = [
 const StatusBadge = ({ status }) => {
   const s = STATUS_CONFIG[status] || STATUS_CONFIG.planning;
   return (
-    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap"
-      style={{ background: s.bg, color: s.color, border: `1px solid ${s.color}25` }}>
-      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: s.color }} />
+    <span
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wide shadow-sm shrink-0"
+      style={{
+        background: s.bg,
+        color: s.color,
+        border: `1px solid ${s.color}35`,
+        boxShadow: `0 2px 10px ${s.color}15`,
+      }}
+    >
+      <span
+        className="w-1.5 h-1.5 rounded-full shrink-0 animate-pulse"
+        style={{ background: s.color, boxShadow: `0 0 8px ${s.color}` }}
+      />
       {s.label}
     </span>
   );
 };
 
 // ── Glass Container Card ───────────────────────────────────────────────────
-const GCard = ({ children, delay, className, glow }) => (
+const GCard = ({ children, delay, className, glow, onClick }) => (
   <motion.div
-    initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: delay || 0, duration: 0.45, ease: [0.16,1,0.3,1] }}
-    className={"relative overflow-hidden rounded-2xl " + (className || "")}
+    initial={{ opacity: 0, y: 16 }}
+    animate={{ opacity: 1, y: 0 }}
+    whileHover={{ y: -4, transition: { duration: 0.2 } }}
+    transition={{ delay: delay || 0, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+    onClick={onClick}
+    className={
+      "relative overflow-hidden rounded-2xl transition-all duration-300 " +
+      (className || "")
+    }
     style={{
-      background: "rgba(255,255,255,0.03)", backdropFilter: "blur(16px)",
-      border: "1px solid rgba(255,255,255,0.07)",
-      boxShadow: glow ? ("0 0 50px " + glow + "10") : "0 0 30px rgba(99,91,255,0.04)",
+      background: "linear-gradient(145deg, rgba(15,23,42,0.85) 0%, rgba(9,14,26,0.92) 100%)",
+      backdropFilter: "blur(20px)",
+      WebkitBackdropFilter: "blur(20px)",
+      border: "1px solid rgba(255,255,255,0.09)",
+      boxShadow: glow
+        ? `0 10px 30px -10px ${glow}20, 0 0 20px ${glow}10`
+        : "0 10px 30px -10px rgba(0,0,0,0.5), 0 0 20px rgba(99,91,255,0.05)",
     }}
   >
-    <div className="absolute inset-x-0 top-0 h-px pointer-events-none"
-      style={{ background: glow
-        ? ("linear-gradient(90deg,transparent," + glow + "50,transparent)")
-        : "linear-gradient(90deg,transparent,rgba(99,91,255,0.25),transparent)" }} />
+    {/* Top Shimmer Highlight */}
+    <div
+      className="absolute inset-x-0 top-0 h-px pointer-events-none"
+      style={{
+        background: glow
+          ? `linear-gradient(90deg, transparent, ${glow}70, transparent)`
+          : "linear-gradient(90deg, transparent, rgba(99,91,255,0.35), transparent)",
+      }}
+    />
     {children}
   </motion.div>
 );
@@ -79,7 +111,9 @@ const TaskList = ({ projectId }) => {
   const tasks = tasksByProject[projectId] || [];
   const isLoading = loading.tasks?.[projectId];
 
-  useEffect(() => { fetchTasks(projectId); }, [projectId]);
+  useEffect(() => {
+    fetchTasks(projectId);
+  }, [projectId]);
 
   if (isLoading) {
     return (
@@ -93,9 +127,12 @@ const TaskList = ({ projectId }) => {
 
   if (tasks.length === 0) {
     return (
-      <div className="flex flex-col items-center py-8 gap-2 mt-3">
-        <ListTodo size={24} style={{ color: "rgba(148,163,184,0.3)" }} />
-        <p className="text-xs font-medium" style={{ color: "rgba(148,163,184,0.6)" }}>No active tasks listed for this project</p>
+      <div className="flex flex-col items-center py-10 gap-2 mt-3 text-center bg-slate-900/40 rounded-2xl border border-white/5 p-6">
+        <ListTodo size={28} className="text-slate-500 mb-1" />
+        <p className="text-xs font-bold text-slate-300">No active tasks listed yet</p>
+        <p className="text-[11px] text-slate-400 max-w-xs">
+          Tasks created for this project will appear here automatically.
+        </p>
       </div>
     );
   }
@@ -116,20 +153,19 @@ const TaskList = ({ projectId }) => {
         return (
           <div key={status}>
             <div className="flex items-center gap-2 mb-2">
-              <Icon size={12} style={{ color: cfg.color }} />
+              <Icon size={13} style={{ color: cfg.color }} />
               <span className="text-xs font-bold" style={{ color: cfg.color }}>{cfg.label}</span>
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
                 style={{ background: `${cfg.color}18`, color: cfg.color }}>{list.length}</span>
             </div>
             <div className="space-y-2">
               {list.map((task) => (
-                <div key={task._id} className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl"
-                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div key={task._id} className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-slate-900/60 border border-white/5 hover:border-white/10 transition-all">
                   <div className="w-1.5 h-1.5 rounded-full shrink-0"
                     style={{ background: PRIORITY_COLOR[task.priority] || "#9CA3AF" }} />
                   <p className="flex-1 text-xs font-semibold text-white truncate">{task.title}</p>
                   {task.dueDate && (
-                    <span className="text-[10px] font-medium shrink-0" style={{ color: "rgba(148,163,184,0.5)" }}>
+                    <span className="text-[10px] font-medium shrink-0 text-slate-400">
                       {formatDate(task.dueDate)}
                     </span>
                   )}
@@ -161,8 +197,28 @@ const PostProjectModal = ({ open, onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.title.trim() || !form.description.trim()) {
-      toast.error("Please enter project title and description");
+    if (!form.title.trim()) {
+      toast.error("Please enter project title");
+      return;
+    }
+    if (!form.category) {
+      toast.error("Please select a category");
+      return;
+    }
+    if (!form.requiredSkills.trim()) {
+      toast.error("Please enter required skills");
+      return;
+    }
+    if (!form.budget || Number(form.budget) <= 0) {
+      toast.error("Please enter a valid budget amount");
+      return;
+    }
+    if (!form.deadline) {
+      toast.error("Please select a project deadline date");
+      return;
+    }
+    if (!form.description.trim()) {
+      toast.error("Please enter project scope and description");
       return;
     }
     setLoading(true);
@@ -187,107 +243,121 @@ const PostProjectModal = ({ open, onClose }) => {
     }
   };
 
+  const CATEGORY_OPTIONS = CATEGORIES.map((c) => ({ value: c, label: c }));
+  const CURRENCY_OPTIONS = [
+    { value: "USD", label: "USD ($)" },
+    { value: "INR", label: "INR (₹)" },
+    { value: "EUR", label: "EUR (€)" },
+    { value: "GBP", label: "GBP (£)" },
+  ];
+
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/70 backdrop-blur-md" onClick={onClose} />
-        
-        <motion.div initial={{ scale: 0.94, opacity: 0, y: 16 }} animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.94, opacity: 0, y: 16 }} transition={{ duration: 0.25 }}
-          className="relative w-full max-w-xl rounded-3xl overflow-hidden z-10 p-6 sm:p-8"
-          style={{
-            background: "linear-gradient(160deg,rgba(15,23,42,0.98) 0%,rgba(8,14,26,0.98) 100%)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            boxShadow: "0 24px 64px rgba(0,0,0,0.8), 0 0 40px rgba(99,91,255,0.15)",
-          }}>
-          <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/10">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
-                <Plus size={20} />
-              </div>
-              <div>
-                <h2 className="text-lg font-black text-white">Post New Project</h2>
-                <p className="text-xs text-slate-400">Post a project for freelancers to explore & apply</p>
-              </div>
-            </div>
-            <button onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5">
-              <X size={18} />
-            </button>
-          </div>
+    <Modal
+      isOpen={open}
+      onClose={onClose}
+      size="lg"
+      icon={Plus}
+      title="Post New Project"
+      description="Post a project for freelancers to explore & apply"
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Input
+          label="Project Title"
+          name="title"
+          required
+          value={form.title}
+          onChange={(e) => setForm({ ...form, title: e.target.value })}
+          placeholder="e.g. Modern Full-Stack E-Commerce Web App"
+          className="bg-slate-900/80 border-slate-700/80 text-white placeholder-slate-500 text-xs h-10 rounded-xl focus:border-indigo-500"
+        />
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1.5">Project Title *</label>
-              <input type="text" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
-                placeholder="e.g. Modern Full-Stack E-Commerce Web App"
-                className="w-full px-4 py-2.5 rounded-xl text-xs bg-slate-900/80 border border-slate-700/80 text-white placeholder-slate-500 outline-none focus:border-indigo-500" />
-            </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Select
+            label="Category"
+            name="category"
+            required
+            value={form.category}
+            onChange={(e) => setForm({ ...form, category: e.target.value })}
+            options={CATEGORY_OPTIONS}
+          />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">Category</label>
-                <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}
-                  className="w-full px-3 py-2.5 rounded-xl text-xs bg-slate-900/80 border border-slate-700/80 text-white outline-none focus:border-indigo-500">
-                  {CATEGORIES.map((c) => <option key={c} value={c} className="bg-slate-900 text-white">{c}</option>)}
-                </select>
-              </div>
+          <Input
+            label="Required Skills (Comma separated)"
+            name="requiredSkills"
+            required
+            value={form.requiredSkills}
+            onChange={(e) => setForm({ ...form, requiredSkills: e.target.value })}
+            placeholder="React, Node.js, Tailwind, MongoDB"
+            className="bg-slate-900/80 border-slate-700/80 text-white placeholder-slate-500 text-xs h-10 rounded-xl focus:border-indigo-500"
+          />
+        </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">Required Skills (Comma separated)</label>
-                <input type="text" value={form.requiredSkills} onChange={(e) => setForm({ ...form, requiredSkills: e.target.value })}
-                  placeholder="React, Node.js, Tailwind, MongoDB"
-                  className="w-full px-4 py-2.5 rounded-xl text-xs bg-slate-900/80 border border-slate-700/80 text-white placeholder-slate-500 outline-none focus:border-indigo-500" />
-              </div>
-            </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Input
+            label="Budget"
+            name="budget"
+            type="number"
+            min="1"
+            required
+            value={form.budget}
+            onChange={(e) => setForm({ ...form, budget: e.target.value })}
+            placeholder="1500"
+            prefix={form.currency === "INR" ? "₹" : "$"}
+            className="bg-slate-900/80 border-slate-700/80 text-white placeholder-slate-500 text-xs h-10 rounded-xl focus:border-indigo-500"
+          />
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">Budget</label>
-                <input type="number" min="0" value={form.budget} onChange={(e) => setForm({ ...form, budget: e.target.value })}
-                  placeholder="1500"
-                  className="w-full px-4 py-2.5 rounded-xl text-xs bg-slate-900/80 border border-slate-700/80 text-white placeholder-slate-500 outline-none focus:border-indigo-500" />
-              </div>
+          <Select
+            label="Currency"
+            name="currency"
+            required
+            value={form.currency}
+            onChange={(e) => setForm({ ...form, currency: e.target.value })}
+            options={CURRENCY_OPTIONS}
+          />
 
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">Currency</label>
-                <select value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })}
-                  className="w-full px-3 py-2.5 rounded-xl text-xs bg-slate-900/80 border border-slate-700/80 text-white outline-none focus:border-indigo-500">
-                  <option value="USD">USD ($)</option>
-                  <option value="INR">INR (₹)</option>
-                  <option value="EUR">EUR (€)</option>
-                  <option value="GBP">GBP (£)</option>
-                </select>
-              </div>
+          <DatePicker
+            label="Deadline"
+            name="deadline"
+            required
+            value={form.deadline}
+            onChange={(e) => setForm({ ...form, deadline: e.target.value })}
+            placeholder="Select deadline..."
+          />
+        </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">Deadline</label>
-                <input type="date" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })}
-                  className="w-full px-3 py-2.5 rounded-xl text-xs bg-slate-900/80 border border-slate-700/80 text-white outline-none focus:border-indigo-500" />
-              </div>
-            </div>
+        <div>
+          <label className="block text-xs font-bold text-slate-200 mb-1.5">
+            Project Scope & Description <span className="text-rose-400">*</span>
+          </label>
+          <textarea
+            required
+            rows={4}
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            placeholder="Detail the scope of work, requirements, deliverables, and expectations..."
+            className="w-full px-4 py-2.5 rounded-xl text-xs bg-slate-900/80 border border-slate-700/80 text-white placeholder-slate-500 outline-none focus:border-indigo-500/80 focus:ring-2 focus:ring-indigo-500/20 leading-relaxed resize-none transition-all"
+          />
+        </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1.5">Project Scope & Description *</label>
-              <textarea required rows={4} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
-                placeholder="Detail the scope of work, requirements, deliverables, and expectations..."
-                className="w-full px-4 py-2.5 rounded-xl text-xs bg-slate-900/80 border border-slate-700/80 text-white placeholder-slate-500 outline-none focus:border-indigo-500 leading-relaxed resize-none" />
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10">
-              <button type="button" onClick={onClose} className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white">
-                Cancel
-              </button>
-              <button type="submit" disabled={loading}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 shadow-lg shadow-indigo-500/30 cursor-pointer disabled:opacity-50">
-                {loading ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
-                <span>Post Project Now</span>
-              </button>
-            </div>
-          </form>
-        </motion.div>
-      </div>
-    </AnimatePresence>
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 shadow-lg shadow-indigo-600/30 transition-all cursor-pointer disabled:opacity-50"
+          >
+            {loading ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+            <span>Post Project Now</span>
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 };
 
@@ -324,11 +394,11 @@ const ProposalsDrawer = ({ project, onClose }) => {
     }
   };
 
-  return (
+  const drawerContent = (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex justify-end">
+      <div className="fixed inset-0 z-[9999] flex justify-end">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+          className="fixed inset-0 bg-black/75 backdrop-blur-md" onClick={onClose} />
 
         <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
           transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
@@ -337,12 +407,12 @@ const ProposalsDrawer = ({ project, onClose }) => {
           <div className="sticky top-0 z-20 flex items-center justify-between px-6 py-4 bg-[#0B1120]/95 backdrop-blur-md border-b border-white/10">
             <div>
               <div className="flex items-center gap-2">
-                <Users size={16} className="text-cyan-400" />
-                <h2 className="text-base font-bold text-white truncate max-w-md">Proposals for {project.title}</h2>
+                <Users size={18} className="text-cyan-400" />
+                <h2 className="text-base font-black text-white truncate max-w-md">Proposals for {project.title}</h2>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">{proposals.length} proposal(s) submitted by freelancers</p>
+              <p className="text-xs font-medium text-slate-400 mt-0.5">{proposals.length} proposal(s) submitted by freelancers</p>
             </div>
-            <button onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5">
+            <button onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer">
               <X size={18} />
             </button>
           </div>
@@ -360,7 +430,7 @@ const ProposalsDrawer = ({ project, onClose }) => {
                   <Users size={28} />
                 </div>
                 <p className="text-sm font-bold text-white">No proposals received yet</p>
-                <p className="text-xs text-slate-400 max-w-xs">
+                <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
                   Freelancers are currently reviewing your project listing. Submitted applications will appear here.
                 </p>
               </div>
@@ -414,7 +484,7 @@ const ProposalsDrawer = ({ project, onClose }) => {
                     {freelancer.skills?.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mb-4">
                         {freelancer.skills.map((sk) => (
-                          <span key={sk} className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-800 text-slate-300">
+                          <span key={sk} className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700/50">
                             {sk}
                           </span>
                         ))}
@@ -423,7 +493,7 @@ const ProposalsDrawer = ({ project, onClose }) => {
 
                     {/* Actions */}
                     <div className="flex items-center justify-between pt-3 border-t border-white/10">
-                      <span className="text-[11px] text-slate-400">Submitted {formatDate(prop.createdAt)}</span>
+                      <span className="text-[11px] text-slate-400 font-medium">Submitted {formatDate(prop.createdAt)}</span>
                       <div className="flex items-center gap-2">
                         {isApproved ? (
                           <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-400 bg-emerald-500/20 px-3 py-1.5 rounded-xl border border-emerald-500/30">
@@ -461,115 +531,207 @@ const ProposalsDrawer = ({ project, onClose }) => {
       </div>
     </AnimatePresence>
   );
+
+  return typeof document !== "undefined" ? createPortal(drawerContent, document.body) : null;
 };
 
 // ── Project Detail Drawer ──────────────────────────────────────────────────
-const ProjectDrawer = ({ project, onClose }) => {
+const ProjectDrawer = ({ project, onClose, onOpenProposals }) => {
+  const navigate = useNavigate();
   const [tab, setTab] = useState("overview");
   const pct = project?.progress ?? 0;
   const cfg = STATUS_CONFIG[project?.status] || STATUS_CONFIG.planning;
 
-  return (
+  const drawerContent = (
     <AnimatePresence>
       {project && (
         <>
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-[9999] bg-black/75 backdrop-blur-md"
             onClick={onClose} />
           <motion.div
             initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-md overflow-y-auto"
+            className="fixed right-0 top-0 bottom-0 z-[10000] w-full max-w-lg overflow-y-auto flex flex-col"
             style={{
               background: "linear-gradient(160deg,rgba(12,19,36,0.99) 0%,rgba(8,14,26,0.99) 100%)",
-              borderLeft: "1px solid rgba(255,255,255,0.08)",
-              boxShadow: "-24px 0 64px rgba(0,0,0,0.7)",
+              borderLeft: "1px solid rgba(255,255,255,0.1)",
+              boxShadow: "-24px 0 64px rgba(0,0,0,0.8)",
             }}>
-            <div className="absolute top-0 left-0 bottom-0 w-px"
+            <div className="absolute top-0 left-0 bottom-0 w-px pointer-events-none"
               style={{ background: "linear-gradient(180deg,transparent,rgba(99,91,255,0.5),rgba(0,212,255,0.3),transparent)" }} />
 
             {/* Header */}
-            <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4"
-              style={{ background: "rgba(8,14,26,0.95)", borderBottom: "1px solid rgba(255,255,255,0.07)", backdropFilter: "blur(16px)" }}>
+            <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 shrink-0"
+              style={{ background: "rgba(8,14,26,0.95)", borderBottom: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(16px)" }}>
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                  style={{ background: `${cfg.color}18`, border: `1px solid ${cfg.color}30` }}>
-                  <FolderOpen size={16} style={{ color: cfg.color }} />
+                <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-lg"
+                  style={{ background: `${cfg.color}20`, border: `1px solid ${cfg.color}40` }}>
+                  <FolderOpen size={18} style={{ color: cfg.color }} />
                 </div>
                 <div>
-                  <p className="text-sm font-black text-white leading-tight">{project.title}</p>
-                  <StatusBadge status={project.status} />
+                  <h3 className="text-base font-black text-white leading-tight">{project.title}</h3>
+                  <div className="flex items-center gap-2 mt-1">
+                    <StatusBadge status={project.status} />
+                    {project.category && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700/60">
+                        {project.category}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
-              <button onClick={onClose} className="p-2 rounded-xl transition-colors cursor-pointer"
-                style={{ color: "rgba(148,163,184,0.6)" }}
-                onMouseEnter={e => e.currentTarget.style.color = "#F9FAFB"}
-                onMouseLeave={e => e.currentTarget.style.color = "rgba(148,163,184,0.6)"}>
-                <X size={16} />
+              <button onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer">
+                <X size={18} />
               </button>
             </div>
 
             {/* Navigation Tabs */}
-            <div className="flex items-center gap-1.5 px-6 py-3"
+            <div className="flex items-center gap-2 px-6 py-3 shrink-0"
               style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-              {["overview", "tasks"].map((t) => (
-                <button key={t} onClick={() => setTab(t)}
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold capitalize transition-all duration-200 cursor-pointer"
+              {[
+                { id: "overview", label: "Overview", icon: BarChart2 },
+                { id: "tasks", label: "Tasks", icon: ListTodo },
+              ].map(({ id, label, icon: Icon }) => (
+                <button key={id} onClick={() => setTab(id)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer"
                   style={{
-                    background: tab === t ? "linear-gradient(135deg,rgba(99,91,255,0.25) 0%,rgba(139,92,246,0.15) 100%)" : "transparent",
-                    color: tab === t ? "#EDE9FE" : "rgba(148,163,184,0.6)",
-                    border: tab === t ? "1px solid rgba(99,91,255,0.4)" : "1px solid transparent",
-                  }}>{t}</button>
+                    background: tab === id ? "linear-gradient(135deg,rgba(99,91,255,0.3) 0%,rgba(139,92,246,0.2) 100%)" : "rgba(255,255,255,0.03)",
+                    color: tab === id ? "#F3E8FF" : "rgba(148,163,184,0.7)",
+                    border: tab === id ? "1px solid rgba(167,139,250,0.5)" : "1px solid rgba(255,255,255,0.05)",
+                  }}>
+                  <Icon size={14} className={tab === id ? "text-indigo-300" : "text-slate-400"} />
+                  <span>{label}</span>
+                </button>
               ))}
             </div>
 
-            <div className="p-6 space-y-5">
+            {/* Main Content Body */}
+            <div className="p-6 space-y-5 flex-1">
               {tab === "overview" ? (
                 <>
                   {/* Progress Bar Container */}
-                  <div className="rounded-2xl p-4"
-                    style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                  <div className="rounded-2xl p-4 bg-slate-900/80 border border-white/10 shadow-lg">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-bold" style={{ color: "rgba(148,163,184,0.7)" }}>Project Progress</span>
-                      <span className="text-sm font-black" style={{ color: cfg.color }}>{pct}%</span>
+                      <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                        <Sparkles size={13} className="text-cyan-400" />
+                        Project Completion
+                      </span>
+                      <span className="text-sm font-black text-cyan-400">{pct}%</span>
                     </div>
-                    <div className="h-2.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
+                    <div className="h-2.5 rounded-full overflow-hidden bg-slate-950/80 p-0.5 border border-white/5">
                       <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }}
                         transition={{ duration: 0.9, ease: "easeOut" }}
                         className="h-full rounded-full"
-                        style={{ background: `linear-gradient(90deg,${cfg.color},${cfg.color}80)` }} />
+                        style={{ background: "linear-gradient(90deg,#38BDF8 0%,#635BFF 50%,#A78BFA 100%)" }} />
                     </div>
+                    <p className="text-[11px] text-slate-400 mt-2 font-medium">
+                      {project.taskStats ? `${project.taskStats.done || 0} of ${project.taskStats.total || 0} tasks completed` : "No tasks logged"}
+                    </p>
                   </div>
+
+                  {/* Required Skills & Category */}
+                  {project.requiredSkills?.length > 0 && (
+                    <div>
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
+                        <Tag size={12} className="text-indigo-400" />
+                        Required Skills
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {project.requiredSkills.map((skill) => (
+                          <span key={skill} className="text-xs font-bold px-3 py-1 rounded-xl bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Description */}
                   {project.description && (
                     <div>
-                      <p className="text-[11px] font-bold uppercase tracking-wider mb-1.5" style={{ color: "rgba(148,163,184,0.5)" }}>Description</p>
-                      <p className="text-xs leading-relaxed font-medium" style={{ color: "#D1D5DB" }}>{project.description}</p>
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Scope & Description</p>
+                      <div className="bg-slate-900/60 rounded-2xl p-4 border border-white/10 text-xs leading-relaxed font-medium text-slate-200">
+                        {project.description}
+                      </div>
                     </div>
                   )}
 
-                  {/* Meta Grid */}
+                  {/* Meta Grid - 4 Interactive Stat Cards */}
                   <div className="grid grid-cols-2 gap-3">
-                    {[
-                      { label: "Deadline",   value: project.deadline ? formatDate(project.deadline) : "—", icon: Calendar },
-                      { label: "Budget",     value: project.budget > 0 ? `${project.currency === "INR" ? "₹" : "$"}${project.budget?.toLocaleString()}` : "—", icon: TrendingUp },
-                      { label: "Freelancer", value: project.assignedFreelancer?.name || project.owner?.name || "Unassigned", icon: CheckSquare },
-                      { label: "Tasks",      value: project.taskStats ? `${project.taskStats.done || 0}/${project.taskStats.total || 0} done` : "—", icon: ListTodo },
-                    ].map(({ label, value, icon: Icon }) => (
-                      <div key={label} className="rounded-xl p-3.5"
-                        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <Icon size={12} style={{ color: "rgba(148,163,184,0.5)" }} />
-                          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(148,163,184,0.5)" }}>{label}</span>
-                        </div>
-                        <p className="text-xs font-bold text-white truncate">{value}</p>
+                    <div className="rounded-2xl p-4 bg-slate-900/60 border border-white/10 space-y-1">
+                      <div className="flex items-center gap-1.5 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                        <Calendar size={13} className="text-cyan-400" />
+                        <span>Deadline</span>
                       </div>
-                    ))}
+                      <p className="text-xs font-black text-white">
+                        {project.deadline ? formatDate(project.deadline) : "Not Set"}
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl p-4 bg-slate-900/60 border border-white/10 space-y-1">
+                      <div className="flex items-center gap-1.5 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                        <TrendingUp size={13} className="text-emerald-400" />
+                        <span>Budget</span>
+                      </div>
+                      <p className="text-xs font-black text-emerald-400">
+                        {project.budget > 0 ? `${project.currency === "INR" ? "₹" : "$"}${project.budget?.toLocaleString()}` : "Unspecified"}
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl p-4 bg-slate-900/60 border border-white/10 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                          <CheckSquare size={13} className="text-indigo-400" />
+                          <span>Freelancer</span>
+                        </div>
+                        {project.assignedFreelancer && (
+                          <button
+                            onClick={() => navigate("/messages")}
+                            className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
+                          >
+                            <MessageSquare size={10} /> Chat
+                          </button>
+                        )}
+                      </div>
+                      <p className="text-xs font-black text-white truncate">
+                        {project.assignedFreelancer?.name || project.owner?.name || "Unassigned"}
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl p-4 bg-slate-900/60 border border-white/10 space-y-1">
+                      <div className="flex items-center gap-1.5 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                        <ListTodo size={13} className="text-purple-400" />
+                        <span>Tasks</span>
+                      </div>
+                      <p className="text-xs font-black text-white">
+                        {project.taskStats ? `${project.taskStats.done || 0}/${project.taskStats.total || 0} done` : "0/0"}
+                      </p>
+                    </div>
                   </div>
                 </>
               ) : (
                 <TaskList projectId={project._id} />
+              )}
+            </div>
+
+            {/* Sticky Drawer Footer Actions */}
+            <div className="p-4 bg-slate-950/90 border-t border-white/10 flex items-center gap-3 shrink-0">
+              {(project.createdByRole === "client" || project.status === "open") && (
+                <button
+                  onClick={() => { onClose(); onOpenProposals(project); }}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 shadow-lg shadow-indigo-600/30 transition-all cursor-pointer">
+                  <Users size={15} />
+                  <span>View Proposals ({project.proposalsCount || 0})</span>
+                </button>
+              )}
+              {project.assignedFreelancer && (
+                <button
+                  onClick={() => { onClose(); navigate("/messages"); }}
+                  className="flex items-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-all cursor-pointer">
+                  <MessageSquare size={15} />
+                  <span>Chat</span>
+                </button>
               )}
             </div>
           </motion.div>
@@ -577,6 +739,8 @@ const ProjectDrawer = ({ project, onClose }) => {
       )}
     </AnimatePresence>
   );
+
+  return typeof document !== "undefined" ? createPortal(drawerContent, document.body) : null;
 };
 
 // ── Project Card ───────────────────────────────────────────────────────────
@@ -586,54 +750,80 @@ const ProjectCard = ({ project, delay, onSelect, onOpenProposals }) => {
   const isOwnerClient = project.createdByRole === "client" || project.status === "open";
 
   return (
-    <GCard delay={delay} glow={cfg.color} className="p-5 flex flex-col justify-between group">
+    <GCard delay={delay} glow={cfg.color} onClick={() => onSelect(project)} className="p-5 flex flex-col justify-between group">
       <div>
-        <div className="flex items-start justify-between mb-3" onClick={() => onSelect(project)}>
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: `${cfg.color}18`, border: `1px solid ${cfg.color}30`, boxShadow: `0 0 16px ${cfg.color}15` }}>
+        {/* Card Header Row */}
+        <div className="flex items-start justify-between mb-3.5">
+          <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-md transition-transform group-hover:scale-105"
+            style={{ background: `${cfg.color}20`, border: `1px solid ${cfg.color}40`, boxShadow: `0 0 20px ${cfg.color}20` }}>
             <FolderOpen size={18} style={{ color: cfg.color }} />
           </div>
           <div className="flex items-center gap-2">
+            {project.category && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800/90 text-slate-300 border border-slate-700/60 hidden sm:inline-block">
+                {project.category}
+              </span>
+            )}
             <StatusBadge status={project.status} />
-            <ChevronRight size={14} style={{ color: "rgba(148,163,184,0.5)" }}
-              className="opacity-0 group-hover:opacity-100 transition-opacity" />
+            <ChevronRight size={15} className="text-slate-500 opacity-50 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
           </div>
         </div>
 
-        <h3 onClick={() => onSelect(project)} className="text-sm font-bold text-white mb-1.5 leading-snug group-hover:text-indigo-400 transition-colors cursor-pointer">
+        {/* Title */}
+        <h3 className="text-base font-black text-white mb-1.5 leading-snug group-hover:text-indigo-300 transition-colors">
           {project.title}
         </h3>
+
+        {/* Description */}
         {project.description && (
-          <p onClick={() => onSelect(project)} className="text-xs font-medium mb-4 line-clamp-2 cursor-pointer" style={{ color: "rgba(148,163,184,0.6)" }}>
+          <p className="text-xs font-medium text-slate-400 mb-4 line-clamp-2 leading-relaxed">
             {project.description}
           </p>
         )}
 
+        {/* Skill Badges Preview */}
+        {project.requiredSkills?.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            {project.requiredSkills.slice(0, 3).map((sk) => (
+              <span key={sk} className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+                {sk}
+              </span>
+            ))}
+            {project.requiredSkills.length > 3 && (
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-slate-800 text-slate-400 border border-slate-700">
+                +{project.requiredSkills.length - 3}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Progress Bar Section */}
         <div className="mb-4">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[11px] font-semibold" style={{ color: "rgba(148,163,184,0.6)" }}>Progress</span>
+            <span className="text-[11px] font-bold text-slate-400">Progress</span>
             <span className="text-xs font-black" style={{ color: cfg.color }}>{pct}%</span>
           </div>
-          <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
+          <div className="h-2 rounded-full overflow-hidden bg-slate-950/80 border border-white/5">
             <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }}
               transition={{ duration: 0.9, delay: delay + 0.2, ease: "easeOut" }}
               className="h-full rounded-full"
-              style={{ background: `linear-gradient(90deg,${cfg.color},${cfg.color}99)` }} />
+              style={{ background: "linear-gradient(90deg,#38BDF8 0%,#635BFF 50%,#A78BFA 100%)" }} />
           </div>
         </div>
       </div>
 
-      <div className="space-y-3 pt-3 border-t border-white/5">
-        <div className="flex items-center justify-between gap-2 flex-wrap text-[11px] text-slate-400">
-          {project.deadline && (
-            <div className="flex items-center gap-1.5">
-              <Calendar size={12} className="text-slate-500" />
+      {/* Card Footer & Proposal Action Button */}
+      <div className="space-y-3 pt-3 border-t border-white/10">
+        <div className="flex items-center justify-between gap-2 flex-wrap text-xs font-bold text-slate-300">
+          {project.deadline ? (
+            <div className="flex items-center gap-1.5 text-slate-400">
+              <Calendar size={13} className="text-slate-400" />
               <span>Due {formatDate(project.deadline)}</span>
             </div>
-          )}
+          ) : <span />}
           {project.budget > 0 && (
-            <div className="flex items-center gap-1.5 font-bold text-slate-200">
-              <TrendingUp size={12} className="text-emerald-400" />
+            <div className="flex items-center gap-1 font-black text-emerald-400">
+              <TrendingUp size={13} className="text-emerald-400" />
               <span>{project.currency === "INR" ? "₹" : "$"}{project.budget?.toLocaleString()}</span>
             </div>
           )}
@@ -643,7 +833,7 @@ const ProjectCard = ({ project, delay, onSelect, onOpenProposals }) => {
         {isOwnerClient && (
           <button
             onClick={(e) => { e.stopPropagation(); onOpenProposals(project); }}
-            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 transition-all cursor-pointer">
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 hover:to-purple-500 shadow-md shadow-indigo-600/25 transition-all cursor-pointer">
             <Users size={14} />
             <span>View Proposals ({project.proposalsCount || 0})</span>
           </button>
@@ -656,9 +846,10 @@ const ProjectCard = ({ project, delay, onSelect, onOpenProposals }) => {
 // ── Main Component ─────────────────────────────────────────────────────────
 const ClientProjects = () => {
   const { projects, loading, error, fetchProjects, patchProject } = useClientPortalStore();
-  const [search, setSearch]       = useState("");
-  const [statusFilter, setStatus] = useState("all");
-  const [selected, setSelected]   = useState(null);
+  const [search, setSearch]           = useState("");
+  const [statusFilter, setStatus]     = useState("all");
+  const [categoryFilter, setCategory] = useState("all");
+  const [selected, setSelected]       = useState(null);
   const [proposalProject, setProposalProject] = useState(null);
   const [postModalOpen, setPostModalOpen]     = useState(false);
 
@@ -672,29 +863,47 @@ const ClientProjects = () => {
   const filtered = useMemo(() => {
     let list = projects;
     if (statusFilter !== "all") list = list.filter((p) => p.status === statusFilter);
+    if (categoryFilter !== "all") list = list.filter((p) => p.category === categoryFilter);
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter((p) => p.title?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q));
     }
     return list;
-  }, [projects, search, statusFilter]);
+  }, [projects, search, statusFilter, categoryFilter]);
 
   const counts = useMemo(() => ({
+    all:       projects.length,
     open:      projects.filter((p) => p.status === "open").length,
     active:    projects.filter((p) => p.status === "active").length,
     planning:  projects.filter((p) => p.status === "planning").length,
+    on_hold:   projects.filter((p) => p.status === "on_hold").length,
     completed: projects.filter((p) => p.status === "completed").length,
+    cancelled: projects.filter((p) => p.status === "cancelled").length,
   }), [projects]);
 
-  const STATUS_OPTS = ["all", "open", "planning", "active", "on_hold", "completed", "cancelled"];
+  const STATUS_OPTS = [
+    { id: "all", label: "All", count: counts.all },
+    { id: "open", label: "Open", count: counts.open },
+    { id: "planning", label: "Planning", count: counts.planning },
+    { id: "active", label: "Active", count: counts.active },
+    { id: "on_hold", label: "On Hold", count: counts.on_hold },
+    { id: "completed", label: "Completed", count: counts.completed },
+    { id: "cancelled", label: "Cancelled", count: counts.cancelled },
+  ];
+
+  const CATEGORY_OPTS = [
+    { value: "all", label: "All Categories" },
+    ...CATEGORIES.map((c) => ({ value: c, label: c })),
+  ];
 
   const handleExportCSV = () => {
     const list = filtered.length ? filtered : projects;
     const rows = [
-      ["Project Title", "Status", "Progress (%)", "Deadline", "Budget", "Tasks Done", "Total Tasks"],
+      ["Project Title", "Status", "Category", "Progress (%)", "Deadline", "Budget", "Tasks Done", "Total Tasks"],
       ...list.map((p) => [
         `"${(p.title || "").replace(/"/g, '""')}"`,
         `"${p.status || ""}"`,
+        `"${p.category || ""}"`,
         p.progress ?? 0,
         `"${p.deadline ? new Date(p.deadline).toLocaleDateString() : ""}"`,
         p.budget || 0,
@@ -715,10 +924,10 @@ const ClientProjects = () => {
     <div className="min-h-screen relative overflow-hidden"
       style={{ background: "radial-gradient(ellipse 100% 55% at 65% -5%,rgba(99,91,255,0.08) 0%,transparent 52%),linear-gradient(180deg,#0B0F1A 0%,#07090F 100%)" }}>
       
-      {/* Background ambient lighting */}
+      {/* Background Ambient Glow */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-40 right-1/4 w-[650px] h-[650px] rounded-full"
-          style={{ background: "radial-gradient(circle,rgba(99,91,255,0.05) 0%,transparent 60%)" }} />
+        <div className="absolute -top-40 right-1/4 w-[650px] h-[650px] rounded-full pointer-events-none"
+          style={{ background: "radial-gradient(circle,rgba(99,91,255,0.06) 0%,transparent 60%)" }} />
       </div>
 
       <div className="relative p-6 lg:p-8 max-w-[1400px] mx-auto space-y-6">
@@ -760,13 +969,13 @@ const ClientProjects = () => {
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               onClick={handleExportCSV}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-300 bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-300 bg-slate-800/90 hover:bg-slate-800 border border-slate-700/80 transition-all cursor-pointer"
             >
               <Download size={14} />
               <span>Export CSV</span>
             </motion.button>
 
-            {/* Post Project Primary Action Button */}
+            {/* Post Project Primary Button */}
             <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
@@ -780,106 +989,138 @@ const ClientProjects = () => {
           </div>
         </motion.div>
 
-      {/* Summary KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <SubpageStatCard icon={Sparkles}     label="Open Proposals"    value={counts.open}      color="cyan"  delay={0}    sub="Open for freelancer bids" />
-        <SubpageStatCard icon={FolderOpen}   label="Active Workstreams" value={counts.active}    color="green" delay={0.05} sub="Currently in development" />
-        <SubpageStatCard icon={Clock}        label="Planning Phase"     value={counts.planning}  color="#9CA3AF" delay={0.1} sub="Scope & milestone setup" />
-        <SubpageStatCard icon={CheckCircle2} label="Completed Projects" value={counts.completed} color="blue" delay={0.15} sub="Delivered & signed off" />
-      </div>
-
-      {/* Filter & Search Bar */}
-      <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
-        <div className="relative flex-1 max-w-md">
-          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "rgba(148,163,184,0.5)" }} />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search projects by title or description..."
-            className="w-full pl-10 pr-9 py-2.5 rounded-xl text-xs font-medium outline-none transition-all duration-200"
-            style={{
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              color: "#F9FAFB",
-            }}
-            onFocus={e => { e.currentTarget.style.border = "1px solid rgba(99,91,255,0.4)"; e.currentTarget.style.background = "rgba(99,91,255,0.06)"; }}
-            onBlur={e => { e.currentTarget.style.border = "1px solid rgba(255,255,255,0.08)"; e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }} />
-          {search && (
-            <button onClick={() => setSearch("")} className="absolute right-3.5 top-1/2 -translate-y-1/2" style={{ color: "rgba(148,163,184,0.5)" }}>
-              <X size={13} />
-            </button>
-          )}
+        {/* Summary KPI Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <SubpageStatCard icon={Sparkles}     label="Open Proposals"    value={counts.open}      color="cyan"  delay={0}    sub="Open for freelancer bids" />
+          <SubpageStatCard icon={FolderOpen}   label="Active Workstreams" value={counts.active}    color="green" delay={0.05} sub="Currently in development" />
+          <SubpageStatCard icon={Clock}        label="Planning Phase"     value={counts.planning}  color="#9CA3AF" delay={0.1} sub="Scope & milestone setup" />
+          <SubpageStatCard icon={CheckCircle2} label="Completed Projects" value={counts.completed} color="blue" delay={0.15} sub="Delivered & signed off" />
         </div>
 
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <Filter size={13} style={{ color: "rgba(148,163,184,0.5)", marginRight: 2 }} />
-          {STATUS_OPTS.map((s) => (
-            <button key={s} onClick={() => setStatus(s)}
-              className="px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition-all duration-200 cursor-pointer"
+        {/* Filter & Search Bar */}
+        <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+          <div className="relative flex-1 max-w-md">
+            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "rgba(148,163,184,0.5)" }} />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search projects by title or description..."
+              className="w-full pl-10 pr-9 py-2.5 rounded-xl text-xs font-medium outline-none transition-all duration-200"
               style={{
-                background: statusFilter === s ? "linear-gradient(135deg,rgba(99,91,255,0.25) 0%,rgba(139,92,246,0.15) 100%)" : "rgba(255,255,255,0.04)",
-                color: statusFilter === s ? "#EDE9FE" : "rgba(148,163,184,0.7)",
-                border: statusFilter === s ? "1px solid rgba(99,91,255,0.4)" : "1px solid rgba(255,255,255,0.08)",
-                boxShadow: statusFilter === s ? "0 0 12px rgba(99,91,255,0.18)" : "none",
-              }}>{s.replace("_"," ")}</button>
-          ))}
-        </div>
-      </div>
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                color: "#F9FAFB",
+              }}
+              onFocus={e => { e.currentTarget.style.border = "1px solid rgba(99,91,255,0.4)"; e.currentTarget.style.background = "rgba(99,91,255,0.06)"; }}
+              onBlur={e => { e.currentTarget.style.border = "1px solid rgba(255,255,255,0.08)"; e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
+            />
+            {search && (
+              <button onClick={() => setSearch("")} className="absolute right-3.5 top-1/2 -translate-y-1/2" style={{ color: "rgba(148,163,184,0.5)" }}>
+                <X size={13} />
+              </button>
+            )}
+          </div>
 
-      {/* Grid */}
-      {loading.projects && projects.length === 0 ? (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
-        </div>
-      ) : error.projects && projects.length === 0 ? (
-        <div className="flex flex-col items-center py-16 gap-3">
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "rgba(239,68,68,0.1)" }}>
-            <AlertCircle size={24} style={{ color: "#EF4444" }} />
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <Filter size={13} style={{ color: "rgba(148,163,184,0.5)", marginRight: 2 }} />
+            {["all", "open", "planning", "active", "on_hold", "completed", "cancelled"].map((s) => {
+              const labels = {
+                all: "All",
+                open: "Open",
+                planning: "Planning",
+                active: "Active",
+                on_hold: "On Hold",
+                completed: "Completed",
+                cancelled: "Cancelled",
+              };
+              return (
+                <button
+                  key={s}
+                  onClick={() => setStatus(s)}
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition-all duration-200 cursor-pointer"
+                  style={{
+                    background: statusFilter === s ? "linear-gradient(135deg,rgba(99,91,255,0.25) 0%,rgba(139,92,246,0.15) 100%)" : "rgba(255,255,255,0.04)",
+                    color: statusFilter === s ? "#EDE9FE" : "rgba(148,163,184,0.7)",
+                    border: statusFilter === s ? "1px solid rgba(99,91,255,0.4)" : "1px solid rgba(255,255,255,0.08)",
+                    boxShadow: statusFilter === s ? "0 0 12px rgba(99,91,255,0.18)" : "none",
+                  }}
+                >
+                  {labels[s] || s}
+                </button>
+              );
+            })}
           </div>
-          <p className="text-xs font-bold text-white">Failed to load projects</p>
-          <button onClick={fetchProjects} className="text-xs font-bold px-4 py-2 rounded-xl"
-            style={{ background: "rgba(99,91,255,0.2)", color: "#A78BFA", border: "1px solid rgba(99,91,255,0.3)" }}>
-            Retry
-          </button>
         </div>
-      ) : filtered.length === 0 ? (
-        <GCard delay={0.1} className="p-12 text-center flex flex-col items-center justify-center gap-3">
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-1" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
-            <FolderOpen size={26} style={{ color: "rgba(148,163,184,0.4)" }} />
-          </div>
-          <p className="text-sm font-bold text-white">
-            {projects.length > 0 ? "No projects match your active filters" : "No projects posted yet"}
-          </p>
-          <p className="text-xs font-medium max-w-sm text-slate-400">
-            {projects.length > 0
-              ? "Try adjusting your search criteria or status filter."
-              : "Post your first project to invite top freelancers to submit proposals and bids."}
-          </p>
-          {projects.length === 0 ? (
-            <button onClick={() => setPostModalOpen(true)}
-              className="flex items-center gap-2 text-xs font-bold px-5 py-2.5 rounded-xl mt-2 cursor-pointer bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/30">
-              <Plus size={15} />
-              <span>Post Your First Project</span>
-            </button>
-          ) : (
-            <button onClick={() => { setSearch(""); setStatus("all"); }}
-              className="text-xs font-bold px-4 py-2 rounded-xl mt-1 cursor-pointer bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-              Clear Filters
-            </button>
-          )}
-        </GCard>
-      ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          <AnimatePresence mode="popLayout">
-            {filtered.map((p, i) => (
-              <ProjectCard key={p._id} project={p} delay={i * 0.04} onSelect={setSelected} onOpenProposals={setProposalProject} />
+
+        {/* Projects Grid */}
+        {loading.projects ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[...Array(6)].map((_, i) => (
+              <SkeletonCard key={i} />
             ))}
-          </AnimatePresence>
-        </div>
-      )}
-
-      {/* Modals & Drawers */}
-      <ProjectDrawer project={selected} onClose={() => setSelected(null)} />
-      <ProposalsDrawer project={proposalProject} onClose={() => setProposalProject(null)} />
-      <PostProjectModal open={postModalOpen} onClose={() => setPostModalOpen(false)} />
+          </div>
+        ) : error.projects ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center space-y-3 bg-slate-900/40 rounded-3xl border border-rose-500/20">
+            <AlertCircle size={32} className="text-rose-400" />
+            <p className="text-sm font-bold text-white">Failed to load project records</p>
+            <p className="text-xs text-slate-400 max-w-sm">{error.projects}</p>
+            <button
+              onClick={fetchProjects}
+              className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 cursor-pointer"
+            >
+              Try Again
+            </button>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center space-y-3 bg-slate-900/40 rounded-3xl border border-white/5">
+            <FolderKanban size={36} className="text-slate-500" />
+            <p className="text-sm font-bold text-white">No projects found</p>
+            <p className="text-xs text-slate-400 max-w-xs">
+              {search || statusFilter !== "all" || categoryFilter !== "all"
+                ? "No project listings match your selected search filters."
+                : "Post your first project to receive proposals from qualified freelancers."}
+            </p>
+            <button
+              onClick={() => setPostModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-600/30 cursor-pointer"
+            >
+              <Plus size={14} />
+              <span>Post New Project</span>
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {filtered.map((proj, idx) => (
+              <ProjectCard
+                key={proj._id}
+                project={proj}
+                delay={idx * 0.05}
+                onSelect={(p) => setSelected(p)}
+                onOpenProposals={(p) => setProposalProject(p)}
+              />
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* Project Detail Drawer */}
+      <ProjectDrawer
+        project={selected}
+        onClose={() => setSelected(null)}
+        onOpenProposals={(p) => setProposalProject(p)}
+      />
+
+      {/* Proposals Drawer */}
+      <ProposalsDrawer
+        project={proposalProject}
+        onClose={() => setProposalProject(null)}
+      />
+
+      {/* Post Project Modal */}
+      <PostProjectModal
+        open={postModalOpen}
+        onClose={() => setPostModalOpen(false)}
+      />
     </div>
   );
 };

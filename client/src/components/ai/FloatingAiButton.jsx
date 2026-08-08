@@ -10,7 +10,7 @@
  * - Desktop: bottom-right popup (380px wide)
  */
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, X } from "lucide-react";
 import useClickOutside from "../../hooks/useClickOutside";
@@ -18,8 +18,19 @@ import AiWidgetPanel from "./AiWidgetPanel";
 
 const FloatingAiButton = () => {
   const [open, setOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const panelRef        = useRef(null);
   const buttonRef       = useRef(null);
+
+  useEffect(() => {
+    const checkModal = () => {
+      setIsModalOpen(document.body.style.overflow === "hidden");
+    };
+    checkModal();
+    const observer = new MutationObserver(checkModal);
+    observer.observe(document.body, { attributes: true, attributeFilter: ["style"] });
+    return () => observer.disconnect();
+  }, []);
 
   // Close on click-outside (excludes the toggle button itself)
   const handleOutside = useCallback(
@@ -32,6 +43,8 @@ const FloatingAiButton = () => {
   );
 
   useClickOutside(panelRef, handleOutside, { enabled: open, escKey: true });
+
+  if (isModalOpen) return null;
 
   return (
     <>

@@ -7,6 +7,8 @@ import {
 } from "lucide-react";
 import useInvoiceStore from "../../store/invoiceStore";
 import useClientStore from "../../store/clientStore";
+import Select from "../../components/ui/Select";
+import DatePicker from "../../components/ui/DatePicker";
 import { formatCurrency } from "../../utils/helpers";
 
 // ─────────────────────────────────────────────────────────
@@ -176,21 +178,18 @@ const InvoiceBuilder = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   {/* Client selector */}
                   <div>
-                    <Label required>Client</Label>
-                    <div className="relative">
-                      <select name="clientId" value={form.clientId} onChange={setField} required
-                        className="appearance-none w-full pr-9 pl-3 py-2.5 cursor-pointer"
-                        style={{ ...iBase }} onFocus={iFocus} onBlur={iBlur}>
-                        <option value="" style={{ background: "#0D1526" }}>Select client...</option>
-                        {clients.map(c => (
-                          <option key={c._id} value={c._id} style={{ background: "#0D1526", color: "#F9FAFB" }}>
-                            {c.name}{c.company ? ` — ${c.company}` : ""}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
-                        style={{ color: "#4B5563" }} />
-                    </div>
+                    <Select
+                      label="Client *"
+                      name="clientId"
+                      value={form.clientId}
+                      onChange={setField}
+                      required
+                      placeholder="Select client..."
+                      options={clients.map(c => ({
+                        value: c._id,
+                        label: `${c.name}${c.company ? ` — ${c.company}` : ""}`,
+                      }))}
+                    />
                     {/* Client preview */}
                     {selectedClient && (
                       <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
@@ -210,26 +209,24 @@ const InvoiceBuilder = () => {
 
                   {/* Due date */}
                   <div>
-                    <Label>Due date</Label>
-                    <div className="relative">
-                      <input type="date" name="dueDate" value={form.dueDate} onChange={setField}
-                        className="w-full pl-3 pr-9 py-2.5"
-                        style={{ ...iBase, colorScheme: "dark" }} onFocus={iFocus} onBlur={iBlur} />
-                      <Calendar size={13} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
-                        style={{ color: "#4B5563" }} />
-                    </div>
+                    <DatePicker
+                      label="Due date"
+                      name="dueDate"
+                      value={form.dueDate}
+                      onChange={setField}
+                      placeholder="Select due date..."
+                    />
                   </div>
 
                   {/* Currency */}
                   <div>
-                    <Label>Currency</Label>
-                    <select name="currency" value={form.currency} onChange={setField}
-                      className="w-full px-3 py-2.5 appearance-none"
-                      style={iBase} onFocus={iFocus} onBlur={iBlur}>
-                      {["INR","USD","EUR","GBP","AUD","CAD"].map(c => (
-                        <option key={c} value={c}>{c}</option>
-                      ))}
-                    </select>
+                    <Select
+                      label="Currency"
+                      name="currency"
+                      value={form.currency}
+                      onChange={setField}
+                      options={["INR","USD","EUR","GBP","AUD","CAD"]}
+                    />
                   </div>
 
                   {/* Project (optional) */}

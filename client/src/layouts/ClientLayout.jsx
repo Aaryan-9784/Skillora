@@ -227,7 +227,7 @@ const ClientNavbar = ({ onSearch, mobileOpen, setMobileOpen }) => {
 
   return (
     <>
-      <header className="sticky top-0 z-40 flex items-center justify-between h-16 px-6 gap-3"
+      <header className="relative z-40 shrink-0 flex items-center justify-between h-16 px-6 gap-3"
         style={{
           background: "linear-gradient(90deg,rgba(9,15,28,0.94) 0%,rgba(11,18,32,0.94) 100%)",
           backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
