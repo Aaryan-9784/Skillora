@@ -37,3 +37,29 @@ export const relativeTime = (date) => {
   if (diffInDays < 30) return `${diffInDays}d ago`;
   return formatDate(date);
 };
+
+export const formatMessageTime = (dateStr) => {
+  if (!dateStr) return "";
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return "";
+
+  const now = new Date();
+  const isToday = date.toDateString() === now.toDateString();
+
+  const timeStr = date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+
+  if (isToday) return timeStr;
+
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday = date.toDateString() === yesterday.toDateString();
+
+  if (isYesterday) return `Yesterday ${timeStr}`;
+
+  const datePart = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return `${datePart}, ${timeStr}`;
+};

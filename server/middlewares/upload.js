@@ -15,31 +15,42 @@ if (process.env.CLOUDINARY_CLOUD_NAME) {
 const makeStorage = (folder) =>
   new CloudinaryStorage({
     cloudinary,
-    params: {
-      folder:         `skillora/${folder}`,
-      allowed_formats: ["jpg", "jpeg", "png", "webp", "gif", "pdf"],
-      transformation: folder === "avatars" ? [{ width: 400, height: 400, crop: "fill" }] : [],
+    params: async (req, file) => {
+      const isAudioOrVideo = file.mimetype.startsWith("audio/") || file.mimetype.startsWith("video/") || file.originalname.match(/\.(webm|wav|mp3|ogg|m4a|mp4)$/i);
+      const isImage = file.mimetype.startsWith("image/");
+      
+      let resource_type = "raw";
+      if (isImage) resource_type = "image";
+      else if (isAudioOrVideo) resource_type = "video";
+
+      return {
+        folder: `skillora/${folder}`,
+        resource_type,
+        transformation: folder === "avatars" ? [{ width: 400, height: 400, crop: "fill" }] : [],
+      };
     },
   });
 
 // Fallback to memory storage when Cloudinary not configured
 const memoryStorage = multer.memoryStorage();
 
-const makeUpload = (folder, fieldName = "file", maxSizeMB = 10) => {
+const makeUpload = (folder, fieldName = "file", maxSizeMB = 50) => {
   const storage = process.env.CLOUDINARY_CLOUD_NAME ? makeStorage(folder) : memoryStorage;
 
   return multer({
     storage,
     limits: { fileSize: maxSizeMB * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
-      const allowed = /jpeg|jpg|png|webp|gif|pdf/;
-      if (allowed.test(file.mimetype)) return cb(null, true);
+      // Allow images, audio, video, pdf, office docs, archives, text
+      const allowedRegex = /jpeg|jpg|png|webp|gif|pdf|doc|docx|xls|xlsx|ppt|pptx|zip|rar|7z|txt|csv|audio|video|mp3|wav|webm|ogg|m4a|mp4/;
+      const isAllowed = allowedRegex.test(file.mimetype.toLowerCase()) || allowedRegex.test(file.originalname.toLowerCase());
+      if (isAllowed) return cb(null, true);
       cb(ApiError.badRequest("File type not allowed"));
     },
   }).single(fieldName);
 };
 
 const uploadAvatar  = makeUpload("avatars",  "avatar",  5);
-const uploadFile    = makeUpload("files",    "file",    20);
+const uploadFile    = makeUpload("files",    "file",    50);
 
 module.exports = { uploadAvatar, uploadFile, cloudinary };

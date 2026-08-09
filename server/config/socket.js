@@ -22,9 +22,18 @@ const initSocket = (httpServer) => {
   // 🔒 Auth middleware
   io.use(async (socket, next) => {
     try {
+      const cookieHeader = socket.handshake.headers?.cookie || "";
+      const parsedCookies = cookieHeader.split(";").reduce((res, item) => {
+        const [k, v] = item.trim().split("=");
+        if (k && v) res[k] = decodeURIComponent(v);
+        return res;
+      }, {});
+
       const token =
         socket.handshake.auth?.token ||
-        socket.handshake.headers?.authorization?.split(" ")[1];
+        socket.handshake.headers?.authorization?.split(" ")[1] ||
+        parsedCookies.accessToken ||
+        parsedCookies.token;
 
       if (!token) return next(new Error("Authentication token required"));
 

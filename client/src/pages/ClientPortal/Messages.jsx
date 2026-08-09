@@ -11,6 +11,8 @@ import { useWebRTC } from "../../hooks/useWebRTC";
 import CallModal from "../../components/chat/CallModal";
 import VoiceRecorder from "../../components/chat/VoiceRecorder";
 import ScheduleMeetingModal from "../../components/chat/ScheduleMeetingModal";
+import { CustomVoicePlayer, FileAttachmentCard, ImageAttachmentCard } from "../../components/chat/AttachmentViews";
+import { getInitials, relativeTime, formatMessageTime } from "../../utils/helpers";
 import api from "../../services/api";
 import toast from "react-hot-toast";
 
@@ -32,19 +34,6 @@ const GCard = ({ children, delay, className, glow }) => (
     {children}
   </motion.div>
 );
-
-const relativeTime = (dateStr) => {
-  if (!dateStr) return "Just now";
-  const date = new Date(dateStr);
-  const diffSec = Math.floor((Date.now() - date.getTime()) / 1000);
-  if (diffSec < 60) return "Just now";
-  if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
-  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
-  return `${Math.floor(diffSec / 86400)}d ago`;
-};
-
-const getInitials = (name = "") =>
-  name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "U";
 
 const ClientMessages = () => {
   const user = useAuthStore((state) => state.user);
@@ -95,16 +84,18 @@ const ClientMessages = () => {
     c.role.toLowerCase().includes(contactSearch.toLowerCase())
   );
 
+  const partnerUserId = partner?._id || partner?.id || (typeof partner === "string" ? partner : "") || selectedContactId;
+
   const {
     startCall, acceptCall, rejectCall, endCall,
     toggleMute, toggleVideo, toggleScreenShare,
-    localStream, remoteStream, callState, incomingCall,
+    localStream, remoteStream, callState, activeCallType, incomingCall,
     isMuted, isVideoOff, isScreenSharing, callDuration
-  } = useWebRTC(partner?._id || partner, "video");
+  } = useWebRTC(partnerUserId, "video");
 
   const handleInitiateCall = (callType) => {
-    if (!partner?._id && !partner) {
-      toast.error("No project contact available to call.");
+    if (!partnerUserId) {
+      toast.error("No project contact selected or available to call.");
       return;
     }
     startCall(callType);
@@ -167,7 +158,7 @@ const ClientMessages = () => {
 
       await sendMessage({
         conversationId: activeConversation._id,
-        content: "🎙 Voice Note",
+        content: "",
         attachments: [attachment],
         type: "voice_note",
       });
@@ -196,7 +187,7 @@ const ClientMessages = () => {
 
       await sendMessage({
         conversationId: activeConversation._id,
-        content: `📎 Shared file: ${file.name}`,
+        content: "",
         attachments: [attachment],
         type: attachment.fileType === "audio" ? "voice_note" : "media",
       });
@@ -565,6 +556,16 @@ const ClientMessages = () => {
                 ) : (
                   messages.map((msg) => {
                     const isMe = (msg.sender?._id || msg.sender) === user?._id;
+                    const hasAttachments = msg.attachments?.length > 0;
+                    
+                    const isRedundantText =
+                      msg.content === "🎙 Voice Note" ||
+                      msg.content?.startsWith("📎 Shared file:") ||
+                      msg.content?.startsWith("Shared file:") ||
+                      (hasAttachments && msg.content?.trim() === msg.attachments[0]?.fileName);
+
+                    const displayContent = isRedundantText ? "" : msg.content;
+
                     return (
                       <motion.div
                         key={msg._id || msg.id}
@@ -573,31 +574,29 @@ const ClientMessages = () => {
                         className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
                       >
                         <div
-                          className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-xs shadow-md ${
+                          className={`max-w-[80%] sm:max-w-[70%] rounded-2xl px-3.5 py-2.5 text-xs shadow-md ${
                             isMe
                               ? "bg-indigo-600 text-white rounded-tr-none"
                               : "bg-[#202c33] text-slate-100 rounded-tl-none border border-white/5"
                           }`}
                         >
-                          {msg.content && <p className="leading-relaxed whitespace-pre-wrap">{msg.content}</p>}
+                          {displayContent && <p className="leading-relaxed whitespace-pre-wrap mb-1">{displayContent}</p>}
 
                           {/* Attachments rendering */}
                           {msg.attachments?.map((att, idx) => (
-                            <div key={idx} className="mt-2 pt-2 border-t border-white/10">
+                            <div key={idx} className={displayContent ? "mt-2 pt-1 border-t border-white/10" : ""}>
                               {att.fileType === "image" ? (
-                                <img src={att.url} alt={att.fileName} className="max-w-xs rounded-xl border border-white/10" />
-                              ) : att.fileType === "audio" ? (
-                                <audio controls src={att.url} className="h-8 max-w-xs" />
+                                <ImageAttachmentCard att={att} isMe={isMe} />
+                              ) : att.fileType === "audio" || msg.type === "voice_note" ? (
+                                <CustomVoicePlayer url={att.url} duration={att.duration} isMe={isMe} />
                               ) : (
-                                <a href={att.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-indigo-200 underline">
-                                  <FileText size={14} /> {att.fileName}
-                                </a>
+                                <FileAttachmentCard att={att} isMe={isMe} />
                               )}
                             </div>
                           ))}
 
                           <div className={`flex items-center gap-1.5 mt-1 text-[10px] ${isMe ? "text-indigo-200 justify-end" : "text-slate-400"}`}>
-                            <span>{relativeTime(msg.createdAt)}</span>
+                            <span>{formatMessageTime(msg.createdAt)}</span>
                             {isMe && <CheckCheck size={13} className="text-indigo-200" />}
                           </div>
                         </div>
@@ -677,6 +676,7 @@ const ClientMessages = () => {
       {/* WebRTC Video/Voice Call Modal Overlay */}
       <CallModal
         callState={callState}
+        callType={activeCallType}
         localStream={localStream}
         remoteStream={remoteStream}
         onEndCall={endCall}
@@ -690,6 +690,7 @@ const ClientMessages = () => {
         onToggleScreenShare={toggleScreenShare}
         callDuration={callDuration}
         partnerName={partner?.name || "Skillora Team"}
+        partnerAvatar={partner?.avatar || ""}
       />
 
       {/* Schedule Meeting Modal */}

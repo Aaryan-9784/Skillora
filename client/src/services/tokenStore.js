@@ -11,12 +11,26 @@
  * The access token lives here — never touches the DOM or storage.
  */
 
-let _accessToken = null;
+import { updateSocketToken, disconnectSocket } from "./socketService";
+
+let _accessToken = typeof window !== "undefined" ? localStorage.getItem("sk_access_token") : null;
 
 const tokenStore = {
-  get:   ()      => _accessToken,
-  set:   (token) => { _accessToken = token; },
-  clear: ()      => { _accessToken = null; },
+  get: () => _accessToken || (typeof window !== "undefined" ? localStorage.getItem("sk_access_token") : null),
+  set: (token) => {
+    _accessToken = token;
+    if (token) {
+      if (typeof window !== "undefined") localStorage.setItem("sk_access_token", token);
+      updateSocketToken(token);
+    } else {
+      if (typeof window !== "undefined") localStorage.removeItem("sk_access_token");
+    }
+  },
+  clear: () => {
+    _accessToken = null;
+    if (typeof window !== "undefined") localStorage.removeItem("sk_access_token");
+    disconnectSocket();
+  },
 };
 
 export default tokenStore;

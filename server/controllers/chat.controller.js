@@ -4,8 +4,35 @@ const ApiError       = require("../utils/ApiError");
 const Conversation   = require("../models/Conversation");
 const Message        = require("../models/Message");
 const Project        = require("../models/Project");
+const logger       = require("../utils/logger");
+const { cloudinary } = require("../middlewares/upload");
 const notify         = require("../utils/notify");
 const { getIO } = require("../config/socket");
+
+const uploadToCloudinary = (fileBuffer, originalname, mimetype) => {
+  return new Promise((resolve, reject) => {
+    let resource_type = "raw";
+    if (mimetype.startsWith("image/")) {
+      resource_type = "image";
+    } else if (mimetype.startsWith("audio/") || mimetype.startsWith("video/") || originalname.match(/\.(webm|wav|mp3|ogg|m4a|mp4)$/i)) {
+      resource_type = "video";
+    }
+
+    const cleanFilename = originalname.replace(/[^a-zA-Z0-9.-]/g, "_");
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: "skillora/chat",
+        resource_type,
+        public_id: `${Date.now()}_${cleanFilename}`,
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      }
+    );
+    stream.end(fileBuffer);
+  });
+};
 
 // Get or Create single project conversation
 const getProjectConversation = asyncHandler(async (req, res) => {
@@ -168,24 +195,46 @@ const sendMessage = asyncHandler(async (req, res) => {
   ApiResponse.success(res, "Message sent", { message });
 });
 
-// Upload Attachment File
+// Upload Attachment File (Voice Notes, Media & Documents to Cloudinary)
 const uploadAttachment = asyncHandler(async (req, res) => {
   if (!req.file) throw ApiError.badRequest("File required");
 
+  const mimetype = req.file.mimetype || "";
+  const originalname = req.file.originalname || "attachment";
+
   let fileType = "document";
-  if (req.file.mimetype.startsWith("image/")) fileType = "image";
-  else if (req.file.mimetype.startsWith("audio/")) fileType = "audio";
-  else if (req.file.mimetype.includes("pdf")) fileType = "pdf";
-  else if (req.file.mimetype.includes("zip")) fileType = "zip";
+  if (mimetype.startsWith("image/")) {
+    fileType = "image";
+  } else if (mimetype.startsWith("audio/") || originalname.match(/\.(webm|wav|mp3|ogg|m4a|aac|flac)$/i)) {
+    fileType = "audio";
+  } else if (mimetype.includes("pdf") || originalname.toLowerCase().endsWith(".pdf")) {
+    fileType = "pdf";
+  } else if (mimetype.includes("zip") || originalname.match(/\.(zip|rar|7z|gz|tar)$/i)) {
+    fileType = "zip";
+  }
+
+  let fileUrl = "";
+  if (process.env.CLOUDINARY_CLOUD_NAME) {
+    try {
+      const cloudResult = await uploadToCloudinary(req.file.buffer, originalname, mimetype);
+      fileUrl = cloudResult.secure_url;
+    } catch (err) {
+      logger.error(`Cloudinary upload failed: ${err.message}`);
+      throw ApiError.internal("Failed to upload file to Cloudinary: " + err.message);
+    }
+  } else {
+    fileUrl = req.file.path || `/uploads/${req.file.filename}`;
+  }
 
   const attachment = {
-    url:       `/uploads/${req.file.filename}`,
-    fileName:  req.file.originalname,
+    url:       fileUrl,
+    fileName:  originalname,
+    filename:  originalname,
     fileType,
-    sizeBytes: req.file.size,
+    sizeBytes: req.file.size || 0,
   };
 
-  ApiResponse.success(res, "File uploaded", { attachment });
+  ApiResponse.success(res, "File uploaded successfully", { attachment });
 });
 
 module.exports = { getProjectConversation, getMessages, sendMessage, uploadAttachment };

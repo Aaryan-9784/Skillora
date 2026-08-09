@@ -1,8 +1,8 @@
 const express     = require("express");
 const router      = express.Router();
-const { protect } = require("../middlewares/auth.middleware");
 const multer      = require("multer");
-const upload      = multer({ dest: "uploads/", limits: { fileSize: 25 * 1024 * 1024 } });
+const { protect } = require("../middlewares/auth.middleware");
+const upload      = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
 const {
   getProjectConversation,
   getMessages,

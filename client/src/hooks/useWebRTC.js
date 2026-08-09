@@ -1,21 +1,28 @@
 import { useRef, useState, useEffect, useCallback } from "react";
-import { getSocket } from "../services/socketService";
+import { getSocket, connectSocket } from "../services/socketService";
 import { RTC_CONFIG } from "../utils/webrtcConfig";
+import toast from "react-hot-toast";
+
+// Safety shim for react-hot-toast info calls across all browser bundles
+if (toast && typeof toast.info !== "function") {
+  toast.info = (msg, opts) => toast(msg, opts || { icon: "ℹ️" });
+}
 
 export const useWebRTC = (targetUserId, defaultCallType = "video") => {
   const [localStream, setLocalStream]       = useState(null);
   const [remoteStream, setRemoteStream]     = useState(null);
   const [callState, setCallState]           = useState("idle"); // idle | calling | incoming | connected | ended
+  const [activeCallType, setActiveCallType] = useState(defaultCallType); // voice | video
   const [incomingCall, setIncomingCall]     = useState(null);   // { callerId, offer, callType }
   const [isMuted, setIsMuted]               = useState(false);
   const [isVideoOff, setIsVideoOff]         = useState(false);
   const [isScreenSharing, setIsScreenShare] = useState(false);
   const [callDuration, setCallDuration]     = useState(0);
 
-  const peerConnectionRef = useRef(null);
-  const timerRef          = useRef(null);
-  const screenTrackRef    = useRef(null);
-  const socket            = getSocket();
+  const peerConnectionRef     = useRef(null);
+  const timerRef              = useRef(null);
+  const screenTrackRef        = useRef(null);
+  const iceCandidatesQueueRef = useRef([]);
 
   useEffect(() => {
     if (callState === "connected") {
@@ -34,6 +41,7 @@ export const useWebRTC = (targetUserId, defaultCallType = "video") => {
       peerConnectionRef.current.close();
       peerConnectionRef.current = null;
     }
+    iceCandidatesQueueRef.current = [];
     setLocalStream(null);
     setRemoteStream(null);
     setCallState("idle");
@@ -41,66 +49,165 @@ export const useWebRTC = (targetUserId, defaultCallType = "video") => {
     setIsScreenShare(false);
   }, [localStream]);
 
+  // Process any ICE candidates queued before remote description was set
+  const processIceQueue = async () => {
+    const pc = peerConnectionRef.current;
+    if (!pc || !pc.remoteDescription) return;
+    while (iceCandidatesQueueRef.current.length > 0) {
+      const cand = iceCandidatesQueueRef.current.shift();
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(cand));
+      } catch (e) {
+        console.error("Error processing queued ICE candidate:", e);
+      }
+    }
+  };
+
   useEffect(() => {
-    const socket = getSocket();
-    if (!socket) return;
+    let activeSocket = getSocket() || connectSocket();
 
-    const onIncoming = ({ callerId, offer, callType, projectId }) => {
-      setIncomingCall({ callerId, offer, callType, projectId });
-      setCallState("incoming");
-    };
+    const setupListeners = (sock) => {
+      if (!sock) return null;
 
-    const onAnswered = async ({ answer }) => {
-      if (peerConnectionRef.current) {
-        await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(answer));
-        setCallState("connected");
-      }
-    };
+      const onIncoming = ({ callerId, offer, callType, projectId }) => {
+        setIncomingCall({ callerId, offer, callType, projectId });
+        setActiveCallType(callType || "video");
+        setCallState("incoming");
+        toast(`Incoming ${callType === "voice" ? "voice" : "video"} call…`, { icon: "📞" });
+      };
 
-    const onIceCandidate = async ({ candidate }) => {
-      if (peerConnectionRef.current && candidate) {
-        try {
-          await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(candidate));
-        } catch (e) {
-          console.error("Error adding ICE candidate:", e);
+      const onAnswered = async ({ answer }) => {
+        if (peerConnectionRef.current) {
+          try {
+            await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(answer));
+            await processIceQueue();
+            setCallState("connected");
+            toast.success("Call connected");
+          } catch (e) {
+            console.error("Error setting remote description on answer:", e);
+          }
         }
+      };
+
+      const onIceCandidate = async ({ candidate }) => {
+        if (!candidate) return;
+        const pc = peerConnectionRef.current;
+        if (pc && pc.remoteDescription) {
+          try {
+            await pc.addIceCandidate(new RTCIceCandidate(candidate));
+          } catch (e) {
+            console.error("Error adding ICE candidate:", e);
+          }
+        } else {
+          iceCandidatesQueueRef.current.push(candidate);
+        }
+      };
+
+      const onRejected = () => {
+        toast.error("Call was declined.");
+        endCallCleanup();
+      };
+
+      const onEnded = () => {
+        toast("Call ended.");
+        endCallCleanup();
+      };
+
+      sock.on("call:incoming",      onIncoming);
+      sock.on("call:answered",      onAnswered);
+      sock.on("call:ice_candidate", onIceCandidate);
+      sock.on("call:rejected",      onRejected);
+      sock.on("call:ended",         onEnded);
+
+      return () => {
+        sock.off("call:incoming",      onIncoming);
+        sock.off("call:answered",      onAnswered);
+        sock.off("call:ice_candidate", onIceCandidate);
+        sock.off("call:rejected",      onRejected);
+        sock.off("call:ended",         onEnded);
+      };
+    };
+
+    let cleanup = setupListeners(activeSocket);
+
+    const checkInterval = setInterval(() => {
+      const currentSocket = getSocket() || connectSocket();
+      if (currentSocket && currentSocket !== activeSocket) {
+        if (cleanup) cleanup();
+        activeSocket = currentSocket;
+        cleanup = setupListeners(activeSocket);
       }
-    };
-
-    const onRejected = () => {
-      alert("Call rejected");
-      endCallCleanup();
-    };
-
-    const onEnded = () => endCallCleanup();
-
-    socket.on("call:incoming",      onIncoming);
-    socket.on("call:answered",      onAnswered);
-    socket.on("call:ice_candidate", onIceCandidate);
-    socket.on("call:rejected",      onRejected);
-    socket.on("call:ended",         onEnded);
+    }, 1000);
 
     return () => {
-      socket.off("call:incoming",      onIncoming);
-      socket.off("call:answered",      onAnswered);
-      socket.off("call:ice_candidate", onIceCandidate);
-      socket.off("call:rejected",      onRejected);
-      socket.off("call:ended",         onEnded);
+      clearInterval(checkInterval);
+      if (cleanup) cleanup();
     };
   }, [endCallCleanup]);
 
+  const ensureSocketConnected = async () => {
+    let socket = getSocket() || connectSocket();
+    if (socket && socket.connected) return socket;
+
+    return new Promise((resolve) => {
+      let timer = null;
+      let interval = null;
+
+      const finish = (res) => {
+        if (timer) clearTimeout(timer);
+        if (interval) clearInterval(interval);
+        resolve(res);
+      };
+
+      interval = setInterval(() => {
+        const currentSocket = getSocket() || connectSocket();
+        if (currentSocket && currentSocket.connected) {
+          finish(currentSocket);
+        }
+      }, 200);
+
+      timer = setTimeout(() => {
+        const finalSocket = getSocket();
+        finish(finalSocket && finalSocket.connected ? finalSocket : null);
+      }, 4000);
+    });
+  };
+
+  const getMediaStream = async (requestVideo) => {
+    try {
+      return await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: requestVideo,
+      });
+    } catch (err) {
+      if (requestVideo) {
+        console.warn("Camera locked by another application/tab, falling back to audio stream:", err.message);
+        toast("Camera busy in another tab, connecting voice stream...", { icon: "🎙️" });
+        return await navigator.mediaDevices.getUserMedia({
+          audio: true,
+          video: false,
+        });
+      }
+      throw err;
+    }
+  };
+
   const startCall = async (type = defaultCallType) => {
-    const socket = getSocket();
-    if (!socket) {
-      alert("Socket connection not established. Please refresh or try again.");
+    if (!targetUserId) {
+      toast.error("No active user selected for this call.");
       return;
     }
+
+    let socket = await ensureSocketConnected();
+    if (!socket || !socket.connected) {
+      toast.error("Real-time call server connecting... Please try again in 2 seconds.");
+      return;
+    }
+
+    setActiveCallType(type);
     setCallState("calling");
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: type === "video",
-      });
+      const stream = await getMediaStream(type === "video");
       setLocalStream(stream);
 
       const pc = new RTCPeerConnection(RTC_CONFIG);
@@ -110,28 +217,29 @@ export const useWebRTC = (targetUserId, defaultCallType = "video") => {
 
       pc.ontrack = (e) => setRemoteStream(e.streams[0]);
       pc.onicecandidate = (e) => {
-        if (e.candidate && targetUserId) socket.emit("call:ice_candidate", { targetUserId, candidate: e.candidate });
+        if (e.candidate && targetUserId) {
+          socket.emit("call:ice_candidate", { targetUserId, candidate: e.candidate });
+        }
       };
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
       socket.emit("call:initiate", { targetUserId, offer, callType: type });
+      toast.loading(`Calling...`, { id: "call-status" });
     } catch (err) {
-      alert(`Could not start media: ${err.message}`);
+      toast.error(`Media access failed: ${err.message}`, { id: "call-status" });
       setCallState("idle");
     }
   };
 
   const acceptCall = async () => {
-    const socket = getSocket();
+    let socket = await ensureSocketConnected();
     if (!incomingCall || !socket) return;
+    toast.dismiss("call-status");
     setCallState("connected");
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: incomingCall.callType === "video",
-      });
+      const stream = await getMediaStream(incomingCall.callType === "video");
       setLocalStream(stream);
 
       const pc = new RTCPeerConnection(RTC_CONFIG);
@@ -141,16 +249,20 @@ export const useWebRTC = (targetUserId, defaultCallType = "video") => {
 
       pc.ontrack = (e) => setRemoteStream(e.streams[0]);
       pc.onicecandidate = (e) => {
-        if (e.candidate) socket.emit("call:ice_candidate", { targetUserId: incomingCall.callerId, candidate: e.candidate });
+        if (e.candidate) {
+          socket.emit("call:ice_candidate", { targetUserId: incomingCall.callerId, candidate: e.candidate });
+        }
       };
 
       await pc.setRemoteDescription(new RTCSessionDescription(incomingCall.offer));
+      await processIceQueue();
+
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
 
       socket.emit("call:answer", { callerId: incomingCall.callerId, answer });
     } catch (err) {
-      alert(`Could not accept call: ${err.message}`);
+      toast.error(`Could not accept call: ${err.message}`);
       rejectCall();
     }
   };
@@ -158,6 +270,7 @@ export const useWebRTC = (targetUserId, defaultCallType = "video") => {
   const rejectCall = () => {
     const socket = getSocket();
     if (incomingCall && socket) socket.emit("call:reject", { callerId: incomingCall.callerId });
+    toast.dismiss("call-status");
     endCallCleanup();
   };
 
@@ -165,6 +278,7 @@ export const useWebRTC = (targetUserId, defaultCallType = "video") => {
     const socket = getSocket();
     const target = targetUserId || incomingCall?.callerId;
     if (target && socket) socket.emit("call:end", { targetUserId: target });
+    toast.dismiss("call-status");
     endCallCleanup();
   };
 
@@ -210,7 +324,7 @@ export const useWebRTC = (targetUserId, defaultCallType = "video") => {
   return {
     startCall, acceptCall, rejectCall, endCall,
     toggleMute, toggleVideo, toggleScreenShare,
-    localStream, remoteStream, callState, incomingCall,
+    localStream, remoteStream, callState, activeCallType, incomingCall,
     isMuted, isVideoOff, isScreenSharing, callDuration,
   };
 };

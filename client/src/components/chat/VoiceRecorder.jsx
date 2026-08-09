@@ -16,7 +16,16 @@ const VoiceRecorder = ({ onSendVoiceNote, onCancel }) => {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(stream, { mimeType: "audio/webm" });
+      
+      let options = undefined;
+      if (typeof MediaRecorder.isTypeSupported === "function") {
+        if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) options = { mimeType: "audio/webm;codecs=opus" };
+        else if (MediaRecorder.isTypeSupported("audio/webm")) options = { mimeType: "audio/webm" };
+        else if (MediaRecorder.isTypeSupported("audio/mp4")) options = { mimeType: "audio/mp4" };
+        else if (MediaRecorder.isTypeSupported("audio/ogg")) options = { mimeType: "audio/ogg" };
+      }
+
+      mediaRecorderRef.current = new MediaRecorder(stream, options);
       audioChunksRef.current = [];
 
       mediaRecorderRef.current.ondataavailable = (e) => {
@@ -36,9 +45,10 @@ const VoiceRecorder = ({ onSendVoiceNote, onCancel }) => {
     if (!mediaRecorderRef.current) return;
     clearInterval(timerRef.current);
     mediaRecorderRef.current.onstop = () => {
-      const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+      const mime = mediaRecorderRef.current?.mimeType || "audio/webm";
+      const audioBlob = new Blob(audioChunksRef.current, { type: mime });
       onSendVoiceNote(audioBlob, duration);
-      mediaRecorderRef.current.stream.getTracks().forEach((t) => t.stop());
+      mediaRecorderRef.current.stream?.getTracks().forEach((t) => t.stop());
     };
     mediaRecorderRef.current.stop();
   };
