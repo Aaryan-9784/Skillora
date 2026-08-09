@@ -5,7 +5,8 @@ import {
   MessageSquare, Send, Paperclip, Search, Sparkles,
   Phone, Video, Calendar, Mic, FileText, Image as ImageIcon,
   Clock, CheckCheck, Circle, RefreshCw, X, Play, Volume2,
-  CheckCircle2, Info, MoreVertical, Users, Plus
+  CheckCircle2, Info, MoreVertical, Users, Plus, Trash2, Ban, UserX,
+  Reply, Copy, Smile
 } from "lucide-react";
 import useAuthStore from "../../store/authStore";
 import useChatStore from "../../store/chatStore";
@@ -43,7 +44,8 @@ const Messages = () => {
   const { clients, fetchClients } = useClientStore();
   const {
     activeConversation, messages, typingUsers, onlinePresence,
-    fetchProjectConversation, sendMessage, appendMessage
+    fetchProjectConversation, sendMessage, appendMessage, deleteMessage,
+    replyingTo, setReplyTo, clearReplyTo, toggleReaction
   } = useChatStore();
 
   const [inputText, setInputText]           = useState("");
@@ -54,6 +56,7 @@ const Messages = () => {
   const [searchQuery, setSearchQuery]       = useState("");
   const [moreMenuOpen, setMoreMenuOpen]     = useState(false);
   const [sidebarMenuOpen, setSidebarMenuOpen] = useState(false);
+  const [deleteModalMsg, setDeleteModalMsg] = useState(null);
   const fileInputRef                        = useRef(null);
   const messagesEndRef                      = useRef(null);
   const moreMenuRef                         = useRef(null);
@@ -615,46 +618,133 @@ const Messages = () => {
                     const hasAttachments = msg.attachments?.length > 0;
                     
                     const isRedundantText =
+                      !msg.content ||
                       msg.content === "🎙 Voice Note" ||
+                      msg.content === "📎 Attachment" ||
                       msg.content?.startsWith("📎 Shared file:") ||
                       msg.content?.startsWith("Shared file:") ||
-                      (hasAttachments && msg.content?.trim() === msg.attachments[0]?.fileName);
+                      (hasAttachments && (
+                        msg.content?.trim() === msg.attachments[0]?.fileName ||
+                        msg.content?.trim() === msg.attachments[0]?.filename ||
+                        msg.content?.trim() === "📎 Attachment" ||
+                        msg.content?.trim() === ""
+                      ));
 
-                    const displayContent = isRedundantText ? "" : msg.content;
+                    const displayContent = isRedundantText ? "" : msg.content?.trim();
 
                     return (
                       <motion.div
                         key={msg._id}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
+                        className={`flex flex-col group relative ${isMe ? "items-end" : "items-start"} ${msg.reactions?.length ? "mb-3" : ""}`}
                       >
-                        <div
-                          className={`max-w-[80%] sm:max-w-[70%] rounded-2xl px-3.5 py-2.5 text-xs shadow-md ${
-                            isMe
-                              ? "bg-indigo-600 text-white rounded-tr-none"
-                              : "bg-[#202c33] text-slate-100 rounded-tl-none border border-white/5"
-                          }`}
-                        >
-                          {displayContent && <p className="leading-relaxed whitespace-pre-wrap mb-1">{displayContent}</p>}
-
-                          {/* Attachments rendering */}
-                          {msg.attachments?.map((att, idx) => (
-                            <div key={idx} className={displayContent ? "mt-2 pt-1 border-t border-white/10" : ""}>
-                              {att.fileType === "image" ? (
-                                <ImageAttachmentCard att={att} isMe={isMe} />
-                              ) : att.fileType === "audio" || msg.type === "voice_note" ? (
-                                <CustomVoicePlayer url={att.url} duration={att.duration} isMe={isMe} />
-                              ) : (
-                                <FileAttachmentCard att={att} isMe={isMe} />
-                              )}
+                        <div className="relative max-w-[80%] sm:max-w-[70%] group/bubble">
+                          {/* Hover WhatsApp Action Bar */}
+                          {!msg.isDeleted && (
+                            <div className={`absolute -top-3.5 ${isMe ? "right-2" : "left-2"} opacity-0 group-hover/bubble:opacity-100 transition-opacity z-20 flex items-center gap-1 bg-[#1e293b] border border-slate-700/80 rounded-full px-2 py-1 shadow-xl backdrop-blur-md`}>
+                              {["❤️", "👍", "😂", "😮", "😢", "🙏"].map((emoji) => (
+                                <button
+                                  key={emoji}
+                                  type="button"
+                                  onClick={() => toggleReaction(msg._id, emoji)}
+                                  className="hover:scale-125 transition-transform p-0.5 text-xs cursor-pointer"
+                                  title={`React ${emoji}`}
+                                >
+                                  {emoji}
+                                </button>
+                              ))}
+                              <div className="w-px h-3 bg-white/20 mx-0.5" />
+                              <button
+                                type="button"
+                                onClick={() => setReplyTo(msg)}
+                                className="p-1 text-slate-300 hover:text-indigo-400 transition-colors cursor-pointer"
+                                title="Reply"
+                              >
+                                <Reply size={13} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (msg.content) {
+                                    navigator.clipboard.writeText(msg.content);
+                                    toast.success("Text copied!");
+                                  }
+                                }}
+                                className="p-1 text-slate-300 hover:text-indigo-400 transition-colors cursor-pointer"
+                                title="Copy text"
+                              >
+                                <Copy size={13} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setDeleteModalMsg(msg)}
+                                className="p-1 text-slate-300 hover:text-red-400 transition-colors cursor-pointer"
+                                title="Delete message"
+                              >
+                                <Trash2 size={13} />
+                              </button>
                             </div>
-                          ))}
+                          )}
 
-                          <div className={`flex items-center gap-1.5 mt-1 text-[10px] ${isMe ? "text-indigo-200 justify-end" : "text-slate-400"}`}>
-                            <span>{formatMessageTime(msg.createdAt)}</span>
-                            {isMe && <CheckCheck size={13} className="text-indigo-200" />}
+                          <div
+                            className={`rounded-2xl px-3.5 py-2.5 text-xs shadow-md ${
+                              msg.isDeleted
+                                ? "bg-slate-800/80 border border-slate-700/60 text-slate-400"
+                                : isMe
+                                ? "bg-indigo-600 text-white rounded-tr-none"
+                                : "bg-[#202c33] text-slate-100 rounded-tl-none border border-white/5"
+                            }`}
+                          >
+                            {/* Quoted message reply header */}
+                            {msg.replyTo && (msg.replyTo.senderName || msg.replyTo.content) && !msg.isDeleted && (
+                              <div className="mb-2 p-2 rounded-lg bg-black/25 border-l-3 border-indigo-400 text-[11px] leading-snug">
+                                {msg.replyTo.senderName && <span className="font-semibold text-indigo-300 block">{msg.replyTo.senderName}</span>}
+                                {msg.replyTo.content && <span className="opacity-80 truncate block">{msg.replyTo.content}</span>}
+                              </div>
+                            )}
+
+                            {msg.isDeleted ? (
+                              <div className="flex items-center gap-1.5 py-0.5 select-none text-slate-400">
+                                <Ban size={13} className="shrink-0 text-slate-400" />
+                                <span className="italic text-slate-300 font-medium">This message was deleted</span>
+                              </div>
+                            ) : (
+                              <>
+                                {displayContent && <p className="leading-relaxed whitespace-pre-wrap mb-1">{displayContent}</p>}
+
+                                {/* Attachments rendering */}
+                                {msg.attachments?.map((att, idx) => (
+                                  <div key={idx} className={displayContent ? "mt-2 pt-1 border-t border-white/10" : ""}>
+                                    {att.fileType === "image" ? (
+                                      <ImageAttachmentCard att={att} isMe={isMe} />
+                                    ) : att.fileType === "audio" || msg.type === "voice_note" ? (
+                                      <CustomVoicePlayer url={att.url} duration={att.duration} isMe={isMe} />
+                                    ) : (
+                                      <FileAttachmentCard att={att} isMe={isMe} />
+                                    )}
+                                  </div>
+                                ))}
+                              </>
+                            )}
+
+                            <div className={`flex items-center gap-1.5 mt-1 text-[10px] ${isMe ? "text-indigo-200 justify-end" : "text-slate-400"}`}>
+                              <span>{formatMessageTime(msg.createdAt)}</span>
+                              {isMe && <CheckCheck size={13} className="text-indigo-200" />}
+                            </div>
                           </div>
+
+                          {/* WhatsApp Style Reaction Pill Badge */}
+                          {msg.reactions?.length > 0 && !msg.isDeleted && (
+                            <div className={`absolute -bottom-3 ${isMe ? "right-2" : "left-2"} z-10 flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] bg-[#1e293b] border border-slate-700/80 shadow-md cursor-pointer hover:scale-105 transition-transform`}>
+                              {Array.from(new Set(msg.reactions.map((r) => r.emoji))).map((emoji, i) => (
+                                <span key={i} onClick={() => toggleReaction(msg._id, emoji)}>
+                                  {emoji}
+                                </span>
+                              ))}
+                              {msg.reactions.length > 1 && <span className="text-[10px] text-slate-300 font-bold font-mono ml-0.5">{msg.reactions.length}</span>}
+                            </div>
+                          )}
                         </div>
                       </motion.div>
                     );
@@ -663,7 +753,23 @@ const Messages = () => {
                 <div ref={messagesEndRef} />
               </div>
 
-                {/* Message Input Footer */}
+              {/* Quoted Reply Banner */}
+              {replyingTo && (
+                <div className="flex items-center justify-between px-4 py-2 bg-slate-900/90 border-t border-indigo-500/30 text-xs shrink-0">
+                  <div className="flex items-center gap-2 border-l-2 border-indigo-500 pl-2.5 min-w-0">
+                    <Reply size={14} className="text-indigo-400 shrink-0" />
+                    <div className="min-w-0">
+                      <span className="font-bold text-indigo-300 block truncate">{replyingTo.senderName}</span>
+                      <span className="text-slate-300 truncate block text-[11px]">{replyingTo.content}</span>
+                    </div>
+                  </div>
+                  <button type="button" onClick={() => clearReplyTo()} className="p-1 text-slate-400 hover:text-white cursor-pointer">
+                    <X size={14} />
+                  </button>
+                </div>
+              )}
+
+              {/* Message Input Footer */}
               <div className="p-3 bg-[#111b21] border-t border-slate-800 shrink-0">
                 {showVoiceRecorder ? (
                   <VoiceRecorder onSendVoiceNote={handleSendVoiceNote} onCancel={() => setShowVoice(false)} />
@@ -756,6 +862,83 @@ const Messages = () => {
         projectId={activeConversation?.projectId || ""}
         participants={partner ? [partner] : []}
       />
+
+      {/* WhatsApp Style Delete Message Modal */}
+      <AnimatePresence>
+        {deleteModalMsg && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs"
+            onClick={() => setDeleteModalMsg(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.92, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-sm bg-[#1e293b] border border-slate-700/60 rounded-2xl p-5 shadow-2xl space-y-4 text-slate-100"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-red-500/15 border border-red-500/20 flex items-center justify-center text-red-400 shrink-0">
+                  <Trash2 size={20} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-white">Delete message?</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">Choose how you want to delete this message</p>
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-2">
+                {(deleteModalMsg.sender?._id || deleteModalMsg.sender) === user?._id && !deleteModalMsg.isDeleted && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const msgId = deleteModalMsg._id;
+                      setDeleteModalMsg(null);
+                      try {
+                        await deleteMessage(msgId, "everyone");
+                        toast.success("Message deleted for everyone");
+                      } catch {
+                        toast.error("Failed to delete message");
+                      }
+                    }}
+                    className="w-full py-2.5 px-4 bg-red-600 hover:bg-red-500 text-white font-semibold text-xs rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-md"
+                  >
+                    <Trash2 size={14} /> Delete for Everyone
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const msgId = deleteModalMsg._id;
+                    setDeleteModalMsg(null);
+                    try {
+                      await deleteMessage(msgId, "me");
+                      toast.success("Message deleted for you");
+                    } catch {
+                      toast.error("Failed to delete message");
+                    }
+                  }}
+                  className="w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer border border-white/10"
+                >
+                  <UserX size={14} /> Delete for Me
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setDeleteModalMsg(null)}
+                  className="w-full py-2 px-4 hover:bg-white/5 text-slate-400 hover:text-white font-medium text-xs rounded-xl transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

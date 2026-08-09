@@ -51,6 +51,28 @@ const useChatStore = create((set, get) => ({
     }
   },
 
+  replyingTo: null,
+  setReplyTo: (msg) => {
+    if (!msg) {
+      set({ replyingTo: null });
+      return;
+    }
+    const senderName = msg.sender?.name || "User";
+    const fileType = msg.attachments?.[0]?.fileType || "";
+    const fileName = msg.attachments?.[0]?.fileName || msg.attachments?.[0]?.filename || "Attachment";
+    const content = msg.content || (msg.type === "voice_note" ? "🎙 Voice Note" : msg.attachments?.length ? `📎 ${fileName}` : "");
+    if (!content && !fileType) return;
+    set({
+      replyingTo: {
+        messageId: msg._id,
+        senderName,
+        content,
+        fileType,
+      },
+    });
+  },
+  clearReplyTo: () => set({ replyingTo: null }),
+
   sendMessage: async (conversationIdOrObj, content, attachments = [], type = "text") => {
     let convId = conversationIdOrObj;
     let msgContent = content;
@@ -66,13 +88,30 @@ const useChatStore = create((set, get) => ({
 
     if (!convId) throw new Error("Conversation ID is required");
 
+    const replyTo = get().replyingTo;
+
     const { data } = await api.post(`/chat/conversations/${convId}/messages`, {
       content: msgContent,
       attachments: msgAttachments,
       type: msgType,
+      replyTo: replyTo || undefined,
     });
+    get().clearReplyTo();
     get().appendMessage(data.data.message);
     return data.data.message;
+  },
+
+  toggleReaction: async (messageId, emoji) => {
+    const { data } = await api.post(`/chat/messages/${messageId}/react`, { emoji });
+    get().updateMessageReactions(messageId, data.data.reactions);
+  },
+
+  updateMessageReactions: (messageId, reactions) => {
+    set((state) => ({
+      messages: state.messages.map((m) =>
+        m._id === messageId ? { ...m, reactions } : m
+      ),
+    }));
   },
 
   appendMessage: (message) => {
@@ -94,6 +133,27 @@ const useChatStore = create((set, get) => ({
         : list.filter((name) => name !== userName);
       return { typingUsers: { ...state.typingUsers, [conversationId]: updated } };
     });
+  },
+
+  deleteMessage: async (messageId, mode = "everyone") => {
+    await api.delete(`/chat/messages/${messageId}`, { data: { mode } });
+    if (mode === "everyone") {
+      get().markMessageDeleted(messageId);
+    } else {
+      set((state) => ({
+        messages: state.messages.filter((m) => m._id !== messageId),
+      }));
+    }
+  },
+
+  markMessageDeleted: (messageId) => {
+    set((state) => ({
+      messages: state.messages.map((m) =>
+        m._id === messageId
+          ? { ...m, isDeleted: true, content: "This message was deleted", attachments: [] }
+          : m
+      ),
+    }));
   },
 
   updatePresence: (userId, isOnline, lastSeen) => {

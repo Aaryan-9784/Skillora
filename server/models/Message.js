@@ -36,6 +36,19 @@ const messageSchema = new Schema(
       },
     ],
     isDeleted: { type: Boolean, default: false },
+    deletedFor: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    replyTo: {
+      messageId:  { type: Schema.Types.ObjectId, ref: "Message" },
+      senderName: { type: String, default: "" },
+      content:    { type: String, default: "" },
+      fileType:   { type: String, default: "" },
+    },
+    reactions: [
+      {
+        user:  { type: Schema.Types.ObjectId, ref: "User" },
+        emoji: { type: String, required: true },
+      },
+    ],
   },
   { timestamps: true }
 );

@@ -26,6 +26,14 @@ const useSyncEvents = () => {
       chatStore.appendMessage(message);
     };
 
+    const onChatMessageDeleted = ({ messageId }) => {
+      chatStore.markMessageDeleted(messageId);
+    };
+
+    const onChatMessageReaction = ({ messageId, reactions }) => {
+      chatStore.updateMessageReactions(messageId, reactions);
+    };
+
     const onChatTyping = ({ conversationId, userName }) => {
       chatStore.setTyping(conversationId, userName, true);
     };
@@ -107,6 +115,8 @@ const useSyncEvents = () => {
     socket.on("message:new",         onMessageNew);
     socket.on("milestone:updated",   onMilestoneUpdated);
     socket.on("chat:message_new",    onChatMessageNew);
+    socket.on("chat:message_deleted", onChatMessageDeleted);
+    socket.on("chat:message_reaction", onChatMessageReaction);
     socket.on("chat:typing",         onChatTyping);
     socket.on("chat:stop_typing",    onChatStopTyping);
     socket.on("presence:update",     onPresenceUpdate);
@@ -122,6 +132,8 @@ const useSyncEvents = () => {
       socket.off("message:new",         onMessageNew);
       socket.off("milestone:updated",   onMilestoneUpdated);
       socket.off("chat:message_new",    onChatMessageNew);
+      socket.off("chat:message_deleted", onChatMessageDeleted);
+      socket.off("chat:message_reaction", onChatMessageReaction);
       socket.off("chat:typing",         onChatTyping);
       socket.off("chat:stop_typing",    onChatStopTyping);
       socket.off("presence:update",     onPresenceUpdate);

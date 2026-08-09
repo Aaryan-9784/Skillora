@@ -12,19 +12,27 @@ const { getIO } = require("../config/socket");
 const uploadToCloudinary = (fileBuffer, originalname, mimetype) => {
   return new Promise((resolve, reject) => {
     let resource_type = "raw";
+
     if (mimetype.startsWith("image/")) {
       resource_type = "image";
-    } else if (mimetype.startsWith("audio/") || mimetype.startsWith("video/") || originalname.match(/\.(webm|wav|mp3|ogg|m4a|mp4)$/i)) {
-      resource_type = "video";
+    } else if (mimetype.startsWith("audio/") || mimetype.startsWith("video/") || originalname.match(/\.(webm|wav|mp3|ogg|m4a|aac|flac|mp4)$/i)) {
+      resource_type = "auto";
     }
 
-    const cleanFilename = originalname.replace(/[^a-zA-Z0-9.-]/g, "_");
+    let baseName = originalname || "file";
+    if (baseName.includes(".")) {
+      baseName = baseName.substring(0, baseName.lastIndexOf("."));
+    }
+    const cleanFilename = baseName.replace(/[^a-zA-Z0-9_-]/g, "_");
+
+    const uploadOptions = {
+      folder: "skillora/chat",
+      resource_type,
+      public_id: `${Date.now()}_${cleanFilename}`,
+    };
+
     const stream = cloudinary.uploader.upload_stream(
-      {
-        folder: "skillora/chat",
-        resource_type,
-        public_id: `${Date.now()}_${cleanFilename}`,
-      },
+      uploadOptions,
       (error, result) => {
         if (error) return reject(error);
         resolve(result);
@@ -122,14 +130,16 @@ const getMessages = asyncHandler(async (req, res) => {
   const limit = Math.min(100, parseInt(req.query.limit) || 30);
   const skip  = (page - 1) * limit;
 
+  const query = { conversationId, deletedFor: { $ne: req.user._id } };
+
   const [messages, total] = await Promise.all([
-    Message.find({ conversationId })
+    Message.find(query)
       .populate("sender", "name avatar role")
       .sort("-createdAt")
       .skip(skip)
       .limit(limit)
       .lean(),
-    Message.countDocuments({ conversationId }),
+    Message.countDocuments(query),
   ]);
 
   ApiResponse.success(res, "Messages fetched", {
@@ -138,10 +148,81 @@ const getMessages = asyncHandler(async (req, res) => {
   });
 });
 
+// Delete Message (WhatsApp style: Delete for Me or Delete for Everyone)
+const deleteMessage = asyncHandler(async (req, res) => {
+  const { messageId } = req.params;
+  const { mode } = req.body; // "everyone" | "me"
+  const userId = req.user._id;
+
+  const message = await Message.findById(messageId);
+  if (!message) throw ApiError.notFound("Message not found");
+
+  if (mode === "everyone") {
+    if (message.sender.toString() !== userId.toString() && req.user.role !== "admin") {
+      throw ApiError.forbidden("You can only delete your own messages for everyone");
+    }
+
+    message.isDeleted = true;
+    message.content = "This message was deleted";
+    message.attachments = [];
+    await message.save();
+
+    const io = getIO();
+    if (io) {
+      io.to(`conversation:${message.conversationId}`).emit("chat:message_deleted", {
+        messageId: message._id,
+        conversationId: message.conversationId,
+        isDeleted: true,
+      });
+    }
+  } else {
+    if (!message.deletedFor.some((id) => id.toString() === userId.toString())) {
+      message.deletedFor.push(userId);
+      await message.save();
+    }
+  }
+
+  ApiResponse.success(res, "Message deleted successfully", { messageId, mode });
+});
+
+// Toggle Emoji Reaction on a message
+const toggleReaction = asyncHandler(async (req, res) => {
+  const { messageId } = req.params;
+  const { emoji } = req.body;
+  const userId = req.user._id;
+
+  const message = await Message.findById(messageId);
+  if (!message) throw ApiError.notFound("Message not found");
+
+  const existingIdx = message.reactions.findIndex((r) => r.user.toString() === userId.toString());
+  if (existingIdx > -1) {
+    if (message.reactions[existingIdx].emoji === emoji) {
+      message.reactions.splice(existingIdx, 1);
+    } else {
+      message.reactions[existingIdx].emoji = emoji;
+    }
+  } else {
+    message.reactions.push({ user: userId, emoji });
+  }
+
+  await message.save();
+
+  const io = getIO();
+  if (io) {
+    io.to(`conversation:${message.conversationId}`).emit("chat:message_reaction", {
+      messageId: message._id,
+      conversationId: message.conversationId,
+      reactions: message.reactions,
+    });
+  }
+
+  ApiResponse.success(res, "Reaction updated", { messageId, reactions: message.reactions });
+});
+
 // Send Message (Text, Voice Note, or File Attachments)
 const sendMessage = asyncHandler(async (req, res) => {
   const { conversationId } = req.params;
-  const { content, attachments, type } = req.body;
+  const { content, attachments, type, replyTo } = req.body;
   const senderId = req.user._id;
 
   const conversation = await Conversation.findById(conversationId);
@@ -153,6 +234,7 @@ const sendMessage = asyncHandler(async (req, res) => {
     type: type || (attachments?.length ? (attachments[0].fileType === "audio" ? "voice_note" : "media") : "text"),
     content: content || "",
     attachments: attachments || [],
+    replyTo: replyTo || undefined,
     readBy: [{ user: senderId }],
   });
 
@@ -237,4 +319,4 @@ const uploadAttachment = asyncHandler(async (req, res) => {
   ApiResponse.success(res, "File uploaded successfully", { attachment });
 });
 
-module.exports = { getProjectConversation, getMessages, sendMessage, uploadAttachment };
+module.exports = { getProjectConversation, getMessages, sendMessage, uploadAttachment, deleteMessage, toggleReaction };

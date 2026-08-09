@@ -8,6 +8,8 @@ const {
   getMessages,
   sendMessage,
   uploadAttachment,
+  deleteMessage,
+  toggleReaction,
 } = require("../controllers/chat.controller");
 
 router.use(protect);
@@ -16,6 +18,8 @@ router.get("/project", getProjectConversation);
 router.get("/project/:projectId", getProjectConversation);
 router.get("/conversations/:conversationId/messages", getMessages);
 router.post("/conversations/:conversationId/messages", sendMessage);
+router.delete("/messages/:messageId", deleteMessage);
+router.post("/messages/:messageId/react", toggleReaction);
 router.post("/upload", upload.single("file"), uploadAttachment);
 
 module.exports = router;

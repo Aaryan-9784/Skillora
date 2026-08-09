@@ -37,6 +37,7 @@ const app = express();
 // ── Security headers ──────────────────────────────────────
 app.use(helmet({
   crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" },
   contentSecurityPolicy: process.env.NODE_ENV === "production" ? undefined : false,
 }));
 
@@ -99,7 +100,11 @@ app.use("/api/submissions",   submissionRoutes);
 app.use("/api/disputes",      disputeRoutes);
 
 // Serve static uploads
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/uploads", (req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Cross-Origin-Resource-Policy", "cross-origin");
+  next();
+}, express.static(path.join(__dirname, "uploads")));
 
 // ── 404 ───────────────────────────────────────────────────
 app.use((req, res) =>
