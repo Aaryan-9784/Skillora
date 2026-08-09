@@ -151,8 +151,10 @@ const ClientMessages = () => {
     setShowVoice(false);
     try {
       setUploadingFile(true);
+      const mimeType = audioBlob.type || "audio/webm";
+      const voiceFile = new File([audioBlob], `voice-note-${Date.now()}.webm`, { type: mimeType });
       const formData = new FormData();
-      formData.append("file", audioBlob, "voice-note.webm");
+      formData.append("file", voiceFile);
 
       const { data } = await api.post("/chat/upload", formData, {
         headers: { "Content-Type": "multipart/form-data" },

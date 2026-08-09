@@ -11,24 +11,36 @@ const { getIO } = require("../config/socket");
 
 const uploadToCloudinary = (fileBuffer, originalname, mimetype) => {
   return new Promise((resolve, reject) => {
-    let resource_type = "raw";
-
-    if (mimetype.startsWith("image/")) {
-      resource_type = "image";
-    } else if (mimetype.startsWith("audio/") || mimetype.startsWith("video/") || originalname.match(/\.(webm|wav|mp3|ogg|m4a|aac|flac|mp4)$/i)) {
-      resource_type = "auto";
+    let ext = "webm";
+    if (originalname && originalname.includes(".")) {
+      ext = originalname.substring(originalname.lastIndexOf(".") + 1).toLowerCase();
+    } else if (mimetype.includes("mp3")) {
+      ext = "mp3";
+    } else if (mimetype.includes("wav")) {
+      ext = "wav";
+    } else if (mimetype.includes("ogg")) {
+      ext = "ogg";
     }
 
-    let baseName = originalname || "file";
+    let baseName = originalname || "voice-note";
     if (baseName.includes(".")) {
       baseName = baseName.substring(0, baseName.lastIndexOf("."));
     }
     const cleanFilename = baseName.replace(/[^a-zA-Z0-9_-]/g, "_");
 
+    let resource_type = "raw";
+    const isAudioOrVideo = mimetype.startsWith("audio/") || mimetype.startsWith("video/") || originalname.match(/\.(webm|wav|mp3|ogg|m4a|aac|flac|mp4)$/i);
+    if (mimetype.startsWith("image/")) {
+      resource_type = "image";
+    } else if (isAudioOrVideo) {
+      resource_type = "video";
+    }
+
     const uploadOptions = {
       folder: "skillora/chat",
       resource_type,
       public_id: `${Date.now()}_${cleanFilename}`,
+      format: isAudioOrVideo ? ext : undefined,
     };
 
     const stream = cloudinary.uploader.upload_stream(
@@ -305,7 +317,30 @@ const uploadAttachment = asyncHandler(async (req, res) => {
       throw ApiError.internal("Failed to upload file to Cloudinary: " + err.message);
     }
   } else {
-    fileUrl = req.file.path || `/uploads/${req.file.filename}`;
+    // Local disk fallback for memoryStorage uploads
+    if (req.file.path) {
+      fileUrl = req.file.path;
+    } else if (req.file.filename) {
+      fileUrl = `/uploads/${req.file.filename}`;
+    } else if (req.file.buffer) {
+      const fs = require("fs");
+      const path = require("path");
+      const uploadsDir = path.join(__dirname, "../uploads");
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+      let ext = "";
+      if (originalname && originalname.includes(".")) {
+        ext = originalname.substring(originalname.lastIndexOf("."));
+      } else if (mimetype.includes("webm")) {
+        ext = ".webm";
+      } else {
+        ext = ".webm";
+      }
+      const safeFilename = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}${ext}`;
+      fs.writeFileSync(path.join(uploadsDir, safeFilename), req.file.buffer);
+      fileUrl = `/uploads/${safeFilename}`;
+    }
   }
 
   const attachment = {

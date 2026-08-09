@@ -23,9 +23,15 @@ const makeStorage = (folder) =>
       if (isImage) resource_type = "image";
       else if (isAudioOrVideo) resource_type = "video";
 
+      let ext = "webm";
+      if (file.originalname && file.originalname.includes(".")) {
+        ext = file.originalname.substring(file.originalname.lastIndexOf(".") + 1).toLowerCase();
+      }
+
       return {
         folder: `skillora/${folder}`,
         resource_type,
+        format: isAudioOrVideo ? ext : undefined,
         transformation: folder === "avatars" ? [{ width: 400, height: 400, crop: "fill" }] : [],
       };
     },

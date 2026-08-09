@@ -13,6 +13,10 @@ export const getMediaUrl = (url) => {
     if (finalUrl.includes("/raw/upload/") && finalUrl.match(/\.(webm|wav|mp3|ogg|m4a|aac)$/i)) {
       finalUrl = finalUrl.replace("/raw/upload/", "/video/upload/");
     }
+    // If url lacks extension but is video/audio upload on cloudinary, append .webm for HTML5 audio player
+    if (finalUrl.includes("/video/upload/") && !finalUrl.match(/\.(webm|wav|mp3|ogg|m4a|aac|mp4)$/i)) {
+      finalUrl = `${finalUrl}.webm`;
+    }
   }
 
   if (finalUrl.startsWith("http://") || finalUrl.startsWith("https://") || finalUrl.startsWith("blob:") || finalUrl.startsWith("data:")) {
