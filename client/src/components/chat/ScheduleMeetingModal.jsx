@@ -47,12 +47,29 @@ const parseCustomDateTime = (dateText, timeText) => {
   return `${yyyy}-${mm}-${dd}T${hStr}:${mStr}`;
 };
 
+const getTodayFormatted = () => {
+  const d = new Date();
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+};
+
 const ScheduleMeetingModal = ({ open, onClose, projectId, participants = [] }) => {
   const [title, setTitle]             = useState("");
-  const [dateInput, setDateInput]     = useState("");
-  const [timeInput, setTimeInput]     = useState("");
-  const [duration, setDuration]       = useState("");
+  const [dateInput, setDateInput]     = useState(getTodayFormatted());
+  const [timeInput, setTimeInput]     = useState("10:00 AM");
+  const [duration, setDuration]       = useState("30");
   const [loading, setLoading]         = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setTitle("");
+      setDateInput(getTodayFormatted());
+      setTimeInput("10:00 AM");
+      setDuration("30");
+    }
+  }, [open]);
 
   if (!open) return null;
 

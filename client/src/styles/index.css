@@ -149,9 +149,8 @@
 
   /* ── Skeleton ────────────────────────────────────────── */
   .skeleton {
-    @apply rounded-lg bg-gradient-to-r from-slate-100 via-slate-200 to-slate-100
-           dark:from-dark-card dark:via-dark-muted dark:to-dark-card
-           bg-[length:200%_100%] animate-shimmer;
+    @apply rounded-lg bg-gradient-to-r from-slate-800/80 via-slate-700/60 to-slate-800/80
+           bg-[length:200%_100%] animate-pulse;
   }
 
   /* ── Divider ─────────────────────────────────────────── */

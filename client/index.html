@@ -15,8 +15,10 @@
     <script>
       try {
         const t = JSON.parse(localStorage.getItem("skillora-theme") || "{}");
-        if (t.state?.isDark) document.documentElement.classList.add("dark");
-      } catch {}
+        if (t.state?.isDark !== false) document.documentElement.classList.add("dark");
+      } catch {
+        document.documentElement.classList.add("dark");
+      }
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

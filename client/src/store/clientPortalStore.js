@@ -135,6 +135,17 @@ const useClientPortalStore = create((set, get) => ({
     }
   },
 
+  deleteProject: async (id) => {
+    try {
+      await svc.deleteProject(id);
+      set((s) => ({ projects: s.projects.filter((p) => p._id !== id) }));
+      toast.success("Project deleted and client/freelancer connection disconnected");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to delete project");
+      throw err;
+    }
+  },
+
   fetchProposalsForProject: async (projectId) => {
     try {
       const { data } = await svc.getProjectProposals(projectId);

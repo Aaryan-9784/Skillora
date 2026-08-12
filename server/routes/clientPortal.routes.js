@@ -3,7 +3,7 @@ const { protect, requireClient } = require("../middlewares/auth.middleware");
 const { authLimiter }            = require("../middlewares/rateLimiter");
 const {
   clientLogin, acceptInvite, clientMe,
-  getClientInvoices, getClientProjects,
+  getClientInvoices, getClientProjects, deleteClientProject,
   getClientProfile, updateClientProfile,
   getInvoiceDetail,
   getFinanceSummary,
@@ -45,6 +45,7 @@ const proposalController = require("../controllers/proposal.controller");
 // Projects & Proposals
 router.get("/projects",                                                    getClientProjects);
 router.post("/projects",                                                   proposalController.postClientProject);
+router.delete("/projects/:id",                                             deleteClientProject);
 router.get("/projects/:projectId/proposals",                              proposalController.getProjectProposals);
 router.patch("/proposals/:proposalId/respond",                            proposalController.respondToProposal);
 router.post("/projects/:id/milestones/:milestoneId/approve",               approveMilestone);

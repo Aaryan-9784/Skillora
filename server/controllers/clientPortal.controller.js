@@ -54,20 +54,31 @@ const getClientInvoices = asyncHandler(async (req, res) => {
 
 const getClientProjects = asyncHandler(async (req, res) => {
   const { status, search } = req.query;
-  const filter = { clientId: req.user.clientRef, isDeleted: { $ne: true } };
+  const filter = {
+    $or: [
+      { clientId: req.user.clientRef },
+      { clientUser: req.user._id },
+      { owner: req.user._id },
+    ],
+    isDeleted: { $ne: true },
+  };
   if (status) filter.status = status;
   if (search) {
-    filter.$or = [
-      { title:       { $regex: search, $options: "i" } },
-      { description: { $regex: search, $options: "i" } },
-    ];
+    filter.title = { $regex: search, $options: "i" };
   }
 
   const projects = await Project.find(filter)
     .populate("owner", "name email avatar")
+    .populate("assignedFreelancer", "name email avatar")
     .sort({ createdAt: -1 });
 
   ApiResponse.success(res, "Projects fetched", { projects });
+});
+
+const deleteClientProject = asyncHandler(async (req, res) => {
+  const projectService = require("../services/project.service");
+  await projectService.deleteProject(req.params.id, req.user._id);
+  ApiResponse.success(res, "Project deleted and client/freelancer disconnected");
 });
 
 const getClientProfile = asyncHandler(async (req, res) => {
@@ -599,7 +610,7 @@ const getAiInsights = asyncHandler(async (req, res) => {
 
 module.exports = {
   clientLogin, acceptInvite, clientMe,
-  getClientInvoices, getClientProjects,
+  getClientInvoices, getClientProjects, deleteClientProject,
   getClientProfile, updateClientProfile,
   getInvoiceDetail,
   getFinanceSummary,

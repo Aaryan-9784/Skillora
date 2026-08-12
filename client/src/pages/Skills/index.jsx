@@ -364,16 +364,35 @@ const EmptyState = ({ onAdd }) => (
 // ─────────────────────────────────────────────────────────
 const SkillForm = ({ initial = {}, onSubmit, onClose, loading }) => {
   const [form, setForm] = useState({ name: "", category: "development", level: 50, yearsOfExperience: 0, ...initial });
-  const set = (e) => setForm((f) => ({
-    ...f,
-    [e.target.name]: ["level","yearsOfExperience"].includes(e.target.name) ? Number(e.target.value) : e.target.value,
-  }));
+  
+  const set = (e) => {
+    const { name, value } = e.target;
+    if (name === "yearsOfExperience") {
+      setForm((f) => ({
+        ...f,
+        yearsOfExperience: value === "" ? "" : Math.max(0, Math.min(50, Number(value))),
+      }));
+    } else if (name === "level") {
+      setForm((f) => ({ ...f, level: Number(value) }));
+    } else {
+      setForm((f) => ({ ...f, [name]: value }));
+    }
+  };
 
   const levelLabel = form.level <= 25 ? "Beginner" : form.level <= 50 ? "Intermediate" : form.level <= 75 ? "Advanced" : "Expert";
   const cfg = LEVEL_CONFIG[levelLabel.toLowerCase()] || LEVEL_CONFIG.beginner;
 
   return (
-    <form onSubmit={(e) => { e.preventDefault(); onSubmit(form); }} className="space-y-4">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSubmit({
+          ...form,
+          yearsOfExperience: form.yearsOfExperience === "" ? 0 : Number(form.yearsOfExperience),
+        });
+      }}
+      className="space-y-4"
+    >
       <div>
         <label style={lStyle}>Skill name *</label>
         <input name="name" placeholder="e.g. React.js" value={form.name} onChange={set}
@@ -406,7 +425,8 @@ const SkillForm = ({ initial = {}, onSubmit, onClose, loading }) => {
       <div>
         <label style={lStyle}>Years of experience</label>
         <input name="yearsOfExperience" type="number" min="0" max="50" placeholder="0"
-          value={form.yearsOfExperience} onChange={set} style={iStyle} onFocus={iFocus} onBlur={iBlur} />
+          value={form.yearsOfExperience ?? ""} onChange={set} style={iStyle}
+          onFocus={(e) => { iFocus(e); e.target.select(); }} onBlur={iBlur} />
       </div>
 
       <div className="flex gap-3 pt-2">

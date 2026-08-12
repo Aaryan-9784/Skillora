@@ -74,18 +74,54 @@ const updateProject = async (projectId, ownerId, updates) => {
   return project;
 };
 
-const deleteProject = async (projectId, ownerId) => {
-  const project = await Project.findOne({ _id: projectId, owner: ownerId });
+const deleteProject = async (projectId, userId) => {
+  const project = await Project.findOne({
+    _id: projectId,
+    $or: [
+      { owner: userId },
+      { clientUser: userId },
+      { assignedFreelancer: userId },
+    ],
+  });
   if (!project) throw ApiError.notFound("Project not found");
+
+  const Proposal = require("../models/Proposal");
+  const Escrow   = require("../models/Escrow");
 
   await Promise.all([
     project.softDelete(),
-    Task.updateMany({ projectId }, { isDeleted: true, deletedAt: new Date() }),
+    Task.updateMany({ project: projectId }, { isDeleted: true, deletedAt: new Date() }),
+    Proposal.deleteMany({ project: projectId }),
+    Escrow.updateMany({ project: projectId }, { status: "refunded" }),
   ]);
 
   if (project.clientId) {
     await Client.findByIdAndUpdate(project.clientId, { $inc: { "stats.totalProjects": -1 } });
   }
+
+  const userIdStr = userId.toString();
+  let notifyUserId = null;
+
+  if (project.assignedFreelancer && project.assignedFreelancer.toString() !== userIdStr) {
+    notifyUserId = project.assignedFreelancer;
+  } else if (project.clientUser && project.clientUser.toString() !== userIdStr) {
+    notifyUserId = project.clientUser;
+  } else if (project.owner && project.owner.toString() !== userIdStr) {
+    notifyUserId = project.owner;
+  }
+
+  if (notifyUserId) {
+    await notify({
+      recipient: notifyUserId,
+      type: "project_deleted",
+      title: "Project Deleted & Disconnected",
+      message: `The project "${project.title}" was deleted and the active client-freelancer connection has ended.`,
+      link: "/projects",
+      refModel: "Project",
+      refId: projectId,
+    });
+  }
+
   return true;
 };
 

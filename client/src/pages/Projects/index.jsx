@@ -420,7 +420,15 @@ const Projects = () => {
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <StatusBadge status={p.status} />
-                      <button onClick={() => deleteProject(p._id)} className="text-slate-500 hover:text-rose-400 p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => {
+                          if (window.confirm(`Are you sure you want to delete "${p.title}"? This will disconnect active client & freelancer connections.`)) {
+                            deleteProject(p._id);
+                          }
+                        }}
+                        className="text-slate-500 hover:text-rose-400 p-1 opacity-80 hover:opacity-100 transition-all cursor-pointer"
+                        title="Delete project & disconnect"
+                      >
                         <Trash2 size={14} />
                       </button>
                     </div>

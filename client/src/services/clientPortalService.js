@@ -23,6 +23,7 @@ export const verifyPayment    = (id, data)     => api.post(`/client/invoices/${i
 // ── Projects & Proposals ──────────────────────────────────
 export const getProjects         = (params = {}) => api.get("/client/projects", { params });
 export const postProject          = (data)        => api.post("/client/projects", data);
+export const deleteProject        = (id)          => api.delete(`/client/projects/${id}`);
 export const getProjectProposals  = (projectId)   => api.get(`/client/projects/${projectId}/proposals`);
 export const respondToProposal    = (proposalId, action) => api.patch(`/client/proposals/${proposalId}/respond`, { action });
 export const approveMilestone    = (projectId, milestoneId)          => api.post(`/client/projects/${projectId}/milestones/${milestoneId}/approve`);

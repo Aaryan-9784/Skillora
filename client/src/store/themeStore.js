@@ -4,7 +4,7 @@ import { persist } from "zustand/middleware";
 const useThemeStore = create(
   persist(
     (set, get) => ({
-      isDark: false,
+      isDark: true,
       toggle: () => {
         const next = !get().isDark;
         set({ isDark: next });
@@ -12,7 +12,7 @@ const useThemeStore = create(
       },
       init: () => {
         const { isDark } = get();
-        document.documentElement.classList.toggle("dark", isDark);
+        document.documentElement.classList.toggle("dark", isDark !== false);
       },
     }),
     { name: "skillora-theme" }
