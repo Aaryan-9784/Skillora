@@ -21,7 +21,7 @@ const AiWidgetPanel = ({ onClose }) => {
   const { messages, isStreaming, clearChat } = useAiStore();
   const { user } = useAuthStore();
   const bottomRef = useRef(null);
-  const isEmptyChat = messages.length <= 1 && !isStreaming;
+  const isEmptyChat = messages.filter(m => m.id !== "welcome").length === 0 && !isStreaming;
   const firstName = user?.name ? user.name.split(" ")[0] : "Aryan";
 
   // Auto-scroll on new messages

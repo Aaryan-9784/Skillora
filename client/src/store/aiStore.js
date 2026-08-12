@@ -13,13 +13,14 @@ const WELCOME = {
 const useAiStore = create(
   persist(
     (set, get) => ({
-      messages:    [WELCOME],
+      messages:    [],
       isStreaming: false,
       error:       null,
       history:     [],
 
-      clearChat: () => set({ messages: [WELCOME], error: null }),
+      clearChat: () => set({ messages: [], error: null }),
       loadSession: (sessionMessages) => set({ messages: sessionMessages, isStreaming: false, error: null }),
+      stopGenerating: () => set({ isStreaming: false }),
 
       addUserMessage: (content) => {
         const msg = { id: Date.now().toString(), role: "user", content, ts: Date.now() };

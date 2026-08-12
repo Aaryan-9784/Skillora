@@ -103,7 +103,7 @@ const PREVIOUS_SESSIONS = [
 
 const AI = () => {
   const { user } = useAuthStore();
-  const { messages, isStreaming, sendMessage, clearChat, loadSession } = useAiStore();
+  const { messages, isStreaming, sendMessage, clearChat, loadSession, stopGenerating } = useAiStore();
   const { fetchSummary } = useDashboardStore();
 
   const [sidebarOpen, setSidebarOpen]         = useState(true);
@@ -297,10 +297,10 @@ const AI = () => {
 
   const handleRegenerateLast = (lastMsgContent) => {
     if (!lastMsgContent || isStreaming) return;
-    sendMessage(lastMsgContent, "chat", null, "gemini-1.5-pro");
+    sendMessage(lastMsgContent, "chat", null, selectedModel?.id || "gemini-2.5-flash");
   };
 
-  const isEmptyChat = messages.length <= 1;
+  const isEmptyChat = messages.filter(m => m.id !== "welcome").length === 0;
   const groups = ["Today", "Yesterday", "Previous 7 Days"];
 
   // Render ChatGPT Prompt Input Box
@@ -336,7 +336,7 @@ const AI = () => {
         {isStreaming ? (
           <button
             type="button"
-            onClick={() => {}}
+            onClick={stopGenerating}
             className="p-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white transition-all cursor-pointer shrink-0 shadow-lg shadow-red-600/20"
             title="Stop Generating"
           >
@@ -714,7 +714,7 @@ const AI = () => {
             ) : (
               /* Active Chat Stream List */
               <div className="max-w-3xl lg:max-w-4xl mx-auto space-y-6">
-                {messages.map((msg, index) => {
+                {messages.filter(m => m.id !== "welcome").map((msg, index) => {
                   const isUser = msg.role === "user";
                   return (
                     <motion.div

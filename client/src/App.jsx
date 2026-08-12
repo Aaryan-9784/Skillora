@@ -1,6 +1,22 @@
 import { lazy, Suspense, useEffect, Component } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { Toaster } from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
+
+// Enforce single-toast display across the entire project
+if (typeof window !== "undefined" && !window._toastPatched) {
+  window._toastPatched = true;
+  const rawSuccess = toast.success;
+  const rawError = toast.error;
+
+  toast.success = (msg, opts) => {
+    toast.dismiss();
+    return rawSuccess(msg, opts);
+  };
+  toast.error = (msg, opts) => {
+    toast.dismiss();
+    return rawError(msg, opts);
+  };
+}
 
 const TITLE_MAP = {
   "/": "Skillora — Freelancer OS & Client Portal",
@@ -169,7 +185,7 @@ const App = () => {
               border: "1px solid rgba(99,91,255,0.25)",
             },
           },
-          duration: 3500,
+          duration: 1800,
         }}
       />
       <Suspense fallback={<PageLoader />}>
