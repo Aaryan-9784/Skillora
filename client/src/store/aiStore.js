@@ -6,7 +6,7 @@ import tokenStore from "../services/tokenStore";
 const WELCOME = {
   id:      "welcome",
   role:    "assistant",
-  content: "Hi! I'm **Skillora AI** — your personal productivity assistant, powered by **Gemini 1.5 Pro**.\n\nI know your projects, tasks, and skills, so I can give you personalized advice. Try one of the suggestions below or ask me anything.",
+  content: "Hi! I'm **Skillora AI** — your personal productivity assistant, powered by **Google Gemini 3.6 Flash**.\n\nI know your workspace, projects, tasks, and skills, so I can give you personalized advice. Try one of the quick actions below or ask me anything.",
   ts:      Date.now(),
 };
 
@@ -31,7 +31,7 @@ const useAiStore = create(
        * Send a message and stream the response.
        * Uses fetch directly (not axios) for SSE streaming.
        */
-      sendMessage: async (content, feature = "chat", projectId = null, model = "gemini-1.5-pro") => {
+      sendMessage: async (content, feature = "chat", projectId = null, model = "gemini-3.6-flash") => {
         if (!content.trim() || get().isStreaming) return;
 
         // Add user message

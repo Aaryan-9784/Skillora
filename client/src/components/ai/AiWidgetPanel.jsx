@@ -9,12 +9,14 @@
  */
 
 import { useRef, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Trash2, Minimize2 } from "lucide-react";
+import { Sparkles, Trash2, Minimize2, Maximize2 } from "lucide-react";
 import useAiStore from "../../store/aiStore";
 import useAuthStore from "../../store/authStore";
 import ChatMessage from "./ChatMessage";
 import WidgetInputBar from "./WidgetInputBar";
+import WidgetQuickActions from "./WidgetQuickActions";
 
 const AiWidgetPanel = ({ onClose }) => {
   const { messages, isStreaming, clearChat } = useAiStore();
@@ -30,11 +32,11 @@ const AiWidgetPanel = ({ onClose }) => {
 
   return (
     <div
-      className="flex flex-col overflow-hidden"
+      className="flex flex-col overflow-hidden relative"
       style={{
-        height: "520px",
+        height: "560px",
         borderRadius: "24px",
-        background: "rgba(9, 13, 22, 0.95)",
+        background: "rgba(9, 13, 22, 0.96)",
         border: "1px solid rgba(255, 255, 255, 0.1)",
         backdropFilter: "blur(28px)",
         boxShadow:
@@ -55,29 +57,36 @@ const AiWidgetPanel = ({ onClose }) => {
 
       {/* ── Main Chat Area ── */}
       <div
-        className="flex-1 overflow-y-auto px-4 py-3 flex flex-col"
+        className="flex-1 overflow-y-auto px-4 py-3 flex flex-col space-y-3"
         style={{ scrollbarWidth: "none" }}
       >
         {isEmptyChat ? (
-          /* Simple Clean Centered State matching Image 2 */
-          <div className="flex-1 flex flex-col items-center justify-center text-center p-6 space-y-4 my-auto">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.25 }}
-              className="w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30"
-            >
-              <Sparkles size={24} />
-            </motion.div>
+          /* Clean Centered Welcome + Quick Action Features */
+          <div className="flex-1 flex flex-col items-center justify-between p-2 space-y-4 my-auto">
+            <div className="flex flex-col items-center text-center mt-2 space-y-2">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.25 }}
+                className="w-11 h-11 rounded-full bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30"
+              >
+                <Sparkles size={22} />
+              </motion.div>
 
-            <motion.h2
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25, delay: 0.05 }}
-              className="text-xl font-extrabold text-white tracking-tight leading-snug"
-            >
-              What can I help with today, {firstName}?
-            </motion.h2>
+              <motion.h2
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25, delay: 0.05 }}
+                className="text-lg font-extrabold text-white tracking-tight leading-snug"
+              >
+                What can I help with today, {firstName}?
+              </motion.h2>
+            </div>
+
+            {/* Quick Action Grid */}
+            <div className="w-full">
+              <WidgetQuickActions />
+            </div>
           </div>
         ) : (
           /* Active Chat Stream */
@@ -172,7 +181,7 @@ const WidgetHeader = ({ onClose, onClear, isStreaming }) => (
         whileTap={{ scale: 0.92 }}
         onClick={onClear}
         title="Clear chat"
-        className="w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-150"
+        className="w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-150 cursor-pointer"
         style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", color: "#6B7280" }}
         onMouseEnter={(e) => {
           e.currentTarget.style.background = "rgba(239,68,68,0.1)";
@@ -188,13 +197,36 @@ const WidgetHeader = ({ onClose, onClear, isStreaming }) => (
         <Trash2 size={13} />
       </motion.button>
 
+      {/* Expand / Full Studio Page */}
+      <Link to="/dashboard/ai" onClick={onClose}>
+        <motion.button
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.92 }}
+          title="Open Full AI Studio"
+          className="w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-150 cursor-pointer"
+          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", color: "#6B7280" }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(99,91,255,0.12)";
+            e.currentTarget.style.color = "#A78BFA";
+            e.currentTarget.style.border = "1px solid rgba(99,91,255,0.25)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+            e.currentTarget.style.color = "#6B7280";
+            e.currentTarget.style.border = "1px solid rgba(255,255,255,0.07)";
+          }}
+        >
+          <Maximize2 size={13} />
+        </motion.button>
+      </Link>
+
       {/* Minimize / close */}
       <motion.button
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.92 }}
         onClick={onClose}
         title="Minimize"
-        className="w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-150"
+        className="w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-150 cursor-pointer"
         style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", color: "#6B7280" }}
         onMouseEnter={(e) => {
           e.currentTarget.style.background = "rgba(99,91,255,0.12)";

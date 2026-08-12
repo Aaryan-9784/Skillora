@@ -17,8 +17,8 @@ import { getInitials } from "../../utils/helpers";
 import toast from "react-hot-toast";
 
 const AI_MODELS = [
+  { id: "gemini-3.6-flash", name: "Gemini 3.6 Flash", desc: "Fastest & most accurate workspace AI copilot (Active Free Key)", icon: Zap, color: "#635BFF", tag: "Recommended Free" },
   { id: "skillora-pro",   name: "Skillora AI Pro", desc: "Ultimate flagship copilot with maximum speed & reasoning", icon: Sparkles, color: "#A855F7", tag: "Pro Flagship" },
-  { id: "gemini-1.5-pro", name: "Gemini 1.5 Pro", desc: "Fastest & most accurate workspace AI copilot", icon: Zap, color: "#635BFF", tag: "Recommended" },
   { id: "gpt-4o",         name: "GPT-4o Copilot",  desc: "Multimodal logic, complex coding & reasoning", icon: Brain, color: "#10A37F", tag: "OpenAI" },
   { id: "claude-3.5",     name: "Claude 3.5 Sonnet", desc: "Creative proposal writing & deep analysis", icon: Bot, color: "#D97706", tag: "Creative" },
   { id: "deepseek-r1",    name: "DeepSeek R1",    desc: "Chain-of-thought mathematical & code logic", icon: Code, color: "#00D4FF", tag: "Reasoning" },
@@ -184,8 +184,8 @@ const AI = () => {
       finalPrompt = `[Attachment: ${attachedFile.name}]\n${finalPrompt}`;
     }
 
-    // Always route through Gemini Pro free model behind the scenes
-    sendMessage(finalPrompt, "chat", null, "gemini-1.5-pro");
+    // Pass selected model to backend Gemini service
+    sendMessage(finalPrompt, "chat", null, selectedModel?.id || "gemini-3.6-flash");
     setInput("");
     setAttachedFile(null);
     setSlashSuggestions([]);

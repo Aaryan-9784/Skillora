@@ -19,7 +19,12 @@ const getClient = () => {
   return _genAI;
 };
 
-const MODEL_NAME = () => process.env.GEMINI_MODEL || "gemini-1.5-pro";
+const MODEL_NAME = (requestedModel) => {
+  if (requestedModel && typeof requestedModel === "string" && (requestedModel.includes("3.6") || requestedModel.includes("flash"))) {
+    return "gemini-3.6-flash";
+  }
+  return process.env.GEMINI_MODEL || "gemini-3.6-flash";
+};
 
 // Safety settings — permissive for business content
 const SAFETY_SETTINGS = [
