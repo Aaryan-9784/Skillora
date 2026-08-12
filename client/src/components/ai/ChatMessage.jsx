@@ -72,13 +72,10 @@ const ChatMessage = ({ msg, compact = false }) => {
             }}>
             <div className="px-4 py-3 text-sm leading-[1.75]" style={{ color: "#D1D5DB" }}>
               {msg.streaming && !msg.content ? (
-                <div className="flex gap-1.5 items-center py-0.5">
-                  {[0,1,2].map(i => (
-                    <motion.div key={i} className="w-1.5 h-1.5 rounded-full"
-                      style={{ background: "#635BFF" }}
-                      animate={{ y: [0,-4,0], opacity: [0.4,1,0.4] }}
-                      transition={{ duration: 0.65, repeat: Infinity, delay: i * 0.14 }} />
-                  ))}
+                <div className="flex items-center gap-1.5 py-1 px-0.5">
+                  <span className="w-2 h-2 rounded-full bg-[#635BFF] animate-bounce shadow-sm shadow-indigo-500/50" style={{ animationDuration: "0.8s" }} />
+                  <span className="w-2 h-2 rounded-full bg-[#7C6FFF] animate-bounce shadow-sm shadow-indigo-400/50" style={{ animationDuration: "0.8s", animationDelay: "0.15s" }} />
+                  <span className="w-2 h-2 rounded-full bg-[#8B5CF6] animate-bounce shadow-sm shadow-purple-500/50" style={{ animationDuration: "0.8s", animationDelay: "0.3s" }} />
                 </div>
               ) : (
                 <>

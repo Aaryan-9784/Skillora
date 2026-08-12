@@ -23,8 +23,10 @@ const chat = async (req, res, next) => {
       return next(ApiError.badRequest("Last message must be a non-empty user message"));
     }
 
+    const userId = req.user?._id || "guest_user";
+
     await aiService.streamChat({
-      userId:    req.user._id,
+      userId,
       messages,
       feature,
       projectId,

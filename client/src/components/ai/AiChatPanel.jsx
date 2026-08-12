@@ -56,12 +56,10 @@ const MessageBubble = ({ msg, isLast }) => {
               <MarkdownMessage content={msg.content} />
               {msg.streaming && msg.content && <TypingCursor />}
               {msg.streaming && !msg.content && (
-                <div className="flex gap-1 items-center py-1">
-                  {[0, 1, 2].map((i) => (
-                    <motion.div key={i} className="w-1.5 h-1.5 rounded-full bg-brand"
-                      animate={{ y: [0, -4, 0] }}
-                      transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }} />
-                  ))}
+                <div className="flex items-center gap-1.5 py-1 px-0.5">
+                  <span className="w-2 h-2 rounded-full bg-[#635BFF] animate-bounce shadow-sm shadow-indigo-500/50" style={{ animationDuration: "0.8s" }} />
+                  <span className="w-2 h-2 rounded-full bg-[#7C6FFF] animate-bounce shadow-sm shadow-indigo-400/50" style={{ animationDuration: "0.8s", animationDelay: "0.15s" }} />
+                  <span className="w-2 h-2 rounded-full bg-[#8B5CF6] animate-bounce shadow-sm shadow-purple-500/50" style={{ animationDuration: "0.8s", animationDelay: "0.3s" }} />
                 </div>
               )}
             </>

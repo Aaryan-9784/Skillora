@@ -17,7 +17,7 @@ import { getInitials } from "../../utils/helpers";
 import toast from "react-hot-toast";
 
 const AI_MODELS = [
-  { id: "gemini-3.6-flash", name: "Gemini 3.6 Flash", desc: "Fastest & most accurate workspace AI copilot (Active Free Key)", icon: Zap, color: "#635BFF", tag: "Recommended Free" },
+  { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash", desc: "Fastest & most accurate workspace AI copilot (Active Free Key)", icon: Zap, color: "#635BFF", tag: "Recommended Free" },
   { id: "skillora-pro",   name: "Skillora AI Pro", desc: "Ultimate flagship copilot with maximum speed & reasoning", icon: Sparkles, color: "#A855F7", tag: "Pro Flagship" },
   { id: "gpt-4o",         name: "GPT-4o Copilot",  desc: "Multimodal logic, complex coding & reasoning", icon: Brain, color: "#10A37F", tag: "OpenAI" },
   { id: "claude-3.5",     name: "Claude 3.5 Sonnet", desc: "Creative proposal writing & deep analysis", icon: Bot, color: "#D97706", tag: "Creative" },
@@ -176,18 +176,9 @@ const AI = () => {
     const text = overridePrompt || input.trim();
     if (!text || isStreaming) return;
 
-    let finalPrompt = text;
-    if (webSearchEnabled) {
-      finalPrompt = `[Live Web Search Enabled] ${text}`;
-    }
-    if (attachedFile) {
-      finalPrompt = `[Attachment: ${attachedFile.name}]\n${finalPrompt}`;
-    }
-
     // Pass selected model to backend Gemini service
-    sendMessage(finalPrompt, "chat", null, selectedModel?.id || "gemini-3.6-flash");
+    sendMessage(text, "chat", null, selectedModel?.id || "gemini-2.5-flash");
     setInput("");
-    setAttachedFile(null);
     setSlashSuggestions([]);
     if (textareaRef.current) textareaRef.current.style.height = "auto";
   };
@@ -330,51 +321,6 @@ const AI = () => {
       {/* Floating Input Toolbar Box */}
       <div className="relative flex items-end gap-2 p-3 rounded-2xl bg-[#111726] border border-slate-700/60 focus-within:border-indigo-500/60 transition-all shadow-2xl">
         
-        {/* Hidden File Input */}
-        <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
-
-        {/* File Attachment Button */}
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-all cursor-pointer shrink-0"
-          title="Attach File"
-        >
-          <Paperclip size={18} />
-        </button>
-
-        {/* Live Web Search Toggle Button */}
-        <button
-          type="button"
-          onClick={() => {
-            setWebSearch(!webSearchEnabled);
-            toast.success(webSearchEnabled ? "Live Web Search Disabled" : "Live Web Search Enabled");
-          }}
-          className={`p-2 rounded-xl transition-all cursor-pointer shrink-0 flex items-center gap-1.5 text-xs font-bold ${
-            webSearchEnabled
-              ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
-              : "text-slate-400 hover:text-white hover:bg-slate-800"
-          }`}
-          title="Toggle Live Web Search"
-        >
-          <Globe size={18} />
-          {webSearchEnabled && <span className="hidden sm:inline text-[10px]">Search On</span>}
-        </button>
-
-        {/* Voice Input Button */}
-        <button
-          type="button"
-          onClick={toggleVoiceInput}
-          className={`p-2 rounded-xl transition-all cursor-pointer shrink-0 ${
-            isListening
-              ? "bg-red-600 text-white animate-pulse"
-              : "text-slate-400 hover:text-white hover:bg-slate-800"
-          }`}
-          title={isListening ? "Listening... Click to stop" : "Voice Input"}
-        >
-          {isListening ? <MicOff size={18} /> : <Mic size={18} />}
-        </button>
-
         {/* Textarea Prompt Field */}
         <textarea
           ref={textareaRef}
@@ -801,10 +747,10 @@ const AI = () => {
                           }`}
                         >
                           {msg.streaming && !msg.content ? (
-                            <div className="flex items-center gap-1.5 py-1">
-                              <span className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce" />
-                              <span className="w-2 h-2 rounded-full bg-purple-400 animate-bounce [animation-delay:0.2s]" />
-                              <span className="w-2 h-2 rounded-full bg-pink-400 animate-bounce [animation-delay:0.4s]" />
+                            <div className="flex items-center gap-1.5 py-1 px-0.5">
+                              <span className="w-2 h-2 rounded-full bg-[#635BFF] animate-bounce shadow-sm shadow-indigo-500/50" style={{ animationDuration: "0.8s" }} />
+                              <span className="w-2 h-2 rounded-full bg-[#7C6FFF] animate-bounce shadow-sm shadow-indigo-400/50" style={{ animationDuration: "0.8s", animationDelay: "0.15s" }} />
+                              <span className="w-2 h-2 rounded-full bg-[#8B5CF6] animate-bounce shadow-sm shadow-purple-500/50" style={{ animationDuration: "0.8s", animationDelay: "0.3s" }} />
                             </div>
                           ) : (
                             <>

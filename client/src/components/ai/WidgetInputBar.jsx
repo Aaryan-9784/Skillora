@@ -12,9 +12,8 @@
 
 import { useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Mic, Paperclip, Globe, FileText, X } from "lucide-react";
+import { Send } from "lucide-react";
 import useAiStore from "../../store/aiStore";
-import toast from "react-hot-toast";
 
 const SLASH_COMMANDS = [
   { cmd: "/plan",     desc: "Generate a project plan",   prompt: "Generate a detailed project plan for my most recent active project" },
@@ -29,69 +28,8 @@ const WidgetInputBar = () => {
   const [input, setInput] = useState("");
   const [slashHints, setSlashHints] = useState([]);
   const [focused, setFocused] = useState(false);
-  const [webSearchEnabled, setWebSearch] = useState(false);
-  const [attachedFile, setAttachedFile] = useState(null);
-  const [isListening, setIsListening] = useState(false);
 
-  const handleVoiceInput = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      toast.error("Speech recognition is not supported in this browser.");
-      return;
-    }
-
-    if (isListening) {
-      setIsListening(false);
-      return;
-    }
-
-    try {
-      const recognition = new SpeechRecognition();
-      recognition.lang = "en-US";
-      recognition.interimResults = false;
-      recognition.continuous = false;
-
-      recognition.onstart = () => {
-        setIsListening(true);
-        toast.success("Listening... Speak into your microphone");
-      };
-
-      recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        if (transcript) {
-          setInput((prev) => (prev ? `${prev} ${transcript}` : transcript));
-          toast.success("Voice transcribed successfully!");
-        }
-        setIsListening(false);
-      };
-
-      recognition.onerror = (err) => {
-        console.error("Speech recognition error:", err);
-        setIsListening(false);
-        toast.error("Voice input error. Please try again.");
-      };
-
-      recognition.onend = () => {
-        setIsListening(false);
-      };
-
-      recognition.start();
-    } catch (err) {
-      setIsListening(false);
-      toast.error("Could not access microphone.");
-    }
-  };
-  
   const inputRef = useRef(null);
-  const fileInputRef = useRef(null);
-
-  const handleFileUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setAttachedFile(file);
-      toast.success(`Attached file: ${file.name}`);
-    }
-  };
 
   const handleChange = (e) => {
     const val = e.target.value;
@@ -109,21 +47,12 @@ const WidgetInputBar = () => {
 
   const handleSend = () => {
     const text = input.trim();
-    if ((!text && !attachedFile) || isStreaming) return;
-
-    let finalPrompt = text;
-    if (webSearchEnabled) {
-      finalPrompt = `[Live Web Search Enabled] ${finalPrompt}`;
-    }
-    if (attachedFile) {
-      finalPrompt = `[Attachment: ${attachedFile.name}]\n${finalPrompt}`;
-    }
+    if (!text || isStreaming) return;
 
     const slashMatch = SLASH_COMMANDS.find((c) => c.cmd === text.toLowerCase());
-    sendMessage(slashMatch ? slashMatch.prompt : finalPrompt);
+    sendMessage(slashMatch ? slashMatch.prompt : text);
 
     setInput("");
-    setAttachedFile(null);
     setSlashHints([]);
     if (inputRef.current) inputRef.current.style.height = "auto";
     inputRef.current?.focus();
@@ -143,23 +72,10 @@ const WidgetInputBar = () => {
     }
   };
 
-  const canSend = (input.trim().length > 0 || attachedFile) && !isStreaming;
+  const canSend = input.trim().length > 0 && !isStreaming;
 
   return (
     <div className="shrink-0 px-3 pb-3 pt-2 border-t border-slate-800/60 bg-[#0B0F1A]/95">
-      {/* Hidden File Input */}
-      <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
-
-      {/* Attachment Chip Preview */}
-      {attachedFile && (
-        <div className="flex items-center gap-2 px-2.5 py-1 rounded-xl bg-indigo-500/20 border border-indigo-500/30 text-[11px] text-indigo-300 w-fit mb-2">
-          <FileText size={13} />
-          <span className="font-semibold truncate max-w-[180px]">{attachedFile.name}</span>
-          <button onClick={() => setAttachedFile(null)} className="hover:text-white cursor-pointer ml-1">
-            <X size={12} />
-          </button>
-        </div>
-      )}
 
       {/* Slash suggestions */}
       <AnimatePresence>
@@ -192,47 +108,6 @@ const WidgetInputBar = () => {
             : "bg-[#111726]/90 border border-slate-700/60 hover:border-slate-600"
         }`}
       >
-        {/* Paperclip / File Button */}
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-slate-800/80 transition-all cursor-pointer shrink-0"
-          title="Attach file"
-        >
-          <Paperclip size={16} />
-        </button>
-
-        {/* Globe / Web Search Toggle */}
-        <button
-          type="button"
-          onClick={() => {
-            setWebSearch(!webSearchEnabled);
-            toast.success(webSearchEnabled ? "Web search disabled" : "Live web search enabled");
-          }}
-          className={`p-1.5 rounded-full transition-all cursor-pointer shrink-0 ${
-            webSearchEnabled
-              ? "bg-indigo-600 text-white shadow-sm"
-              : "text-slate-400 hover:text-white hover:bg-slate-800/80"
-          }`}
-          title="Toggle live web search"
-        >
-          <Globe size={16} />
-        </button>
-
-        {/* Mic / Voice Button */}
-        <button
-          type="button"
-          onClick={handleVoiceInput}
-          className={`p-1.5 rounded-full transition-all cursor-pointer shrink-0 ${
-            isListening
-              ? "bg-red-500/30 text-red-400 border border-red-500/50 animate-pulse shadow-sm shadow-red-500/30"
-              : "text-slate-400 hover:text-white hover:bg-slate-800/80"
-          }`}
-          title={isListening ? "Listening... Click to stop" : "Voice input"}
-        >
-          <Mic size={16} className={isListening ? "animate-bounce" : ""} />
-        </button>
-
         {/* Text Input Field */}
         <textarea
           ref={inputRef}
@@ -243,7 +118,7 @@ const WidgetInputBar = () => {
           onBlur={() => setFocused(false)}
           placeholder="Message Skillora AI..."
           rows={1}
-          className="flex-1 bg-transparent text-xs text-white placeholder-slate-500 outline-none resize-none max-h-24 py-1 leading-relaxed"
+          className="flex-1 bg-transparent text-xs text-white placeholder-slate-500 outline-none resize-none max-h-24 py-1.5 px-1 leading-relaxed"
         />
 
         {/* Send Button (Purple Gradient Circle) */}
