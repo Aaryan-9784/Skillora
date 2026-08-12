@@ -916,7 +916,6 @@ const ClientProjects = () => {
   const handleExportCSV = () => {
     const list = filtered.length ? filtered : projects;
     if (!list.length) return toast.error("No project data available to export.");
-
     const headers = ["Title", "Category", "Status", "Budget", "Currency", "Progress", "Deadline", "Proposals", "Created At"];
     const rows = list.map((p) => [
       `"${(p.title || "").replace(/"/g, '""')}"`,
@@ -942,177 +941,221 @@ const ClientProjects = () => {
   };
 
   return (
-    <div className="space-y-6 pb-12">
-      {/* Top Banner Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-6 rounded-3xl relative overflow-hidden"
-        style={{
-          background: "linear-gradient(135deg,rgba(15,23,42,0.9) 0%,rgba(10,15,30,0.95) 100%)",
-          border: "1px solid rgba(255,255,255,0.08)",
-          boxShadow: "0 20px 50px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1)",
-        }}
-      >
-        <div className="absolute top-0 right-0 w-[400px] h-[200px] bg-indigo-600/10 blur-[100px] pointer-events-none" />
+    <div
+      className="min-h-screen relative overflow-hidden"
+      style={{
+        background:
+          "radial-gradient(ellipse 100% 55% at 65% -5%,rgba(99,91,255,0.08) 0%,transparent 52%),linear-gradient(180deg,#0B0F1A 0%,#07090F 100%)",
+      }}
+    >
+      {/* Background ambient lighting */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div
+          className="absolute -top-40 right-1/4 w-[650px] h-[650px] rounded-full"
+          style={{ background: "radial-gradient(circle,rgba(99,91,255,0.05) 0%,transparent 60%)" }}
+        />
+      </div>
 
-        <div className="relative z-10 space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-black tracking-widest uppercase px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-              Workstream Management
-            </span>
+      <div className="relative p-6 lg:p-8 max-w-[1400px] mx-auto space-y-6">
+        {/* ── Page Header ── */}
+        <motion.div
+          initial={{ opacity: 0, y: -14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          className="flex flex-wrap items-center justify-between gap-4"
+        >
+          <div>
+            <h1
+              className="text-2xl lg:text-3xl font-black tracking-tight leading-tight"
+              style={{
+                background: "linear-gradient(135deg, #FFFFFF 30%, #A78BFA 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                filter: "drop-shadow(0 2px 12px rgba(167,139,250,0.2))",
+              }}
+            >
+              Client Projects & Proposals
+            </h1>
+            <p className="text-xs lg:text-sm mt-1 font-medium text-slate-400">
+              Post projects for proposals, review applications, and manage active workstreams
+            </p>
           </div>
-          <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">
-            Client Projects & Proposals
-          </h1>
-          <p className="text-xs text-slate-400 max-w-xl">
-            Post projects for proposals, review applications, and manage active workstreams
-          </p>
+
+          <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={fetchProjects}
+              title="Refresh Data"
+              className="w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer"
+              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.09)", color: "rgba(148,163,184,0.75)" }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(99,91,255,0.12)";
+                e.currentTarget.style.color = "#A78BFA";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+                e.currentTarget.style.color = "rgba(148,163,184,0.75)";
+              }}
+            >
+              <RefreshCw size={15} className={loading.projects ? "animate-spin text-indigo-400" : ""} />
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={handleExportCSV}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-300 transition-all cursor-pointer"
+              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.09)" }}
+            >
+              <Download size={14} />
+              <span>Export CSV</span>
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => setPostModalOpen(true)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
+              style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)", boxShadow: "0 0 20px rgba(99,91,255,0.35)" }}
+            >
+              <Plus size={16} />
+              <span>New Project</span>
+            </motion.button>
+          </div>
+        </motion.div>
+
+        {/* Summary KPI Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <SubpageStatCard icon={Sparkles} label="Open Proposals" value={counts.open} color="cyan" delay={0} sub="Open for freelancer bids" />
+          <SubpageStatCard icon={FolderOpen} label="Active Workstreams" value={counts.active} color="green" delay={0.05} sub="Currently in development" />
+          <SubpageStatCard icon={Clock} label="Planning Phase" value={counts.planning} color="#9CA3AF" delay={0.1} sub="Scope & milestone setup" />
+          <SubpageStatCard icon={CheckCircle2} label="Completed Projects" value={counts.completed} color="blue" delay={0.15} sub="Delivered & signed off" />
         </div>
 
-        <div className="relative z-10 flex items-center gap-2 self-stretch md:self-auto justify-end">
-          <button
-            onClick={fetchProjects}
-            className="p-2.5 rounded-xl text-slate-400 hover:text-white bg-slate-800/80 hover:bg-slate-700 border border-slate-700 transition-all cursor-pointer"
-            title="Refresh projects list"
-          >
-            <RefreshCw size={16} className={loading.projects ? "animate-spin text-indigo-400" : ""} />
-          </button>
-
-          <button
-            onClick={handleExportCSV}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-all cursor-pointer"
-          >
-            <Download size={15} />
-            <span className="hidden sm:inline">Export CSV</span>
-          </button>
-
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => setPostModalOpen(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
-            style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)", boxShadow: "0 0 20px rgba(99,91,255,0.4)" }}
-          >
-            <Plus size={16} />
-            <span>New Project</span>
-          </motion.button>
-        </div>
-      </motion.div>
-
-      {/* Summary KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <SubpageStatCard icon={Sparkles}     label="Open Proposals"    value={counts.open}      color="cyan"  delay={0}    sub="Open for freelancer bids" />
-        <SubpageStatCard icon={FolderOpen}   label="Active Workstreams" value={counts.active}    color="green" delay={0.05} sub="Currently in development" />
-        <SubpageStatCard icon={Clock}        label="Planning Phase"     value={counts.planning}  color="#9CA3AF" delay={0.1} sub="Scope & milestone setup" />
-        <SubpageStatCard icon={CheckCircle2} label="Completed Projects" value={counts.completed} color="blue" delay={0.15} sub="Delivered & signed off" />
-      </div>
-
-      {/* Filter & Search Bar */}
-      <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
-        <div className="relative flex-1 max-w-md">
-          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "rgba(148,163,184,0.5)" }} />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search projects by title or description..."
-            className="w-full pl-10 pr-9 py-2.5 rounded-xl text-xs font-medium outline-none transition-all duration-200"
-            style={{
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              color: "#F9FAFB",
-            }}
-            onFocus={e => { e.currentTarget.style.border = "1px solid rgba(99,91,255,0.4)"; e.currentTarget.style.background = "rgba(99,91,255,0.06)"; }}
-            onBlur={e => { e.currentTarget.style.border = "1px solid rgba(255,255,255,0.08)"; e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
-          />
-          {search && (
-            <button onClick={() => setSearch("")} className="absolute right-3.5 top-1/2 -translate-y-1/2" style={{ color: "rgba(148,163,184,0.5)" }}>
-              <X size={13} />
-            </button>
-          )}
-        </div>
-
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <Filter size={13} style={{ color: "rgba(148,163,184,0.5)", marginRight: 2 }} />
-          {["all", "open", "planning", "active", "on_hold", "completed", "cancelled"].map((s) => {
-            const labels = {
-              all: "All",
-              open: "Open",
-              planning: "Planning",
-              active: "Active",
-              on_hold: "On Hold",
-              completed: "Completed",
-              cancelled: "Cancelled",
-            };
-            return (
-              <button
-                key={s}
-                onClick={() => setStatus(s)}
-                className="px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition-all duration-200 cursor-pointer"
-                style={{
-                  background: statusFilter === s ? "linear-gradient(135deg,rgba(99,91,255,0.25) 0%,rgba(139,92,246,0.15) 100%)" : "rgba(255,255,255,0.04)",
-                  color: statusFilter === s ? "#EDE9FE" : "rgba(148,163,184,0.7)",
-                  border: statusFilter === s ? "1px solid rgba(99,91,255,0.4)" : "1px solid rgba(255,255,255,0.08)",
-                  boxShadow: statusFilter === s ? "0 0 12px rgba(99,91,255,0.18)" : "none",
-                }}
-              >
-                {labels[s] || s}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Projects Grid */}
-      {loading.projects ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {[...Array(6)].map((_, i) => (
-            <SkeletonCard key={i} />
-          ))}
-        </div>
-      ) : error.projects ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center space-y-3 bg-slate-900/40 rounded-3xl border border-rose-500/20">
-          <AlertCircle size={32} className="text-rose-400" />
-          <p className="text-sm font-bold text-white">Failed to load project records</p>
-          <p className="text-xs text-slate-400 max-w-sm">{error.projects}</p>
-          <button
-            onClick={fetchProjects}
-            className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 cursor-pointer"
-          >
-            Try Again
-          </button>
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center space-y-3 bg-slate-900/40 rounded-3xl border border-white/5">
-          <FolderKanban size={36} className="text-slate-500" />
-          <p className="text-sm font-bold text-white">No projects found</p>
-          <p className="text-xs text-slate-400 max-w-xs">
-            {search || statusFilter !== "all" || categoryFilter !== "all"
-              ? "No project listings match your selected search filters."
-              : "Post your first project to receive proposals from qualified freelancers."}
-          </p>
-          <button
-            onClick={() => setPostModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-600/30 cursor-pointer"
-          >
-            <Plus size={14} />
-            <span>Post New Project</span>
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filtered.map((proj, idx) => (
-            <ProjectCard
-              key={proj._id}
-              project={proj}
-              delay={idx * 0.05}
-              onSelect={(p) => setSelected(p)}
-              onOpenProposals={(p) => setProposalProject(p)}
-              onDelete={(p) => setDeleteTarget(p)}
+        {/* Filter & Search Bar */}
+        <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+          <div className="relative flex-1 max-w-md">
+            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "rgba(148,163,184,0.5)" }} />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search projects by title or description..."
+              className="w-full pl-10 pr-9 py-2.5 rounded-xl text-xs font-medium outline-none transition-all duration-200"
+              style={{
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                color: "#F9FAFB",
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.border = "1px solid rgba(99,91,255,0.4)";
+                e.currentTarget.style.background = "rgba(99,91,255,0.06)";
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.border = "1px solid rgba(255,255,255,0.08)";
+                e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+              }}
             />
-          ))}
+            {search && (
+              <button onClick={() => setSearch("")} className="absolute right-3.5 top-1/2 -translate-y-1/2" style={{ color: "rgba(148,163,184,0.5)" }}>
+                <X size={13} />
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <Filter size={13} style={{ color: "rgba(148,163,184,0.5)", marginRight: 2 }} />
+            {["all", "open", "planning", "active", "on_hold", "completed", "cancelled"].map((s) => {
+              const labels = {
+                all: "All",
+                open: "Open",
+                planning: "Planning",
+                active: "Active",
+                on_hold: "On Hold",
+                completed: "Completed",
+                cancelled: "Cancelled",
+              };
+              return (
+                <button
+                  key={s}
+                  onClick={() => setStatus(s)}
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition-all duration-200 cursor-pointer"
+                  style={{
+                    background: statusFilter === s ? "linear-gradient(135deg,rgba(99,91,255,0.25) 0%,rgba(139,92,246,0.15) 100%)" : "rgba(255,255,255,0.04)",
+                    color: statusFilter === s ? "#EDE9FE" : "rgba(148,163,184,0.7)",
+                    border: statusFilter === s ? "1px solid rgba(99,91,255,0.4)" : "1px solid rgba(255,255,255,0.08)",
+                    boxShadow: statusFilter === s ? "0 0 12px rgba(99,91,255,0.18)" : "none",
+                  }}
+                >
+                  {labels[s] || s}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      )}
+
+        {/* Projects Grid */}
+        {loading.projects ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[...Array(6)].map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        ) : error.projects ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center space-y-3 bg-slate-900/40 rounded-3xl border border-rose-500/20">
+            <AlertCircle size={32} className="text-rose-400" />
+            <p className="text-sm font-bold text-white">Failed to load project records</p>
+            <p className="text-xs text-slate-400 max-w-sm">{error.projects}</p>
+            <button
+              onClick={fetchProjects}
+              className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 cursor-pointer"
+            >
+              Try Again
+            </button>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div
+            className="flex flex-col items-center justify-center py-20 text-center space-y-3 rounded-3xl"
+            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", backdropFilter: "blur(16px)" }}
+          >
+            <div
+              className="w-14 h-14 rounded-2xl flex items-center justify-center mb-1"
+              style={{ background: "rgba(99,91,255,0.12)", border: "1px solid rgba(99,91,255,0.25)" }}
+            >
+              <FolderKanban size={26} style={{ color: "#A78BFA" }} />
+            </div>
+            <p className="text-base font-bold text-white">No projects found</p>
+            <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
+              {search || statusFilter !== "all" || categoryFilter !== "all"
+                ? "No project listings match your selected search filters."
+                : "Post your first project to receive proposals from qualified freelancers."}
+            </p>
+            <motion.button
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
+              onClick={() => setPostModalOpen(true)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer mt-1"
+              style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)", boxShadow: "0 0 20px rgba(99,91,255,0.35)" }}
+            >
+              <Plus size={15} />
+              <span>Post New Project</span>
+            </motion.button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {filtered.map((proj, idx) => (
+              <ProjectCard
+                key={proj._id}
+                project={proj}
+                delay={idx * 0.05}
+                onSelect={(p) => setSelected(p)}
+                onOpenProposals={(p) => setProposalProject(p)}
+                onDelete={(p) => setDeleteTarget(p)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Project Detail Drawer */}
       <ProjectDrawer
@@ -1123,23 +1166,19 @@ const ClientProjects = () => {
       />
 
       {/* Proposals Drawer */}
-      <ProposalsDrawer
-        project={proposalProject}
-        onClose={() => setProposalProject(null)}
-      />
+      <ProposalsDrawer project={proposalProject} onClose={() => setProposalProject(null)} />
 
       {/* Post Project Modal */}
-      <PostProjectModal
-        open={postModalOpen}
-        onClose={() => setPostModalOpen(false)}
-      />
+      <PostProjectModal open={postModalOpen} onClose={() => setPostModalOpen(false)} />
 
       {/* Delete Confirmation Modal */}
       <AnimatePresence>
         {deleteTarget && (
           <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4">
             <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               className="absolute inset-0 bg-black/80 backdrop-blur-md"
               onClick={() => setDeleteTarget(null)}
             />
@@ -1160,8 +1199,7 @@ const ClientProjects = () => {
               <div>
                 <h3 className="text-lg font-bold text-white">Delete Project & Disconnect</h3>
                 <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                  Are you sure you want to delete <strong className="text-white">"{deleteTarget.title}"</strong>?
-                  This will permanently remove the project and disconnect any related client & freelancer connections.
+                  Are you sure you want to delete <strong className="text-white">"{deleteTarget.title}"</strong>? This will permanently remove the project and disconnect any related client & freelancer connections.
                 </p>
               </div>
               <div className="flex gap-3 pt-2">
