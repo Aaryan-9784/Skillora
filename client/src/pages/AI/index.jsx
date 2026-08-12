@@ -318,8 +318,8 @@ const AI = () => {
         </div>
       )}
 
-      {/* Floating Input Toolbar Box */}
-      <div className="relative flex items-end gap-2 p-3 rounded-2xl bg-[#111726] border border-slate-700/60 focus-within:border-indigo-500/60 transition-all shadow-2xl">
+      {/* Floating Input Capsule Box (Matching Reference Image Pill Styling) */}
+      <div className="relative flex items-center gap-3 px-5 py-2.5 rounded-full bg-[#0B0F1A] border border-indigo-500/40 hover:border-indigo-500/60 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all shadow-2xl">
         
         {/* Textarea Prompt Field */}
         <textarea
@@ -329,29 +329,33 @@ const AI = () => {
           onKeyDown={handleKeyDown}
           placeholder="Message Skillora AI..."
           rows={1}
-          className="flex-1 bg-transparent text-xs lg:text-sm text-white placeholder-slate-500 outline-none resize-none max-h-40 py-1.5"
+          className="flex-1 bg-transparent text-xs lg:text-sm text-slate-100 placeholder:text-slate-400 outline-none resize-none max-h-40 py-1.5 px-1 leading-relaxed"
         />
 
-        {/* Send / Stop Generation Button */}
-        {isStreaming ? (
-          <button
-            type="button"
-            onClick={stopGenerating}
-            className="p-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white transition-all cursor-pointer shrink-0 shadow-lg shadow-red-600/20"
-            title="Stop Generating"
-          >
-            <Square size={16} />
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => handleSend()}
-            disabled={!input.trim() && !attachedFile}
-            className="p-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-40 text-white transition-all cursor-pointer shadow-lg shadow-indigo-600/30 shrink-0"
-          >
-            <Send size={16} />
-          </button>
-        )}
+        {/* Action icons / Mic / Send / Stop Generation Button */}
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Stop Generation Button */}
+          {isStreaming ? (
+            <button
+              type="button"
+              onClick={stopGenerating}
+              className="w-10 h-10 rounded-full bg-red-600 hover:bg-red-500 text-white transition-all cursor-pointer shrink-0 shadow-lg shadow-red-600/30 flex items-center justify-center"
+              title="Stop Generating"
+            >
+              <Square size={16} />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => handleSend()}
+              disabled={!input.trim() && !attachedFile}
+              className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-600 via-indigo-600 to-indigo-500 hover:from-purple-500 hover:to-indigo-400 disabled:opacity-40 disabled:cursor-not-allowed text-white transition-all cursor-pointer shadow-lg shadow-purple-600/35 hover:shadow-indigo-500/50 hover:scale-[1.05] active:scale-[0.95] shrink-0 flex items-center justify-center"
+              title="Send Message"
+            >
+              <Send size={16} className="translate-x-[0.5px]" />
+            </button>
+          )}
+        </div>
       </div>
 
       {!isCentered && (

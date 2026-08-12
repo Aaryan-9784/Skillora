@@ -100,12 +100,12 @@ const WidgetInputBar = () => {
         )}
       </AnimatePresence>
 
-      {/* Rounded Input Container (Identical layout & icons to Image 2) */}
+      {/* Rounded Input Container (Identical layout & styling to Reference Image) */}
       <div
-        className={`relative flex items-center gap-2 px-3 py-2 rounded-full transition-all duration-200 ${
+        className={`relative flex items-center gap-3 px-4 py-2 rounded-full transition-all duration-200 ${
           focused
-            ? "bg-[#111726] border border-indigo-500/60 shadow-lg shadow-indigo-500/10"
-            : "bg-[#111726]/90 border border-slate-700/60 hover:border-slate-600"
+            ? "bg-[#0B0F19] border border-indigo-500/80 shadow-lg shadow-indigo-500/20 ring-2 ring-indigo-500/20"
+            : "bg-[#0B0F19]/95 border border-indigo-500/40 hover:border-indigo-500/60 shadow-md"
         }`}
       >
         {/* Text Input Field */}
@@ -118,7 +118,7 @@ const WidgetInputBar = () => {
           onBlur={() => setFocused(false)}
           placeholder="Message Skillora AI..."
           rows={1}
-          className="flex-1 bg-transparent text-xs text-white placeholder-slate-500 outline-none resize-none max-h-24 py-1.5 px-1 leading-relaxed"
+          className="flex-1 bg-transparent text-xs lg:text-sm text-slate-100 placeholder:text-slate-400 outline-none resize-none max-h-24 py-1.5 px-2 leading-relaxed"
         />
 
         {/* Send Button (Purple Gradient Circle) */}
@@ -127,16 +127,16 @@ const WidgetInputBar = () => {
           whileTap={canSend ? { scale: 0.92 } : {}}
           onClick={handleSend}
           disabled={!canSend}
-          className={`w-8 h-8 rounded-full flex items-center justify-center text-white transition-all shrink-0 ${
+          className={`w-9 h-9 rounded-full flex items-center justify-center text-white transition-all shrink-0 ${
             canSend
-              ? "bg-gradient-to-tr from-indigo-600 to-purple-600 shadow-md shadow-indigo-600/40 cursor-pointer"
-              : "bg-slate-800 text-slate-500 opacity-50 cursor-not-allowed"
+              ? "bg-gradient-to-tr from-purple-600 via-indigo-600 to-indigo-500 shadow-md shadow-purple-600/40 cursor-pointer"
+              : "bg-purple-950/40 text-slate-500 border border-purple-500/20 opacity-50 cursor-not-allowed"
           }`}
         >
           {isStreaming ? (
             <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
           ) : (
-            <Send size={13} className="ml-0.5" />
+            <Send size={15} className="ml-0.5" />
           )}
         </motion.button>
       </div>

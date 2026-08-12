@@ -20,10 +20,13 @@ const getClient = () => {
 };
 
 const MODEL_NAME = (requestedModel) => {
-  if (requestedModel && typeof requestedModel === "string" && requestedModel.includes("2.5")) {
-    return "gemini-2.5-flash";
+  if (requestedModel && typeof requestedModel === "string") {
+    if (requestedModel.includes("2.5")) return "gemini-2.5-flash";
+    if (requestedModel.includes("pro") || requestedModel.includes("1.5-pro")) return "gemini-1.5-pro";
+    if (requestedModel.includes("1.5")) return "gemini-1.5-flash";
+    if (requestedModel.includes("flash")) return "gemini-2.5-flash";
   }
-  return process.env.GEMINI_MODEL || "gemini-3.5-flash";
+  return process.env.GEMINI_MODEL || "gemini-2.5-flash";
 };
 
 // Safety settings — permissive for business content
@@ -156,7 +159,7 @@ const toGeminiHistory = (messages, systemContext) => {
 /**
  * Stream a Gemini response via Server-Sent Events.
  */
-const streamChat = async ({ userId, messages, feature = "chat", projectId, res }) => {
+const streamChat = async ({ userId, messages, feature = "chat", projectId, model, res }) => {
   const start = Date.now();
 
   // SSE headers
@@ -196,7 +199,7 @@ const streamChat = async ({ userId, messages, feature = "chat", projectId, res }
       : rawPrompt;
 
     // Automatic multi-model failover chain if quota is hit
-    const primaryModel = MODEL_NAME();
+    const primaryModel = MODEL_NAME(model);
     const modelCandidates = [primaryModel, "gemini-3.5-flash", "gemini-3.6-flash", "gemini-2.5-flash"];
     const uniqueModels = [...new Set(modelCandidates)];
 

@@ -156,35 +156,36 @@ const AiChatPanel = ({ compact = false, onClose }) => {
       </div>
 
       {/* Input */}
-      <div className="px-4 pb-4 pt-2 shrink-0 border-t border-surface-border dark:border-dark-border">
-        <div className="flex items-end gap-2 bg-white dark:bg-dark-card rounded-xl border border-surface-border dark:border-dark-border
-                        focus-within:ring-2 focus-within:ring-brand/30 focus-within:border-brand transition-all p-2">
+      <div className="px-4 pb-4 pt-2 shrink-0 border-t border-slate-800/60 bg-[#0B0F19]">
+        <div className="flex items-center gap-2.5 bg-[#0B0F19] rounded-full border border-indigo-500/40 hover:border-indigo-500/60
+                        focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all px-4 py-2">
           <textarea
             ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKey}
-            placeholder="Ask anything about your projects..."
+            placeholder="Message Skillora AI..."
             rows={1}
-            className="flex-1 bg-transparent text-sm text-ink dark:text-slate-200 placeholder:text-ink-muted
+            className="flex-1 bg-transparent text-xs lg:text-sm text-slate-100 placeholder:text-slate-400
                        outline-none resize-none max-h-32 leading-relaxed"
-            style={{ minHeight: "24px" }}
+            style={{ minHeight: "22px" }}
             onInput={(e) => {
               e.target.style.height = "auto";
               e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`;
             }}
           />
           <motion.button
-            whileTap={{ scale: 0.9 }}
+            whileHover={input.trim() && !isStreaming ? { scale: 1.08 } : {}}
+            whileTap={input.trim() && !isStreaming ? { scale: 0.92 } : {}}
             onClick={handleSend}
             disabled={!input.trim() || isStreaming}
-            className="w-8 h-8 rounded-lg bg-brand flex items-center justify-center text-white
-                       disabled:opacity-40 disabled:cursor-not-allowed hover:bg-brand-600 transition-colors shrink-0"
+            className="w-9 h-9 rounded-full bg-gradient-to-tr from-purple-600 via-indigo-600 to-indigo-500 flex items-center justify-center text-white
+                       disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-md shadow-purple-600/30 shrink-0"
           >
             {isStreaming ? (
-              <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
             ) : (
-              <Send size={13} />
+              <Send size={15} className="ml-0.5" />
             )}
           </motion.button>
         </div>

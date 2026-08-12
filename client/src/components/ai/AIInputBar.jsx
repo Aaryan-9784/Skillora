@@ -133,21 +133,11 @@ const AIInputBar = () => {
         </AnimatePresence>
 
         {/* Input box */}
-        <div className="relative rounded-2xl transition-all duration-200"
-          style={{
-            background: "rgba(255,255,255,0.04)",
-            border: focused ? "1px solid rgba(99,91,255,0.35)" : "1px solid rgba(255,255,255,0.08)",
-            backdropFilter: "blur(16px)",
-            boxShadow: focused
-              ? "0 0 0 3px rgba(99,91,255,0.08), 0 8px 32px rgba(0,0,0,0.25)"
-              : "0 2px 12px rgba(0,0,0,0.15)",
-          }}>
-
-          {/* Focus top glow */}
-          {focused && (
-            <div className="absolute top-0 inset-x-0 h-px rounded-t-2xl pointer-events-none"
-              style={{ background: "linear-gradient(90deg,transparent,rgba(99,91,255,0.55),rgba(139,92,246,0.4),transparent)" }} />
-          )}
+        <div className={`relative flex items-center gap-3 px-4 py-2 rounded-full transition-all duration-200 ${
+          focused
+            ? "bg-[#0B0F19] border border-indigo-500/80 shadow-lg shadow-indigo-500/20 ring-2 ring-indigo-500/20"
+            : "bg-[#0B0F19]/95 border border-indigo-500/40 hover:border-indigo-500/60 shadow-md"
+        }`}>
 
           <textarea
             ref={inputRef}
@@ -156,51 +146,37 @@ const AIInputBar = () => {
             onKeyDown={handleKey}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
-            placeholder="Ask anything about your work…"
+            placeholder="Message Skillora AI..."
             rows={1}
-            className="w-full bg-transparent px-4 pt-4 pb-2 text-sm outline-none resize-none leading-relaxed"
-            style={{ color: "#F9FAFB", minHeight: "24px", maxHeight: "120px" }}
+            className="flex-1 bg-transparent text-xs lg:text-sm text-slate-100 placeholder:text-slate-400 outline-none resize-none max-h-28 py-1.5 px-2 leading-relaxed"
           />
 
-          <div className="flex items-center gap-1.5 px-3 pb-3">
-            {/* Slash hint */}
-            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md"
-              style={{ color: "#374151", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
-              /
-            </span>
-            <span className="text-[10px]" style={{ color: "#374151" }}>for commands</span>
-
-            <div className="flex-1" />
-
+          <div className="flex items-center gap-2 shrink-0">
             {/* Mic */}
             <button
               type="button"
               onClick={handleVoiceInput}
               title={isListening ? "Listening... Click to stop" : "Voice input"}
-              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-150 cursor-pointer ${
-                isListening ? "bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse" : ""
-              }`}
-              style={isListening ? {} : { color: "#374151" }}
-              onMouseEnter={e => { if (!isListening) { e.currentTarget.style.color = "#6B7280"; e.currentTarget.style.background = "rgba(255,255,255,0.05)"; } }}
-              onMouseLeave={e => { if (!isListening) { e.currentTarget.style.color = "#374151"; e.currentTarget.style.background = "transparent"; } }}>
-              <Mic size={13} className={isListening ? "animate-bounce" : ""} />
+              className={`w-7 h-7 rounded-full flex items-center justify-center transition-all duration-150 cursor-pointer ${
+                isListening ? "bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse" : "text-slate-400 hover:text-white hover:bg-slate-800/60"
+              }`}>
+              <Mic size={14} className={isListening ? "animate-bounce" : ""} />
             </button>
 
             {/* Send */}
             <motion.button
-              whileHover={canSend ? { scale: 1.06 } : {}}
-              whileTap={canSend ? { scale: 0.94 } : {}}
+              whileHover={canSend ? { scale: 1.08 } : {}}
+              whileTap={canSend ? { scale: 0.92 } : {}}
               onClick={handleSend}
               disabled={!canSend}
-              className="w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-200"
-              style={{
-                background: canSend ? "linear-gradient(135deg,#635BFF,#8579FF)" : "rgba(255,255,255,0.05)",
-                boxShadow: canSend ? "0 0 14px rgba(99,91,255,0.4)" : "none",
-                color: canSend ? "#fff" : "#374151",
-              }}>
+              className={`w-9 h-9 rounded-full flex items-center justify-center text-white transition-all shrink-0 ${
+                canSend
+                  ? "bg-gradient-to-tr from-purple-600 via-indigo-600 to-indigo-500 shadow-md shadow-purple-600/40 cursor-pointer"
+                  : "bg-purple-950/40 text-slate-500 border border-purple-500/20 opacity-50 cursor-not-allowed"
+              }`}>
               {isStreaming
                 ? <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                : <Send size={13} strokeWidth={2} />
+                : <Send size={15} className="ml-0.5" />
               }
             </motion.button>
           </div>

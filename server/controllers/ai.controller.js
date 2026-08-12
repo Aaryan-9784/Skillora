@@ -11,7 +11,7 @@ const aiService    = require("../services/ai.service");
  */
 const chat = async (req, res, next) => {
   try {
-    const { messages, feature = "chat", projectId } = req.body;
+    const { messages, feature = "chat", projectId, model } = req.body;
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return next(ApiError.badRequest("messages array is required"));
@@ -30,6 +30,7 @@ const chat = async (req, res, next) => {
       messages,
       feature,
       projectId,
+      model,
       res,
     });
   } catch (err) {
