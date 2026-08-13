@@ -77,7 +77,7 @@ const SubpageStatCard = ({
 
       {/* Middle Row: Large Value */}
       <div className="my-auto py-1">
-        <h4 className={`${valueFontSize} tracking-tight text-white truncate`} title={valStr}>
+        <h4 className={`${valueFontSize} tracking-tight text-white truncate`}>
           {value}
         </h4>
       </div>

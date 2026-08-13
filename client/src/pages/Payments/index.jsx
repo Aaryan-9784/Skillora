@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import {
   Plus, TrendingUp, Clock, CheckCircle, FileText,
   AlertCircle, Send, Eye, Trash2, Search, Copy,
-  X, RefreshCw,
+  X, RefreshCw, Filter,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import useInvoiceStore from "../../store/invoiceStore";
@@ -45,20 +45,20 @@ const GCard = ({ children, delay, className = "", glow, onClick }) => (
 );
 
 const STATUS_STYLE = {
-  draft:     { color: "#9CA3AF", bg: "rgba(156,163,175,0.12)", label: "Draft"     },
-  sent:      { color: "#635BFF", bg: "rgba(99,91,255,0.12)",   label: "Sent"      },
-  viewed:    { color: "#00D4FF", bg: "rgba(0,212,255,0.12)",   label: "Viewed"    },
-  paid:      { color: "#22C55E", bg: "rgba(34,197,94,0.12)",   label: "Paid", glow: "0 0 10px rgba(34,197,94,0.4)" },
-  overdue:   { color: "#EF4444", bg: "rgba(239,68,68,0.12)",   label: "Overdue", glow: "0 0 10px rgba(239,68,68,0.4)" },
-  cancelled: { color: "#6B7280", bg: "rgba(107,114,128,0.12)", label: "Cancelled" },
+  draft:     { bg: "rgba(107,114,128,0.15)", color: "#9CA3AF", dot: "#9CA3AF", label: "Draft" },
+  sent:      { bg: "rgba(59,130,246,0.15)",  color: "#60A5FA", dot: "#60A5FA", label: "Sent" },
+  viewed:    { bg: "rgba(99,91,255,0.15)",   color: "#A78BFA", dot: "#A78BFA", label: "Viewed" },
+  paid:      { bg: "rgba(34,197,94,0.15)",   color: "#4ADE80", dot: "#4ADE80", label: "Paid" },
+  overdue:   { bg: "rgba(239,68,68,0.15)",   color: "#F87171", dot: "#EF4444", label: "Overdue" },
+  cancelled: { bg: "rgba(107,114,128,0.15)", color: "#9CA3AF", dot: "#9CA3AF", label: "Cancelled" },
 };
 
 const StatusBadge = ({ status }) => {
   const s = STATUS_STYLE[status] || STATUS_STYLE.draft;
   return (
-    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wide shrink-0"
-      style={{ background: s.bg, color: s.color, border: `1px solid ${s.color}25`, boxShadow: s.glow || "none" }}>
-      <span className="w-1.5 h-1.5 rounded-full shrink-0 animate-pulse" style={{ background: s.color, boxShadow: `0 0 8px ${s.color}` }} />
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold capitalize whitespace-nowrap"
+      style={{ background: s.bg, color: s.color, border: `1px solid ${s.color}25` }}>
+      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: s.dot }} />
       {s.label}
     </span>
   );
@@ -84,9 +84,7 @@ const InvoiceRow = ({ inv, index, onDelete }) => {
     <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.03 }}
       onClick={() => navigate(`/payments/${inv._id}`)}
-      className="flex items-center gap-4 py-3.5 px-4 rounded-xl transition-all duration-150 group relative cursor-pointer"
-      onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
-      onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+      className="flex items-center gap-4 py-3.5 px-4 hover:bg-white/[0.03] transition-colors group cursor-pointer border-b border-white/[0.04] last:border-0">
 
       <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
         style={{ background: "rgba(99,91,255,0.12)", border: "1px solid rgba(99,91,255,0.2)" }}>
@@ -94,20 +92,29 @@ const InvoiceRow = ({ inv, index, onDelete }) => {
       </div>
 
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold truncate text-white">{inv.invoiceNumber}</p>
-        <p className="text-xs truncate text-gray-400 mt-0.5">
-          {inv.clientId?.name || "Client"}{inv.projectId?.title ? ` · ${inv.projectId.title}` : ""} · Due {formatDate(inv.dueDate)}
+        <p className="text-xs font-bold text-white truncate">{inv.invoiceNumber}</p>
+        <p className="text-[11px] text-slate-400 truncate mt-0.5">
+          Due {formatDate(inv.dueDate)}
         </p>
       </div>
 
-      <StatusBadge status={inv.status} />
+      <div className="hidden md:block flex-1 min-w-0">
+        <p className="text-xs font-semibold text-slate-200 truncate">{inv.clientId?.name || "Client"}</p>
+        {inv.projectId?.title && <p className="text-[11px] text-slate-400 truncate">{inv.projectId.title}</p>}
+      </div>
 
-      <p className="text-sm font-bold hidden sm:block shrink-0 text-white">
-        {formatCurrency(inv.total, inv.currency)}
-      </p>
+      <div className="w-28 shrink-0">
+        <StatusBadge status={inv.status} />
+      </div>
+
+      <div className="w-28 shrink-0 text-right">
+        <p className="text-xs font-black text-white">
+          {formatCurrency(inv.total, inv.currency)}
+        </p>
+      </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 shrink-0"
+      <div className="w-28 shrink-0 flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
         onClick={e => e.stopPropagation()}>
         <ActionBtn icon={Eye} title="View" color="#A78BFA" bg="rgba(99,91,255,0.15)"
           onClick={() => navigate(`/payments/${inv._id}`)} />
@@ -226,19 +233,34 @@ const Payments = () => {
             </p>
           </div>
 
-          <motion.button
-            whileHover={{ scale: 1.04, boxShadow: "0 0 28px rgba(99,91,255,0.55)" }}
-            whileTap={{ scale: 0.96 }}
-            onClick={() => navigate("/payments/new")}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer transition-all shrink-0"
-            style={{
-              background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)",
-              boxShadow: "0 0 20px rgba(99,91,255,0.35)",
-              border: "1px solid rgba(255,255,255,0.15)",
-            }}>
-            <Plus size={15} strokeWidth={2.5} />
-            <span>Create Invoice</span>
-          </motion.button>
+          <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={fetchInvoices}
+              title="Refresh Data"
+              className="w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer"
+              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.09)", color: "rgba(148,163,184,0.75)" }}
+              onMouseEnter={e => { e.currentTarget.style.background = "rgba(99,91,255,0.12)"; e.currentTarget.style.color = "#A78BFA"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "rgba(148,163,184,0.75)"; }}
+            >
+              <RefreshCw size={15} className={isLoading ? "animate-spin text-indigo-400" : ""} />
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.04, boxShadow: "0 0 28px rgba(99,91,255,0.55)" }}
+              whileTap={{ scale: 0.96 }}
+              onClick={() => navigate("/payments/new")}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer transition-all shrink-0"
+              style={{
+                background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)",
+                boxShadow: "0 0 20px rgba(99,91,255,0.35)",
+                border: "1px solid rgba(255,255,255,0.15)",
+              }}>
+              <Plus size={15} strokeWidth={2.5} />
+              <span>Create Invoice</span>
+            </motion.button>
+          </div>
         </motion.div>
 
         {/* ── KPI STAT CARDS ── */}
@@ -250,74 +272,108 @@ const Payments = () => {
         </div>
 
         {/* ── CONTROLS TOOLBAR (Search + Status Tabs) ── */}
-        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3 rounded-2xl"
-          style={{
-            background: "linear-gradient(145deg, rgba(15,23,42,0.65) 0%, rgba(10,15,26,0.85) 100%)",
-            border: "1px solid rgba(255,255,255,0.08)",
-            backdropFilter: "blur(16px)"
-          }}>
-          {/* Status Filter Tabs */}
-          <div className="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0" style={{ scrollbarWidth: "none" }}>
+        <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+          {/* Search Bar on Left */}
+          <div className="relative flex-1 max-w-md">
+            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "rgba(148,163,184,0.5)" }} />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by invoice number or total..."
+              className="w-full pl-10 pr-9 py-2.5 rounded-xl text-xs font-medium text-white placeholder-slate-400 outline-none transition-all duration-200"
+              style={{
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.08)",
+              }}
+              onFocus={(e) => {
+                e.target.style.border = "1px solid rgba(99,91,255,0.5)";
+                e.target.style.background = "rgba(99,91,255,0.06)";
+                e.target.style.boxShadow = "0 0 0 3px rgba(99,91,255,0.12)";
+              }}
+              onBlur={(e) => {
+                e.target.style.border = "1px solid rgba(255,255,255,0.08)";
+                e.target.style.background = "rgba(255,255,255,0.04)";
+                e.target.style.boxShadow = "none";
+              }}
+            />
+            {search && (
+              <button onClick={() => setSearch("")} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer">
+                <X size={13} />
+              </button>
+            )}
+          </div>
+
+          {/* Status Filter Tabs on Right */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 shrink-0" style={{ scrollbarWidth: "none" }}>
+            <Filter size={13} style={{ color: "rgba(148,163,184,0.5)", marginRight: 2 }} className="shrink-0" />
             {["all", "draft", "sent", "viewed", "paid", "overdue"].map((status) => (
               <button
                 key={status}
                 onClick={() => handleTabChange(status)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold capitalize transition-all shrink-0 cursor-pointer ${
-                  activeTab === status
-                    ? "bg-gradient-to-r from-indigo-500/25 to-purple-500/25 text-purple-300 border border-indigo-500/35 shadow-md shadow-indigo-500/10"
-                    : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
-                }`}
+                className="px-3.5 py-1.5 rounded-xl text-xs font-bold capitalize transition-all duration-200 shrink-0 cursor-pointer"
+                style={{
+                  background: activeTab === status ? "linear-gradient(135deg,rgba(99,91,255,0.25) 0%,rgba(139,92,246,0.15) 100%)" : "rgba(255,255,255,0.04)",
+                  color: activeTab === status ? "#EDE9FE" : "rgba(148,163,184,0.7)",
+                  border: activeTab === status ? "1px solid rgba(99,91,255,0.4)" : "1px solid rgba(255,255,255,0.08)",
+                  boxShadow: activeTab === status ? "0 0 12px rgba(99,91,255,0.18)" : "none",
+                }}
               >
                 {status}
               </button>
             ))}
           </div>
-
-          {/* Search Bar */}
-          <div className="relative min-w-[240px]">
-            <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search invoice number..."
-              className="w-full bg-white/[0.04] border border-white/[0.09] rounded-xl pl-9 pr-8 py-2 text-xs text-white placeholder-slate-500 focus:outline-none transition-all"
-              onFocus={(e) => {
-                e.target.style.border = "1px solid rgba(99,91,255,0.5)";
-                e.target.style.boxShadow = "0 0 0 3px rgba(99,91,255,0.12)";
-              }}
-              onBlur={(e) => {
-                e.target.style.border = "1px solid rgba(255,255,255,0.09)";
-                e.target.style.boxShadow = "none";
-              }}
-            />
-            {search && (
-              <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer">
-                <X size={12} />
-              </button>
-            )}
-          </div>
         </div>
 
         {/* ── MAIN INVOICES CARD CONTAINER (Client Portal GCard) ── */}
-        <GCard delay={0.2} glow="#635BFF" className="min-h-[320px]">
+        <GCard delay={0.2} glow="#635BFF" className="min-h-[380px]">
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-3">
+            <div className="flex flex-col items-center justify-center min-h-[380px] text-slate-400 gap-3">
               <RefreshCw size={24} className="animate-spin text-indigo-400" />
               <p className="text-xs font-semibold">Loading invoice matrix...</p>
             </div>
           ) : invoices.length === 0 ? (
-            <EmptyInvoices onNew={() => navigate("/payments/new")} />
+            <div className="flex flex-col items-center justify-center min-h-[380px] py-16 px-4 text-center space-y-3">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-1 shadow-lg shadow-indigo-500/10"
+                style={{ background: "rgba(99,91,255,0.12)", border: "1px solid rgba(99,91,255,0.25)" }}>
+                <FileText size={26} style={{ color: "#A78BFA" }} />
+              </div>
+              <h3 className="text-base font-bold text-white">No invoices found</h3>
+              <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
+                Create your first invoice to start getting paid and tracking revenue.
+              </p>
+              <motion.button
+                whileHover={{ scale: 1.04, boxShadow: "0 0 24px rgba(99,91,255,0.4)" }}
+                whileTap={{ scale: 0.96 }}
+                onClick={() => navigate("/payments/new")}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer mt-2"
+                style={{ background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)", border: "1px solid rgba(255,255,255,0.15)", boxShadow: "0 0 20px rgba(99,91,255,0.35)" }}>
+                <Plus size={15} strokeWidth={2.5} />
+                <span>Create Invoice</span>
+              </motion.button>
+            </div>
           ) : (
-            <div className="divide-y divide-white/[0.04] p-2">
-              {invoices.map((inv, idx) => (
-                <InvoiceRow
-                  key={inv._id}
-                  inv={inv}
-                  index={idx}
-                  onDelete={(i) => setDeleteModal(i)}
-                />
-              ))}
+            <div className="overflow-x-auto">
+              {/* Table Header Row */}
+              <div className="flex items-center gap-4 px-4 py-3 bg-white/[0.02]"
+                style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                <span className="text-[10px] font-bold tracking-widest uppercase text-slate-500 w-8 text-center shrink-0" />
+                <span className="text-[10px] font-bold tracking-widest uppercase text-slate-500 flex-1 min-w-0">Invoice #</span>
+                <span className="text-[10px] font-bold tracking-widest uppercase text-slate-500 hidden md:block flex-1 min-w-0">Client / Workspace</span>
+                <span className="text-[10px] font-bold tracking-widest uppercase text-slate-500 w-28 shrink-0">Status</span>
+                <span className="text-[10px] font-bold tracking-widest uppercase text-slate-500 w-28 shrink-0 text-right">Amount</span>
+                <span className="text-[10px] font-bold tracking-widest uppercase text-slate-500 w-28 shrink-0 text-right">Actions</span>
+              </div>
+              <div className="divide-y divide-white/[0.04]">
+                {invoices.map((inv, idx) => (
+                  <InvoiceRow
+                    key={inv._id}
+                    inv={inv}
+                    index={idx}
+                    onDelete={(i) => setDeleteModal(i)}
+                  />
+                ))}
+              </div>
             </div>
           )}
         </GCard>

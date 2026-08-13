@@ -170,12 +170,47 @@ const Dashboard = () => {
               Here&apos;s what&apos;s happening with your work today.
             </p>
           </div>
-          <motion.button whileHover={{ scale: 1.03, boxShadow: "0 0 28px rgba(99,91,255,0.5)" }} whileTap={{ scale: 0.97 }}
-            onClick={() => navigate("/clients", { state: { openAddModal: true } })}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer transition-all"
-            style={{ background: "linear-gradient(135deg, #635BFF 0%, #8579FF 100%)", boxShadow: "0 0 20px rgba(99,91,255,0.35)", border: "1px solid rgba(255,255,255,0.15)" }}>
-            <UserPlus size={15} strokeWidth={2.5} /> Add Client
-          </motion.button>
+          <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+            <motion.button
+              whileHover={{ scale: 1.04, boxShadow: "0 0 24px rgba(99,91,255,0.4)" }}
+              whileTap={{ scale: 0.96 }}
+              onClick={() => navigate("/projects")}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer transition-all"
+              style={{
+                background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)",
+                boxShadow: "0 0 20px rgba(99,91,255,0.35)",
+                border: "1px solid rgba(255,255,255,0.15)",
+              }}
+            >
+              <FolderKanban size={15} strokeWidth={2.5} />
+              <span>Projects</span>
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
+              onClick={() => navigate("/tasks")}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold cursor-pointer transition-all"
+              style={{
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.09)",
+                color: "#E2E8F0",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(99,91,255,0.15)";
+                e.currentTarget.style.borderColor = "rgba(99,91,255,0.35)";
+                e.currentTarget.style.color = "#C4B5FD";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.09)";
+                e.currentTarget.style.color = "#E2E8F0";
+              }}
+            >
+              <CheckSquare size={15} strokeWidth={2.5} />
+              <span>Tasks</span>
+            </motion.button>
+          </div>
         </motion.div>
 
         {/* KPI Cards — Instant static render */}

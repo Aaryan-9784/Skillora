@@ -6,7 +6,7 @@ import {
   Trash2, Pencil, Calendar, DollarSign, ArrowRight,
   Sparkles, ChevronDown, ExternalLink, FolderKanban,
   Globe, Briefcase, FileText, Send, CheckCircle2, Clock,
-  XCircle, Filter, Tag, Loader2, Check
+  XCircle, Filter, Tag, Loader2, Check, X,
 } from "lucide-react";
 import useProjectStore from "../../store/projectStore";
 import Modal from "../../components/ui/Modal";
@@ -127,6 +127,7 @@ const Projects = () => {
   } = useProjectStore();
 
   const [activeTab, setActiveTab] = useState("my"); // "my" | "proposals"
+  const [search, setSearch]       = useState("");
   const [showModal, setShowModal] = useState(false);
   const [creating, setCreating]   = useState(false);
 
@@ -141,6 +142,26 @@ const Projects = () => {
     setCreating(false);
     setShowModal(false);
   };
+
+  const filteredProjects = projects.filter((p) => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (
+      p.title?.toLowerCase().includes(q) ||
+      p.description?.toLowerCase().includes(q) ||
+      p.status?.toLowerCase().includes(q)
+    );
+  });
+
+  const filteredProposals = myProposals.filter((prop) => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (
+      prop.project?.title?.toLowerCase().includes(q) ||
+      prop.coverLetter?.toLowerCase().includes(q) ||
+      prop.status?.toLowerCase().includes(q)
+    );
+  });
 
   return (
     <div className="min-h-screen relative overflow-hidden pb-12"
@@ -223,55 +244,94 @@ const Projects = () => {
           />
         </div>
 
-        {/* ── NAVIGATION TABS BAR ── */}
-        <div className="flex items-center gap-2 p-1.5 rounded-2xl"
-          style={{
-            background: "linear-gradient(145deg, rgba(15,23,42,0.65) 0%, rgba(10,15,26,0.85) 100%)",
-            border: "1px solid rgba(255,255,255,0.08)",
-            backdropFilter: "blur(16px)"
-          }}>
-          <button onClick={() => setActiveTab("my")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              activeTab === "my"
-                ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-600/30"
-                : "text-slate-400 hover:text-white"
-            }`}>
-            <FolderKanban size={15} />
-            <span>My Active Projects ({projects.length})</span>
-          </button>
+        {/* ── TOOLBAR: SEARCH BAR ON LEFT + TABS ON RIGHT ── */}
+        <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+          {/* Search Bar */}
+          <div className="relative flex-1 max-w-md">
+            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "rgba(148,163,184,0.5)" }} />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={activeTab === "my" ? "Search projects by title or description..." : "Search applications or proposals..."}
+              className="w-full pl-10 pr-9 py-2.5 rounded-xl text-xs font-medium text-white placeholder-slate-400 outline-none transition-all duration-200"
+              style={{
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.08)",
+              }}
+              onFocus={(e) => {
+                e.target.style.border = "1px solid rgba(99,91,255,0.5)";
+                e.target.style.background = "rgba(99,91,255,0.06)";
+                e.target.style.boxShadow = "0 0 0 3px rgba(99,91,255,0.12)";
+              }}
+              onBlur={(e) => {
+                e.target.style.border = "1px solid rgba(255,255,255,0.08)";
+                e.target.style.background = "rgba(255,255,255,0.04)";
+                e.target.style.boxShadow = "none";
+              }}
+            />
+            {search && (
+              <button onClick={() => setSearch("")} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer">
+                <X size={13} />
+              </button>
+            )}
+          </div>
 
-          <button onClick={() => setActiveTab("proposals")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              activeTab === "proposals"
-                ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-600/30"
-                : "text-slate-400 hover:text-white"
-            }`}>
-            <FileText size={15} />
-            <span>My Applications ({myProposals.length})</span>
-          </button>
+          {/* Navigation Tabs */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 shrink-0" style={{ scrollbarWidth: "none" }}>
+            <button onClick={() => setActiveTab("my")}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                activeTab === "my"
+                  ? "bg-gradient-to-r from-indigo-500/25 to-purple-500/25 text-purple-300 border border-indigo-500/35 shadow-md shadow-indigo-500/10"
+                  : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
+              }`}>
+              <FolderKanban size={15} />
+              <span>My Active Projects ({projects.length})</span>
+            </button>
+
+            <button onClick={() => setActiveTab("proposals")}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                activeTab === "proposals"
+                  ? "bg-gradient-to-r from-indigo-500/25 to-purple-500/25 text-purple-300 border border-indigo-500/35 shadow-md shadow-indigo-500/10"
+                  : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
+              }`}>
+              <FileText size={15} />
+              <span>My Applications ({myProposals.length})</span>
+            </button>
+          </div>
         </div>
 
         {/* ── MAIN CONTENT CONTAINER (Client Portal GCard) ── */}
         <GCard delay={0.2} glow="#635BFF" className="min-h-[320px] p-6">
           {activeTab === "my" && (
             <div>
-              {projects.length === 0 ? (
+              {filteredProjects.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
                   <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3 shadow-lg shadow-indigo-500/10"
                     style={{ background: "rgba(99,91,255,0.12)", border: "1px solid rgba(99,91,255,0.25)" }}>
                     <FolderKanban size={26} className="text-indigo-400" />
                   </div>
-                  <h3 className="text-base font-bold text-white mb-1">No active projects found</h3>
-                  <p className="text-xs text-slate-400 max-w-sm mb-5">Create a personal project or apply for open jobs in the Explore Jobs section.</p>
-                  <Link to="/marketplace" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
-                    style={{ background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)", boxShadow: "0 0 20px rgba(99,91,255,0.35)" }}>
-                    <Globe size={14} />
-                    <span>Explore Jobs</span>
-                  </Link>
+                  <h3 className="text-base font-bold text-white mb-1">
+                    {search ? "No projects match your search" : "No active projects found"}
+                  </h3>
+                  <p className="text-xs text-slate-400 max-w-sm mb-5">
+                    {search ? "Try clearing or adjusting your search term." : "Create a personal project or apply for open jobs in the Explore Jobs section."}
+                  </p>
+                  {search ? (
+                    <button onClick={() => setSearch("")} className="px-4 py-2 rounded-xl text-xs font-bold text-purple-300 bg-purple-500/20 border border-purple-500/30 hover:bg-purple-500/30 transition-all cursor-pointer">
+                      Clear Search
+                    </button>
+                  ) : (
+                    <Link to="/marketplace" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
+                      style={{ background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)", boxShadow: "0 0 20px rgba(99,91,255,0.35)" }}>
+                      <Globe size={14} />
+                      <span>Explore Jobs</span>
+                    </Link>
+                  )}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-                  {projects.map((p) => (
+                  {filteredProjects.map((p) => (
                     <div key={p._id} className="rounded-2xl p-5 border transition-all duration-200 group flex flex-col justify-between space-y-4"
                       style={{
                         background: "rgba(255,255,255,0.03)",
@@ -331,23 +391,33 @@ const Projects = () => {
 
           {activeTab === "proposals" && (
             <div>
-              {myProposals.length === 0 ? (
+              {filteredProposals.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
                   <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3 shadow-lg shadow-indigo-500/10"
                     style={{ background: "rgba(99,91,255,0.12)", border: "1px solid rgba(99,91,255,0.25)" }}>
                     <FileText size={26} className="text-indigo-400" />
                   </div>
-                  <h3 className="text-base font-bold text-white mb-1">No applications submitted yet</h3>
-                  <p className="text-xs text-slate-400 max-w-sm mb-5">Browse open client contracts in the Explore Jobs section to submit proposals.</p>
-                  <Link to="/marketplace" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
-                    style={{ background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)", boxShadow: "0 0 20px rgba(99,91,255,0.35)" }}>
-                    <Globe size={14} />
-                    <span>Explore Jobs</span>
-                  </Link>
+                  <h3 className="text-base font-bold text-white mb-1">
+                    {search ? "No applications match your search" : "No applications submitted yet"}
+                  </h3>
+                  <p className="text-xs text-slate-400 max-w-sm mb-5">
+                    {search ? "Try clearing or adjusting your search term." : "Browse open client contracts in the Explore Jobs section to submit proposals."}
+                  </p>
+                  {search ? (
+                    <button onClick={() => setSearch("")} className="px-4 py-2 rounded-xl text-xs font-bold text-purple-300 bg-purple-500/20 border border-purple-500/30 hover:bg-purple-500/30 transition-all cursor-pointer">
+                      Clear Search
+                    </button>
+                  ) : (
+                    <Link to="/marketplace" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
+                      style={{ background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)", boxShadow: "0 0 20px rgba(99,91,255,0.35)" }}>
+                      <Globe size={14} />
+                      <span>Explore Jobs</span>
+                    </Link>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {myProposals.map((prop) => {
+                  {filteredProposals.map((prop) => {
                     const p = prop.project || {};
                     const isApproved = prop.status === "approved";
                     const isRejected = prop.status === "rejected";
