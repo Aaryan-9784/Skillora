@@ -39,6 +39,18 @@ const useNotificationStore = create((set, get) => ({
     }
   },
 
+  addNotification: (notification) => {
+    set((s) => {
+      const exists = s.notifications.some((n) => n._id === notification._id);
+      if (exists) return s;
+      const list = [notification, ...s.notifications];
+      return {
+        notifications: list,
+        unreadCount: list.filter((n) => !n.read).length,
+      };
+    });
+  },
+
   markRead: async (id) => {
     try {
       await api.patch(`/notifications/${id}/read`);

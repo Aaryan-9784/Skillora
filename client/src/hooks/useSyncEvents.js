@@ -48,6 +48,7 @@ const useSyncEvents = () => {
 
     // ── Freelancer / shared events ──────────────────────
     const onNotification = (notification) => {
+      useNotificationStore.getState().addNotification(notification);
       fetchUnreadCount();
       if (isClient) {
         clientStore.addNotification(notification);

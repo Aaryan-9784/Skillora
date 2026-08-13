@@ -5,15 +5,23 @@ import useNotificationStore from "../../store/notificationStore";
 import { formatDate } from "../../utils/helpers";
 
 const TYPE_META = {
-  project_created:   { emoji: "🗂️", color: "#635BFF" },
-  project_completed: { emoji: "✅", color: "#22C55E" },
-  task_assigned:     { emoji: "📋", color: "#3B82F6" },
-  task_due_soon:     { emoji: "⏰", color: "#F59E0B" },
-  invoice_sent:      { emoji: "📄", color: "#8B5CF6" },
-  invoice_paid:      { emoji: "💰", color: "#22C55E" },
-  payment_received:  { emoji: "💳", color: "#00D4FF" },
-  ai_suggestion:     { emoji: "🤖", color: "#A78BFA" },
-  system:            { emoji: "🔔", color: "#6B7280" },
+  project_created:        { emoji: "🗂️", color: "#635BFF" },
+  project_updated:        { emoji: "✏️", color: "#635BFF" },
+  project_completed:      { emoji: "✅", color: "#22C55E" },
+  project_status_changed: { emoji: "🔄", color: "#635BFF" },
+  task_assigned:          { emoji: "📋", color: "#3B82F6" },
+  task_due_soon:          { emoji: "⏰", color: "#F59E0B" },
+  task_overdue:           { emoji: "⚠️", color: "#EF4444" },
+  invoice_sent:           { emoji: "📄", color: "#8B5CF6" },
+  invoice_viewed:         { emoji: "👁️", color: "#00D4FF" },
+  invoice_paid:           { emoji: "💰", color: "#22C55E" },
+  invoice_overdue:        { emoji: "⚠️", color: "#EF4444" },
+  payment_received:       { emoji: "💳", color: "#00D4FF" },
+  plan_changed:           { emoji: "⭐", color: "#F59E0B" },
+  client_portal_joined:   { emoji: "🤝", color: "#22C55E" },
+  account_deactivated:    { emoji: "🛑", color: "#EF4444" },
+  ai_suggestion:          { emoji: "🤖", color: "#A78BFA" },
+  system:                 { emoji: "🔔", color: "#6B7280" },
 };
 
 const NotificationsPanel = ({ open, onClose }) => {

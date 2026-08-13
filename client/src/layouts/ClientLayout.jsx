@@ -221,7 +221,10 @@ const ClientNavbar = ({ onSearch, mobileOpen, setMobileOpen }) => {
   const PageIcon = currentConfig.icon;
   const pageTitle = currentConfig.title;
 
-  useEffect(() => { fetchUnreadCount(); }, []);
+  useEffect(() => {
+    useNotificationStore.getState().fetchNotifications();
+    fetchUnreadCount();
+  }, []);
 
   const handleLogout = async () => { await logout(); navigate("/login"); };
 
