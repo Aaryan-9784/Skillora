@@ -142,6 +142,15 @@ const getMessages = asyncHandler(async (req, res) => {
   const limit = Math.min(100, parseInt(req.query.limit) || 30);
   const skip  = (page - 1) * limit;
 
+  // RBAC Participant Check
+  const conversation = await Conversation.findById(conversationId);
+  if (!conversation) throw ApiError.notFound("Conversation not found");
+
+  const isParticipant = conversation.participants.some((p) => p.toString() === req.user._id.toString());
+  if (!isParticipant && req.user.role !== "admin") {
+    throw ApiError.forbidden("Access denied: You can only view your own conversations");
+  }
+
   const query = { conversationId, deletedFor: { $ne: req.user._id } };
 
   const [messages, total] = await Promise.all([
@@ -239,6 +248,11 @@ const sendMessage = asyncHandler(async (req, res) => {
 
   const conversation = await Conversation.findById(conversationId);
   if (!conversation) throw ApiError.notFound("Conversation not found");
+
+  const isParticipant = conversation.participants.some((p) => p.toString() === senderId.toString());
+  if (!isParticipant && req.user.role !== "admin") {
+    throw ApiError.forbidden("Access denied: You can only send messages in your own conversations");
+  }
 
   const message = await Message.create({
     conversationId,

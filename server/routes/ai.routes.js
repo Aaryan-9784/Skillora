@@ -6,8 +6,8 @@ const { aiLimiter } = require("../middlewares/rateLimiter");
 
 router.use(aiLimiter);
 
-// Streaming chat — main endpoint (supports authenticated & guest users)
-router.post("/chat", optionalAuth, chat);
+// Streaming chat — main endpoint (requires authenticated user session for RBAC isolation)
+router.post("/chat", protect, chat);
 
 // Protected endpoints
 router.post("/project-plan", protect, requireAny, projectPlan);

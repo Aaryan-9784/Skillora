@@ -39,17 +39,6 @@ const STATUS_STYLE = {
   cancelled: { dot: "#EF4444", bg: "rgba(239,68,68,0.12)",   text: "#EF4444", label: "Cancelled"  },
 };
 
-const CATEGORIES = [
-  "All",
-  "Web Development",
-  "Mobile App Development",
-  "UI/UX Design",
-  "AI & Data Science",
-  "Writing & Content",
-  "Marketing & SEO",
-  "General",
-];
-
 const StatusBadge = ({ status }) => {
   const s = STATUS_STYLE[status] || STATUS_STYLE.planning;
   return (
@@ -75,187 +64,6 @@ const SkeletonCard = () => (
     <div className="h-1.5 w-full rounded-full mb-4 bg-white/5" />
   </div>
 );
-
-// ── CUSTOM DARK GLASS DROPDOWN ──
-const CustomDropdown = ({ value, onChange, options }) => {
-  const [open, setOpen] = useState(false);
-  const dropdownRef = useRef(null);
-  const selected = options.find((o) => (typeof o === "string" ? o === value : o.value === value)) || options[0];
-  const getLabel = (o) => (typeof o === "string" ? o : o.label);
-  const getVal = (o) => (typeof o === "string" ? o : o.value);
-
-  useEffect(() => {
-    const handleClick = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
-
-  return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="h-9 px-3.5 rounded-xl text-xs font-semibold text-white flex items-center justify-between gap-2.5 transition-all cursor-pointer"
-        style={{
-          background: "rgba(255,255,255,0.04)",
-          border: open ? "1px solid rgba(99,91,255,0.45)" : "1px solid rgba(255,255,255,0.09)",
-        }}
-      >
-        <span>{getLabel(selected)}</span>
-        <ChevronDown size={13} className={`transition-transform duration-200 text-slate-400 ${open ? "rotate-180 text-indigo-400" : ""}`} />
-      </button>
-
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 6 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 6 }} transition={{ duration: 0.15 }}
-            className="absolute left-0 top-11 z-50 w-44 p-1.5 rounded-xl border border-slate-700/80 shadow-2xl space-y-0.5 backdrop-blur-xl"
-            style={{ background: "rgba(13,21,38,0.96)" }}>
-            {options.map((o) => {
-              const val = getVal(o);
-              const isSel = val === value;
-              return (
-                <button
-                  key={val}
-                  type="button"
-                  onClick={() => { onChange(val); setOpen(false); }}
-                  className={`w-full px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-between text-left transition-all cursor-pointer ${
-                    isSel ? "bg-indigo-600/30 text-white font-bold border border-indigo-500/40" : "hover:bg-white/10 text-slate-300"
-                  }`}>
-                  <span>{getLabel(o)}</span>
-                  {isSel && <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" />}
-                </button>
-              );
-            })}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-};
-
-// ── APPLY PROPOSAL MODAL ──
-const ApplyProposalModal = ({ project, onClose }) => {
-  const { submitProposal } = useProjectStore();
-  const [coverLetter, setCoverLetter] = useState("");
-  const [bidAmount, setBidAmount]   = useState(project?.budget || "");
-  const [currency, setCurrency]     = useState(project?.currency || "USD");
-  const [estimatedDays, setDays]    = useState(7);
-  const [loading, setLoading]       = useState(false);
-
-  if (!project) return null;
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!coverLetter.trim() || !bidAmount) {
-      toast.error("Please provide a cover letter and proposed bid amount");
-      return;
-    }
-    setLoading(true);
-    try {
-      await submitProposal(project._id, {
-        coverLetter: coverLetter.trim(),
-        bidAmount: Number(bidAmount),
-        currency,
-        estimatedDays: Number(estimatedDays),
-      });
-      onClose();
-    } catch {
-      /* handled in store */
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/70 backdrop-blur-md" onClick={onClose} />
-
-        <motion.div initial={{ scale: 0.94, opacity: 0, y: 16 }} animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.94, opacity: 0, y: 16 }} transition={{ duration: 0.25 }}
-          className="relative w-full max-w-xl rounded-3xl overflow-hidden z-10 p-6 sm:p-8"
-          style={{
-            background: "linear-gradient(160deg,rgba(15,23,42,0.98) 0%,rgba(8,14,26,0.98) 100%)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            boxShadow: "0 24px 64px rgba(0,0,0,0.8), 0 0 40px rgba(99,91,255,0.15)",
-          }}>
-          <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/10">
-            <div>
-              <h2 className="text-lg font-black text-white">Submit Proposal</h2>
-              <p className="text-xs text-indigo-400 font-semibold truncate max-w-md">{project.title}</p>
-            </div>
-            <button onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5">
-              <XCircle size={18} />
-            </button>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="bg-slate-900/80 rounded-2xl p-4 border border-slate-800 space-y-2">
-              <div className="flex justify-between text-xs">
-                <span className="text-slate-400">Posted Budget:</span>
-                <span className="font-bold text-white">{project.currency === "INR" ? "₹" : "$"}{project.budget?.toLocaleString()}</span>
-              </div>
-              {project.category && (
-                <div className="flex justify-between text-xs">
-                  <span className="text-slate-400">Category:</span>
-                  <span className="font-semibold text-slate-200">{project.category}</span>
-                </div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">Proposed Bid *</label>
-                <input type="number" required min="1" value={bidAmount} onChange={(e) => setBidAmount(e.target.value)}
-                  placeholder="1500" className="w-full px-3 py-2.5 rounded-xl text-xs bg-slate-900/80 border border-slate-700/80 text-white outline-none focus:border-indigo-500" />
-              </div>
-
-              <Select
-                label="Currency"
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
-                options={[
-                  { value: "USD", label: "USD ($)" },
-                  { value: "INR", label: "INR (₹)" },
-                  { value: "EUR", label: "EUR (€)" },
-                ]}
-              />
-
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">Est. Days *</label>
-                <input type="number" required min="1" value={estimatedDays} onChange={(e) => setDays(e.target.value)}
-                  placeholder="7" className="w-full px-3 py-2.5 rounded-xl text-xs bg-slate-900/80 border border-slate-700/80 text-white outline-none focus:border-indigo-500" />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1.5">Cover Letter & Approach *</label>
-              <textarea required rows={5} value={coverLetter} onChange={(e) => setCoverLetter(e.target.value)}
-                placeholder="Explain why you are the best fit for this project, your experience, relevant work samples, and proposed workflow..."
-                className="w-full px-4 py-2.5 rounded-xl text-xs bg-slate-900/80 border border-slate-700/80 text-white placeholder-slate-500 outline-none focus:border-indigo-500 leading-relaxed resize-none" />
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10">
-              <button type="button" onClick={onClose} className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white">
-                Cancel
-              </button>
-              <button type="submit" disabled={loading}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 shadow-lg shadow-indigo-500/30 cursor-pointer disabled:opacity-50">
-                {loading ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
-                <span>Submit Proposal</span>
-              </button>
-            </div>
-          </form>
-        </motion.div>
-      </div>
-    </AnimatePresence>
-  );
-};
 
 // ── NEW PROJECT FORM MODAL ──
 const ProjectForm = ({ onSubmit, onClose, loading }) => {
@@ -311,21 +119,17 @@ const ProjectForm = ({ onSubmit, onClose, loading }) => {
 // ── MAIN FREELANCER PROJECTS PAGE ──
 const Projects = () => {
   const {
-    projects, openProjects, myProposals,
-    fetchProjects, fetchOpenProjects, fetchMyProposals,
+    projects, myProposals,
+    fetchProjects, fetchMyProposals,
     createProject, deleteProject, isLoading
   } = useProjectStore();
 
-  const [activeTab, setActiveTab] = useState("my"); // "my" | "marketplace" | "proposals"
+  const [activeTab, setActiveTab] = useState("my"); // "my" | "proposals"
   const [showModal, setShowModal] = useState(false);
   const [creating, setCreating]   = useState(false);
-  const [search, setSearch]       = useState("");
-  const [categoryFilter, setCategory] = useState("All");
-  const [applyProject, setApplyProject] = useState(null);
 
   useEffect(() => {
     fetchProjects();
-    fetchOpenProjects();
     fetchMyProposals();
   }, []);
 
@@ -335,12 +139,6 @@ const Projects = () => {
     setCreating(false);
     setShowModal(false);
   };
-
-  const filteredMarketplace = openProjects.filter((p) => {
-    const matchSearch = p.title.toLowerCase().includes(search.toLowerCase()) || p.description.toLowerCase().includes(search.toLowerCase());
-    const matchCat = categoryFilter === "All" || p.category === categoryFilter;
-    return matchSearch && matchCat;
-  });
 
   return (
     <div className="min-h-screen relative overflow-hidden"
@@ -354,7 +152,7 @@ const Projects = () => {
 
       <div className="relative p-6 lg:p-8 max-w-[1400px] mx-auto space-y-6">
 
-        {/* ── HEADER & TAB BAR ── */}
+        {/* ── HEADER & ACTION BUTTON ── */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl lg:text-3xl font-black tracking-tight leading-tight"
@@ -364,10 +162,10 @@ const Projects = () => {
                 WebkitTextFillColor: "transparent",
                 filter: "drop-shadow(0 2px 12px rgba(167,139,250,0.25))",
               }}>
-              Freelancer Projects & Marketplace
+              Freelancer Projects Workspace
             </h1>
             <p className="text-xs lg:text-sm mt-1 font-medium text-slate-400">
-              Manage active client projects, explore open opportunities, and track submitted proposals
+              Manage active client projects and track submitted proposals
             </p>
           </div>
 
@@ -376,6 +174,42 @@ const Projects = () => {
             <Plus size={16} />
             <span>Create Personal Project</span>
           </button>
+        </div>
+
+        {/* ── STAT CARDS ROW ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <SubpageStatCard
+            label="Total Projects"
+            value={projects.length}
+            icon={Folder}
+            subtext="Personal & client projects"
+            color="purple"
+            delay={0}
+          />
+          <SubpageStatCard
+            label="Active Workspaces"
+            value={projects.filter((p) => p.status === "active" || p.status === "in_progress" || p.status === "planning").length}
+            icon={FolderKanban}
+            subtext="Currently in execution"
+            color="green"
+            delay={0.05}
+          />
+          <SubpageStatCard
+            label="Completed"
+            value={projects.filter((p) => p.status === "completed").length}
+            icon={CheckCircle2}
+            subtext="Delivered & signed off"
+            color="cyan"
+            delay={0.1}
+          />
+          <SubpageStatCard
+            label="Submitted Bids"
+            value={myProposals.length}
+            icon={FileText}
+            subtext="Proposals under review"
+            color="amber"
+            delay={0.15}
+          />
         </div>
 
         {/* ── MAIN PORTAL NAVIGATION TABS ── */}
@@ -388,16 +222,6 @@ const Projects = () => {
             }`}>
             <FolderKanban size={15} />
             <span>My Active Projects ({projects.length})</span>
-          </button>
-
-          <button onClick={() => setActiveTab("marketplace")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              activeTab === "marketplace"
-                ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-600/30"
-                : "text-slate-400 hover:text-white"
-            }`}>
-            <Globe size={15} />
-            <span>Explore Marketplace ({openProjects.length})</span>
           </button>
 
           <button onClick={() => setActiveTab("proposals")}
@@ -415,138 +239,74 @@ const Projects = () => {
         {activeTab === "my" && (
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-              {projects.map((p) => (
-                <div key={p._id} className="rounded-2xl p-5 bg-slate-900/80 border border-slate-800 hover:border-indigo-500/40 transition-all group flex flex-col justify-between space-y-4">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <StatusBadge status={p.status} />
-                      <button
-                        onClick={() => {
-                          if (window.confirm(`Are you sure you want to delete "${p.title}"? This will disconnect active client & freelancer connections.`)) {
-                            deleteProject(p._id);
-                          }
-                        }}
-                        className="text-slate-500 hover:text-rose-400 p-1 opacity-80 hover:opacity-100 transition-all cursor-pointer"
-                        title="Delete project & disconnect"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                    <Link to={`/projects/${p._id}`} className="text-sm font-bold text-white hover:text-indigo-400 transition-colors line-clamp-1">
-                      {p.title}
-                    </Link>
-                    <p className="text-xs text-slate-400 mt-1 line-clamp-2">{p.description || "No description"}</p>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-xs text-slate-400 mb-1">
-                      <span>Progress</span>
-                      <span className="font-bold text-indigo-400">{p.progress || 0}%</span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-indigo-500 to-cyan-400 rounded-full" style={{ width: `${p.progress || 0}%` }} />
-                    </div>
-                    <div className="flex justify-between items-center mt-3 text-xs text-slate-400 pt-2 border-t border-slate-800">
-                      <span>Budget: <strong className="text-white">₹{p.budget?.toLocaleString() || 0}</strong></span>
-                      <Link to={`/projects/${p._id}`} className="text-indigo-400 font-bold hover:underline flex items-center gap-1">
-                        Open Workspace <ArrowRight size={13} />
-                      </Link>
-                    </div>
-                  </div>
+              {projects.length === 0 ? (
+                <div className="col-span-full flex flex-col items-center justify-center py-20 bg-slate-900/30 rounded-3xl border border-slate-800 text-center space-y-3">
+                  <FolderKanban size={32} className="text-slate-500" />
+                  <p className="text-base font-bold text-white">No active projects found</p>
+                  <p className="text-xs text-slate-400 max-w-sm">Create a personal project or apply for open jobs in the Explore Jobs section.</p>
+                  <Link to="/marketplace" className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition-all shadow-md">
+                    <Globe size={14} />
+                    <span>Explore Jobs</span>
+                  </Link>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── TAB 2: EXPLORE MARKETPLACE ── */}
-        {activeTab === "marketplace" && (
-          <div className="space-y-6">
-            {/* Filter Bar */}
-            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between bg-slate-900/60 p-3 rounded-2xl border border-slate-800">
-              <div className="relative flex-1 max-w-md">
-                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search open client projects..."
-                  className="w-full pl-10 pr-4 py-2 rounded-xl text-xs bg-slate-950/80 border border-slate-800 text-white outline-none focus:border-indigo-500" />
-              </div>
-              <div className="flex items-center gap-2">
-                <Filter size={14} className="text-slate-400 ml-1" />
-                <CustomDropdown value={categoryFilter} onChange={setCategory} options={CATEGORIES} />
-              </div>
-            </div>
-
-            {/* Marketplace Grid */}
-            {filteredMarketplace.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 bg-slate-900/30 rounded-3xl border border-slate-800 text-center space-y-3">
-                <Globe size={32} className="text-indigo-400 opacity-60" />
-                <p className="text-base font-bold text-white">No open client projects match filters</p>
-                <p className="text-xs text-slate-400 max-w-sm">Client projects will appear here as soon as clients post them.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-                {filteredMarketplace.map((p) => {
-                  const client = p.clientUser || p.clientId || {};
-                  return (
-                    <div key={p._id} className="rounded-3xl p-6 bg-slate-900/90 border border-slate-800 hover:border-indigo-500/50 shadow-xl transition-all flex flex-col justify-between space-y-4">
-                      <div>
-                        {/* Client Identity Header */}
-                        <div className="flex items-center gap-3 pb-3 mb-3 border-b border-slate-800">
-                          <div className="w-10 h-10 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-bold text-xs overflow-hidden shrink-0">
-                            {client.avatar ? <img src={client.avatar} className="w-full h-full object-cover" /> : client.name?.slice(0, 2).toUpperCase() || "CL"}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs font-bold text-white truncate">{client.name || "Client"}</p>
-                            <p className="text-[10px] text-slate-400 truncate">{client.company || "Client Enterprise"}</p>
-                          </div>
-                          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                            {p.category || "Project"}
-                          </span>
-                        </div>
-
-                        <h3 className="text-sm font-bold text-white mb-2 leading-snug">{p.title}</h3>
-                        <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed mb-4">{p.description}</p>
-
-                        {/* Skills Required */}
-                        {p.requiredSkills?.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5 mb-4">
-                            {p.requiredSkills.map((sk) => (
-                              <span key={sk} className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-800/90 text-slate-300 border border-slate-700/50">
-                                {sk}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Footer & Apply Action */}
-                      <div className="pt-3 border-t border-slate-800 space-y-3">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-slate-400">Budget: <strong className="text-emerald-400 font-black">{p.currency === "INR" ? "₹" : "$"}{p.budget?.toLocaleString() || "Negotiable"}</strong></span>
-                          <span className="text-slate-400">{p.proposalsCount || 0} proposals</span>
-                        </div>
-
-                        <button onClick={() => setApplyProject(p)}
-                          className="w-full py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 shadow-md shadow-indigo-600/30 flex items-center justify-center gap-2 cursor-pointer">
-                          <Send size={14} />
-                          <span>Apply & Submit Proposal</span>
+              ) : (
+                projects.map((p) => (
+                  <div key={p._id} className="rounded-2xl p-5 bg-slate-900/80 border border-slate-800 hover:border-indigo-500/40 transition-all group flex flex-col justify-between space-y-4">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <StatusBadge status={p.status} />
+                        <button
+                          onClick={() => {
+                            if (window.confirm(`Are you sure you want to delete "${p.title}"? This will disconnect active client & freelancer connections.`)) {
+                              deleteProject(p._id);
+                            }
+                          }}
+                          className="text-slate-500 hover:text-rose-400 p-1 opacity-80 hover:opacity-100 transition-all cursor-pointer"
+                          title="Delete project & disconnect"
+                        >
+                          <Trash2 size={14} />
                         </button>
                       </div>
+                      <Link to={`/projects/${p._id}`} className="text-sm font-bold text-white hover:text-indigo-400 transition-colors line-clamp-1">
+                        {p.title}
+                      </Link>
+                      <p className="text-xs text-slate-400 mt-1 line-clamp-2">{p.description || "No description"}</p>
                     </div>
-                  );
-                })}
-              </div>
-            )}
+
+                    <div>
+                      <div className="flex justify-between text-xs text-slate-400 mb-1">
+                        <span>Progress</span>
+                        <span className="font-bold text-indigo-400">{p.progress || 0}%</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                        <div className="h-full bg-gradient-to-r from-indigo-500 to-cyan-400 rounded-full" style={{ width: `${p.progress || 0}%` }} />
+                      </div>
+                      <div className="flex justify-between items-center mt-3 text-xs text-slate-400 pt-2 border-t border-slate-800">
+                        <span>Budget: <strong className="text-white">₹{p.budget?.toLocaleString() || 0}</strong></span>
+                        <Link to={`/projects/${p._id}`} className="text-indigo-400 font-bold hover:underline flex items-center gap-1">
+                          Open Workspace <ArrowRight size={13} />
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         )}
 
-        {/* ── TAB 3: MY APPLICATIONS ── */}
+        {/* ── TAB 2: MY APPLICATIONS ── */}
         {activeTab === "proposals" && (
           <div className="space-y-4">
             {myProposals.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 bg-slate-900/30 rounded-3xl border border-slate-800 text-center space-y-3">
                 <FileText size={32} className="text-slate-500" />
                 <p className="text-base font-bold text-white">No applications submitted yet</p>
-                <p className="text-xs text-slate-400 max-w-sm">Switch to the "Explore Marketplace" tab to find client projects and apply.</p>
+                <p className="text-xs text-slate-400 max-w-sm">Browse open client contracts in the Explore Jobs section to submit proposals.</p>
+                <Link to="/marketplace" className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition-all shadow-md">
+                  <Globe size={14} />
+                  <span>Explore Jobs</span>
+                </Link>
               </div>
             ) : (
               <div className="space-y-3">
@@ -598,8 +358,6 @@ const Projects = () => {
       <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="New Personal Project" description="Create a project for your workspace">
         <ProjectForm onSubmit={handleCreate} onClose={() => setShowModal(false)} loading={creating} />
       </Modal>
-
-      <ApplyProposalModal project={applyProject} onClose={() => setApplyProject(null)} />
     </div>
   );
 };

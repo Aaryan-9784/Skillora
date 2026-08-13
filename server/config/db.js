@@ -4,7 +4,8 @@ const logger = require("../utils/logger");
 
 const attemptConnection = async (uri, options = {}) => {
   return await mongoose.connect(uri, {
-    serverSelectionTimeoutMS: 5000,
+    serverSelectionTimeoutMS: 15000,
+    connectTimeoutMS: 15000,
     ...options,
   });
 };
@@ -56,8 +57,10 @@ const connectDB = async () => {
   logger.error("  4. Local MongoDB: Install/start local MongoDB and set MONGO_URI=mongodb://127.0.0.1:27017/skillora in .env");
   logger.error("==========================================================================");
 
-  process.exit(1);
+  // Non-fatal mode in dev so nodemon server does not crash
+  logger.warn("Server starting in offline mode. Connect database to enable full persistence.");
 };
 
 module.exports = connectDB;
+
 

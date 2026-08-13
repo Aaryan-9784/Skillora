@@ -3,6 +3,8 @@ import * as authService from "../services/authService";
 import tokenStore from "../services/tokenStore";
 import toast from "react-hot-toast";
 
+import useAiStore from "./aiStore";
+
 /**
  * Auth store — access token lives in tokenStore (memory only).
  * User object is kept in Zustand state (not persisted to localStorage
@@ -14,7 +16,10 @@ const useAuthStore = create((set, get) => ({
   isLoading:       true,  // ← TRUE: block route guards until session restore completes
   errors:          {},
 
-  setUser: (user) => set({ user, isAuthenticated: !!user }),
+  setUser: (user) => {
+    set({ user, isAuthenticated: !!user });
+    useAiStore.getState().syncUserSession(user?._id || null);
+  },
 
   clearErrors: () => set({ errors: {} }),
 
@@ -26,6 +31,7 @@ const useAuthStore = create((set, get) => ({
       tokenStore.set(data.data.accessToken);
       sessionStorage.setItem("sk_has_session", "1");
       set({ user: data.data.user, isAuthenticated: true });
+      useAiStore.getState().syncUserSession(data.data.user._id);
       toast.success("Welcome to Skillora!");
       return { success: true, role: data.data.user.role };
     } catch (err) {
@@ -45,6 +51,7 @@ const useAuthStore = create((set, get) => ({
       tokenStore.set(data.data.accessToken);
       sessionStorage.setItem("sk_has_session", "1");
       set({ user: data.data.user, isAuthenticated: true });
+      useAiStore.getState().syncUserSession(data.data.user._id);
       toast.success(`Welcome back, ${data.data.user.name.split(" ")[0]}!`);
       return { success: true, role: data.data.user.role };
     } catch (err) {
@@ -63,6 +70,7 @@ const useAuthStore = create((set, get) => ({
     try {
       const { data } = await authService.getMe();
       set({ user: data.data.user, isAuthenticated: true });
+      useAiStore.getState().syncUserSession(data.data.user._id);
       return true;
     } catch {
       tokenStore.clear();
@@ -80,6 +88,7 @@ const useAuthStore = create((set, get) => ({
       tokenStore.clear();
       sessionStorage.removeItem("sk_has_session");
       set({ user: null, isAuthenticated: false });
+      useAiStore.getState().syncUserSession(null);
       toast.success("Signed out");
     }
   },
@@ -92,6 +101,7 @@ const useAuthStore = create((set, get) => ({
       tokenStore.clear();
       sessionStorage.removeItem("sk_has_session");
       set({ user: null, isAuthenticated: false });
+      useAiStore.getState().syncUserSession(null);
       toast.success("Signed out from all devices");
     }
   },
@@ -101,6 +111,7 @@ const useAuthStore = create((set, get) => ({
     // Skip fetch entirely if no session marker — avoids hanging on cold load
     if (!sessionStorage.getItem("sk_has_session") && !tokenStore.get()) {
       set({ isLoading: false });
+      useAiStore.getState().syncUserSession(null);
       return;
     }
     set({ isLoading: true });
@@ -113,10 +124,12 @@ const useAuthStore = create((set, get) => ({
       tokenStore.set(data.data?.accessToken ?? tokenStore.get());
       sessionStorage.setItem("sk_has_session", "1");
       set({ user: data.data.user, isAuthenticated: true });
+      useAiStore.getState().syncUserSession(data.data.user._id);
     } catch {
       tokenStore.clear();
       sessionStorage.removeItem("sk_has_session");
       set({ user: null, isAuthenticated: false });
+      useAiStore.getState().syncUserSession(null);
     } finally {
       clearTimeout(timeout);
       set({ isLoading: false });

@@ -12,6 +12,7 @@ import api from "../../services/api";
 import useAuthStore from "../../store/authStore";
 import useClickOutside from "../../hooks/useClickOutside";
 import KPIWidget from "../../components/dashboard/KPIWidget";
+import SubpageStatCard from "../../components/dashboard/SubpageStatCard";
 import { formatCurrency, getInitials } from "../../utils/helpers";
 
 // ─────────────────────────────────────────────────────────
@@ -417,27 +418,38 @@ export default function MarketplacePage() {
         </motion.div>
 
         {/* ── KPI STAT CARDS ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <KPIWidget
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <SubpageStatCard
             label="Active Job Listings"
-            value={`${filteredProjects.length} Open Jobs`}
+            value={filteredProjects.length}
             icon={Briefcase}
-            trendLabel="Verified client contracts"
-            color="brand"
+            subtext="Verified client contracts"
+            color="purple"
+            delay={0}
           />
-          <KPIWidget
+          <SubpageStatCard
             label="Escrow Protection"
             value="100% Guaranteed"
             icon={ShieldCheck}
-            trendLabel="Milestones locked safely"
-            color="success"
+            subtext="Milestones locked safely"
+            color="green"
+            delay={0.05}
           />
-          <KPIWidget
+          <SubpageStatCard
             label="Avg Contract Value"
             value={projects.length > 0 ? formatCurrency(Math.round(projects.reduce((acc, p) => acc + (p.budget || 0), 0) / projects.length), "INR") : "₹0"}
             icon={TrendingUp}
-            trendLabel="Based on live database contracts"
+            subtext="Based on live contracts"
             color="cyan"
+            delay={0.1}
+          />
+          <SubpageStatCard
+            label="Client Network"
+            value={new Set(projects.map(p => p.clientId?._id || p.clientId || p._id)).size}
+            icon={Building2}
+            subtext="Active client accounts"
+            color="amber"
+            delay={0.15}
           />
         </div>
 

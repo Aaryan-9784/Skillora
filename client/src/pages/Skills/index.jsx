@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Sparkles, Pencil, Trash2, Trophy, Zap, Target, TrendingUp, ChevronDown, X } from "lucide-react";
+import { Plus, Sparkles, Pencil, Trash2, Trophy, Zap, Target, TrendingUp, ChevronDown, X, Award } from "lucide-react";
 import useSkillStore from "../../store/skillStore";
+import SubpageStatCard from "../../components/dashboard/SubpageStatCard";
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis,
   ResponsiveContainer, Tooltip,
@@ -497,24 +498,39 @@ const StatsBar = ({ skills }) => {
   const experts   = skills.filter(s => s.levelLabel === "expert").length;
 
   return (
-    <div className="grid grid-cols-3 gap-3 mb-6">
-      {[
-        { icon: Zap,       label: "Total XP",    value: `${totalXP.toLocaleString()} XP`, color: "#F59E0B" },
-        { icon: Target,    label: "Avg. Level",  value: `${avgLevel}%`,                   color: "#635BFF" },
-        { icon: Trophy,    label: "Expert Skills", value: experts,                         color: "#22C55E" },
-      ].map(({ icon: Icon, label, value, color }) => (
-        <div key={label} className="rounded-2xl p-4 flex items-center gap-3"
-          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: `${color}18`, border: `1px solid ${color}25` }}>
-            <Icon size={16} style={{ color }} strokeWidth={1.8} />
-          </div>
-          <div>
-            <p className="text-base font-bold" style={{ color: "#F9FAFB" }}>{value}</p>
-            <p className="text-[10px]" style={{ color: "#4B5563" }}>{label}</p>
-          </div>
-        </div>
-      ))}
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <SubpageStatCard
+        label="Total Skills"
+        value={skills.length}
+        icon={Sparkles}
+        subtext="Logged skill matrix"
+        color="purple"
+        delay={0}
+      />
+      <SubpageStatCard
+        label="Total XP"
+        value={`${totalXP.toLocaleString()} XP`}
+        icon={Zap}
+        subtext="Earned mastery points"
+        color="amber"
+        delay={0.05}
+      />
+      <SubpageStatCard
+        label="Avg. Level"
+        value={`${avgLevel}%`}
+        icon={Target}
+        subtext="Overall proficiency"
+        color="brand"
+        delay={0.1}
+      />
+      <SubpageStatCard
+        label="Expert Skills"
+        value={experts}
+        icon={Trophy}
+        subtext="High-level mastery"
+        color="green"
+        delay={0.15}
+      />
     </div>
   );
 };

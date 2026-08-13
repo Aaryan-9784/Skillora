@@ -11,13 +11,17 @@ const start = async () => {
   await connectDB();
 
   // Schedule cron jobs after DB is connected
-  const cron = require("node-cron");
-  const { markOverdueInvoices } = require("./jobs/markOverdue.job");
-  const startMeetingCron = require("./services/meetingReminder.service");
+  try {
+    const cron = require("node-cron");
+    const { markOverdueInvoices } = require("./jobs/markOverdue.job");
+    const startMeetingCron = require("./services/meetingReminder.service");
 
-  cron.schedule("0 0 * * *", markOverdueInvoices); // midnight daily
-  markOverdueInvoices(); // run once on startup
-  startMeetingCron();    // 15-min meeting reminder cron
+    cron.schedule("0 0 * * *", markOverdueInvoices); // midnight daily
+    markOverdueInvoices().catch(() => {});
+    startMeetingCron();
+  } catch (cronErr) {
+    logger.warn(`Cron initialization warning: ${cronErr.message}`);
+  }
 
   const server = http.createServer(app);
 
