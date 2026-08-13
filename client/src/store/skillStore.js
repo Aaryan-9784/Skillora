@@ -18,6 +18,8 @@ const useSkillStore = create((set) => ({
         skills:     skillsRes.data.data.skills || [],
         categories: catRes.data.data.categories || [],
       });
+    } catch (err) {
+      console.warn("Failed to fetch skills:", err);
     } finally {
       set({ isLoading: false });
     }
@@ -40,9 +42,19 @@ const useSkillStore = create((set) => ({
   },
 
   deleteSkill: async (id) => {
-    await api.delete(`/skills/${id}`);
-    set((s) => ({ skills: s.skills.filter((sk) => sk._id !== id) }));
-    toast.success("Skill removed");
+    try {
+      await api.delete(`/skills/${id}`);
+      set((s) => ({ skills: s.skills.filter((sk) => sk._id !== id) }));
+      toast.success("Skill removed");
+    } catch (err) {
+      if (err.response?.status === 404) {
+        // Skill already removed on server, update state locally
+        set((s) => ({ skills: s.skills.filter((sk) => sk._id !== id) }));
+        toast.success("Skill removed");
+      } else {
+        toast.error(err.response?.data?.message || "Failed to delete skill");
+      }
+    }
   },
 }));
 

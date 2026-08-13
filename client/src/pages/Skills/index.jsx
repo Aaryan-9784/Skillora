@@ -1,12 +1,47 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Sparkles, Pencil, Trash2, Trophy, Zap, Target, TrendingUp, ChevronDown, X, Award } from "lucide-react";
+import {
+  Plus, Sparkles, Pencil, Trash2, Trophy, Zap, Target,
+  TrendingUp, ChevronDown, X, Award, Search, Filter, SlidersHorizontal, Check
+} from "lucide-react";
 import useSkillStore from "../../store/skillStore";
 import SubpageStatCard from "../../components/dashboard/SubpageStatCard";
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis,
   ResponsiveContainer, Tooltip,
 } from "recharts";
+
+// ── Glass Container Card (Client Portal Standard) ──────────────────────────
+const GCard = ({ children, delay, className = "", glow, onClick }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 16 }}
+    animate={{ opacity: 1, y: 0 }}
+    whileHover={{ y: -4, transition: { duration: 0.2 } }}
+    transition={{ delay: delay || 0, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+    onClick={onClick}
+    className={`relative overflow-hidden rounded-2xl transition-all duration-300 ${className}`}
+    style={{
+      background: "linear-gradient(145deg, rgba(15,23,42,0.85) 0%, rgba(9,14,26,0.92) 100%)",
+      backdropFilter: "blur(20px)",
+      WebkitBackdropFilter: "blur(20px)",
+      border: "1px solid rgba(255,255,255,0.09)",
+      boxShadow: glow
+        ? `0 10px 30px -10px ${glow}20, 0 0 20px ${glow}10`
+        : "0 10px 30px -10px rgba(0,0,0,0.5), 0 0 20px rgba(99,91,255,0.05)",
+    }}
+  >
+    {/* Top Shimmer Accent Highlight Line */}
+    <div
+      className="absolute inset-x-0 top-0 h-px pointer-events-none"
+      style={{
+        background: glow
+          ? `linear-gradient(90deg, transparent, ${glow}70, transparent)`
+          : "linear-gradient(90deg, transparent, rgba(99,91,255,0.35), transparent)",
+      }}
+    />
+    {children}
+  </motion.div>
+);
 
 // ─────────────────────────────────────────────────────────
 // CUSTOM DARK GLASS DROPDOWN
@@ -86,7 +121,7 @@ const CustomDropdown = ({ value, onChange, options }) => {
 };
 
 // ─────────────────────────────────────────────────────────
-// CONSTANTS
+// CONSTANTS & CONFIG
 // ─────────────────────────────────────────────────────────
 const CATEGORIES = [
   { value: "development", label: "Development", emoji: "💻" },
@@ -125,13 +160,24 @@ const iFocus = (e) => { e.target.style.border = "1px solid rgba(99,91,255,0.5)";
 const iBlur  = (e) => { e.target.style.border = "1px solid rgba(255,255,255,0.09)"; e.target.style.boxShadow = "none"; };
 
 // ─────────────────────────────────────────────────────────
-// LEVEL BADGE
+// LEVEL BADGE (Client Portal Style with Animated Pulse Dot)
 // ─────────────────────────────────────────────────────────
 const LevelBadge = ({ levelLabel }) => {
   const cfg = LEVEL_CONFIG[levelLabel?.toLowerCase()] || LEVEL_CONFIG.beginner;
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold"
-      style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.color}25`, boxShadow: `0 0 8px ${cfg.glow}` }}>
+    <span
+      className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide shrink-0"
+      style={{
+        background: cfg.bg,
+        color: cfg.color,
+        border: `1px solid ${cfg.color}25`,
+        boxShadow: `0 0 8px ${cfg.glow}`,
+      }}
+    >
+      <span
+        className="w-1.5 h-1.5 rounded-full shrink-0 animate-pulse"
+        style={{ background: cfg.color, boxShadow: `0 0 8px ${cfg.color}` }}
+      />
       {levelLabel === "expert" && "⭐ "}
       {cfg.label}
     </span>
@@ -141,7 +187,7 @@ const LevelBadge = ({ levelLabel }) => {
 // ─────────────────────────────────────────────────────────
 // CIRCULAR PROGRESS
 // ─────────────────────────────────────────────────────────
-const CircularProgress = ({ value, color, size = 56 }) => {
+const CircularProgress = ({ value, color, size = 52 }) => {
   const r = (size - 8) / 2;
   const circ = 2 * Math.PI * r;
   const offset = circ - (value / 100) * circ;
@@ -167,7 +213,7 @@ const CircularProgress = ({ value, color, size = 56 }) => {
 };
 
 // ─────────────────────────────────────────────────────────
-// SKILL CARD
+// SKILL CARD (Client Portal Glass Card Standard)
 // ─────────────────────────────────────────────────────────
 const SkillCard = ({ skill, index, onEdit, onDelete }) => {
   const levelKey = skill.levelLabel?.toLowerCase() || "beginner";
@@ -182,71 +228,67 @@ const SkillCard = ({ skill, index, onEdit, onDelete }) => {
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ delay: index * 0.05, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
       whileHover={{ y: -4, transition: { duration: 0.2 } }}
-      className="relative rounded-2xl p-5 flex flex-col gap-4 group overflow-hidden"
+      className="relative rounded-2xl p-5 flex flex-col justify-between group overflow-hidden"
       style={{
-        background: "rgba(255,255,255,0.03)",
-        border: "1px solid rgba(255,255,255,0.07)",
-        backdropFilter: "blur(12px)",
+        background: "linear-gradient(145deg, rgba(15,23,42,0.85) 0%, rgba(9,14,26,0.92) 100%)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.4), 0 0 20px rgba(99,91,255,0.04)",
       }}
       onMouseEnter={e => {
-        e.currentTarget.style.border = `1px solid ${cfg.color}35`;
-        e.currentTarget.style.boxShadow = `0 8px 32px rgba(0,0,0,0.3), 0 0 0 1px ${cfg.color}18`;
+        e.currentTarget.style.border = `1px solid ${cfg.color}40`;
+        e.currentTarget.style.boxShadow = `0 12px 36px rgba(0,0,0,0.5), 0 0 24px ${cfg.color}20`;
       }}
       onMouseLeave={e => {
-        e.currentTarget.style.border = "1px solid rgba(255,255,255,0.07)";
-        e.currentTarget.style.boxShadow = "none";
+        e.currentTarget.style.border = "1px solid rgba(255,255,255,0.08)";
+        e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,0,0,0.4), 0 0 20px rgba(99,91,255,0.04)";
       }}
     >
-      {/* Ambient glow */}
-      <div className="absolute -top-8 -right-8 w-28 h-28 rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-        style={{ background: `radial-gradient(circle, ${cfg.glow} 0%, transparent 70%)` }} />
-
-      {/* Top gradient line */}
+      {/* Top Shimmer Highlight Line */}
       <div className="absolute top-0 inset-x-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-300"
         style={{ background: `linear-gradient(90deg, transparent, ${cfg.color}, transparent)` }} />
 
+      {/* Ambient Radial Glow */}
+      <div className="absolute -top-8 -right-8 w-28 h-28 rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        style={{ background: `radial-gradient(circle, ${cfg.glow} 0%, transparent 70%)` }} />
+
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between relative z-10">
         <div className="flex items-center gap-2.5">
-          {/* Category emoji badge */}
           <div className="w-9 h-9 rounded-xl flex items-center justify-center text-base shrink-0"
             style={{ background: `${catColor}18`, border: `1px solid ${catColor}25` }}>
             {catEmoji}
           </div>
           <div>
-            <p className="text-sm font-bold" style={{ color: "#F9FAFB" }}>{skill.name}</p>
-            <p className="text-[10px] capitalize mt-0.5" style={{ color: "#4B5563" }}>{skill.category}</p>
+            <p className="text-sm font-bold text-white group-hover:text-purple-300 transition-colors line-clamp-1">{skill.name}</p>
+            <p className="text-[10px] capitalize mt-0.5 font-medium text-slate-400">{skill.category}</p>
           </div>
         </div>
 
-        {/* Quick actions */}
-        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 shrink-0">
+        {/* Actions */}
+        <div className="flex gap-1 opacity-80 group-hover:opacity-100 transition-opacity shrink-0">
           <button onClick={() => onEdit(skill)}
-            className="w-6 h-6 rounded-lg flex items-center justify-center transition-all duration-100"
-            style={{ color: "#6B7280" }}
-            onMouseEnter={e => { e.currentTarget.style.background = "rgba(99,91,255,0.15)"; e.currentTarget.style.color = "#A78BFA"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#6B7280"; }}>
-            <Pencil size={11} />
+            className="p-1.5 rounded-lg text-slate-400 hover:text-purple-300 hover:bg-purple-500/15 transition-all cursor-pointer"
+            title="Edit skill">
+            <Pencil size={12} />
           </button>
           <button onClick={() => onDelete(skill._id)}
-            className="w-6 h-6 rounded-lg flex items-center justify-center transition-all duration-100"
-            style={{ color: "#6B7280" }}
-            onMouseEnter={e => { e.currentTarget.style.background = "rgba(239,68,68,0.15)"; e.currentTarget.style.color = "#EF4444"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#6B7280"; }}>
-            <Trash2 size={11} />
+            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/15 transition-all cursor-pointer"
+            title="Delete skill">
+            <Trash2 size={12} />
           </button>
         </div>
       </div>
 
-      {/* Progress + circular */}
-      <div className="flex items-center gap-4">
+      {/* Progress Section */}
+      <div className="flex items-center gap-4 my-4 relative z-10">
         <CircularProgress value={skill.level} color={cfg.color} size={52} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-2">
             <LevelBadge levelLabel={skill.levelLabel} />
-            <span className="text-[10px] font-semibold" style={{ color: cfg.color }}>{skill.level}%</span>
+            <span className="text-xs font-bold" style={{ color: cfg.color }}>{skill.level}%</span>
           </div>
-          {/* Progress bar */}
           <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.07)" }}>
             <motion.div
               initial={{ width: 0 }}
@@ -262,15 +304,14 @@ const SkillCard = ({ skill, index, onEdit, onDelete }) => {
         </div>
       </div>
 
-      {/* XP badge */}
-      <div className="flex items-center justify-between pt-2"
-        style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-        <div className="flex items-center gap-1.5 text-[10px]" style={{ color: "#4B5563" }}>
+      {/* Bottom Experience & XP */}
+      <div className="flex items-center justify-between pt-2.5 border-t border-white/5 text-[10px] text-slate-400 relative z-10">
+        <div className="flex items-center gap-1.5">
           <Zap size={10} style={{ color: cfg.color }} />
-          <span>{LEVEL_CONFIG[levelKey]?.xp || 0} XP</span>
+          <span className="font-semibold text-slate-300">{LEVEL_CONFIG[levelKey]?.xp || 0} XP</span>
         </div>
         {skill.yearsOfExperience > 0 && (
-          <span className="text-[10px]" style={{ color: "#4B5563" }}>
+          <span className="font-medium text-slate-400">
             {skill.yearsOfExperience}y exp
           </span>
         )}
@@ -280,7 +321,7 @@ const SkillCard = ({ skill, index, onEdit, onDelete }) => {
 };
 
 // ─────────────────────────────────────────────────────────
-// EMPTY STATE
+// EMPTY STATE (Matches Exact Original Centered Design with Glass Aesthetics)
 // ─────────────────────────────────────────────────────────
 const EmptyState = ({ onAdd }) => (
   <motion.div
@@ -289,28 +330,28 @@ const EmptyState = ({ onAdd }) => (
     transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
     className="flex flex-col items-center justify-center py-24 text-center relative"
   >
-    {/* Radial glow */}
+    {/* Radial Ambient Glow */}
     <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
       <div className="w-96 h-96 rounded-full"
-        style={{ background: "radial-gradient(circle, rgba(99,91,255,0.07) 0%, transparent 70%)" }} />
+        style={{ background: "radial-gradient(circle, rgba(99,91,255,0.08) 0%, transparent 70%)" }} />
     </div>
 
-    {/* Floating icon */}
+    {/* Floating Animated Icon Box */}
     <div className="relative mb-8">
       <motion.div
         animate={{ y: [0, -10, 0] }}
         transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
         className="w-24 h-24 rounded-3xl flex items-center justify-center"
         style={{
-          background: "linear-gradient(135deg, rgba(99,91,255,0.15) 0%, rgba(139,92,246,0.08) 100%)",
-          border: "1px solid rgba(99,91,255,0.25)",
-          boxShadow: "0 0 48px rgba(99,91,255,0.15), inset 0 1px 0 rgba(255,255,255,0.08)",
+          background: "linear-gradient(135deg, rgba(99,91,255,0.18) 0%, rgba(139,92,246,0.1) 100%)",
+          border: "1px solid rgba(99,91,255,0.3)",
+          boxShadow: "0 0 48px rgba(99,91,255,0.2), inset 0 1px 0 rgba(255,255,255,0.1)",
         }}
       >
-        <Sparkles size={40} style={{ color: "#635BFF" }} strokeWidth={1.4} />
+        <Sparkles size={40} style={{ color: "#8B5CF6" }} strokeWidth={1.4} />
       </motion.div>
 
-      {/* Orbiting XP dots */}
+      {/* Orbiting XP Dots */}
       {[
         { color: "#F59E0B", angle: 0   },
         { color: "#22C55E", angle: 120 },
@@ -330,7 +371,7 @@ const EmptyState = ({ onAdd }) => (
       ))}
     </div>
 
-    <h3 className="text-2xl font-bold mb-3"
+    <h3 className="text-2xl font-black mb-3"
       style={{
         background: "linear-gradient(135deg, #FFFFFF 0%, #C4B5FD 100%)",
         WebkitBackgroundClip: "text",
@@ -338,16 +379,16 @@ const EmptyState = ({ onAdd }) => (
       }}>
       No skills yet
     </h3>
-    <p className="text-sm max-w-sm leading-relaxed mb-2" style={{ color: "#6B7280" }}>
+    <p className="text-xs lg:text-sm text-slate-400 max-w-sm leading-relaxed mb-2">
       Track your skills, measure your progress, and grow your expertise over time.
     </p>
-    <p className="text-sm mb-8" style={{ color: "#4B5563" }}>Every expert was once a beginner 🚀</p>
+    <p className="text-xs lg:text-sm text-slate-500 mb-8">Every expert was once a beginner 🚀</p>
 
     <motion.button
       whileHover={{ scale: 1.04, boxShadow: "0 0 32px rgba(99,91,255,0.5)" }}
       whileTap={{ scale: 0.96 }}
       onClick={onAdd}
-      className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white"
+      className="flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-bold text-white cursor-pointer"
       style={{
         background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)",
         boxShadow: "0 0 20px rgba(99,91,255,0.35)",
@@ -404,7 +445,7 @@ const SkillForm = ({ initial = {}, onSubmit, onClose, loading }) => {
         <CustomDropdown value={form.category} onChange={(val) => setForm(f => ({ ...f, category: val }))} options={CATEGORIES} />
       </div>
 
-      {/* Level slider */}
+      {/* Level Slider */}
       <div>
         <div className="flex items-center justify-between mb-2">
           <label style={{ ...lStyle, marginBottom: 0 }}>Proficiency level</label>
@@ -418,7 +459,7 @@ const SkillForm = ({ initial = {}, onSubmit, onClose, loading }) => {
           style={{ accentColor: cfg.color, background: `linear-gradient(to right, ${cfg.color} ${form.level}%, rgba(255,255,255,0.1) ${form.level}%)` }} />
         <div className="flex justify-between mt-1.5">
           {["Beginner","Intermediate","Advanced","Expert"].map(l => (
-            <span key={l} className="text-[9px]" style={{ color: "#374151" }}>{l}</span>
+            <span key={l} className="text-[9px] text-slate-500 font-medium">{l}</span>
           ))}
         </div>
       </div>
@@ -432,17 +473,16 @@ const SkillForm = ({ initial = {}, onSubmit, onClose, loading }) => {
 
       <div className="flex gap-3 pt-2">
         <button type="button" onClick={onClose}
-          className="flex-1 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer"
-          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "#9CA3AF" }}
-          onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.08)"}
-          onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}>
+          className="flex-1 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-slate-400"
+          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
           Cancel
         </button>
         <motion.button type="submit" whileTap={{ scale: 0.97 }} disabled={loading}
-          className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white cursor-pointer"
+          className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
           style={{
             background: loading ? "rgba(99,91,255,0.5)" : "linear-gradient(135deg,#635BFF,#8B5CF6)",
             boxShadow: loading ? "none" : "0 0 16px rgba(99,91,255,0.35)",
+            border: "1px solid rgba(255,255,255,0.15)",
           }}>
           {loading ? "Saving…" : initial._id ? "Save changes" : "Add Skill"}
         </motion.button>
@@ -452,14 +492,14 @@ const SkillForm = ({ initial = {}, onSubmit, onClose, loading }) => {
 };
 
 // ─────────────────────────────────────────────────────────
-// MODAL
+// MODAL (Client Portal Glass Standard)
 // ─────────────────────────────────────────────────────────
 const SkillModal = ({ isOpen, onClose, title, children }) => (
   <AnimatePresence>
     {isOpen && (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          className="absolute inset-0 bg-black/70 backdrop-blur-md"
+          className="absolute inset-0 bg-black/75 backdrop-blur-md"
           onClick={onClose} />
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 12 }}
@@ -468,16 +508,16 @@ const SkillModal = ({ isOpen, onClose, title, children }) => (
           transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
           className="relative w-full max-w-md rounded-3xl overflow-hidden z-10 shadow-2xl"
           style={{
-            background: "rgba(11,15,26,0.96)",
+            background: "linear-gradient(160deg, rgba(15,23,42,0.98) 0%, rgba(10,16,30,0.98) 100%)",
             backdropFilter: "blur(24px)",
             border: "1px solid rgba(255,255,255,0.12)",
             boxShadow: "0 25px 60px rgba(0,0,0,0.8), 0 0 50px rgba(99,91,255,0.15)",
           }}
         >
           <div className="absolute top-0 inset-x-0 h-px pointer-events-none"
-            style={{ background: "linear-gradient(90deg,transparent,rgba(99,91,255,0.4),transparent)" }} />
+            style={{ background: "linear-gradient(90deg,transparent,rgba(99,91,255,0.5),transparent)" }} />
           <div className="flex items-center justify-between p-6 border-b border-white/10">
-            <h2 className="text-lg font-black tracking-tight text-white">{title}</h2>
+            <h2 className="text-base font-black tracking-tight text-white">{title}</h2>
             <button onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-all cursor-pointer">
               <X size={16} />
             </button>
@@ -490,7 +530,7 @@ const SkillModal = ({ isOpen, onClose, title, children }) => (
 );
 
 // ─────────────────────────────────────────────────────────
-// STATS BAR (top summary)
+// STATS BAR (Top Summary when skills exist)
 // ─────────────────────────────────────────────────────────
 const StatsBar = ({ skills }) => {
   const totalXP   = skills.reduce((s, sk) => s + (LEVEL_CONFIG[sk.levelLabel?.toLowerCase()]?.xp || 0), 0);
@@ -562,16 +602,18 @@ const Skills = () => {
     setConfirmOpen(false);
   };
 
-  const radarData = skills.slice(0, 8).map(s => ({ subject: s.name, level: s.level }));
+  const radarData = useMemo(() => {
+    return skills.slice(0, 8).map(s => ({ subject: s.name, level: s.level }));
+  }, [skills]);
 
   return (
-    <div className="min-h-screen relative overflow-hidden"
+    <div className="min-h-screen relative overflow-hidden pb-12"
       style={{ background: "radial-gradient(ellipse 100% 55% at 65% -5%,rgba(99,91,255,0.08) 0%,transparent 52%),linear-gradient(180deg,#0B0F1A 0%,#07090F 100%)" }}>
       
       {/* Ambient background lighting */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute -top-40 right-1/4 w-[650px] h-[650px] rounded-full"
-          style={{ background: "radial-gradient(circle,rgba(99,91,255,0.05) 0%,transparent 60%)" }} />
+          style={{ background: "radial-gradient(circle,rgba(99,91,255,0.06) 0%,transparent 60%)" }} />
       </div>
 
       <div className="relative p-6 lg:p-8 max-w-[1400px] mx-auto space-y-6">
@@ -582,10 +624,10 @@ const Skills = () => {
           <div>
             <h1 className="text-2xl lg:text-3xl font-black tracking-tight leading-tight"
               style={{
-                background: "linear-gradient(135deg, #FFFFFF 30%, #A78BFA 100%)",
+                background: "linear-gradient(135deg, #FFFFFF 0%, #DDD6FE 40%, #A78BFA 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
-                filter: "drop-shadow(0 2px 12px rgba(167,139,250,0.2))",
+                filter: "drop-shadow(0 2px 12px rgba(167,139,250,0.25))",
               }}>
               Skills & Competencies
             </h1>
@@ -621,39 +663,34 @@ const Skills = () => {
           <EmptyState onAdd={() => setModal({})} />
         ) : (
           <>
-            {/* Stats bar */}
+            {/* Stats Bar */}
             <StatsBar skills={skills} />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Radar chart */}
               {radarData.length >= 3 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="rounded-2xl p-5 lg:col-span-1"
-                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
-                >
-                  <h3 className="text-sm font-semibold mb-1" style={{ color: "#F9FAFB" }}>Skill Radar</h3>
-                  <p className="text-xs mb-4" style={{ color: "#4B5563" }}>Top {radarData.length} skills</p>
+                <GCard delay={0.05} glow="#635BFF" className="p-5 lg:col-span-1 h-fit">
+                  <h3 className="text-sm font-bold text-white mb-0.5">Skill Radar</h3>
+                  <p className="text-xs text-slate-400 mb-4">Competency mapping (Top {radarData.length})</p>
                   <ResponsiveContainer width="100%" height={220}>
                     <RadarChart data={radarData}>
-                      <PolarGrid stroke="rgba(255,255,255,0.06)" />
-                      <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10, fill: "#6B7280" }} />
-                      <Radar dataKey="level" stroke="#635BFF" fill="#635BFF" fillOpacity={0.15} strokeWidth={2}
-                        dot={{ fill: "#635BFF", r: 3 }} />
+                      <PolarGrid stroke="rgba(255,255,255,0.07)" />
+                      <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10, fill: "#9CA3AF" }} />
+                      <Radar dataKey="level" stroke="#635BFF" fill="#635BFF" fillOpacity={0.2} strokeWidth={2}
+                        dot={{ fill: "#A78BFA", r: 3 }} />
                       <Tooltip
                         formatter={(v) => [`${v}%`, "Level"]}
                         contentStyle={{
                           background: "rgba(10,17,32,0.97)",
-                          border: "1px solid rgba(255,255,255,0.1)",
+                          border: "1px solid rgba(255,255,255,0.12)",
                           borderRadius: 10,
                           fontSize: 12,
                           color: "#F9FAFB",
-                        }} />
+                        }}
+                      />
                     </RadarChart>
                   </ResponsiveContainer>
-                </motion.div>
+                </GCard>
               )}
 
               {/* Skill cards grid */}
@@ -692,25 +729,25 @@ const Skills = () => {
               className="relative w-full max-w-sm rounded-2xl p-6 z-10"
               style={{
                 background: "rgba(13,20,40,0.99)",
-                border: "1px solid rgba(239,68,68,0.2)",
-                boxShadow: "0 0 0 1px rgba(239,68,68,0.1), 0 24px 48px rgba(0,0,0,0.6)",
+                border: "1px solid rgba(239,68,68,0.25)",
+                boxShadow: "0 0 0 1px rgba(239,68,68,0.1), 0 24px 48px rgba(0,0,0,0.7)",
               }}
             >
               <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
                 style={{ background: "rgba(239,68,68,0.12)" }}>
                 <Trash2 size={18} style={{ color: "#EF4444" }} />
               </div>
-              <h3 className="text-base font-semibold mb-1" style={{ color: "#F9FAFB" }}>Remove skill</h3>
-              <p className="text-sm mb-5" style={{ color: "#6B7280" }}>Remove this skill from your profile?</p>
+              <h3 className="text-base font-bold text-white mb-1">Remove Skill</h3>
+              <p className="text-xs text-slate-400 mb-5">Remove this skill from your profile?</p>
               <div className="flex gap-3">
                 <button onClick={() => setConfirmOpen(false)}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-medium"
-                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "#9CA3AF" }}>
+                  className="flex-1 py-2.5 rounded-xl text-xs font-bold text-slate-400 cursor-pointer"
+                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
                   Cancel
                 </button>
                 <button onClick={handleDeleteConfirm}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white"
-                  style={{ background: "linear-gradient(135deg,#EF4444,#DC2626)", boxShadow: "0 0 12px rgba(239,68,68,0.3)" }}>
+                  className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
+                  style={{ background: "linear-gradient(135deg,#EF4444,#DC2626)", boxShadow: "0 0 14px rgba(239,68,68,0.3)" }}>
                   Remove
                 </button>
               </div>

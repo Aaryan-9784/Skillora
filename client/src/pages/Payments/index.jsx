@@ -12,6 +12,38 @@ import SubpageStatCard from "../../components/dashboard/SubpageStatCard";
 import { formatDate, formatCurrency } from "../../utils/helpers";
 import useDebounce from "../../hooks/useDebounce";
 
+// ── Glass Container Card (Client Portal Standard) ──────────────────────────
+const GCard = ({ children, delay, className = "", glow, onClick }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 16 }}
+    animate={{ opacity: 1, y: 0 }}
+    whileHover={{ y: -2, transition: { duration: 0.2 } }}
+    transition={{ delay: delay || 0, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+    onClick={onClick}
+    className={`relative overflow-hidden rounded-2xl transition-all duration-300 ${className}`}
+    style={{
+      background: "linear-gradient(145deg, rgba(15,23,42,0.85) 0%, rgba(9,14,26,0.92) 100%)",
+      backdropFilter: "blur(20px)",
+      WebkitBackdropFilter: "blur(20px)",
+      border: "1px solid rgba(255,255,255,0.09)",
+      boxShadow: glow
+        ? `0 10px 30px -10px ${glow}20, 0 0 20px ${glow}10`
+        : "0 10px 30px -10px rgba(0,0,0,0.5), 0 0 20px rgba(99,91,255,0.05)",
+    }}
+  >
+    {/* Top Shimmer Accent Line */}
+    <div
+      className="absolute inset-x-0 top-0 h-px pointer-events-none"
+      style={{
+        background: glow
+          ? `linear-gradient(90deg, transparent, ${glow}70, transparent)`
+          : "linear-gradient(90deg, transparent, rgba(99,91,255,0.35), transparent)",
+      }}
+    />
+    {children}
+  </motion.div>
+);
+
 const STATUS_STYLE = {
   draft:     { color: "#9CA3AF", bg: "rgba(156,163,175,0.12)", label: "Draft"     },
   sent:      { color: "#635BFF", bg: "rgba(99,91,255,0.12)",   label: "Sent"      },
@@ -24,9 +56,9 @@ const STATUS_STYLE = {
 const StatusBadge = ({ status }) => {
   const s = STATUS_STYLE[status] || STATUS_STYLE.draft;
   return (
-    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold"
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wide shrink-0"
       style={{ background: s.bg, color: s.color, border: `1px solid ${s.color}25`, boxShadow: s.glow || "none" }}>
-      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: s.color }} />
+      <span className="w-1.5 h-1.5 rounded-full shrink-0 animate-pulse" style={{ background: s.color, boxShadow: `0 0 8px ${s.color}` }} />
       {s.label}
     </span>
   );
@@ -98,25 +130,26 @@ const InvoiceRow = ({ inv, index, onDelete }) => {
   );
 };
 
-// ── Metric Card ───────────────────────────────────────────
-
-
-// ── Empty State ───────────────────────────────────────────
+// ── Empty State Container ─────────────────────────────────
 const EmptyInvoices = ({ onNew }) => (
-  <div className="flex flex-col items-center justify-center py-16 text-center">
-    <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
-      style={{ background: "rgba(99,91,255,0.12)", border: "1px solid rgba(99,91,255,0.2)" }}>
-      <FileText size={28} className="text-indigo-400" />
+  <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+    <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3 shadow-lg shadow-indigo-500/10"
+      style={{ background: "rgba(99,91,255,0.12)", border: "1px solid rgba(99,91,255,0.25)" }}>
+      <FileText size={26} className="text-indigo-400" />
     </div>
-    <h3 className="text-lg font-bold text-white mb-1">No invoices found</h3>
-    <p className="text-xs text-gray-400 max-w-xs mb-5">
+    <h3 className="text-base font-bold text-white mb-1">No invoices found</h3>
+    <p className="text-xs text-slate-400 max-w-xs leading-relaxed mb-5">
       Create your first invoice to start getting paid and tracking revenue.
     </p>
-    <button onClick={onNew}
-      className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-white cursor-pointer"
-      style={{ background: "linear-gradient(135deg,#635BFF 0%,#8B5CF6 100%)" }}>
-      <Plus size={14} /> Create Invoice
-    </button>
+    <motion.button
+      whileHover={{ scale: 1.04, boxShadow: "0 0 24px rgba(99,91,255,0.4)" }}
+      whileTap={{ scale: 0.96 }}
+      onClick={onNew}
+      className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
+      style={{ background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)", border: "1px solid rgba(255,255,255,0.15)" }}>
+      <Plus size={15} strokeWidth={2.5} />
+      <span>Create Invoice</span>
+    </motion.button>
   </div>
 );
 
@@ -164,27 +197,27 @@ const Payments = () => {
   const overdueCount = invoices.filter(i => i.status === "overdue").length;
 
   return (
-    <div className="min-h-screen relative overflow-hidden"
+    <div className="min-h-screen relative overflow-hidden pb-12"
       style={{ background: "radial-gradient(ellipse 100% 55% at 65% -5%,rgba(99,91,255,0.08) 0%,transparent 52%),linear-gradient(180deg,#0B0F1A 0%,#07090F 100%)" }}>
       
       {/* Ambient background lighting */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute -top-40 right-1/4 w-[650px] h-[650px] rounded-full"
-          style={{ background: "radial-gradient(circle,rgba(99,91,255,0.05) 0%,transparent 60%)" }} />
+          style={{ background: "radial-gradient(circle,rgba(99,91,255,0.06) 0%,transparent 60%)" }} />
       </div>
 
       <div className="relative p-6 lg:p-8 max-w-[1400px] mx-auto space-y-6">
 
-        {/* Header */}
+        {/* ── HEADER ── */}
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
           className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl lg:text-3xl font-black tracking-tight leading-tight"
               style={{
-                background: "linear-gradient(135deg, #FFFFFF 30%, #A78BFA 100%)",
+                background: "linear-gradient(135deg, #FFFFFF 0%, #DDD6FE 40%, #A78BFA 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
-                filter: "drop-shadow(0 2px 12px rgba(167,139,250,0.2))",
+                filter: "drop-shadow(0 2px 12px rgba(167,139,250,0.25))",
               }}>
               Payments & Invoices
             </h1>
@@ -203,31 +236,36 @@ const Payments = () => {
               boxShadow: "0 0 20px rgba(99,91,255,0.35)",
               border: "1px solid rgba(255,255,255,0.15)",
             }}>
-            <Plus size={16} /> Create Invoice
+            <Plus size={15} strokeWidth={2.5} />
+            <span>Create Invoice</span>
           </motion.button>
         </motion.div>
 
-        {/* Metrics */}
+        {/* ── KPI STAT CARDS ── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <SubpageStatCard icon={TrendingUp} label="Total Received" value={formatCurrency(totalPaid)} color="green" delay={0.05} />
+          <SubpageStatCard icon={TrendingUp} label="Total Received" value={formatCurrency(totalPaid, "INR")} color="green" delay={0.05} />
           <SubpageStatCard icon={Clock} label="Pending Payments" value={pendingCount} color="brand" delay={0.1} />
           <SubpageStatCard icon={AlertCircle} label="Overdue Invoices" value={overdueCount} color="red" delay={0.15} />
           <SubpageStatCard icon={FileText} label="Total Invoices" value={pagination.total || invoices.length} color="cyan" delay={0.2} />
         </div>
 
-        {/* Controls: Search + Status Tabs */}
+        {/* ── CONTROLS TOOLBAR (Search + Status Tabs) ── */}
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3 rounded-2xl"
-          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", backdropFilter: "blur(16px)" }}>
+          style={{
+            background: "linear-gradient(145deg, rgba(15,23,42,0.65) 0%, rgba(10,15,26,0.85) 100%)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            backdropFilter: "blur(16px)"
+          }}>
           {/* Status Filter Tabs */}
           <div className="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0" style={{ scrollbarWidth: "none" }}>
             {["all", "draft", "sent", "viewed", "paid", "overdue"].map((status) => (
               <button
                 key={status}
                 onClick={() => handleTabChange(status)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition-all shrink-0 cursor-pointer ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold capitalize transition-all shrink-0 cursor-pointer ${
                   activeTab === status
-                    ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/30"
-                    : "text-gray-400 hover:text-white hover:bg-white/[0.04]"
+                    ? "bg-gradient-to-r from-indigo-500/25 to-purple-500/25 text-purple-300 border border-indigo-500/35 shadow-md shadow-indigo-500/10"
+                    : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
                 }`}
               >
                 {status}
@@ -236,38 +274,42 @@ const Payments = () => {
           </div>
 
           {/* Search Bar */}
-          <div className="relative min-w-[220px]">
-            <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
+          <div className="relative min-w-[240px]">
+            <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search invoice number..."
-              className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-9 pr-8 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500/50"
+              className="w-full bg-white/[0.04] border border-white/[0.09] rounded-xl pl-9 pr-8 py-2 text-xs text-white placeholder-slate-500 focus:outline-none transition-all"
+              onFocus={(e) => {
+                e.target.style.border = "1px solid rgba(99,91,255,0.5)";
+                e.target.style.boxShadow = "0 0 0 3px rgba(99,91,255,0.12)";
+              }}
+              onBlur={(e) => {
+                e.target.style.border = "1px solid rgba(255,255,255,0.09)";
+                e.target.style.boxShadow = "none";
+              }}
             />
             {search && (
-              <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white cursor-pointer">
+              <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer">
                 <X size={12} />
               </button>
             )}
           </div>
         </div>
 
-        {/* Invoices List Card */}
-        <div className="relative overflow-hidden rounded-2xl p-6 min-h-[300px]"
-          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", backdropFilter: "blur(16px)" }}>
-          <div className="absolute inset-x-0 top-0 h-px pointer-events-none"
-            style={{ background: "linear-gradient(90deg,transparent,rgba(99,91,255,0.25),transparent)" }} />
-          
+        {/* ── MAIN INVOICES CARD CONTAINER (Client Portal GCard) ── */}
+        <GCard delay={0.2} glow="#635BFF" className="min-h-[320px]">
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-20 text-gray-500 gap-3">
+            <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-3">
               <RefreshCw size={24} className="animate-spin text-indigo-400" />
-              <p className="text-xs font-semibold">Loading invoices...</p>
+              <p className="text-xs font-semibold">Loading invoice matrix...</p>
             </div>
           ) : invoices.length === 0 ? (
             <EmptyInvoices onNew={() => navigate("/payments/new")} />
           ) : (
-            <div className="divide-y divide-white/[0.04]">
+            <div className="divide-y divide-white/[0.04] p-2">
               {invoices.map((inv, idx) => (
                 <InvoiceRow
                   key={inv._id}
@@ -278,7 +320,7 @@ const Payments = () => {
               ))}
             </div>
           )}
-        </div>
+        </GCard>
 
       </div>
 

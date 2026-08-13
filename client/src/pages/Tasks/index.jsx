@@ -1,13 +1,45 @@
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Plus, ListTodo, Sparkles, LayoutGrid,
-  Filter, ChevronDown, X,
+  Plus, ListTodo, Sparkles, LayoutGrid, List,
+  Filter, ChevronDown, X, FolderKanban, Search, Trash2, Pencil,
 } from "lucide-react";
 import useProjectStore from "../../store/projectStore";
 import KanbanBoard from "../../components/projects/KanbanBoard";
 import SubpageStatCard from "../../components/dashboard/SubpageStatCard";
 import { formatDate } from "../../utils/helpers";
+
+// ── Glass Container Card (Client Portal Standard) ──────────────────────────
+const GCard = ({ children, delay, className = "", glow, onClick }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 16 }}
+    animate={{ opacity: 1, y: 0 }}
+    whileHover={{ y: -2, transition: { duration: 0.2 } }}
+    transition={{ delay: delay || 0, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+    onClick={onClick}
+    className={`relative overflow-hidden rounded-2xl transition-all duration-300 ${className}`}
+    style={{
+      background: "linear-gradient(145deg, rgba(15,23,42,0.85) 0%, rgba(9,14,26,0.92) 100%)",
+      backdropFilter: "blur(20px)",
+      WebkitBackdropFilter: "blur(20px)",
+      border: "1px solid rgba(255,255,255,0.09)",
+      boxShadow: glow
+        ? `0 10px 30px -10px ${glow}20, 0 0 20px ${glow}10`
+        : "0 10px 30px -10px rgba(0,0,0,0.5), 0 0 20px rgba(99,91,255,0.05)",
+    }}
+  >
+    {/* Top Shimmer Accent Line */}
+    <div
+      className="absolute inset-x-0 top-0 h-px pointer-events-none"
+      style={{
+        background: glow
+          ? `linear-gradient(90deg, transparent, ${glow}70, transparent)`
+          : "linear-gradient(90deg, transparent, rgba(99,91,255,0.35), transparent)",
+      }}
+    />
+    {children}
+  </motion.div>
+);
 
 // ─────────────────────────────────────────────────────────
 // CUSTOM DARK GLASS DROPDOWN
@@ -101,216 +133,136 @@ const SkeletonColumn = () => (
 );
 
 // ─────────────────────────────────────────────────────────
-// EMPTY STATE
+// EMPTY STATE (Inside GCard Container)
 // ─────────────────────────────────────────────────────────
 const EmptyState = ({ onAdd }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 16 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-    className="flex flex-col items-center justify-center py-24 text-center relative"
-  >
-    {/* Radial glow */}
-    <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-      <div className="w-80 h-80 rounded-full"
-        style={{ background: "radial-gradient(circle, rgba(99,91,255,0.07) 0%, transparent 70%)" }} />
+  <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+    <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3 shadow-lg shadow-indigo-500/10"
+      style={{ background: "rgba(99,91,255,0.12)", border: "1px solid rgba(99,91,255,0.25)" }}>
+      <ListTodo size={26} className="text-indigo-400" />
     </div>
-
-    {/* Animated icon */}
-    <div className="relative mb-8">
-      <motion.div
-        animate={{ y: [0, -10, 0] }}
-        transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
-        className="w-24 h-24 rounded-3xl flex items-center justify-center"
-        style={{
-          background: "linear-gradient(135deg, rgba(99,91,255,0.15) 0%, rgba(139,92,246,0.08) 100%)",
-          border: "1px solid rgba(99,91,255,0.25)",
-          boxShadow: "0 0 48px rgba(99,91,255,0.15), inset 0 1px 0 rgba(255,255,255,0.08)",
-        }}
-      >
-        <ListTodo size={40} style={{ color: "#635BFF" }} strokeWidth={1.4} />
-      </motion.div>
-
-      {/* Floating mini kanban columns */}
-      {[
-        { x: -52, y: -8,  delay: 0,    color: "#9CA3AF" },
-        { x: -52, y: 20,  delay: 0.3,  color: "#635BFF" },
-        { x:  52, y: -8,  delay: 0.6,  color: "#F59E0B" },
-        { x:  52, y: 20,  delay: 0.9,  color: "#22C55E" },
-      ].map((dot, i) => (
-        <motion.div key={i}
-          className="absolute w-2 h-2 rounded-full"
-          style={{
-            background: dot.color,
-            boxShadow: `0 0 8px ${dot.color}`,
-            left: `calc(50% + ${dot.x}px)`,
-            top: `calc(50% + ${dot.y}px)`,
-          }}
-          animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.3, 0.8] }}
-          transition={{ duration: 2.2, repeat: Infinity, delay: dot.delay }}
-        />
-      ))}
-    </div>
-
-    <h3 className="text-2xl font-bold mb-3"
-      style={{
-        background: "linear-gradient(135deg, #FFFFFF 0%, #C4B5FD 100%)",
-        WebkitBackgroundClip: "text",
-        WebkitTextFillColor: "transparent",
-      }}>
-      No tasks yet
-    </h3>
-    <p className="text-sm max-w-sm leading-relaxed mb-8" style={{ color: "#6B7280" }}>
-      Create tasks inside a project to start managing your workflow.
-      Organize work across Kanban columns and track progress visually.
+    <h3 className="text-base font-bold text-white mb-1">No tasks yet</h3>
+    <p className="text-xs text-slate-400 max-w-sm leading-relaxed mb-5">
+      Create tasks inside a project to start managing your workflow across Kanban columns and track progress visually.
     </p>
-
-    <div className="flex flex-col sm:flex-row items-center gap-3">
-      <motion.button
-        whileHover={{ scale: 1.04, boxShadow: "0 0 32px rgba(99,91,255,0.5)" }}
-        whileTap={{ scale: 0.96 }}
-        onClick={onAdd}
-        className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white cursor-pointer"
-        style={{
-          background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)",
-          boxShadow: "0 0 20px rgba(99,91,255,0.35)",
-          border: "1px solid rgba(255,255,255,0.15)",
-        }}
-      >
-        <Plus size={16} strokeWidth={2.5} />
-        Add your first task
-      </motion.button>
-    </div>
-
-    <p className="mt-5 text-xs flex items-center gap-1.5" style={{ color: "#374151" }}>
-      <LayoutGrid size={10} style={{ color: "#635BFF" }} />
-      Tip: Organize work with Kanban columns — Todo, In Progress, Review, Done
-    </p>
-  </motion.div>
+    <motion.button
+      whileHover={{ scale: 1.04, boxShadow: "0 0 24px rgba(99,91,255,0.4)" }}
+      whileTap={{ scale: 0.96 }}
+      onClick={onAdd}
+      className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
+      style={{ background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)", border: "1px solid rgba(255,255,255,0.15)" }}>
+      <Plus size={15} strokeWidth={2.5} />
+      <span>Add your first task</span>
+    </motion.button>
+  </div>
 );
 
 // ─────────────────────────────────────────────────────────
-// TASK FORM (modal content)
+// SHARED FORM STYLES
 // ─────────────────────────────────────────────────────────
-const PRIORITY_OPTIONS = [
-  { value: "low", label: "Low" },
-  { value: "medium", label: "Medium" },
-  { value: "high", label: "High" },
-  { value: "urgent", label: "Urgent" },
-];
-const STATUS_OPTIONS   = [
-  { value: "todo",        label: "To Do"       },
-  { value: "in_progress", label: "In Progress" },
-  { value: "review",      label: "In Review"   },
-  { value: "done",        label: "Done"        },
-];
-
-const inputStyle = {
-  background: "rgba(255,255,255,0.04)",
-  border: "1px solid rgba(255,255,255,0.09)",
-  color: "#F9FAFB",
-  borderRadius: 10,
-  padding: "10px 14px",
-  fontSize: 14,
-  outline: "none",
-  width: "100%",
-  transition: "border-color 0.15s, box-shadow 0.15s",
+const iStyle = {
+  background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)",
+  color: "#F9FAFB", borderRadius: 12, padding: "10px 14px", fontSize: 13,
+  outline: "none", width: "100%", transition: "border-color 0.15s, box-shadow 0.15s",
 };
-const labelStyle = { color: "#9CA3AF", fontSize: 12, fontWeight: 600, marginBottom: 6, display: "block" };
-const onFocus = (e) => { e.target.style.border = "1px solid rgba(99,91,255,0.5)"; e.target.style.boxShadow = "0 0 0 3px rgba(99,91,255,0.12)"; };
-const onBlur  = (e) => { e.target.style.border = "1px solid rgba(255,255,255,0.09)"; e.target.style.boxShadow = "none"; };
+const lStyle = { color: "#9CA3AF", fontSize: 12, fontWeight: 600, marginBottom: 6, display: "block" };
+const iFocus = (e) => { e.target.style.border = "1px solid rgba(99,91,255,0.5)"; e.target.style.boxShadow = "0 0 0 3px rgba(99,91,255,0.12)"; };
+const iBlur  = (e) => { e.target.style.border = "1px solid rgba(255,255,255,0.09)"; e.target.style.boxShadow = "none"; };
 
-const TaskForm = ({ projects, onSubmit, onClose, loading, defaultStatus }) => {
+// ─────────────────────────────────────────────────────────
+// TASK FORM
+// ─────────────────────────────────────────────────────────
+const TaskForm = ({ projects, onSubmit, onClose, loading, defaultStatus = "todo" }) => {
   const [form, setForm] = useState({
-    title: "", description: "", priority: "medium",
-    status: defaultStatus || "todo", dueDate: "",
-    projectId: projects[0]?._id || "",
+    title: "", description: "", projectId: projects[0]?._id || "",
+    status: defaultStatus, priority: "medium", dueDate: "",
   });
-  const set = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
-  const projectOptions = projects.map(p => ({ value: p._id, label: p.title }));
+  const set = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
   return (
     <form onSubmit={(e) => { e.preventDefault(); onSubmit(form); }} className="space-y-4">
       <div>
-        <label style={labelStyle}>Task title *</label>
-        <input name="title" placeholder="e.g. Design homepage mockup" value={form.title}
-          onChange={set} required style={inputStyle} onFocus={onFocus} onBlur={onBlur} />
+        <label style={lStyle}>Project *</label>
+        <CustomDropdown
+          value={form.projectId}
+          onChange={(val) => setForm((f) => ({ ...f, projectId: val }))}
+          options={projects.map((p) => ({ value: p._id, label: p.title }))}
+        />
       </div>
+
       <div>
-        <label style={labelStyle}>Description</label>
-        <textarea name="description" placeholder="Optional details…" value={form.description}
-          onChange={set} rows={2} style={{ ...inputStyle, resize: "none" }} onFocus={onFocus} onBlur={onBlur} />
+        <label style={lStyle}>Task Title *</label>
+        <input name="title" placeholder="e.g. Design Landing Page Hero" value={form.title} onChange={set}
+          required style={iStyle} onFocus={iFocus} onBlur={iBlur} />
       </div>
+
+      <div>
+        <label style={lStyle}>Description</label>
+        <textarea name="description" placeholder="Add task details..." value={form.description} onChange={set}
+          rows={3} style={{ ...iStyle, resize: "none" }} onFocus={iFocus} onBlur={iBlur} />
+      </div>
+
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label style={labelStyle}>Priority</label>
-          <CustomDropdown value={form.priority} onChange={(val) => setForm(f => ({ ...f, priority: val }))} options={PRIORITY_OPTIONS} />
+          <label style={lStyle}>Priority</label>
+          <CustomDropdown
+            value={form.priority}
+            onChange={(val) => setForm((f) => ({ ...f, priority: val }))}
+            options={[
+              { value: "low", label: "Low" },
+              { value: "medium", label: "Medium" },
+              { value: "high", label: "High" },
+              { value: "urgent", label: "Urgent" },
+            ]}
+          />
         </div>
         <div>
-          <label style={labelStyle}>Status</label>
-          <CustomDropdown value={form.status} onChange={(val) => setForm(f => ({ ...f, status: val }))} options={STATUS_OPTIONS} />
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label style={labelStyle}>Due date</label>
+          <label style={lStyle}>Due Date</label>
           <input name="dueDate" type="date" value={form.dueDate} onChange={set}
-            style={{ ...inputStyle, colorScheme: "dark" }} onFocus={onFocus} onBlur={onBlur} />
-        </div>
-        <div>
-          <label style={labelStyle}>Project</label>
-          <CustomDropdown value={form.projectId} onChange={(val) => setForm(f => ({ ...f, projectId: val }))} options={projectOptions} />
+            style={{ ...iStyle, colorScheme: "dark" }} onFocus={iFocus} onBlur={iBlur} />
         </div>
       </div>
+
       <div className="flex gap-3 pt-2">
-        <button type="button" onClick={onClose}
-          className="flex-1 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer"
-          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "#9CA3AF" }}
-          onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.08)"}
-          onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}>
+        <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-xl text-xs font-bold text-slate-400 bg-white/5 hover:bg-white/10 cursor-pointer">
           Cancel
         </button>
-        <motion.button type="submit" whileTap={{ scale: 0.97 }} disabled={loading}
-          className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white cursor-pointer"
-          style={{
-            background: loading ? "rgba(99,91,255,0.5)" : "linear-gradient(135deg,#635BFF,#8B5CF6)",
-            boxShadow: loading ? "none" : "0 0 16px rgba(99,91,255,0.35)",
-          }}>
+        <button type="submit" disabled={loading} className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md shadow-indigo-600/30 cursor-pointer">
           {loading ? "Creating…" : "Create Task"}
-        </motion.button>
+        </button>
       </div>
     </form>
   );
 };
 
 // ─────────────────────────────────────────────────────────
-// MODAL WRAPPER
+// TASK MODAL
 // ─────────────────────────────────────────────────────────
-const TaskModal = ({ isOpen, onClose, children, title }) => (
+const TaskModal = ({ isOpen, onClose, title, children }) => (
   <AnimatePresence>
     {isOpen && (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          className="absolute inset-0 bg-black/70 backdrop-blur-md"
+          className="absolute inset-0 bg-black/80 backdrop-blur-md"
           onClick={onClose} />
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 12 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 12 }}
           transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="relative w-full max-w-lg rounded-3xl overflow-hidden z-10 shadow-2xl"
+          className="relative w-full max-w-md rounded-3xl overflow-hidden z-10 shadow-2xl"
           style={{
-            background: "rgba(11,15,26,0.96)",
+            background: "linear-gradient(160deg, rgba(15,23,42,0.98) 0%, rgba(10,16,30,0.98) 100%)",
             backdropFilter: "blur(24px)",
             border: "1px solid rgba(255,255,255,0.12)",
             boxShadow: "0 25px 60px rgba(0,0,0,0.8), 0 0 50px rgba(99,91,255,0.15)",
           }}
         >
           <div className="absolute top-0 inset-x-0 h-px pointer-events-none"
-            style={{ background: "linear-gradient(90deg,transparent,rgba(99,91,255,0.4),transparent)" }} />
+            style={{ background: "linear-gradient(90deg,transparent,rgba(99,91,255,0.5),transparent)" }} />
           <div className="flex items-center justify-between p-6 border-b border-white/10">
-            <h2 className="text-lg font-black tracking-tight text-white">{title}</h2>
+            <h2 className="text-base font-black tracking-tight text-white">{title}</h2>
             <button onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-all cursor-pointer">
               <X size={16} />
             </button>
@@ -326,12 +278,27 @@ const TaskModal = ({ isOpen, onClose, children, title }) => (
 // MAIN TASKS PAGE
 // ─────────────────────────────────────────────────────────
 const Tasks = () => {
-  const { tasks, projects, fetchProjects, createTask, isLoading } = useProjectStore();
-  const [showModal, setShowModal]     = useState(false);
-  const [creating, setCreating]       = useState(false);
-  const [defaultStatus, setDefaultStatus] = useState("todo");
+  const { projects, tasks, fetchProjects, fetchTasks, createTask, deleteTask, isLoading } = useProjectStore();
+  const [selectedProjectId, setSelectedProjectId] = useState("");
+  const [search, setSearch]                       = useState("");
+  const [view, setView]                           = useState("kanban"); // "kanban" | "list"
+  const [showModal, setShowModal]                 = useState(false);
+  const [creating, setCreating]                   = useState(false);
+  const [defaultStatus, setDefaultStatus]         = useState("todo");
 
-  useEffect(() => { fetchProjects(); }, []);
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
+  useEffect(() => {
+    if (projects.length > 0) {
+      const targetId = selectedProjectId || projects[0]._id;
+      if (!selectedProjectId) setSelectedProjectId(targetId);
+      fetchTasks(targetId);
+    } else {
+      useProjectStore.setState({ tasks: [] });
+    }
+  }, [projects, selectedProjectId]);
 
   const handleAddTask = (status = "todo") => {
     setDefaultStatus(status);
@@ -339,30 +306,44 @@ const Tasks = () => {
   };
 
   const handleCreate = async (form) => {
-    if (!form.projectId) return;
     setCreating(true);
-    await createTask(form);
-    setCreating(false);
-    setShowModal(false);
+    try {
+      await createTask(form);
+      setShowModal(false);
+      if (selectedProjectId) fetchTasks(selectedProjectId);
+    } finally {
+      setCreating(false);
+    }
   };
 
-  const todoCount = tasks.filter(t => t.status === "todo").length;
-  const inProgressCount = tasks.filter(t => t.status === "in_progress").length;
-  const doneCount = tasks.filter(t => t.status === "done").length;
+  const todoCount       = tasks.filter((t) => t.status === "todo").length;
+  const inProgressCount = tasks.filter((t) => t.status === "in_progress").length;
+  const doneCount       = tasks.filter((t) => t.status === "done").length;
+
+  const filteredTasks = tasks.filter((t) => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (
+      t.title?.toLowerCase().includes(q) ||
+      t.description?.toLowerCase().includes(q) ||
+      t.status?.toLowerCase().includes(q) ||
+      t.priority?.toLowerCase().includes(q)
+    );
+  });
 
   return (
-    <div className="min-h-screen relative overflow-hidden"
+    <div className="min-h-screen relative overflow-hidden pb-12"
       style={{ background: "radial-gradient(ellipse 100% 55% at 65% -5%,rgba(99,91,255,0.08) 0%,transparent 52%),linear-gradient(180deg,#0B0F1A 0%,#07090F 100%)" }}>
       
-      {/* Ambient background lighting */}
+      {/* Background ambient lighting */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute -top-40 right-1/4 w-[650px] h-[650px] rounded-full"
-          style={{ background: "radial-gradient(circle,rgba(99,91,255,0.05) 0%,transparent 60%)" }} />
+          style={{ background: "radial-gradient(circle,rgba(99,91,255,0.06) 0%,transparent 60%)" }} />
       </div>
 
       <div className="relative p-6 lg:p-8 max-w-[1400px] mx-auto space-y-6">
 
-        {/* ── HEADER ── */}
+        {/* ── PAGE HEADER ── */}
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
           className="flex flex-wrap items-center justify-between gap-4">
           <div>
@@ -380,48 +361,184 @@ const Tasks = () => {
             </p>
           </div>
 
-          <motion.button
-            whileHover={{ scale: 1.04, boxShadow: "0 0 28px rgba(99,91,255,0.55)" }}
-            whileTap={{ scale: 0.96 }}
-            onClick={() => handleAddTask()}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer transition-all"
-            style={{
-              background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)",
-              boxShadow: "0 0 20px rgba(99,91,255,0.35)",
-              border: "1px solid rgba(255,255,255,0.15)",
-            }}>
-            <Plus size={15} strokeWidth={2.5} />
-            Add Task
-          </motion.button>
+          <div className="flex items-center gap-3">
+            {projects.length > 1 && (
+              <div className="w-56">
+                <CustomDropdown
+                  value={selectedProjectId}
+                  onChange={setSelectedProjectId}
+                  options={projects.map((p) => ({ value: p._id, label: p.title }))}
+                />
+              </div>
+            )}
+
+            <motion.button
+              whileHover={{ scale: 1.04, boxShadow: "0 0 28px rgba(99,91,255,0.55)" }}
+              whileTap={{ scale: 0.96 }}
+              onClick={() => handleAddTask()}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer transition-all"
+              style={{
+                background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)",
+                boxShadow: "0 0 20px rgba(99,91,255,0.35)",
+                border: "1px solid rgba(255,255,255,0.15)",
+              }}>
+              <Plus size={15} strokeWidth={2.5} />
+              <span>Add Task</span>
+            </motion.button>
+          </div>
         </motion.div>
 
         {/* ── KPI METRICS CARDS ── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <SubpageStatCard label="Total Tasks" value={tasks.length} icon={ListTodo} subtext="Across all projects" color="purple" delay={0} />
+          <SubpageStatCard label="Total Tasks" value={tasks.length} icon={ListTodo} subtext="Across project" color="purple" delay={0} />
           <SubpageStatCard label="To Do Queue" value={todoCount} icon={Filter} subtext="Pending tasks" color="amber" delay={0.05} />
           <SubpageStatCard label="In Progress" value={inProgressCount} icon={Sparkles} subtext="Active execution" color="cyan" delay={0.1} />
           <SubpageStatCard label="Completed" value={doneCount} icon={ListTodo} subtext="Tasks verified done" color="green" delay={0.15} />
         </div>
 
-        {/* ── CONTENT ── */}
-        {isLoading ? (
-          <div className="flex gap-4 overflow-x-auto pb-4">
-            {Array.from({ length: 4 }).map((_, i) => <SkeletonColumn key={i} />)}
+        {/* ── SEARCH & VIEW TOGGLE TOOLBAR ── */}
+        <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+          <div className="relative flex-1 max-w-md">
+            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "rgba(148,163,184,0.5)" }} />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search tasks by title, status, or description..."
+              className="w-full pl-10 pr-9 py-2.5 rounded-xl text-xs font-medium text-white placeholder-slate-400 outline-none transition-all duration-200"
+              style={{
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.08)",
+              }}
+              onFocus={(e) => {
+                e.target.style.border = "1px solid rgba(99,91,255,0.5)";
+                e.target.style.background = "rgba(99,91,255,0.06)";
+                e.target.style.boxShadow = "0 0 0 3px rgba(99,91,255,0.12)";
+              }}
+              onBlur={(e) => {
+                e.target.style.border = "1px solid rgba(255,255,255,0.08)";
+                e.target.style.background = "rgba(255,255,255,0.04)";
+                e.target.style.boxShadow = "none";
+              }}
+            />
+            {search && (
+              <button onClick={() => setSearch("")} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer">
+                <X size={13} />
+              </button>
+            )}
           </div>
-        ) : tasks.length === 0 ? (
-          <EmptyState onAdd={() => handleAddTask()} />
-        ) : (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}>
-            <KanbanBoard onAddTask={handleAddTask} />
-          </motion.div>
-        )}
+
+          {/* View toggle (Kanban Board vs List Table) */}
+          <div className="flex items-center gap-1 p-1 rounded-xl shrink-0"
+            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+            {[["kanban", LayoutGrid], ["list", List]].map(([v, Icon]) => (
+              <motion.button key={v} onClick={() => setView(v)} whileTap={{ scale: 0.92 }}
+                title={v === "kanban" ? "Kanban Board View" : "List Table View"}
+                className="w-8 h-7 rounded-lg flex items-center justify-center transition-all cursor-pointer"
+                style={{
+                  background: view === v ? "rgba(99,91,255,0.2)" : "transparent",
+                  color: view === v ? "#A78BFA" : "#64748B",
+                  border: view === v ? "1px solid rgba(99,91,255,0.3)" : "1px solid transparent",
+                }}>
+                <Icon size={14} />
+              </motion.button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── MAIN CONTENT CONTAINER (Client Portal GCard) ── */}
+        <GCard delay={0.2} glow="#635BFF" className="min-h-[320px] p-6">
+          {isLoading ? (
+            <div className="flex gap-4 overflow-x-auto pb-4">
+              {Array.from({ length: 4 }).map((_, i) => <SkeletonColumn key={i} />)}
+            </div>
+          ) : tasks.length === 0 ? (
+            <EmptyState onAdd={() => handleAddTask()} />
+          ) : view === "kanban" ? (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}>
+              <KanbanBoard onAddTask={handleAddTask} search={search} />
+            </motion.div>
+          ) : (
+            /* Task List View Table */
+            <div className="rounded-2xl overflow-hidden divide-y divide-white/[0.04]"
+              style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+              {/* Table header */}
+              <div className="flex items-center gap-4 px-4 py-2.5 bg-white/[0.02]"
+                style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                {["Task Title", "Priority", "Status", "Due Date", "Actions"].map((h, i) => (
+                  <span key={i} className="text-[10px] font-bold tracking-widest uppercase text-slate-500"
+                    style={{
+                      flex: h === "Task Title" ? 1 : "none",
+                      width: h === "Priority" ? 96 : h === "Status" ? 110 : h === "Due Date" ? 100 : h === "Actions" ? 64 : undefined,
+                      textAlign: h === "Actions" ? "right" : "left",
+                    }}>
+                    {h}
+                  </span>
+                ))}
+              </div>
+
+              <AnimatePresence>
+                {filteredTasks.map((t, index) => (
+                  <motion.div key={t._id} layout
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ delay: index * 0.02 }}
+                    className="flex items-center gap-4 px-4 py-3 hover:bg-white/[0.03] transition-colors group cursor-pointer"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-white truncate">{t.title}</p>
+                      {t.description && <p className="text-[11px] text-slate-400 truncate mt-0.5">{t.description}</p>}
+                    </div>
+
+                    <div className="w-24 shrink-0">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                        t.priority === "urgent" ? "bg-purple-500/15 text-purple-300 border-purple-500/30" :
+                        t.priority === "high" ? "bg-rose-500/15 text-rose-400 border-rose-500/30" :
+                        t.priority === "medium" ? "bg-amber-500/15 text-amber-400 border-amber-500/30" :
+                        "bg-slate-500/15 text-slate-400 border-slate-500/30"
+                      }`}>
+                        {t.priority ? t.priority.charAt(0).toUpperCase() + t.priority.slice(1) : "Medium"}
+                      </span>
+                    </div>
+
+                    <div className="w-28 shrink-0">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border ${
+                        t.status === "done" ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" :
+                        t.status === "in_progress" ? "bg-indigo-500/15 text-indigo-300 border-indigo-500/30" :
+                        t.status === "review" ? "bg-amber-500/15 text-amber-400 border-amber-500/30" :
+                        "bg-slate-500/15 text-slate-400 border-slate-500/30"
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${
+                          t.status === "done" ? "bg-emerald-400" :
+                          t.status === "in_progress" ? "bg-indigo-400" :
+                          t.status === "review" ? "bg-amber-400" : "bg-slate-400"
+                        }`} />
+                        {t.status === "done" ? "Done" : t.status === "in_progress" ? "In Progress" : t.status === "review" ? "In Review" : "To Do"}
+                      </span>
+                    </div>
+
+                    <div className="w-24 shrink-0 text-xs text-slate-400 font-medium">
+                      {t.dueDate ? formatDate(t.dueDate) : "Flexible"}
+                    </div>
+
+                    <div className="w-16 shrink-0 flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={() => deleteTask(t._id)} title="Delete task" className="p-1 rounded text-slate-400 hover:text-rose-400 transition-colors cursor-pointer">
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          )}
+        </GCard>
       </div>
 
       {/* ── TASK MODAL ── */}
       <TaskModal isOpen={showModal} onClose={() => setShowModal(false)} title="New Task">
         {projects.length === 0 ? (
           <div className="text-center py-6">
-            <p className="text-sm" style={{ color: "#6B7280" }}>
+            <p className="text-xs text-slate-400">
               You need at least one project before adding tasks.
             </p>
           </div>

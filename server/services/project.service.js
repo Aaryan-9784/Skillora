@@ -171,7 +171,13 @@ const createTask = async (ownerId, data) => {
   return task;
 };
 
+const mongoose = require("mongoose");
+
 const getTasksByProject = async (projectId, userOrId, reqQuery = {}) => {
+  if (!projectId || projectId === "undefined" || !mongoose.Types.ObjectId.isValid(projectId)) {
+    return { data: [], total: 0 };
+  }
+
   const userId = typeof userOrId === "object" ? userOrId._id : userOrId;
   const clientRef = typeof userOrId === "object" ? userOrId.clientRef : null;
 

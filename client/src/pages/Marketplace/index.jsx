@@ -11,14 +11,44 @@ import toast from "react-hot-toast";
 import api from "../../services/api";
 import useAuthStore from "../../store/authStore";
 import useClickOutside from "../../hooks/useClickOutside";
-import KPIWidget from "../../components/dashboard/KPIWidget";
 import SubpageStatCard from "../../components/dashboard/SubpageStatCard";
 import { formatCurrency, getInitials } from "../../utils/helpers";
+
+// ── Glass Container Card (Client Portal Standard) ──────────────────────────
+const GCard = ({ children, delay, className = "", glow, onClick }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 16 }}
+    animate={{ opacity: 1, y: 0 }}
+    whileHover={{ y: -4, transition: { duration: 0.2 } }}
+    transition={{ delay: delay || 0, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+    onClick={onClick}
+    className={`relative overflow-hidden rounded-2xl transition-all duration-300 ${className}`}
+    style={{
+      background: "linear-gradient(145deg, rgba(15,23,42,0.85) 0%, rgba(9,14,26,0.92) 100%)",
+      backdropFilter: "blur(20px)",
+      WebkitBackdropFilter: "blur(20px)",
+      border: "1px solid rgba(255,255,255,0.09)",
+      boxShadow: glow
+        ? `0 10px 30px -10px ${glow}20, 0 0 20px ${glow}10`
+        : "0 10px 30px -10px rgba(0,0,0,0.5), 0 0 20px rgba(99,91,255,0.05)",
+    }}
+  >
+    {/* Top Shimmer Accent Highlight Line */}
+    <div
+      className="absolute inset-x-0 top-0 h-px pointer-events-none"
+      style={{
+        background: glow
+          ? `linear-gradient(90deg, transparent, ${glow}70, transparent)`
+          : "linear-gradient(90deg, transparent, rgba(99,91,255,0.35), transparent)",
+      }}
+    />
+    {children}
+  </motion.div>
+);
 
 // ─────────────────────────────────────────────────────────
 // MARKETPLACE CATEGORIES & OPTIONS
 // ─────────────────────────────────────────────────────────
-
 const CATEGORIES = [
   "All",
   "Web Development",
@@ -59,8 +89,8 @@ const CustomCategoryDropdown = ({ value, onChange, counts }) => {
         onClick={() => setOpen((o) => !o)}
         className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-200 transition-all cursor-pointer select-none"
         style={{
-          background: "rgba(255,255,255,0.05)",
-          border: "1px solid rgba(255,255,255,0.1)",
+          background: "rgba(255,255,255,0.04)",
+          border: open ? "1px solid rgba(99,91,255,0.45)" : "1px solid rgba(255,255,255,0.09)",
           boxShadow: open ? "0 0 16px rgba(99,91,255,0.25)" : "none",
         }}
       >
@@ -69,7 +99,7 @@ const CustomCategoryDropdown = ({ value, onChange, counts }) => {
         <span className="px-1.5 py-0.5 rounded-md text-[10px] font-extrabold bg-purple-500/20 text-purple-300 border border-purple-500/30">
           {currentCount}
         </span>
-        <ChevronDown size={13} className={`text-slate-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+        <ChevronDown size={13} className={`text-slate-400 transition-transform duration-200 ${open ? "rotate-180 text-indigo-400" : ""}`} />
       </motion.button>
 
       <AnimatePresence>
@@ -145,14 +175,14 @@ const CustomSortDropdown = ({ value, onChange }) => {
         onClick={() => setOpen((o) => !o)}
         className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-200 transition-all cursor-pointer select-none"
         style={{
-          background: "rgba(255,255,255,0.05)",
-          border: "1px solid rgba(255,255,255,0.1)",
+          background: "rgba(255,255,255,0.04)",
+          border: open ? "1px solid rgba(99,91,255,0.45)" : "1px solid rgba(255,255,255,0.09)",
           boxShadow: open ? "0 0 16px rgba(99,91,255,0.25)" : "none",
         }}
       >
         <SlidersHorizontal size={13} className="text-purple-400" />
         <span>{currentOption.label}</span>
-        <ChevronDown size={13} className={`text-slate-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+        <ChevronDown size={13} className={`text-slate-400 transition-transform duration-200 ${open ? "rotate-180 text-indigo-400" : ""}`} />
       </motion.button>
 
       <AnimatePresence>
@@ -205,7 +235,7 @@ const CustomSortDropdown = ({ value, onChange }) => {
 };
 
 // ─────────────────────────────────────────────────────────
-// CUSTOM DELIVERY DROPDOWN (Modal Dropdown — No OS Native Blue)
+// CUSTOM DELIVERY DROPDOWN
 // ─────────────────────────────────────────────────────────
 const CustomDeliveryDropdown = ({ value, onChange }) => {
   const [open, setOpen] = useState(false);
@@ -222,7 +252,7 @@ const CustomDeliveryDropdown = ({ value, onChange }) => {
         className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold text-white transition-all cursor-pointer select-none"
         style={{
           background: "rgba(255,255,255,0.05)",
-          border: "1px solid rgba(255,255,255,0.1)",
+          border: open ? "1px solid rgba(99,91,255,0.45)" : "1px solid rgba(255,255,255,0.1)",
           boxShadow: open ? "0 0 16px rgba(99,91,255,0.25)" : "none",
         }}
       >
@@ -453,7 +483,7 @@ export default function MarketplacePage() {
           />
         </div>
 
-        {/* ── FILTER TOOLBAR (Compact Search + Category Dropdown + Sort Dropdown) ── */}
+        {/* ── FILTER TOOLBAR ── */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-3">
           {/* Search Input */}
           <div className="relative w-full md:w-96">
@@ -484,7 +514,7 @@ export default function MarketplacePage() {
             )}
           </div>
 
-          {/* Custom Dropdowns Group: Category Dropdown + Sort Dropdown */}
+          {/* Category Dropdown + Sort Dropdown */}
           <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
             <CustomCategoryDropdown
               value={selectedCategory}
@@ -495,225 +525,190 @@ export default function MarketplacePage() {
           </div>
         </div>
 
-        {/* ── PROJECTS GRID (Redesigned Clickable Interactive Job Cards) ── */}
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((n) => (
-              <div key={n} className="h-64 rounded-2xl animate-pulse"
-                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }} />
-            ))}
-          </div>
-        ) : filteredProjects.length === 0 ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            className="flex flex-col items-center justify-center py-16 px-4 text-center rounded-3xl"
-            style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
-              style={{ background: "rgba(99,91,255,0.1)", border: "1px solid rgba(99,91,255,0.2)" }}>
-              <Briefcase size={26} style={{ color: "#635BFF" }} />
+        {/* ── MAIN CONTENT CONTAINER (Client Portal GCard) ── */}
+        <GCard delay={0.2} glow="#635BFF" className="min-h-[320px] p-6">
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3, 4, 5, 6].map((n) => (
+                <div key={n} className="h-64 rounded-2xl animate-pulse"
+                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }} />
+              ))}
             </div>
-            <h3 className="text-base font-bold text-white mb-1">No open projects match your query</h3>
-            <p className="text-xs text-gray-400 max-w-sm mb-4">
-              Try adjusting your search filter or selecting another category.
-            </p>
-            <button onClick={() => { setSearch(""); setSelectedCategory("All"); }}
-              className="px-4 py-2 rounded-xl text-xs font-bold text-white cursor-pointer"
-              style={{ background: "rgba(99,91,255,0.2)", border: "1px solid rgba(99,91,255,0.3)", color: "#A78BFA" }}>
-              Reset Search & Filters
-            </button>
-          </motion.div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProjects.map((project, index) => {
-              const isApplied = appliedProjectIds.has(project._id);
-              const skills = project.requiredSkills || [];
-              const visibleSkills = skills.slice(0, 4);
-              const extraSkills = skills.length - visibleSkills.length;
-              const initials = getInitials(project.clientName || "Client");
-              const formattedBudget = formatCurrency(project.budget || 100000, project.currency || "INR");
+          ) : filteredProjects.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3 shadow-lg shadow-indigo-500/10"
+                style={{ background: "rgba(99,91,255,0.12)", border: "1px solid rgba(99,91,255,0.25)" }}>
+                <Briefcase size={26} style={{ color: "#8B5CF6" }} />
+              </div>
+              <h3 className="text-base font-bold text-white mb-1">No open projects match your query</h3>
+              <p className="text-xs text-slate-400 max-w-sm mb-5">
+                Try adjusting your search filter or selecting another category.
+              </p>
+              <button
+                onClick={() => { setSearch(""); setSelectedCategory("All"); }}
+                className="px-4 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer transition-all hover:bg-purple-600/30"
+                style={{ background: "rgba(99,91,255,0.2)", border: "1px solid rgba(99,91,255,0.35)", color: "#C4B5FD" }}
+              >
+                Reset Search & Filters
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredProjects.map((project, index) => {
+                const isApplied = appliedProjectIds.has(project._id);
+                const skills = project.requiredSkills || [];
+                const visibleSkills = skills.slice(0, 4);
+                const extraSkills = skills.length - visibleSkills.length;
+                const initials = getInitials(project.clientName || "Client");
+                const formattedBudget = formatCurrency(project.budget || 100000, project.currency || "INR");
 
-              return (
-                <motion.div
-                  key={project._id}
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05, duration: 0.3 }}
-                  className="relative rounded-2xl p-6 flex flex-col justify-between group transition-all duration-300 cursor-pointer overflow-hidden"
-                  style={{
-                    background: "linear-gradient(150deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.015) 100%)",
-                    backdropFilter: "blur(20px)",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    boxShadow: "0 4px 24px rgba(0,0,0,0.35)",
-                    minHeight: "350px",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "rgba(99,91,255,0.4)";
-                    e.currentTarget.style.boxShadow = "0 12px 40px rgba(99,91,255,0.2), inset 0 1px 0 rgba(255,255,255,0.1)";
-                    e.currentTarget.style.transform = "translateY(-4px)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
-                    e.currentTarget.style.boxShadow = "0 4px 24px rgba(0,0,0,0.35)";
-                    e.currentTarget.style.transform = "translateY(0)";
-                  }}
-                  onClick={() => setDetailProject(project)}
-                >
-                  {/* Top Ambient Accent Glow Line on Hover */}
-                  <div className="absolute top-0 inset-x-0 h-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-                    style={{ background: "linear-gradient(90deg, transparent, #635BFF 40%, #8B5CF6 60%, transparent)" }} />
+                return (
+                  <div
+                    key={project._id}
+                    onClick={() => setDetailProject(project)}
+                    className="relative rounded-2xl p-5 flex flex-col justify-between group cursor-pointer transition-all duration-300 overflow-hidden"
+                    style={{
+                      background: "rgba(255,255,255,0.03)",
+                      border: "1px solid rgba(255,255,255,0.07)",
+                      backdropFilter: "blur(12px)",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.border = "1px solid rgba(99,91,255,0.4)";
+                      e.currentTarget.style.boxShadow = "0 12px 36px rgba(0,0,0,0.4), 0 0 24px rgba(99,91,255,0.15)";
+                      e.currentTarget.style.transform = "translateY(-3px)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.border = "1px solid rgba(255,255,255,0.07)";
+                      e.currentTarget.style.boxShadow = "none";
+                      e.currentTarget.style.transform = "translateY(0)";
+                    }}
+                  >
+                    {/* Top Shimmer Accent */}
+                    <div className="absolute top-0 inset-x-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                      style={{ background: "linear-gradient(90deg, transparent, #635BFF, transparent)" }} />
 
-                  {/* Corner Glow Blob */}
-                  <div className="absolute -top-12 -right-12 w-36 h-36 rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                    style={{ background: "radial-gradient(circle, rgba(99,91,255,0.15) 0%, transparent 70%)" }} />
-
-                  <div className="space-y-3.5 relative z-10">
-                    {/* Top Header: Category Badge on left, Budget display on right */}
-                    <div className="flex items-start justify-between gap-3">
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-xl"
-                        style={{ background: "rgba(99,91,255,0.15)", color: "#C4B5FD", border: "1px solid rgba(99,91,255,0.25)" }}>
-                        {project.category || "General"}
-                      </span>
-                      <div className="text-right shrink-0">
-                        <p className="text-lg font-black text-emerald-400 leading-none"
-                          style={{ filter: "drop-shadow(0 2px 8px rgba(34,197,94,0.25))" }}>
-                          {formattedBudget}
-                        </p>
-                        <p className="text-[11px] font-semibold text-slate-400 mt-1">
-                          {project.type || "Fixed Price"}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Title & Description */}
-                    <div>
-                      <h3 className="font-extrabold text-base text-white group-hover:text-purple-300 transition-colors line-clamp-2 leading-snug flex items-center justify-between gap-2">
-                        <span>{project.title}</span>
-                        <ArrowUpRight size={17} className="text-slate-500 group-hover:text-purple-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0" />
-                      </h3>
-                      <p className="text-xs text-slate-400 mt-2 line-clamp-2 leading-relaxed font-normal">
-                        {project.description}
-                      </p>
-                    </div>
-
-                    {/* Micro-Badges: Proposals & Escrow */}
-                    <div className="flex flex-wrap items-center gap-2 pt-0.5">
-                      <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold"
-                        style={{ background: "rgba(99,91,255,0.12)", color: "#C4B5FD", border: "1px solid rgba(99,91,255,0.2)" }}>
-                        <Send size={11} className="text-purple-400" />
-                        <span>{project.proposalsCount || 6} proposals</span>
-                      </span>
-
-                      <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold"
-                        style={{ background: "rgba(34,197,94,0.12)", color: "#4ADE80", border: "1px solid rgba(34,197,94,0.2)" }}>
-                        <ShieldCheck size={11} className="text-emerald-400" />
-                        <span>100% Escrow</span>
-                      </span>
-                    </div>
-
-                    {/* Skills Tags */}
-                    {skills.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 pt-0.5">
-                        {visibleSkills.map((sk, i) => (
-                          <span key={i} className="text-[10px] font-semibold px-2.5 py-1 rounded-lg transition-colors"
-                            style={{ background: "rgba(255,255,255,0.04)", color: "#CBD5E1", border: "1px solid rgba(255,255,255,0.08)" }}>
-                            {sk}
-                          </span>
-                        ))}
-                        {extraSkills > 0 && (
-                          <span className="text-[10px] font-semibold px-2.5 py-1 rounded-lg"
-                            style={{ background: "rgba(99,91,255,0.12)", color: "#C4B5FD", border: "1px solid rgba(99,91,255,0.2)" }}>
-                            +{extraSkills} more
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Footer Client Profile & Action Buttons */}
-                  <div className="pt-3.5 space-y-3 mt-3 relative z-10" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-xl flex items-center justify-center text-[10px] font-black text-white shrink-0"
-                          style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)", boxShadow: "0 0 12px rgba(99,91,255,0.4)" }}>
-                          {initials}
+                    <div className="space-y-3 relative z-10">
+                      {/* Top Header: Category & Budget */}
+                      <div className="flex items-start justify-between gap-3">
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-lg"
+                          style={{ background: "rgba(99,91,255,0.15)", color: "#C4B5FD", border: "1px solid rgba(99,91,255,0.25)" }}>
+                          {project.category || "General"}
+                        </span>
+                        <div className="text-right shrink-0">
+                          <p className="text-base font-black text-emerald-400 leading-none">
+                            {formattedBudget}
+                          </p>
+                          <p className="text-[10px] font-semibold text-slate-400 mt-1">
+                            {project.type || "Fixed Price"}
+                          </p>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-bold text-slate-200">{project.clientName || "Verified Client"}</span>
-                          <CheckCircle size={13} className="text-emerald-400 shrink-0" />
-                        </div>
-                        {project.clientRating && (
-                          <span className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold text-amber-300"
-                            style={{ background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.2)" }}>
-                            <Star size={10} className="fill-amber-400 text-amber-400" />
-                            <span>{project.clientRating}</span>
-                          </span>
-                        )}
                       </div>
-                      <span className="text-[10px] text-slate-500 font-medium">{project.postedAt || "Recently"}</span>
+
+                      {/* Title & Description */}
+                      <div>
+                        <h3 className="font-bold text-sm text-white group-hover:text-purple-300 transition-colors line-clamp-2 leading-snug flex items-center justify-between gap-2">
+                          <span>{project.title}</span>
+                          <ArrowUpRight size={15} className="text-slate-500 group-hover:text-purple-400 transition-all shrink-0" />
+                        </h3>
+                        <p className="text-xs text-slate-400 mt-1.5 line-clamp-2 leading-relaxed font-normal">
+                          {project.description}
+                        </p>
+                      </div>
+
+                      {/* Micro-Badges */}
+                      <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                        <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-bold"
+                          style={{ background: "rgba(99,91,255,0.12)", color: "#C4B5FD", border: "1px solid rgba(99,91,255,0.2)" }}>
+                          <Send size={10} className="text-purple-400" />
+                          <span>{project.proposalsCount || 6} proposals</span>
+                        </span>
+
+                        <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-bold"
+                          style={{ background: "rgba(34,197,94,0.12)", color: "#4ADE80", border: "1px solid rgba(34,197,94,0.2)" }}>
+                          <ShieldCheck size={10} className="text-emerald-400" />
+                          <span>100% Escrow</span>
+                        </span>
+                      </div>
+
+                      {/* Skills Tags */}
+                      {skills.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 pt-0.5">
+                          {visibleSkills.map((sk, i) => (
+                            <span key={i} className="text-[10px] font-semibold px-2 py-0.5 rounded-md"
+                              style={{ background: "rgba(255,255,255,0.04)", color: "#CBD5E1", border: "1px solid rgba(255,255,255,0.08)" }}>
+                              {sk}
+                            </span>
+                          ))}
+                          {extraSkills > 0 && (
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md"
+                              style={{ background: "rgba(99,91,255,0.12)", color: "#C4B5FD", border: "1px solid rgba(99,91,255,0.2)" }}>
+                              +{extraSkills} more
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2.5" onClick={(e) => e.stopPropagation()}>
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => setDetailProject(project)}
-                        className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer"
-                        style={{
-                          background: "rgba(255,255,255,0.05)",
-                          color: "#CBD5E1",
-                          border: "1px solid rgba(255,255,255,0.1)",
-                        }}
-                      >
-                        <Eye size={13} className="text-purple-400" /> View Details
-                      </motion.button>
+                    {/* Footer Client Profile & Buttons */}
+                    <div className="pt-3 space-y-2.5 mt-3 relative z-10 border-t border-white/5">
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black text-white shrink-0"
+                            style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)" }}>
+                            {initials}
+                          </div>
+                          <span className="font-semibold text-slate-300 text-xs">{project.clientName || "Verified Client"}</span>
+                          <CheckCircle size={12} className="text-emerald-400 shrink-0" />
+                        </div>
+                        <span className="text-[10px] text-slate-500 font-medium">{project.postedAt || "Recently"}</span>
+                      </div>
 
-                      <motion.button
-                        whileHover={{ scale: isApplied ? 1 : 1.02 }}
-                        whileTap={{ scale: isApplied ? 1 : 0.98 }}
-                        disabled={isApplied}
-                        onClick={() => handleOpenProposal(project)}
-                        className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold text-white transition-all cursor-pointer"
-                        style={{
-                          background: isApplied
-                            ? "rgba(34,197,94,0.15)"
-                            : "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)",
-                          color: isApplied ? "#22C55E" : "#FFFFFF",
-                          border: isApplied ? "1px solid rgba(34,197,94,0.3)" : "none",
-                          boxShadow: isApplied ? "none" : "0 4px 16px rgba(99,91,255,0.35)",
-                        }}
-                      >
-                        {isApplied ? (
-                          <>
-                            <CheckCircle2 size={13} /> Applied
-                          </>
-                        ) : (
-                          <>
-                            Apply Now <ArrowRight size={13} />
-                          </>
-                        )}
-                      </motion.button>
+                      <div className="grid grid-cols-2 gap-2" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={() => setDetailProject(project)}
+                          className="w-full flex items-center justify-center gap-1 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+                          style={{
+                            background: "rgba(255,255,255,0.05)",
+                            color: "#CBD5E1",
+                            border: "1px solid rgba(255,255,255,0.09)",
+                          }}
+                        >
+                          <Eye size={12} className="text-purple-400" /> Details
+                        </button>
+
+                        <button
+                          disabled={isApplied}
+                          onClick={() => handleOpenProposal(project)}
+                          className="w-full flex items-center justify-center gap-1 py-2 rounded-xl text-xs font-bold text-white transition-all cursor-pointer"
+                          style={{
+                            background: isApplied
+                              ? "rgba(34,197,94,0.15)"
+                              : "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)",
+                            color: isApplied ? "#22C55E" : "#FFFFFF",
+                            border: isApplied ? "1px solid rgba(34,197,94,0.3)" : "none",
+                          }}
+                        >
+                          {isApplied ? "Applied" : "Apply Now"}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        )}
+                );
+              })}
+            </div>
+          )}
+        </GCard>
+
       </div>
 
       {/* ── FULL PROJECT DETAILS MODAL ── */}
       <AnimatePresence>
         {detailProject && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setDetailProject(null)}
               className="absolute inset-0 bg-black/80 backdrop-blur-md"
             />
-
-            {/* Modal Container */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -726,90 +721,50 @@ export default function MarketplacePage() {
                 boxShadow: "0 24px 64px rgba(0,0,0,0.8), 0 0 32px rgba(99,91,255,0.2)",
               }}
             >
-              {/* Close Button */}
-              <button
-                onClick={() => setDetailProject(null)}
-                className="absolute top-5 right-5 p-2 rounded-xl text-gray-400 hover:text-white transition-colors cursor-pointer"
-                style={{ background: "rgba(255,255,255,0.05)" }}
-              >
+              <button onClick={() => setDetailProject(null)} className="absolute top-5 right-5 p-2 rounded-xl text-gray-400 hover:text-white transition-colors cursor-pointer" style={{ background: "rgba(255,255,255,0.05)" }}>
                 <X size={16} />
               </button>
-
-              {/* Category & Budget Header */}
               <div className="flex flex-wrap items-center justify-between gap-3 pr-8">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold px-3 py-1 rounded-lg"
-                    style={{ background: "rgba(99,91,255,0.18)", color: "#A78BFA", border: "1px solid rgba(99,91,255,0.3)" }}>
+                  <span className="text-xs font-bold px-3 py-1 rounded-lg" style={{ background: "rgba(99,91,255,0.18)", color: "#A78BFA", border: "1px solid rgba(99,91,255,0.3)" }}>
                     {detailProject.category}
                   </span>
-                  <span className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg text-emerald-400"
-                    style={{ background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.25)" }}>
+                  <span className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg text-emerald-400" style={{ background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.25)" }}>
                     <CheckCircle size={12} /> Verified Client
                   </span>
                 </div>
-
                 <div className="text-right">
-                  <p className="text-xl font-black text-emerald-400">
-                    {formatCurrency(detailProject.budget, detailProject.currency || "INR")}
-                  </p>
+                  <p className="text-xl font-black text-emerald-400">{formatCurrency(detailProject.budget, detailProject.currency || "INR")}</p>
                   <p className="text-[10px] text-gray-400 font-medium">{detailProject.type || "Fixed Contract"}</p>
                 </div>
               </div>
-
-              {/* Title & Post Metadata */}
               <div className="space-y-2">
-                <h2 className="text-xl lg:text-2xl font-black text-white leading-tight">
-                  {detailProject.title}
-                </h2>
+                <h2 className="text-xl lg:text-2xl font-black text-white leading-tight">{detailProject.title}</h2>
                 <div className="flex flex-wrap items-center gap-3 text-xs text-gray-400 font-medium">
-                  <span className="flex items-center gap-1">
-                    <Clock size={13} className="text-purple-400" /> Posted {detailProject.postedAt || "Recently"}
-                  </span>
+                  <span className="flex items-center gap-1"><Clock size={13} className="text-purple-400" /> Posted {detailProject.postedAt || "Recently"}</span>
                   <span>·</span>
-                  <span className="flex items-center gap-1">
-                    <Calendar size={13} className="text-purple-400" /> Deadline: {detailProject.deadline || "Flexible"}
-                  </span>
+                  <span className="flex items-center gap-1"><Calendar size={13} className="text-purple-400" /> Deadline: {detailProject.deadline || "Flexible"}</span>
                   <span>·</span>
-                  <span className="flex items-center gap-1">
-                    <Send size={13} className="text-purple-400" /> {detailProject.proposalsCount || 6} Active Proposals
-                  </span>
+                  <span className="flex items-center gap-1"><Send size={13} className="text-purple-400" /> {detailProject.proposalsCount || 6} Active Proposals</span>
                 </div>
               </div>
-
-              {/* Full Description */}
-              <div className="space-y-2 p-4 rounded-2xl"
-                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
-                <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                  <FileText size={14} className="text-purple-400" /> Detailed Scope & Requirements
-                </h3>
-                <p className="text-xs text-gray-300 leading-relaxed font-normal whitespace-pre-line">
-                  {detailProject.description}
-                </p>
+              <div className="space-y-2 p-4 rounded-2xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5"><FileText size={14} className="text-purple-400" /> Detailed Scope & Requirements</h3>
+                <p className="text-xs text-gray-300 leading-relaxed font-normal whitespace-pre-line">{detailProject.description}</p>
               </div>
-
-              {/* Required Skills Grid */}
-              {detailProject.requiredSkills && detailProject.requiredSkills.length > 0 && (
+              {detailProject.requiredSkills?.length > 0 && (
                 <div className="space-y-2">
-                  <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                    <Layers size={14} className="text-purple-400" /> Required Tech Stack & Skills
-                  </h3>
+                  <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5"><Layers size={14} className="text-purple-400" /> Required Tech Stack & Skills</h3>
                   <div className="flex flex-wrap gap-2">
                     {detailProject.requiredSkills.map((skill, i) => (
-                      <span key={i} className="text-xs font-semibold px-3 py-1.5 rounded-xl"
-                        style={{ background: "rgba(99,91,255,0.12)", color: "#C4B5FD", border: "1px solid rgba(99,91,255,0.25)" }}>
-                        {skill}
-                      </span>
+                      <span key={i} className="text-xs font-semibold px-3 py-1.5 rounded-xl" style={{ background: "rgba(99,91,255,0.12)", color: "#C4B5FD", border: "1px solid rgba(99,91,255,0.25)" }}>{skill}</span>
                     ))}
                   </div>
                 </div>
               )}
-
-              {/* Client Profile Overview Card */}
-              <div className="flex items-center justify-between p-4 rounded-2xl"
-                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+              <div className="flex items-center justify-between p-4 rounded-2xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-extrabold text-white shrink-0"
-                    style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)", boxShadow: "0 0 16px rgba(99,91,255,0.4)" }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-extrabold text-white shrink-0" style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)", boxShadow: "0 0 16px rgba(99,91,255,0.4)" }}>
                     {getInitials(detailProject.clientName || "Client")}
                   </div>
                   <div>
@@ -820,28 +775,9 @@ export default function MarketplacePage() {
                     <p className="text-[11px] text-gray-400 font-medium">Payment Verified · 100% Milestone Completion</p>
                   </div>
                 </div>
-
-                {detailProject.clientRating && (
-                  <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold text-amber-400"
-                    style={{ background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.25)" }}>
-                    <Star size={13} className="fill-amber-400 text-amber-400" />
-                    <span>{detailProject.clientRating} / 5.0</span>
-                  </div>
-                )}
               </div>
-
-              {/* Actions Footer */}
               <div className="flex items-center justify-end pt-2">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => handleOpenProposal(detailProject)}
-                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
-                  style={{
-                    background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)",
-                    boxShadow: "0 0 20px rgba(99,91,255,0.4)",
-                  }}
-                >
+                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => handleOpenProposal(detailProject)} className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer" style={{ background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)", boxShadow: "0 0 20px rgba(99,91,255,0.4)" }}>
                   <span>Apply Now</span>
                   <ArrowRight size={14} />
                 </motion.button>
@@ -855,146 +791,44 @@ export default function MarketplacePage() {
       <AnimatePresence>
         {selectedProject && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setSelectedProject(null)}
-              className="absolute inset-0 bg-black/75 backdrop-blur-md"
-            />
-
-            {/* Modal Container */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 16 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 16 }}
-              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-              className="relative w-full max-w-xl rounded-3xl overflow-hidden z-10 p-6 lg:p-8 space-y-5"
-              style={{
-                background: "linear-gradient(160deg, rgba(15,23,42,0.98) 0%, rgba(10,16,30,0.98) 100%)",
-                border: "1px solid rgba(99,91,255,0.3)",
-                boxShadow: "0 24px 64px rgba(0,0,0,0.8), 0 0 32px rgba(99,91,255,0.2)",
-              }}
-            >
-              {/* Close Button */}
-              <button
-                onClick={() => setSelectedProject(null)}
-                className="absolute top-5 right-5 p-2 rounded-xl text-gray-400 hover:text-white transition-colors cursor-pointer"
-                style={{ background: "rgba(255,255,255,0.05)" }}
-              >
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedProject(null)} className="absolute inset-0 bg-black/75 backdrop-blur-md" />
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 16 }} transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }} className="relative w-full max-w-xl rounded-3xl overflow-hidden z-10 p-6 lg:p-8 space-y-5" style={{ background: "linear-gradient(160deg, rgba(15,23,42,0.98) 0%, rgba(10,16,30,0.98) 100%)", border: "1px solid rgba(99,91,255,0.3)", boxShadow: "0 24px 64px rgba(0,0,0,0.8), 0 0 32px rgba(99,91,255,0.2)" }}>
+              <button onClick={() => setSelectedProject(null)} className="absolute top-5 right-5 p-2 rounded-xl text-gray-400 hover:text-white transition-colors cursor-pointer" style={{ background: "rgba(255,255,255,0.05)" }}>
                 <X size={16} />
               </button>
-
-              {/* Clean Modal Header */}
               <div className="space-y-1.5 pr-8">
-                <h2 className="text-lg lg:text-xl font-black text-white leading-tight">
-                  {selectedProject.title}
-                </h2>
+                <h2 className="text-lg lg:text-xl font-black text-white leading-tight">{selectedProject.title}</h2>
                 <div className="flex flex-wrap items-center gap-2 text-xs font-medium">
-                  <span className="px-2.5 py-0.5 rounded-md font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/25">
-                    Budget: {formatCurrency(selectedProject.budget, selectedProject.currency || "INR")}
-                  </span>
-                  <span className="px-2.5 py-0.5 rounded-md font-bold text-purple-300 bg-purple-500/10 border border-purple-500/25">
-                    {selectedProject.category}
-                  </span>
-                  <span className="px-2.5 py-0.5 rounded-md text-gray-300 bg-white/5 border border-white/10">
-                    Client: {selectedProject.clientName || "Verified"}
-                  </span>
+                  <span className="px-2.5 py-0.5 rounded-md font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/25">Budget: {formatCurrency(selectedProject.budget, selectedProject.currency || "INR")}</span>
+                  <span className="px-2.5 py-0.5 rounded-md font-bold text-purple-300 bg-purple-500/10 border border-purple-500/25">{selectedProject.category}</span>
                 </div>
               </div>
-
-              {/* Form Body */}
               <form onSubmit={handleSubmitProposal} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                  {/* Bid Input in Rupees */}
                   <div>
-                    <label className="block text-xs font-semibold text-gray-300 mb-1.5">
-                      Your Bid Amount (₹ INR)
-                    </label>
+                    <label className="block text-xs font-semibold text-gray-300 mb-1.5">Your Bid Amount (₹ INR)</label>
                     <div className="relative">
                       <IndianRupee size={14} className="absolute left-3 top-3 text-purple-400" />
-                      <input
-                        type="number"
-                        required
-                        value={bidAmount}
-                        onChange={(e) => setBidAmount(e.target.value)}
-                        placeholder="e.g. 250000"
-                        className="w-full pl-8 pr-3 py-2.5 rounded-xl text-xs font-semibold text-white outline-none"
-                        style={{
-                          background: "rgba(255,255,255,0.05)",
-                          border: "1px solid rgba(255,255,255,0.1)",
-                        }}
-                      />
+                      <input type="number" required value={bidAmount} onChange={(e) => setBidAmount(e.target.value)} placeholder="e.g. 250000" className="w-full pl-8 pr-3 py-2.5 rounded-xl text-xs font-semibold text-white outline-none" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }} />
                     </div>
                   </div>
-
-                  {/* Delivery Timeline Dropdown (Custom Dropdown) */}
                   <div>
-                    <label className="block text-xs font-semibold text-gray-300 mb-1.5">
-                      Estimated Delivery
-                    </label>
+                    <label className="block text-xs font-semibold text-gray-300 mb-1.5">Estimated Delivery</label>
                     <CustomDeliveryDropdown value={deliveryDays} onChange={setDeliveryDays} />
                   </div>
                 </div>
-
-                {/* Cover Letter */}
                 <div>
-                  <label className="block text-xs font-semibold text-gray-300 mb-1.5">
-                    Cover Letter & Project Plan
-                  </label>
-                  <textarea
-                    rows={4}
-                    required
-                    value={coverLetter}
-                    onChange={(e) => setCoverLetter(e.target.value)}
-                    placeholder="Describe your technical approach, key milestones, and past experience relevant to this contract..."
-                    className="w-full p-3 rounded-xl text-xs font-medium text-white outline-none leading-relaxed"
-                    style={{
-                      background: "rgba(255,255,255,0.05)",
-                      border: "1px solid rgba(255,255,255,0.1)",
-                    }}
-                  />
+                  <label className="block text-xs font-semibold text-gray-300 mb-1.5">Cover Letter & Project Plan</label>
+                  <textarea rows={4} required value={coverLetter} onChange={(e) => setCoverLetter(e.target.value)} placeholder="Describe your technical approach..." className="w-full p-3 rounded-xl text-xs font-medium text-white outline-none leading-relaxed" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }} />
                 </div>
-
-                {/* High-Contrast Escrow Banner */}
-                <div className="flex items-center gap-3 p-3.5 rounded-xl"
-                  style={{
-                    background: "linear-gradient(135deg, rgba(34,197,94,0.14) 0%, rgba(16,185,129,0.08) 100%)",
-                    border: "1px solid rgba(34,197,94,0.3)",
-                    boxShadow: "0 4px 16px rgba(34,197,94,0.1)",
-                  }}>
+                <div className="flex items-center gap-3 p-3.5 rounded-xl" style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.14) 0%, rgba(16,185,129,0.08) 100%)", border: "1px solid rgba(34,197,94,0.3)" }}>
                   <ShieldCheck size={18} className="text-emerald-400 shrink-0" />
-                  <p className="text-xs text-emerald-100 font-medium leading-relaxed">
-                    <strong className="text-emerald-400 font-bold">100% Escrow Security:</strong> Client funds are securely deposited in milestone escrow before contract start.
-                  </p>
+                  <p className="text-xs text-emerald-100 font-medium"><strong className="text-emerald-400 font-bold">100% Escrow Security:</strong> Client funds are locked before contract start.</p>
                 </div>
-
-                {/* Form Actions */}
                 <div className="flex items-center justify-end gap-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedProject(null)}
-                    className="px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-400 hover:text-white cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    disabled={submitting}
-                    type="submit"
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
-                    style={{
-                      background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)",
-                      boxShadow: "0 0 20px rgba(99,91,255,0.4)",
-                    }}
-                  >
-                    {submitting ? (
-                      <RefreshCw size={14} className="animate-spin" />
-                    ) : (
-                      <Send size={14} />
-                    )}
+                  <button type="button" onClick={() => setSelectedProject(null)} className="px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-400 hover:text-white cursor-pointer">Cancel</button>
+                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} disabled={submitting} type="submit" className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer" style={{ background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)", boxShadow: "0 0 20px rgba(99,91,255,0.4)" }}>
+                    {submitting ? <RefreshCw size={14} className="animate-spin" /> : <Send size={14} />}
                     <span>{submitting ? "Submitting..." : "Submit Proposal"}</span>
                   </motion.button>
                 </div>

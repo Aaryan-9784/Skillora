@@ -242,9 +242,20 @@ const Column = ({ column, tasks, onDelete, onAddTask }) => {
 // ─────────────────────────────────────────────────────────
 // MAIN KANBAN BOARD
 // ─────────────────────────────────────────────────────────
-const KanbanBoard = ({ projectId, onAddTask }) => {
+const KanbanBoard = ({ projectId, onAddTask, search = "" }) => {
   const { tasks, updateTask, deleteTask, reorderTasks } = useProjectStore();
   const [activeTask, setActiveTask] = useState(null);
+
+  const filteredTasks = tasks.filter((t) => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (
+      t.title?.toLowerCase().includes(q) ||
+      t.description?.toLowerCase().includes(q) ||
+      t.status?.toLowerCase().includes(q) ||
+      t.priority?.toLowerCase().includes(q)
+    );
+  });
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
@@ -252,10 +263,10 @@ const KanbanBoard = ({ projectId, onAddTask }) => {
 
   const tasksByColumn = useCallback(() =>
     COLUMNS.reduce((acc, col) => {
-      acc[col.id] = tasks.filter((t) => t.status === col.id).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      acc[col.id] = filteredTasks.filter((t) => t.status === col.id).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
       return acc;
     }, {}),
-  [tasks]);
+  [filteredTasks]);
 
   const handleDragStart = ({ active }) => {
     setActiveTask(tasks.find((t) => t._id === active.id) || null);

@@ -4,67 +4,42 @@ import toast from "react-hot-toast";
 
 const useProjectStore = create((set, get) => ({
   projects:       [],
+  myProposals:   [],
   currentProject: null,
-  openProjects:   [],
-  myProposals:    [],
   tasks:          [],
   isLoading:      false,
-  pagination:     { total: 0, page: 1, pages: 1 },
+  error:          null,
 
-  fetchOpenProjects: async (params = {}) => {
+  fetchProjects: async (params = {}) => {
     set({ isLoading: true });
     try {
-      const { data } = await api.get("/projects/explore", { params });
-      set({ openProjects: data.data.data || [] });
+      const { data } = await api.get("/projects", { params });
+      set({ projects: data.data.projects || [] });
     } catch (err) {
-      toast.error("Failed to load open projects");
+      set({ error: err.message });
     } finally {
       set({ isLoading: false });
-    }
-  },
-
-  submitProposal: async (projectId, proposalData) => {
-    try {
-      const { data } = await api.post(`/projects/${projectId}/proposals`, proposalData);
-      toast.success("Proposal submitted successfully!");
-      get().fetchOpenProjects();
-      get().fetchMyProposals();
-      return data.data.proposal;
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to submit proposal");
-      throw err;
     }
   },
 
   fetchMyProposals: async () => {
     try {
       const { data } = await api.get("/projects/proposals/my");
-      set({ myProposals: data.data.proposals || [] });
+      const proposals = data.data?.proposals || data.proposals || [];
+      set({ myProposals: proposals });
     } catch (err) {
-      console.error("Failed to load proposals:", err);
+      console.warn("Failed to fetch my proposals:", err);
+      set({ myProposals: [] });
     }
   },
 
-  fetchProjects: async (params = {}) => {
-    set({ isLoading: true });
-    try {
-      const { data } = await api.get("/projects", { params });
-      const d = data.data;
-      set({
-        projects:   d.data || [],
-        pagination: d.pagination || { total: 0, page: 1, pages: 1 },
-      });
-    } finally {
-      set({ isLoading: false });
-    }
-  },
-
-  fetchProject: async (id) => {
+  fetchProjectById: async (id) => {
     set({ isLoading: true });
     try {
       const { data } = await api.get(`/projects/${id}`);
       set({ currentProject: data.data.project });
-      return data.data.project;
+    } catch (err) {
+      set({ error: err.message });
     } finally {
       set({ isLoading: false });
     }
@@ -74,7 +49,7 @@ const useProjectStore = create((set, get) => ({
     const { data } = await api.post("/projects", projectData);
     const project = data.data.project;
     set((s) => ({ projects: [project, ...s.projects] }));
-    toast.success("Project created");
+    toast.success("Project created!");
     return project;
   },
 
@@ -97,8 +72,18 @@ const useProjectStore = create((set, get) => ({
 
   // Tasks
   fetchTasks: async (projectId) => {
-    const { data } = await api.get(`/projects/${projectId}/tasks`);
-    set({ tasks: data.data.data || [] });
+    if (!projectId || projectId === "undefined" || typeof projectId !== "string" || projectId.length !== 24) {
+      set({ tasks: [] });
+      return;
+    }
+    try {
+      const { data } = await api.get(`/projects/${projectId}/tasks`);
+      const taskList = data.data?.data || data.data?.tasks || (Array.isArray(data.data) ? data.data : []);
+      set({ tasks: taskList });
+    } catch (err) {
+      console.warn("Failed to fetch tasks for project:", projectId, err);
+      set({ tasks: [] });
+    }
   },
 
   createTask: async (taskData) => {

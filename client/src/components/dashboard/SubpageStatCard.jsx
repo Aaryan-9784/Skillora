@@ -29,27 +29,41 @@ const SubpageStatCard = ({
     : COLOR_MAP.purple);
   const displaySubtext = subtext || sub;
 
+  // Determine dynamic font size for value based on character length
+  const valStr = String(value ?? "");
+  const valueFontSize = valStr.length > 12 
+    ? "text-lg font-black" 
+    : valStr.length > 7 
+    ? "text-xl lg:text-2xl font-black" 
+    : "text-2xl lg:text-3xl font-extrabold";
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: delay, duration: 0.3, ease: "easeOut" }}
       whileHover={{ y: -3, boxShadow: `0 8px 30px ${theme.glow}` }}
-      className="relative rounded-2xl p-5 overflow-hidden flex flex-col justify-between cursor-default transition-all duration-200"
+      className="relative rounded-2xl p-5 overflow-hidden flex flex-col justify-between cursor-default transition-all duration-200 h-full min-h-[135px]"
       style={{
-        background: "linear-gradient(145deg, rgba(15,23,42,0.65) 0%, rgba(10,15,26,0.85) 100%)",
+        background: "linear-gradient(145deg, rgba(15,23,42,0.85) 0%, rgba(10,15,26,0.92) 100%)",
         border: `1px solid ${theme.border}`,
         backdropFilter: "blur(16px)",
       }}
     >
+      {/* Top Shimmer Accent Line */}
+      <div
+        className="absolute inset-x-0 top-0 h-px pointer-events-none"
+        style={{ background: `linear-gradient(90deg, transparent, ${theme.text}60, transparent)` }}
+      />
+
       {/* Top Row: Label on left, Icon on right */}
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-xs lg:text-sm font-semibold tracking-wide" style={{ color: "#9CA3AF" }}>
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs font-semibold tracking-wide text-slate-400 truncate pr-2">
           {label}
         </span>
         {Icon && (
           <div
-            className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+            className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
             style={{
               background: theme.bg,
               border: `1px solid ${theme.border}`,
@@ -62,16 +76,16 @@ const SubpageStatCard = ({
       </div>
 
       {/* Middle Row: Large Value */}
-      <div className="mb-2">
-        <h4 className="text-2xl lg:text-3xl font-extrabold tracking-tight" style={{ color: "#FFFFFF" }}>
+      <div className="my-auto py-1">
+        <h4 className={`${valueFontSize} tracking-tight text-white truncate`} title={valStr}>
           {value}
         </h4>
       </div>
 
       {/* Bottom Row: Subtext on left, Trend badge on right */}
-      <div className="flex items-center justify-between mt-1 text-xs">
+      <div className="flex items-center justify-between mt-1 text-xs min-h-[18px]">
         {displaySubtext ? (
-          <span style={{ color: "#6B7280" }} className="truncate">
+          <span className="text-slate-500 text-[11px] truncate font-medium">
             {displaySubtext}
           </span>
         ) : (
@@ -79,7 +93,7 @@ const SubpageStatCard = ({
         )}
         {trend !== undefined && trend !== null && (
           <span
-            className="px-2 py-0.5 rounded-full font-bold text-[11px] shrink-0 ml-2"
+            className="px-2 py-0.5 rounded-full font-bold text-[10px] shrink-0 ml-2"
             style={{
               background: trendType === "down" ? "rgba(239,68,68,0.12)" : "rgba(34,197,94,0.12)",
               color: trendType === "down" ? "#EF4444" : "#22C55E",
