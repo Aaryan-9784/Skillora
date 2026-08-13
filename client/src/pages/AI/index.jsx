@@ -643,7 +643,7 @@ const AI = () => {
                   {/* Sidebar Footer User Profile Card */}
                   <div className="p-3.5 border-t border-slate-800/80 bg-[#0B0F1B]/95 flex items-center justify-between shrink-0">
                     <Link
-                      to="/profile"
+                      to={user?.role === "admin" ? "/admin/profile" : user?.role === "client" ? "/client/profile" : "/profile"}
                       className="flex items-center gap-3 min-w-0 flex-1 hover:opacity-90 transition-opacity cursor-pointer group"
                       title="View Profile"
                     >

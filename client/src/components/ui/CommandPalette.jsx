@@ -427,7 +427,7 @@ const CommandPalette = ({ isOpen, onClose }) => {
   const listRef  = useRef(null);
 
   const navigate      = useNavigate();
-  const { logout }    = useAuthStore();
+  const { user, logout } = useAuthStore();
   const { sendMessage } = useAiStore();
 
   const debounced = useDebounce(query, 180);
@@ -533,10 +533,14 @@ const CommandPalette = ({ isOpen, onClose }) => {
       return;
     }
     if (item.path) {
-      if (item.id && !item._isRecent) {
-        saveRecent({ id: item.id, label: item.label, typeBadge: item.typeBadge || "Page", color: item.color, path: item.path });
+      let targetPath = item.path;
+      if (item.id === "profile") {
+        targetPath = user?.role === "admin" ? "/admin/profile" : user?.role === "client" ? "/client/profile" : "/profile";
       }
-      navigate(item.path);
+      if (item.id && !item._isRecent) {
+        saveRecent({ id: item.id, label: item.label, typeBadge: item.typeBadge || "Page", color: item.color, path: targetPath });
+      }
+      navigate(targetPath);
       return;
     }
     if (item.action === "logout") { logout().then(() => navigate("/login")); }

@@ -245,7 +245,7 @@ const AdminNavbar = ({ onSearch }) => {
           <motion.button
             whileHover={{ scale: 1.08, y: -1 }}
             whileTap={{ scale: 0.92 }}
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/admin")}
             title="Go to Home"
             className="relative w-8 h-8 rounded-xl flex items-center justify-center shrink-0 cursor-pointer transition-all duration-200"
             style={{
@@ -355,7 +355,7 @@ const AdminNavbar = ({ onSearch }) => {
                     </div>
                     <div className="py-2 px-2 space-y-1">
                       <motion.button whileHover={{ x: 2 }}
-                        onClick={() => { navigate("/"); setDropdownOpen(false); }}
+                        onClick={() => { navigate("/admin"); setDropdownOpen(false); }}
                         className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-150 cursor-pointer"
                         style={{ color: "#9CA3AF" }}
                         onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "#F9FAFB"; }}

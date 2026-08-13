@@ -138,6 +138,15 @@ class ErrorBoundary extends Component {
   }
 }
 
+const NotFoundRedirect = () => {
+  const { user, isAuthenticated, isLoading } = useAuthStore();
+  if (isLoading) return <PageLoader />;
+  if (!isAuthenticated) return <Navigate to="/" replace />;
+  if (user?.role === "admin") return <Navigate to="/admin" replace />;
+  if (user?.role === "client") return <Navigate to="/client/dashboard" replace />;
+  return <Navigate to="/dashboard" replace />;
+};
+
 const App = () => {
   const fetchMe = useAuthStore((s) => s.fetchMe);
   useEffect(() => {
@@ -240,7 +249,7 @@ const App = () => {
             </Route>
           </Route>
 
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFoundRedirect />} />
         </Routes>
       </Suspense>
     </>

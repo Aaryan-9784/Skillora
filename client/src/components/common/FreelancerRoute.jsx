@@ -12,7 +12,11 @@ const FreelancerRoute = () => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (!["freelancer", "admin"].includes(user?.role)) {
+  if (user?.role === "admin") {
+    return <Navigate to="/admin" replace />;
+  }
+
+  if (user?.role === "client") {
     return <Navigate to="/client/dashboard" replace />;
   }
 

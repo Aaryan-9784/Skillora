@@ -13,7 +13,8 @@ const ClientRoute = () => {
   }
 
   if (user?.role !== "client") {
-    return <Navigate to="/dashboard" replace />;
+    const redirectPath = user?.role === "admin" ? "/admin" : "/dashboard";
+    return <Navigate to={redirectPath} replace />;
   }
 
   return <Outlet />;

@@ -101,8 +101,6 @@ const AiWidgetPanel = ({ onClose }) => {
 
 /* ─── Header sub-component ─── */
 const WidgetHeader = ({ onClose, onClear, isStreaming, user }) => {
-  const isClient = user?.role === "client";
-
   return (
     <div
       className="flex items-center justify-between px-4 py-3 shrink-0"
@@ -192,9 +190,9 @@ const WidgetHeader = ({ onClose, onClear, isStreaming, user }) => {
           <Trash2 size={13} />
         </motion.button>
 
-        {/* Expand / Full Studio Page (Hidden for Clients) */}
-        {!isClient && (
-          <Link to="/dashboard/ai" onClick={onClose}>
+        {/* Expand / Full Studio Page (Only for Admin Dashboard) */}
+        {user?.role === "admin" && (
+          <Link to="/admin/ai" onClick={onClose}>
             <motion.button
               whileHover={{ scale: 1.08 }}
               whileTap={{ scale: 0.92 }}
@@ -217,30 +215,30 @@ const WidgetHeader = ({ onClose, onClear, isStreaming, user }) => {
           </Link>
         )}
 
-      {/* Close panel */}
-      <motion.button
-        whileHover={{ scale: 1.08 }}
-        whileTap={{ scale: 0.92 }}
-        onClick={onClose}
-        title="Close assistant"
-        className="w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-150 cursor-pointer"
-        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", color: "#6B7280" }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = "rgba(255,255,255,0.08)";
-          e.currentTarget.style.color = "#FFFFFF";
-          e.currentTarget.style.border = "1px solid rgba(255,255,255,0.15)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = "rgba(255,255,255,0.04)";
-          e.currentTarget.style.color = "#6B7280";
-          e.currentTarget.style.border = "1px solid rgba(255,255,255,0.07)";
-        }}
-      >
-        <X size={14} />
-      </motion.button>
+        {/* Close panel */}
+        <motion.button
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.92 }}
+          onClick={onClose}
+          title="Close assistant"
+          className="w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-150 cursor-pointer"
+          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", color: "#6B7280" }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(255,255,255,0.08)";
+            e.currentTarget.style.color = "#FFFFFF";
+            e.currentTarget.style.border = "1px solid rgba(255,255,255,0.15)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+            e.currentTarget.style.color = "#6B7280";
+            e.currentTarget.style.border = "1px solid rgba(255,255,255,0.07)";
+          }}
+        >
+          <X size={14} />
+        </motion.button>
+      </div>
     </div>
-  </div>
-);
+  );
 };
 
 export default AiWidgetPanel;

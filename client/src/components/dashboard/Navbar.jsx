@@ -89,7 +89,7 @@ const Navbar = ({ onCommandPalette }) => {
           <motion.button
             whileHover={{ scale: 1.08, y: -1 }}
             whileTap={{ scale: 0.92 }}
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/dashboard")}
             title="Go to Home"
             className="relative w-8 h-8 rounded-xl flex items-center justify-center shrink-0 cursor-pointer transition-all duration-200"
             style={{
