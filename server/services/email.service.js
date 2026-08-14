@@ -86,17 +86,18 @@ const send = async ({ to, subject, html, text }) => {
 
 // ── Templates ─────────────────────────────────────────────
 
-const sendWelcome = (user) =>
-  send({
+const sendWelcome = (user) => {
+  const firstName = user.name ? user.name.split(" ")[0] : "User";
+  return send({
     to:      user.email,
-    subject: `Welcome to Skillora, ${user.name.split(" ")[0]}!`,
+    subject: `Welcome to Skillora, ${firstName}!`,
     html: `
       <div style="font-family:Inter,sans-serif;max-width:560px;margin:0 auto;padding:32px;background:#fff">
         <div style="margin-bottom:24px">
           <span style="font-size:24px;font-weight:700;color:#635BFF">Skillora</span>
         </div>
         <h1 style="color:#1A1F36;font-size:22px;margin-bottom:8px">Welcome aboard 🚀</h1>
-        <p style="color:#1A1F36;font-size:16px;margin-bottom:8px">Hi ${user.name},</p>
+        <p style="color:#1A1F36;font-size:16px;margin-bottom:8px">Hi ${user.name || "there"},</p>
         <p style="color:#6B7280;line-height:1.6">
           Your account is ready. Start managing your freelance business smarter —
           track projects, clients, invoices, and get AI-powered insights.
@@ -113,6 +114,7 @@ const sendWelcome = (user) =>
         </p>
       </div>`,
   });
+};
 
 const sendPasswordReset = (user, resetUrl) =>
   send({
@@ -125,7 +127,7 @@ const sendPasswordReset = (user, resetUrl) =>
         </div>
         <h2 style="color:#1A1F36;font-size:20px;margin-bottom:8px">Password Reset Request</h2>
         <p style="color:#6B7280;line-height:1.6">
-          Hi ${user.name}, we received a request to reset your password.
+          Hi ${user.name || "there"}, we received a request to reset your password.
           Click the button below — this link expires in <strong>10 minutes</strong>.
         </p>
         <a href="${resetUrl}"
@@ -145,7 +147,7 @@ const sendPasswordReset = (user, resetUrl) =>
 const sendInvoice = (user, invoice, clientEmail) =>
   send({
     to:      clientEmail,
-    subject: `Invoice ${invoice.invoiceNumber} from ${user.name}`,
+    subject: `Invoice ${invoice.invoiceNumber} from ${user.name || "Freelancer"}`,
     html: `
       <div style="font-family:Inter,sans-serif;max-width:560px;margin:0 auto;padding:32px;background:#fff">
         <div style="margin-bottom:24px">
@@ -153,13 +155,13 @@ const sendInvoice = (user, invoice, clientEmail) =>
         </div>
         <h2 style="color:#1A1F36;font-size:20px;margin-bottom:4px">Invoice ${invoice.invoiceNumber}</h2>
         <p style="color:#6B7280;margin-bottom:20px">
-          You have received an invoice from <strong>${user.name}</strong>.
+          You have received an invoice from <strong>${user.name || "Freelancer"}</strong>.
         </p>
         <table style="width:100%;border-collapse:collapse;border-radius:8px;overflow:hidden">
           <tr style="background:#F6F9FC">
             <td style="padding:12px 16px;font-weight:600;color:#1A1F36">Total Amount</td>
             <td style="padding:12px 16px;text-align:right;font-weight:700;color:#635BFF;font-size:18px">
-              ${invoice.currency} ${invoice.total.toFixed(2)}
+              ${invoice.currency} ${(invoice.total || 0).toFixed(2)}
             </td>
           </tr>
           <tr style="background:#fff">
@@ -171,7 +173,7 @@ const sendInvoice = (user, invoice, clientEmail) =>
         </table>
         ${invoice.notes ? `<p style="color:#6B7280;margin-top:16px;font-size:14px">${invoice.notes}</p>` : ""}
         <hr style="border:none;border-top:1px solid #E3E8EF;margin:24px 0" />
-        <p style="color:#9CA3AF;font-size:12px">Sent via Skillora · ${user.email}</p>
+        <p style="color:#9CA3AF;font-size:12px">Sent via Skillora · ${user.email || ""}</p>
       </div>`,
   });
 
@@ -185,7 +187,7 @@ const sendSubscriptionConfirm = (user, plan) =>
           <span style="font-size:24px;font-weight:700;color:#635BFF">Skillora</span>
         </div>
         <h2 style="color:#635BFF;font-size:20px;margin-bottom:8px">Subscription Activated 🎉</h2>
-        <p style="color:#1A1F36;font-size:16px">Hi ${user.name},</p>
+        <p style="color:#1A1F36;font-size:16px">Hi ${user.name || "there"},</p>
         <p style="color:#6B7280;line-height:1.6">
           Your <strong style="color:#1A1F36">${plan.charAt(0).toUpperCase() + plan.slice(1)}</strong> plan
           is now active. Enjoy all the premium features!
