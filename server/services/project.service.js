@@ -90,7 +90,7 @@ const deleteProject = async (projectId, userId) => {
 
   await Promise.all([
     project.softDelete(),
-    Task.updateMany({ project: projectId }, { isDeleted: true, deletedAt: new Date() }),
+    Task.updateMany({ projectId }, { isDeleted: true, deletedAt: new Date() }),
     Proposal.deleteMany({ project: projectId }),
     Escrow.updateMany({ project: projectId }, { status: "refunded" }),
   ]);
@@ -126,8 +126,10 @@ const deleteProject = async (projectId, userId) => {
 };
 
 const getProjectStats = async (ownerId) => {
+  const mongoose = require("mongoose");
+  const ownerObjId = new mongoose.Types.ObjectId(ownerId);
   const [stats] = await Project.aggregate([
-    { $match: { owner: ownerId, isDeleted: { $ne: true } } },
+    { $match: { owner: ownerObjId, isDeleted: { $ne: true } } },
     {
       $group: {
         _id: null,

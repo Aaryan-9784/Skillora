@@ -156,8 +156,12 @@ const updateClientProfile = asyncHandler(async (req, res) => {
 
 const getInvoiceDetail = asyncHandler(async (req, res) => {
   const invoice = await Invoice.findOne({
-    _id:       req.params.id,
-    clientId:  req.user.clientRef,
+    _id: req.params.id,
+    $or: [
+      { clientId: req.user.clientRef },
+      { clientEmail: req.user.email },
+      { clientUser: req.user._id },
+    ],
     isDeleted: { $ne: true },
   })
     .populate("owner",     "name email avatar")
@@ -291,8 +295,12 @@ const markAllClientNotificationsRead = asyncHandler(async (req, res) => {
  */
 const initiateInvoicePayment = asyncHandler(async (req, res) => {
   const invoice = await Invoice.findOne({
-    _id:       req.params.id,
-    clientId:  req.user.clientRef,
+    _id: req.params.id,
+    $or: [
+      { clientId: req.user.clientRef },
+      { clientEmail: req.user.email },
+      { clientUser: req.user._id },
+    ],
     isDeleted: { $ne: true },
   }).populate("owner", "name email");
 
@@ -311,7 +319,7 @@ const initiateInvoicePayment = asyncHandler(async (req, res) => {
     amount:   Math.round(invoice.total * 100), // paise
     currency: invoice.currency === "USD" ? "USD" : "INR",
     receipt:  invoice.invoiceNumber,
-    notes:    { invoiceId: invoice._id.toString(), clientId: req.user.clientRef.toString() },
+    notes:    { invoiceId: invoice._id.toString(), clientId: (req.user.clientRef || req.user._id).toString() },
   });
 
   ApiResponse.success(res, "Payment order created", {
@@ -342,8 +350,12 @@ const verifyInvoicePayment = asyncHandler(async (req, res) => {
   }
 
   const invoice = await Invoice.findOne({
-    _id:       req.params.id,
-    clientId:  req.user.clientRef,
+    _id: req.params.id,
+    $or: [
+      { clientId: req.user.clientRef },
+      { clientEmail: req.user.email },
+      { clientUser: req.user._id },
+    ],
     isDeleted: { $ne: true },
   });
 
@@ -382,8 +394,12 @@ const verifyInvoicePayment = asyncHandler(async (req, res) => {
  */
 const approveMilestone = asyncHandler(async (req, res) => {
   const project = await Project.findOne({
-    _id:       req.params.id,
-    clientId:  req.user.clientRef,
+    _id: req.params.id,
+    $or: [
+      { clientId: req.user.clientRef },
+      { clientUser: req.user._id },
+      { owner: req.user._id },
+    ],
     isDeleted: { $ne: true },
   });
   if (!project) throw ApiError.notFound("Project not found");
@@ -422,8 +438,12 @@ const approveMilestone = asyncHandler(async (req, res) => {
 const requestMilestoneChanges = asyncHandler(async (req, res) => {
   const { feedback } = req.body;
   const project = await Project.findOne({
-    _id:       req.params.id,
-    clientId:  req.user.clientRef,
+    _id: req.params.id,
+    $or: [
+      { clientId: req.user.clientRef },
+      { clientUser: req.user._id },
+      { owner: req.user._id },
+    ],
     isDeleted: { $ne: true },
   });
   if (!project) throw ApiError.notFound("Project not found");
@@ -463,25 +483,43 @@ const requestMilestoneChanges = asyncHandler(async (req, res) => {
  */
 const getProjectMessages = asyncHandler(async (req, res) => {
   const project = await Project.findOne({
-    _id:       req.params.projectId,
-    clientId:  req.user.clientRef,
+    _id: req.params.projectId,
+    $or: [
+      { clientId: req.user.clientRef },
+      { clientUser: req.user._id },
+      { owner: req.user._id },
+    ],
     isDeleted: { $ne: true },
   });
   if (!project) throw ApiError.notFound("Project not found");
 
-  const Message = require("../models/Message");
+  const Conversation = require("../models/Conversation");
+  const Message      = require("../models/Message");
+
+  let conversation = await Conversation.findOne({ projectId: req.params.projectId });
+  if (!conversation) {
+    const participants = Array.from(
+      new Set([req.user._id, project.owner, project.assignedFreelancer].filter(Boolean))
+    );
+    conversation = await Conversation.create({
+      type: "project",
+      projectId: req.params.projectId,
+      participants,
+    });
+  }
+
   const page  = Math.max(1, parseInt(req.query.page) || 1);
   const limit = 30;
   const skip  = (page - 1) * limit;
 
   const [messages, total] = await Promise.all([
-    Message.find({ projectId: req.params.projectId })
+    Message.find({ conversationId: conversation._id })
       .populate("sender", "name avatar role")
       .sort("-createdAt")
       .skip(skip)
       .limit(limit)
       .lean(),
-    Message.countDocuments({ projectId: req.params.projectId }),
+    Message.countDocuments({ conversationId: conversation._id }),
   ]);
 
   ApiResponse.success(res, "Messages fetched", {
@@ -495,18 +533,43 @@ const sendProjectMessage = asyncHandler(async (req, res) => {
   if (!content?.trim()) throw ApiError.badRequest("Message content is required");
 
   const project = await Project.findOne({
-    _id:       req.params.projectId,
-    clientId:  req.user.clientRef,
+    _id: req.params.projectId,
+    $or: [
+      { clientId: req.user.clientRef },
+      { clientUser: req.user._id },
+      { owner: req.user._id },
+    ],
     isDeleted: { $ne: true },
   });
   if (!project) throw ApiError.notFound("Project not found");
 
-  const Message = require("../models/Message");
+  const Conversation = require("../models/Conversation");
+  const Message      = require("../models/Message");
+
+  let conversation = await Conversation.findOne({ projectId: req.params.projectId });
+  if (!conversation) {
+    const participants = Array.from(
+      new Set([req.user._id, project.owner, project.assignedFreelancer].filter(Boolean))
+    );
+    conversation = await Conversation.create({
+      type: "project",
+      projectId: req.params.projectId,
+      participants,
+    });
+  }
+
   const message = await Message.create({
-    projectId: req.params.projectId,
-    sender:    req.user._id,
-    content:   content.trim(),
+    conversationId: conversation._id,
+    sender:         req.user._id,
+    content:        content.trim(),
   });
+
+  conversation.lastMessage = {
+    text:      content.trim(),
+    sender:    req.user._id,
+    createdAt: new Date(),
+  };
+  await conversation.save();
 
   await message.populate("sender", "name avatar role");
 

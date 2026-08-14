@@ -43,6 +43,8 @@ const ClientMessages = () => {
     messages,
     onlinePresence,
     fetchProjectConversation,
+    fetchConversations,
+    fetchMessages,
     sendMessage,
     isTyping,
     deleteMessage,

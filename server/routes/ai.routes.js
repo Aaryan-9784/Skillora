@@ -1,7 +1,7 @@
 const router = require("express").Router();
 const { chat, projectPlan, proposal, productivity, pricing, history, feedback } =
   require("../controllers/ai.controller");
-const { protect, optionalAuth, requireAny } = require("../middlewares/auth.middleware");
+const { protect, requireAny } = require("../middlewares/auth.middleware");
 const { aiLimiter } = require("../middlewares/rateLimiter");
 
 router.use(aiLimiter);

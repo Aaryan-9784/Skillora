@@ -1,3 +1,4 @@
+const mongoose     = require("mongoose");
 const Project      = require("../models/Project");
 const Task         = require("../models/Task");
 const Invoice      = require("../models/Invoice");
@@ -8,6 +9,7 @@ const Notification = require("../models/Notification");
  * Runs all aggregations in parallel — one network round-trip from the client.
  */
 const getDashboardSummary = async (ownerId) => {
+  const ownerObjId = new mongoose.Types.ObjectId(ownerId);
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
   const [
@@ -20,7 +22,7 @@ const getDashboardSummary = async (ownerId) => {
   ] = await Promise.all([
     // Project counts by status
     Project.aggregate([
-      { $match: { owner: ownerId, isDeleted: { $ne: true } } },
+      { $match: { owner: ownerObjId, isDeleted: { $ne: true } } },
       {
         $group: {
           _id:       null,
@@ -34,7 +36,7 @@ const getDashboardSummary = async (ownerId) => {
 
     // Task counts by status
     Task.aggregate([
-      { $match: { owner: ownerId, isDeleted: { $ne: true } } },
+      { $match: { owner: ownerObjId, isDeleted: { $ne: true } } },
       {
         $group: {
           _id:         null,
@@ -48,7 +50,7 @@ const getDashboardSummary = async (ownerId) => {
 
     // Revenue: paid this month vs last month
     Invoice.aggregate([
-      { $match: { owner: ownerId, status: "paid", isDeleted: { $ne: true } } },
+      { $match: { owner: ownerObjId, status: "paid", isDeleted: { $ne: true } } },
       {
         $group: {
           _id:          null,

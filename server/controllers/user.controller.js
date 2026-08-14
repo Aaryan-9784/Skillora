@@ -1,7 +1,8 @@
 const asyncHandler = require("../utils/asyncHandler");
-const ApiResponse = require("../utils/ApiResponse");
-const userService = require("../services/user.service");
-const User = require("../models/User");
+const ApiResponse  = require("../utils/ApiResponse");
+const ApiError     = require("../utils/ApiError");
+const userService  = require("../services/user.service");
+const User         = require("../models/User");
 
 const getProfile = asyncHandler(async (req, res) => {
   const user = await userService.getProfile(req.user._id);
@@ -49,7 +50,7 @@ const getUserById = asyncHandler(async (req, res) => {
     .select("-password -refreshToken");
 
   if (!user) {
-    return ApiResponse.notFound(res, "User profile not found");
+    throw ApiError.notFound("User profile not found");
   }
   ApiResponse.success(res, "User profile fetched", { user });
 });

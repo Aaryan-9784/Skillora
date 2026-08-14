@@ -41,6 +41,10 @@ const useChatStore = create((set, get) => ({
     }
   },
 
+  fetchConversations: async (projectId) => {
+    return get().fetchProjectConversation(projectId);
+  },
+
   fetchMessages: async (conversationId, page = 1) => {
     set({ loading: true });
     try {

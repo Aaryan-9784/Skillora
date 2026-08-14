@@ -92,9 +92,12 @@ const deleteClient = async (clientId, ownerId) => {
 /**
  * Revenue breakdown per client — aggregation pipeline.
  */
+const mongoose = require("mongoose");
+
 const getClientRevenueStats = async (ownerId) => {
+  const ownerObjId = new mongoose.Types.ObjectId(ownerId);
   return Invoice.aggregate([
-    { $match: { owner: ownerId, status: "paid", isDeleted: { $ne: true } } },
+    { $match: { owner: ownerObjId, status: "paid", isDeleted: { $ne: true } } },
     {
       $group: {
         _id:          "$clientId",

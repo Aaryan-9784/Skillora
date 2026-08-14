@@ -88,6 +88,7 @@ const FinancialBar = ({ invoices }) => {
 
 // ── Invoice Detail Modal ───────────────────────────────────────────────────
 const InvoiceDetailModal = ({ invoiceId, onClose }) => {
+  const fetchInvoices = useClientPortalStore((s) => s.fetchInvoices);
   const [invoice, setInvoice] = useState(null);
   const [loading, setLoading] = useState(true);
 

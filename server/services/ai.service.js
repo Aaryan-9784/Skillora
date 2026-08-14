@@ -268,7 +268,7 @@ const streamChat = async ({ userId, messages, feature = "chat", projectId, model
     const userPrompt = lastMessage?.content || "";
     logInteraction({
       owner: userId, feature, prompt: userPrompt, response: fullResponse,
-      tokensUsed, model: MODEL_NAME(), durationMs, projectId,
+      tokensUsed, model: activeModel, durationMs, projectId,
     });
 
   } catch (err) {

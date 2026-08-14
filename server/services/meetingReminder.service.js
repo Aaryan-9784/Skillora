@@ -17,7 +17,11 @@ const startMeetingCron = () => {
       }).populate("participants organizer");
 
       for (const meeting of upcoming) {
-        const recipients = [meeting.organizer._id, ...(meeting.participants || []).map((p) => p._id)];
+        const organizerId = meeting.organizer?._id || meeting.organizer;
+        const participantIds = (meeting.participants || [])
+          .map((p) => p?._id || p)
+          .filter(Boolean);
+        const recipients = Array.from(new Set([organizerId, ...participantIds].filter(Boolean)));
         
         for (const rId of recipients) {
           await notify({

@@ -121,14 +121,17 @@ const deleteInvoice = async (invoiceId, ownerId) => {
 /**
  * Revenue analytics — monthly breakdown for the last N months.
  */
+const mongoose = require("mongoose");
+
 const getRevenueAnalytics = async (ownerId, months = 12) => {
+  const ownerObjId = new mongoose.Types.ObjectId(ownerId);
   const since = new Date();
   since.setMonth(since.getMonth() - months);
 
   return Invoice.aggregate([
     {
       $match: {
-        owner:     ownerId,
+        owner:     ownerObjId,
         status:    "paid",
         paidAt:    { $gte: since },
         isDeleted: { $ne: true },
@@ -161,10 +164,11 @@ const getRevenueAnalytics = async (ownerId, months = 12) => {
  * Outstanding balance — sum of all unpaid invoices.
  */
 const getOutstandingBalance = async (ownerId) => {
+  const ownerObjId = new mongoose.Types.ObjectId(ownerId);
   const [result] = await Invoice.aggregate([
     {
       $match: {
-        owner:     ownerId,
+        owner:     ownerObjId,
         status:    { $in: ["sent", "overdue"] },
         isDeleted: { $ne: true },
       },

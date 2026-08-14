@@ -44,7 +44,7 @@ const Messages = () => {
   const { clients, fetchClients } = useClientStore();
   const {
     activeConversation, messages, typingUsers, onlinePresence,
-    fetchProjectConversation, sendMessage, appendMessage, deleteMessage,
+    fetchProjectConversation, fetchConversations, fetchMessages, sendMessage, appendMessage, deleteMessage,
     replyingTo, setReplyTo, clearReplyTo, toggleReaction
   } = useChatStore();
 
