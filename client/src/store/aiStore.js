@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import api from "../services/api";
 import tokenStore from "../services/tokenStore";
 

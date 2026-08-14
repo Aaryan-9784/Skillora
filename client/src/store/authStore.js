@@ -10,7 +10,7 @@ import useAiStore from "./aiStore";
  * User object is kept in Zustand state (not persisted to localStorage
  * to avoid leaking PII — we re-fetch on mount via fetchMe).
  */
-const useAuthStore = create((set, get) => ({
+const useAuthStore = create((set) => ({
   user:            null,
   isAuthenticated: false,
   isLoading:       true,  // ← TRUE: block route guards until session restore completes

@@ -24,9 +24,9 @@ export const connectSocket = () => {
     reconnectionDelay: 1000,
   });
 
-  socket.on("connect", () => console.log("[socket] connected:", socket.id));
-  socket.on("disconnect", (reason) => console.log("[socket] disconnected:", reason));
-  socket.on("connect_error", (e) => console.warn("[socket] error:", e.message));
+  socket.off("connect").on("connect", () => console.log("[socket] connected:", socket.id));
+  socket.off("disconnect").on("disconnect", (reason) => console.log("[socket] disconnected:", reason));
+  socket.off("connect_error").on("connect_error", (e) => console.warn("[socket] error:", e.message));
 
   return socket;
 };

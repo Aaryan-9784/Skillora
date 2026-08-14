@@ -8,6 +8,7 @@ const Project         = require("../models/Project");
 const Client          = require("../models/Client");
 const Notification    = require("../models/Notification");
 const notify          = require("../utils/notify");
+const logger          = require("../utils/logger");
 
 const clientLogin = asyncHandler(async (req, res) => {
   const ip = req.ip || req.headers["x-forwarded-for"] || "";
@@ -25,7 +26,7 @@ const acceptInvite = asyncHandler(async (req, res) => {
     try {
       const syncService = require("../services/sync.service");
       await syncService.onClientPortalJoined(user, user.freelancerRef);
-    } catch { /* sync service may not exist yet */ }
+    } catch (err) { logger.warn(`syncService.onClientPortalJoined warning: ${err.message}`); }
   }
 
   authService.setTokenCookies(res, accessToken, refreshToken);
@@ -175,7 +176,7 @@ const getInvoiceDetail = asyncHandler(async (req, res) => {
     try {
       const syncService = require("../services/sync.service");
       await syncService.onInvoiceViewed(invoice);
-    } catch { /* sync service may not exist yet */ }
+    } catch (err) { logger.warn(`syncService.onInvoiceViewed warning: ${err.message}`); }
   }
 
   ApiResponse.success(res, "Invoice fetched", { invoice });
@@ -383,7 +384,7 @@ const verifyInvoicePayment = asyncHandler(async (req, res) => {
       status:    "paid",
     });
     broadcast("admin:stats_refresh", { ts: Date.now() });
-  } catch { /* socket may not be available */ }
+  } catch (err) { logger.warn(`socket update invoice warning: ${err.message}`); }
 
   ApiResponse.success(res, "Payment successful", { invoice });
 });
@@ -427,7 +428,7 @@ const approveMilestone = asyncHandler(async (req, res) => {
       milestoneId: milestone._id,
       status:      "approved",
     });
-  } catch { /* socket optional */ }
+  } catch (err) { logger.warn(`socket update milestone warning: ${err.message}`); }
 
   ApiResponse.success(res, "Milestone approved", { milestone });
 });
@@ -471,7 +472,7 @@ const requestMilestoneChanges = asyncHandler(async (req, res) => {
       milestoneId: milestone._id,
       status:      "changes_requested",
     });
-  } catch { /* socket optional */ }
+  } catch (err) { logger.warn(`socket milestone changes warning: ${err.message}`); }
 
   ApiResponse.success(res, "Changes requested", { milestone });
 });
@@ -590,7 +591,7 @@ const sendProjectMessage = asyncHandler(async (req, res) => {
       projectId: req.params.projectId,
       message,
     });
-  } catch { /* socket optional */ }
+  } catch (err) { logger.warn(`socket emit message warning: ${err.message}`); }
 
   ApiResponse.success(res, "Message sent", { message });
 });

@@ -2,7 +2,7 @@ import { create } from "zustand";
 import api from "../services/api";
 import toast from "react-hot-toast";
 
-const useProjectStore = create((set, get) => ({
+const useProjectStore = create((set) => ({
   projects:       [],
   myProposals:   [],
   currentProject: null,

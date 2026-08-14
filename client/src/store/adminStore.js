@@ -2,7 +2,7 @@ import { create } from "zustand";
 import * as adminService from "../services/adminService";
 import toast from "react-hot-toast";
 
-const useAdminStore = create((set, get) => ({
+const useAdminStore = create((set) => ({
   // ── state ──────────────────────────────────────────────
   stats:          null,
   users:          [],

@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import {
   User, Mail, Shield, Lock, Eye, EyeOff,
   Camera, Save, Key, UserCheck, Phone, Briefcase, FileText,
-  ShieldCheck, Clock, CheckCircle2, Calendar, Check, Trash2, AlertCircle,
+  ShieldCheck, CheckCircle2, Calendar, Trash2, AlertCircle,
   QrCode, Copy, Download, Smartphone,
 } from "lucide-react";
 import useAuthStore from "../../store/authStore";
@@ -137,9 +137,9 @@ const Profile = () => {
   const [formData, setFormData] = useState({
     name: user?.name || "",
     email: user?.email || "",
-    phone: user?.phone || "+1 (555) 234-5678",
-    title: user?.title || "Senior Software Engineer",
-    bio: user?.bio || "Passionate Full-Stack Developer & UI/UX enthusiast building high-scale web applications.",
+    phone: user?.phone || "",
+    title: user?.title || "",
+    bio: user?.bio || "",
   });
 
   const [passwords, setPasswords]     = useState({ newPassword: "", confirmPassword: "" });
@@ -198,9 +198,9 @@ const Profile = () => {
       setFormData({
         name: user.name || "",
         email: user.email || "",
-        phone: user.phone || "+1 (555) 234-5678",
-        title: user.title || "Senior Software Engineer",
-        bio: user.bio || "Passionate Full-Stack Developer & UI/UX enthusiast building high-scale web applications.",
+        phone: user.phone || "",
+        title: user.title || "",
+        bio: user.bio || "",
       });
     }
   }, [user]);

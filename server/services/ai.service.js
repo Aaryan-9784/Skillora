@@ -21,12 +21,11 @@ const getClient = () => {
 
 const MODEL_NAME = (requestedModel) => {
   if (requestedModel && typeof requestedModel === "string") {
-    if (requestedModel.includes("2.5")) return "gemini-2.5-flash";
     if (requestedModel.includes("pro") || requestedModel.includes("1.5-pro")) return "gemini-1.5-pro";
     if (requestedModel.includes("1.5")) return "gemini-1.5-flash";
-    if (requestedModel.includes("flash")) return "gemini-2.5-flash";
+    if (requestedModel.includes("flash")) return "gemini-1.5-flash";
   }
-  return process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  return process.env.GEMINI_MODEL || "gemini-1.5-flash";
 };
 
 // Safety settings — permissive for business content
