@@ -251,32 +251,32 @@ const setup2FA = async (userId) => {
   if (!user) throw ApiError.notFound("User not found");
 
   let secret = user.twoFactorSecret;
-  let otpauth;
-
-  if (!secret) {
+  if (!secret || !user.isTwoFactorEnabled) {
     const generated = speakeasy.generateSecret({
       length: 20,
       name: `Skillora (${user.email})`,
       issuer: "Skillora",
     });
     secret = generated.base32;
-    otpauth = generated.otpauth_url;
     user.twoFactorSecret = secret;
     await user.save({ validateBeforeSave: false });
-  } else {
-    otpauth = speakeasy.otpauthURL({
-      secret,
-      label: `Skillora (${user.email})`,
-      issuer: "Skillora",
-      encoding: "base32",
-    });
   }
+
+  const otpauth = speakeasy.otpauthURL({
+    secret,
+    label: `Skillora (${user.email})`,
+    issuer: "Skillora",
+    encoding: "base32",
+  });
 
   const qrCodeUrl = await QRCode.toDataURL(otpauth);
   return { secret, qrCodeUrl, otpauth };
 };
 
 const enable2FA = async (userId, token) => {
+  const cleanToken = (token || "").toString().replace(/[\s-]/g, "").trim();
+  if (!cleanToken) throw ApiError.badRequest("Verification token is required");
+
   const user = await User.findById(userId).select("+twoFactorSecret +twoFactorBackupCodes");
   if (!user) throw ApiError.notFound("User not found");
   if (!user.twoFactorSecret) throw ApiError.badRequest("Please request 2FA setup QR code first");
@@ -284,7 +284,8 @@ const enable2FA = async (userId, token) => {
   const isValid = speakeasy.totp.verify({
     secret:   user.twoFactorSecret,
     encoding: "base32",
-    token:    token.trim(),
+    token:    cleanToken,
+    window:   2,
   });
   if (!isValid) throw ApiError.badRequest("Invalid 2FA passcode. Please check your authenticator app.");
 
@@ -302,16 +303,34 @@ const enable2FA = async (userId, token) => {
 };
 
 const disable2FA = async (userId, token) => {
+  const cleanToken = (token || "").toString().replace(/[\s-]/g, "").trim();
+  if (!cleanToken) throw ApiError.badRequest("Verification token is required");
+
   const user = await User.findById(userId).select("+twoFactorSecret +twoFactorBackupCodes");
   if (!user) throw ApiError.notFound("User not found");
   if (!user.isTwoFactorEnabled) throw ApiError.badRequest("2FA is not enabled on this account");
 
-  const isValid = speakeasy.totp.verify({
-    secret:   user.twoFactorSecret,
-    encoding: "base32",
-    token:    token.trim(),
-  });
-  if (!isValid) throw ApiError.badRequest("Invalid 2FA passcode");
+  let isValid = false;
+  if (user.twoFactorSecret) {
+    isValid = speakeasy.totp.verify({
+      secret:   user.twoFactorSecret,
+      encoding: "base32",
+      token:    cleanToken,
+      window:   2,
+    });
+  }
+
+  // Also allow disabling via an unused backup code
+  if (!isValid && Array.isArray(user.twoFactorBackupCodes) && user.twoFactorBackupCodes.length > 0) {
+    const backupIndex = user.twoFactorBackupCodes.findIndex(
+      (b) => !b.used && b.code && b.code.toUpperCase() === cleanToken.toUpperCase()
+    );
+    if (backupIndex !== -1) {
+      isValid = true;
+    }
+  }
+
+  if (!isValid) throw ApiError.badRequest("Invalid 2FA passcode or backup code");
 
   user.isTwoFactorEnabled = false;
   user.twoFactorSecret = null;
@@ -323,7 +342,8 @@ const disable2FA = async (userId, token) => {
 };
 
 const verify2FALogin = async ({ mfaToken, code, ip = "" }) => {
-  if (!mfaToken || !code) throw ApiError.badRequest("MFA token and verification code are required");
+  const cleanCode = (code || "").toString().replace(/[\s-]/g, "").trim();
+  if (!mfaToken || !cleanCode) throw ApiError.badRequest("MFA token and verification code are required");
 
   let decoded;
   try {
@@ -340,18 +360,19 @@ const verify2FALogin = async ({ mfaToken, code, ip = "" }) => {
   let isBackupCode = false;
 
   // Check 6-digit TOTP code
-  if (code.length === 6 && /^\d+$/.test(code) && user.twoFactorSecret) {
+  if (cleanCode.length === 6 && /^\d+$/.test(cleanCode) && user.twoFactorSecret) {
     isValid = speakeasy.totp.verify({
       secret:   user.twoFactorSecret,
       encoding: "base32",
-      token:    code.trim(),
+      token:    cleanCode,
+      window:   2,
     });
   }
 
-  // Check backup code if TOTP failed or code length matches 8
-  if (!isValid && user.twoFactorBackupCodes?.length > 0) {
+  // Check backup code if TOTP failed or code is an 8-char backup code
+  if (!isValid && Array.isArray(user.twoFactorBackupCodes) && user.twoFactorBackupCodes.length > 0) {
     const backupIndex = user.twoFactorBackupCodes.findIndex(
-      (b) => !b.used && b.code.toUpperCase() === code.trim().toUpperCase()
+      (b) => !b.used && b.code && b.code.toUpperCase() === cleanCode.toUpperCase()
     );
     if (backupIndex !== -1) {
       isValid = true;

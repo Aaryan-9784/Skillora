@@ -83,10 +83,16 @@ const userSchema = new Schema(
     // Two-Factor Authentication (TOTP)
     isTwoFactorEnabled:   { type: Boolean, default: false },
     twoFactorSecret:      { type: String, select: false, default: null },
-    twoFactorBackupCodes: [{
-      code: { type: String, select: false },
-      used: { type: Boolean, default: false },
-    }],
+    twoFactorBackupCodes: {
+      type: [
+        {
+          code: { type: String, required: true },
+          used: { type: Boolean, default: false },
+        },
+      ],
+      select: false,
+      default: [],
+    },
 
     // Soft delete
     isDeleted:  { type: Boolean, default: false, select: false },
