@@ -1,9 +1,20 @@
-# ── Dependencies ─────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════
+#  Skillora — .gitignore
+# ══════════════════════════════════════════════════════════════
+
+# ── Dependencies ──────────────────────────────────────────────
 node_modules/
 .pnp
-.pnp.js
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+package-lock.json.bak
 
-# ── Build outputs ─────────────────────────────────────────
+# ── Build Outputs ─────────────────────────────────────────────
 dist/
 dist-ssr/
 build/
@@ -11,54 +22,132 @@ build/
 out/
 *.tsbuildinfo
 
-# ── Environment variables (NEVER commit secrets) ───────────
+# ── Environment Variables (NEVER commit secrets) ─────────────
 .env
-.env.local
-.env.development
-.env.test
-.env.production
+.env.*
+!.env.example
 server/.env
 client/.env
 
-# ── Local video & media assets ─────────────────────────────
-client/public/videos/
-video/
-*.mp4
-*.webm
-*.mov
-
-# ── Logs & Databases ──────────────────────────────────────
+# ── Logs ──────────────────────────────────────────────────────
 logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+lerna-debug.log*
 
-# ── Testing & Coverage ────────────────────────────────────
+# ── Testing & Coverage ───────────────────────────────────────
 coverage/
 .nyc_output/
+*.lcov
+jest-results/
 
-# ── OS & Temp files ───────────────────────────────────────
+# ── Video & Media Assets ────────────────────────────────────
+video/
+client/public/videos/
+*.mp4
+*.webm
+*.mov
+*.avi
+*.mkv
+
+# ── Uploaded Files & Temp Media ──────────────────────────────
+uploads/
+tmp/
+temp/
+
+# ── Database Dumps ───────────────────────────────────────────
+*.dump
+*.gz
+*.archive
+dump/
+mongodump/
+
+# ── Redis ─────────────────────────────────────────────────────
+*.rdb
+dump.rdb
+
+# ── OS Files ──────────────────────────────────────────────────
+# macOS
 .DS_Store
 .DS_Store?
 ._*
 .Spotlight-V100
 .Trashes
-ehthumbs.db
-Thumbs.db
+.AppleDouble
+.LSOverride
+Icon?
 
-# ── Editor & IDE ──────────────────────────────────────────
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ── Editor & IDE ──────────────────────────────────────────────
+# VSCode
 .vscode/*
 !.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+
+# JetBrains (WebStorm, IntelliJ)
 .idea/
+*.iml
+*.iws
+*.ipr
+
+# Vim / Neovim
 *.swp
 *.swo
+*.swn
 *~
+Session.vim
+.netrwhist
+tags
 
-# ── Cache & Local Scratch ──────────────────────────────────
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# ── Cache & Temp ──────────────────────────────────────────────
 .cache/
 .parcel-cache/
 .eslintcache
+.stylelintcache
 .temp/
+.tmp/
 scratch/
+
+# Vite
+*.local
+
+# Tailwind
+.tailwindcache/
+
+# ── Misc ──────────────────────────────────────────────────────
+*.pid
+*.seed
+*.pid.lock
+.node_repl_history
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Debug
+node_inspect_*.json
+
+# Sentry
+.sentryclirc
+
+# AI / Gemini agent artifacts
+.agents/
+.gemini/
