@@ -11,7 +11,10 @@ const postClientProject = asyncHandler(async (req, res) => {
 // Freelancer gets open marketplace projects
 const getOpenProjects = asyncHandler(async (req, res) => {
   const result = await proposalService.getOpenProjects(req.query);
-  ApiResponse.success(res, "Marketplace projects fetched", result);
+  ApiResponse.success(res, "Marketplace projects fetched", {
+    projects: result.data || [],
+    pagination: result.pagination,
+  });
 });
 
 // Freelancer submits proposal

@@ -43,7 +43,7 @@ const getOpenProjects = async (reqQuery = {}) => {
     filter.category = reqQuery.category;
   }
   if (reqQuery.skill) {
-    filter.requiredSkills = { $in: [reqQuery.skill] };
+    filter.requiredSkills = { $in: [new RegExp(reqQuery.skill, "i")] };
   }
   if (reqQuery.minBudget || reqQuery.maxBudget) {
     filter.budget = {};
@@ -51,12 +51,18 @@ const getOpenProjects = async (reqQuery = {}) => {
     if (reqQuery.maxBudget) filter.budget.$lte = Number(reqQuery.maxBudget);
   }
 
+  const cleanReqQuery = { ...reqQuery };
+  delete cleanReqQuery.category;
+  delete cleanReqQuery.skill;
+  delete cleanReqQuery.minBudget;
+  delete cleanReqQuery.maxBudget;
+
   const baseQuery = Project.find(filter);
-  return new QueryBuilder(baseQuery, reqQuery)
+  return new QueryBuilder(baseQuery, cleanReqQuery)
     .filter()
-    .search(["title", "description", "category"])
+    .search(["title", "description", "category", "requiredSkills"])
     .sort("-createdAt")
-    .paginate(20)
+    .paginate(parseInt(reqQuery.limit, 10) || 50)
     .lean()
     .populate("clientUser", "name email company avatar")
     .populate("owner", "name email company avatar")
@@ -86,9 +92,9 @@ const submitProposal = async (freelancerId, projectId, data) => {
     freelancer: freelancerId,
     client: clientUserId,
     coverLetter: data.coverLetter,
-    bidAmount: data.bidAmount,
+    bidAmount: Number(data.bidAmount) || project.budget || 0,
     currency: data.currency || project.currency || "USD",
-    estimatedDays: data.estimatedDays,
+    estimatedDays: Number(data.estimatedDays || data.deliveryDays) || 7,
     attachments: data.attachments || [],
     status: "pending",
   });

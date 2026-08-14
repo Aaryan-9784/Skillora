@@ -12,7 +12,7 @@ import api from "../../services/api";
 import useAuthStore from "../../store/authStore";
 import useClickOutside from "../../hooks/useClickOutside";
 import SubpageStatCard from "../../components/dashboard/SubpageStatCard";
-import { formatCurrency, getInitials } from "../../utils/helpers";
+import { formatCurrency, getInitials, formatDate, relativeTime } from "../../utils/helpers";
 
 // ── Glass Container Card (Client Portal Standard) ──────────────────────────
 const GCard = ({ children, delay, className = "", glow, onClick }) => (
@@ -334,9 +334,35 @@ export default function MarketplacePage() {
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      const res = await api.get("/projects/explore");
-      const fetched = res.data?.data?.projects || res.data?.projects || (Array.isArray(res.data?.data) ? res.data.data : []);
-      setProjects(fetched);
+      const [exploreRes, myPropsRes] = await Promise.allSettled([
+        api.get("/projects/explore"),
+        api.get("/projects/proposals/my"),
+      ]);
+
+      if (exploreRes.status === "fulfilled") {
+        const resData = exploreRes.value?.data;
+        const fetched =
+          resData?.data?.projects ||
+          resData?.data?.data ||
+          resData?.projects ||
+          (Array.isArray(resData?.data) ? resData.data : []) ||
+          [];
+        setProjects(Array.isArray(fetched) ? fetched : []);
+      } else {
+        console.error("Failed to fetch explore projects:", exploreRes.reason);
+        setProjects([]);
+      }
+
+      if (myPropsRes.status === "fulfilled") {
+        const props =
+          myPropsRes.value?.data?.data?.proposals ||
+          myPropsRes.value?.data?.proposals ||
+          [];
+        const ids = new Set(
+          props.map((p) => (p.project?._id || p.project)?.toString()).filter(Boolean)
+        );
+        setAppliedProjectIds(ids);
+      }
     } catch (err) {
       console.error("Failed to fetch database projects:", err);
       setProjects([]);
@@ -396,21 +422,19 @@ export default function MarketplacePage() {
 
     try {
       setSubmitting(true);
-      try {
-        await api.post(`/projects/${selectedProject._id}/proposals`, {
-          bidAmount: Number(bidAmount),
-          deliveryDays: Number(deliveryDays),
-          coverLetter,
-        });
-      } catch (err) {
-        // Fallback for demo items
-      }
+      await api.post(`/projects/${selectedProject._id}/proposals`, {
+        bidAmount: Number(bidAmount) || selectedProject.budget || 0,
+        currency: selectedProject.currency || "USD",
+        deliveryDays: Number(deliveryDays) || 7,
+        coverLetter: coverLetter.trim(),
+      });
 
-      setAppliedProjectIds((prev) => new Set(prev).add(selectedProject._id));
+      setAppliedProjectIds((prev) => new Set(prev).add(selectedProject._id?.toString()));
       toast.success("Proposal submitted successfully! The client will review your application.");
       setSelectedProject(null);
+      fetchProjects();
     } catch (err) {
-      toast.error("Failed to submit proposal. Please try again.");
+      toast.error(err.response?.data?.message || "Failed to submit proposal. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -555,12 +579,19 @@ export default function MarketplacePage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredProjects.map((project, index) => {
-                const isApplied = appliedProjectIds.has(project._id);
+                const isApplied = appliedProjectIds.has(project._id?.toString());
                 const skills = project.requiredSkills || [];
                 const visibleSkills = skills.slice(0, 4);
                 const extraSkills = skills.length - visibleSkills.length;
-                const initials = getInitials(project.clientName || "Client");
-                const formattedBudget = formatCurrency(project.budget || 100000, project.currency || "INR");
+                const clientName =
+                  project.clientUser?.name ||
+                  project.owner?.name ||
+                  project.clientId?.name ||
+                  project.clientName ||
+                  "Verified Client";
+                const initials = getInitials(clientName);
+                const formattedBudget = formatCurrency(project.budget || 0, project.currency || "USD");
+                const postedDate = project.createdAt ? relativeTime(project.createdAt) : (project.postedAt || "Recently");
 
                 return (
                   <div
@@ -620,7 +651,7 @@ export default function MarketplacePage() {
                         <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-bold"
                           style={{ background: "rgba(99,91,255,0.12)", color: "#C4B5FD", border: "1px solid rgba(99,91,255,0.2)" }}>
                           <Send size={10} className="text-purple-400" />
-                          <span>{project.proposalsCount || 6} proposals</span>
+                          <span>{project.proposalsCount ?? 0} proposals</span>
                         </span>
 
                         <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-bold"
@@ -657,10 +688,10 @@ export default function MarketplacePage() {
                             style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)" }}>
                             {initials}
                           </div>
-                          <span className="font-semibold text-slate-300 text-xs">{project.clientName || "Verified Client"}</span>
+                          <span className="font-semibold text-slate-300 text-xs truncate max-w-[120px]">{clientName}</span>
                           <CheckCircle size={12} className="text-emerald-400 shrink-0" />
                         </div>
-                        <span className="text-[10px] text-slate-500 font-medium">{project.postedAt || "Recently"}</span>
+                        <span className="text-[10px] text-slate-500 font-medium">{postedDate}</span>
                       </div>
 
                       <div className="grid grid-cols-2 gap-2" onClick={(e) => e.stopPropagation()}>
@@ -679,7 +710,7 @@ export default function MarketplacePage() {
                         <button
                           disabled={isApplied}
                           onClick={() => handleOpenProposal(project)}
-                          className="w-full flex items-center justify-center gap-1 py-2 rounded-xl text-xs font-bold text-white transition-all cursor-pointer"
+                          className="w-full flex items-center justify-center gap-1 py-2 rounded-xl text-xs font-bold text-white transition-all cursor-pointer disabled:opacity-80"
                           style={{
                             background: isApplied
                               ? "rgba(34,197,94,0.15)"
@@ -703,88 +734,113 @@ export default function MarketplacePage() {
 
       {/* ── FULL PROJECT DETAILS MODAL ── */}
       <AnimatePresence>
-        {detailProject && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setDetailProject(null)}
-              className="absolute inset-0 bg-black/80 backdrop-blur-md"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 16 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 16 }}
-              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-              className="relative w-full max-w-2xl rounded-3xl overflow-hidden z-10 p-6 lg:p-8 space-y-6 max-h-[90vh] overflow-y-auto"
-              style={{
-                background: "linear-gradient(160deg, rgba(15,23,42,0.99) 0%, rgba(10,16,30,0.99) 100%)",
-                border: "1px solid rgba(99,91,255,0.3)",
-                boxShadow: "0 24px 64px rgba(0,0,0,0.8), 0 0 32px rgba(99,91,255,0.2)",
-              }}
-            >
-              <button onClick={() => setDetailProject(null)} className="absolute top-5 right-5 p-2 rounded-xl text-gray-400 hover:text-white transition-colors cursor-pointer" style={{ background: "rgba(255,255,255,0.05)" }}>
-                <X size={16} />
-              </button>
-              <div className="flex flex-wrap items-center justify-between gap-3 pr-8">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold px-3 py-1 rounded-lg" style={{ background: "rgba(99,91,255,0.18)", color: "#A78BFA", border: "1px solid rgba(99,91,255,0.3)" }}>
-                    {detailProject.category}
-                  </span>
-                  <span className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg text-emerald-400" style={{ background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.25)" }}>
-                    <CheckCircle size={12} /> Verified Client
-                  </span>
+        {detailProject && (() => {
+          const detailClientName =
+            detailProject.clientUser?.name ||
+            detailProject.owner?.name ||
+            detailProject.clientId?.name ||
+            detailProject.clientName ||
+            "Verified Client";
+          const detailInitials = getInitials(detailClientName);
+          const detailPosted = detailProject.createdAt ? relativeTime(detailProject.createdAt) : (detailProject.postedAt || "Recently");
+          const detailDeadline = detailProject.deadline ? formatDate(detailProject.deadline) : "Flexible";
+          const isAppliedDetail = appliedProjectIds.has(detailProject._id?.toString());
+
+          return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                onClick={() => setDetailProject(null)}
+                className="absolute inset-0 bg-black/80 backdrop-blur-md"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 16 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 16 }}
+                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                className="relative w-full max-w-2xl rounded-3xl overflow-hidden z-10 p-6 lg:p-8 space-y-6 max-h-[90vh] overflow-y-auto"
+                style={{
+                  background: "linear-gradient(160deg, rgba(15,23,42,0.99) 0%, rgba(10,16,30,0.99) 100%)",
+                  border: "1px solid rgba(99,91,255,0.3)",
+                  boxShadow: "0 24px 64px rgba(0,0,0,0.8), 0 0 32px rgba(99,91,255,0.2)",
+                }}
+              >
+                <button onClick={() => setDetailProject(null)} className="absolute top-5 right-5 p-2 rounded-xl text-gray-400 hover:text-white transition-colors cursor-pointer" style={{ background: "rgba(255,255,255,0.05)" }}>
+                  <X size={16} />
+                </button>
+                <div className="flex flex-wrap items-center justify-between gap-3 pr-8">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold px-3 py-1 rounded-lg" style={{ background: "rgba(99,91,255,0.18)", color: "#A78BFA", border: "1px solid rgba(99,91,255,0.3)" }}>
+                      {detailProject.category || "General"}
+                    </span>
+                    <span className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg text-emerald-400" style={{ background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.25)" }}>
+                      <CheckCircle size={12} /> Verified Client
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xl font-black text-emerald-400">{formatCurrency(detailProject.budget, detailProject.currency || "USD")}</p>
+                    <p className="text-[10px] text-gray-400 font-medium">{detailProject.type || "Fixed Contract"}</p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-xl font-black text-emerald-400">{formatCurrency(detailProject.budget, detailProject.currency || "INR")}</p>
-                  <p className="text-[10px] text-gray-400 font-medium">{detailProject.type || "Fixed Contract"}</p>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <h2 className="text-xl lg:text-2xl font-black text-white leading-tight">{detailProject.title}</h2>
-                <div className="flex flex-wrap items-center gap-3 text-xs text-gray-400 font-medium">
-                  <span className="flex items-center gap-1"><Clock size={13} className="text-purple-400" /> Posted {detailProject.postedAt || "Recently"}</span>
-                  <span>·</span>
-                  <span className="flex items-center gap-1"><Calendar size={13} className="text-purple-400" /> Deadline: {detailProject.deadline || "Flexible"}</span>
-                  <span>·</span>
-                  <span className="flex items-center gap-1"><Send size={13} className="text-purple-400" /> {detailProject.proposalsCount || 6} Active Proposals</span>
-                </div>
-              </div>
-              <div className="space-y-2 p-4 rounded-2xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
-                <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5"><FileText size={14} className="text-purple-400" /> Detailed Scope & Requirements</h3>
-                <p className="text-xs text-gray-300 leading-relaxed font-normal whitespace-pre-line">{detailProject.description}</p>
-              </div>
-              {detailProject.requiredSkills?.length > 0 && (
                 <div className="space-y-2">
-                  <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5"><Layers size={14} className="text-purple-400" /> Required Tech Stack & Skills</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {detailProject.requiredSkills.map((skill, i) => (
-                      <span key={i} className="text-xs font-semibold px-3 py-1.5 rounded-xl" style={{ background: "rgba(99,91,255,0.12)", color: "#C4B5FD", border: "1px solid rgba(99,91,255,0.25)" }}>{skill}</span>
-                    ))}
+                  <h2 className="text-xl lg:text-2xl font-black text-white leading-tight">{detailProject.title}</h2>
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-gray-400 font-medium">
+                    <span className="flex items-center gap-1"><Clock size={13} className="text-purple-400" /> Posted {detailPosted}</span>
+                    <span>·</span>
+                    <span className="flex items-center gap-1"><Calendar size={13} className="text-purple-400" /> Deadline: {detailDeadline}</span>
+                    <span>·</span>
+                    <span className="flex items-center gap-1"><Send size={13} className="text-purple-400" /> {detailProject.proposalsCount ?? 0} Active Proposals</span>
                   </div>
                 </div>
-              )}
-              <div className="flex items-center justify-between p-4 rounded-2xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-extrabold text-white shrink-0" style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)", boxShadow: "0 0 16px rgba(99,91,255,0.4)" }}>
-                    {getInitials(detailProject.clientName || "Client")}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-extrabold text-sm text-white">{detailProject.clientName || "Verified Client"}</span>
-                      <CheckCircle size={14} className="text-emerald-400 shrink-0" />
+                <div className="space-y-2 p-4 rounded-2xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                  <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5"><FileText size={14} className="text-purple-400" /> Detailed Scope & Requirements</h3>
+                  <p className="text-xs text-gray-300 leading-relaxed font-normal whitespace-pre-line">{detailProject.description}</p>
+                </div>
+                {detailProject.requiredSkills?.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5"><Layers size={14} className="text-purple-400" /> Required Tech Stack & Skills</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {detailProject.requiredSkills.map((skill, i) => (
+                        <span key={i} className="text-xs font-semibold px-3 py-1.5 rounded-xl" style={{ background: "rgba(99,91,255,0.12)", color: "#C4B5FD", border: "1px solid rgba(99,91,255,0.25)" }}>{skill}</span>
+                      ))}
                     </div>
-                    <p className="text-[11px] text-gray-400 font-medium">Payment Verified · 100% Milestone Completion</p>
+                  </div>
+                )}
+                <div className="flex items-center justify-between p-4 rounded-2xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-extrabold text-white shrink-0" style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)", boxShadow: "0 0 16px rgba(99,91,255,0.4)" }}>
+                      {detailInitials}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-extrabold text-sm text-white">{detailClientName}</span>
+                        <CheckCircle size={14} className="text-emerald-400 shrink-0" />
+                      </div>
+                      <p className="text-[11px] text-gray-400 font-medium">Payment Verified · 100% Milestone Completion</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="flex items-center justify-end pt-2">
-                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => handleOpenProposal(detailProject)} className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer" style={{ background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)", boxShadow: "0 0 20px rgba(99,91,255,0.4)" }}>
-                  <span>Apply Now</span>
-                  <ArrowRight size={14} />
-                </motion.button>
-              </div>
-            </motion.div>
-          </div>
-        )}
+                <div className="flex items-center justify-end pt-2">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    disabled={isAppliedDetail}
+                    onClick={() => handleOpenProposal(detailProject)}
+                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer disabled:opacity-75"
+                    style={{
+                      background: isAppliedDetail ? "rgba(34,197,94,0.2)" : "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)",
+                      boxShadow: isAppliedDetail ? "none" : "0 0 20px rgba(99,91,255,0.4)",
+                      border: isAppliedDetail ? "1px solid rgba(34,197,94,0.4)" : "none",
+                      color: isAppliedDetail ? "#4ADE80" : "#FFFFFF"
+                    }}
+                  >
+                    <span>{isAppliedDetail ? "Already Applied" : "Apply Now"}</span>
+                    {!isAppliedDetail && <ArrowRight size={14} />}
+                  </motion.button>
+                </div>
+              </motion.div>
+            </div>
+          );
+        })()}
       </AnimatePresence>
 
       {/* ── PROPOSAL SUBMISSION MODAL ── */}

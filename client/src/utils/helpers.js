@@ -1,6 +1,17 @@
 export const formatDate = (date) => {
   if (!date) return "—";
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(new Date(date));
+  try {
+    if (typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      const [year, month, day] = date.split("-").map(Number);
+      const localDate = new Date(year, month - 1, day);
+      return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(localDate);
+    }
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return "—";
+    return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(d);
+  } catch {
+    return "—";
+  }
 };
 
 export const formatCurrency = (amount, currency = "INR") => {

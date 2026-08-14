@@ -322,6 +322,7 @@ const PostProjectModal = ({ open, onClose }) => {
             value={form.deadline}
             onChange={(e) => setForm({ ...form, deadline: e.target.value })}
             placeholder="Select deadline..."
+            min={new Date().toISOString().split("T")[0]}
           />
         </div>
 
