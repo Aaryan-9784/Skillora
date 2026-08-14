@@ -2,6 +2,16 @@ const asyncHandler    = require("../utils/asyncHandler");
 const ApiResponse     = require("../utils/ApiResponse");
 const paymentService  = require("../services/payment.service");
 
+const createRazorpayOrder = asyncHandler(async (req, res) => {
+  const result = await paymentService.createRazorpayOrder(req.user._id, req.body);
+  ApiResponse.success(res, "Razorpay order created", result);
+});
+
+const verifyRazorpayPayment = asyncHandler(async (req, res) => {
+  const result = await paymentService.verifyRazorpayPayment(req.user._id, req.body);
+  ApiResponse.success(res, "Razorpay payment verified successfully", result);
+});
+
 const createPayment = asyncHandler(async (req, res) => {
   const payment = await paymentService.createPayment(req.user._id, req.body);
   ApiResponse.created(res, "Payment recorded", { payment });
@@ -27,4 +37,12 @@ const getEarningsSummary = asyncHandler(async (req, res) => {
   ApiResponse.success(res, "Earnings summary", { summary });
 });
 
-module.exports = { createPayment, getPayments, getPayment, updatePayment, getEarningsSummary };
+module.exports = {
+  createRazorpayOrder,
+  verifyRazorpayPayment,
+  createPayment,
+  getPayments,
+  getPayment,
+  updatePayment,
+  getEarningsSummary,
+};

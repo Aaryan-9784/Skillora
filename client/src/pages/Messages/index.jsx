@@ -57,6 +57,18 @@ const Messages = () => {
   const [moreMenuOpen, setMoreMenuOpen]     = useState(false);
   const [sidebarMenuOpen, setSidebarMenuOpen] = useState(false);
   const [deleteModalMsg, setDeleteModalMsg] = useState(null);
+  const [isRefreshing, setIsRefreshing]     = useState(false);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      if (fetchConversations) await fetchConversations();
+      if (activeConversation?._id && fetchMessages) await fetchMessages(activeConversation._id);
+    } catch (e) {
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 500);
+    }
+  };
   const fileInputRef                        = useRef(null);
   const messagesEndRef                      = useRef(null);
   const moreMenuRef                         = useRef(null);
@@ -270,19 +282,37 @@ const Messages = () => {
             </p>
           </div>
 
-          <motion.button
-            whileHover={{ scale: 1.04, boxShadow: "0 0 28px rgba(99,91,255,0.55)" }}
-            whileTap={{ scale: 0.96 }}
-            onClick={() => setShowSchedule(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer transition-all shrink-0"
-            style={{
-              background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)",
-              boxShadow: "0 0 20px rgba(99,91,255,0.35)",
-              border: "1px solid rgba(255,255,255,0.15)",
-            }}
-          >
-            <Calendar size={15} strokeWidth={2.5} /> Schedule Meeting
-          </motion.button>
+          <div className="flex items-center gap-2.5 shrink-0">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleRefresh}
+              title="Refresh Messages"
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition-all cursor-pointer shrink-0"
+              style={{
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.08)",
+              }}
+              onMouseEnter={e => e.currentTarget.style.border = "1px solid rgba(99,91,255,0.3)"}
+              onMouseLeave={e => e.currentTarget.style.border = "1px solid rgba(255,255,255,0.08)"}
+            >
+              <RefreshCw size={16} strokeWidth={2} className={isRefreshing ? "animate-spin text-[#635BFF]" : ""} />
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.04, boxShadow: "0 0 28px rgba(99,91,255,0.55)" }}
+              whileTap={{ scale: 0.96 }}
+              onClick={() => setShowSchedule(true)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer transition-all shrink-0"
+              style={{
+                background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)",
+                boxShadow: "0 0 20px rgba(99,91,255,0.35)",
+                border: "1px solid rgba(255,255,255,0.15)",
+              }}
+            >
+              <Calendar size={15} strokeWidth={2.5} /> Schedule Meeting
+            </motion.button>
+          </div>
         </motion.div>
 
         {/* ── Main 2-Column WhatsApp Web Layout Container (100% Identical to Client Messages) ── */}

@@ -5,7 +5,7 @@ import {
   Sparkles, Plus, Search, MessageSquare, PanelLeftClose, PanelLeftOpen,
   ChevronDown, Trash2, Download, Paperclip, Mic, MicOff, Globe,
   Send, Square, RotateCcw, ThumbsUp, ThumbsDown, Volume2, VolumeX, Copy,
-  CheckCheck, Code, FileText, Zap, Brain, Bot, Check, X, Cpu
+  CheckCheck, Code, FileText, Zap, Brain, Bot, Check, X, Cpu, RefreshCw
 } from "lucide-react";
 import useAiStore from "../../store/aiStore";
 import useDashboardStore from "../../store/dashboardStore";
@@ -137,6 +137,17 @@ const AI = () => {
   const [searchHistory, setSearchHistory] = useState("");
   const [slashSuggestions, setSlashSuggestions] = useState([]);
   const [attachedFile, setAttachedFile] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      if (fetchSummary) await fetchSummary();
+    } catch (e) {
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 500);
+    }
+  };
 
   const [sessionsList, setSessionsList] = useState(() => {
     try {
@@ -396,22 +407,40 @@ const AI = () => {
             </p>
           </div>
 
-          <motion.button
-            whileHover={{ scale: 1.04, boxShadow: "0 0 28px rgba(99,91,255,0.55)" }}
-            whileTap={{ scale: 0.96 }}
-            onClick={() => {
-              handleSelectModel(AI_MODELS[0]);
-              toast.success("Activated Skillora AI Pro model!");
-            }}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer transition-all shrink-0"
-            style={{
-              background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)",
-              boxShadow: "0 0 20px rgba(99,91,255,0.35)",
-              border: "1px solid rgba(255,255,255,0.15)",
-            }}
-          >
-            <Sparkles size={15} strokeWidth={2.5} /> Skillora AI Pro
-          </motion.button>
+          <div className="flex items-center gap-2.5 shrink-0">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleRefresh}
+              title="Refresh AI Studio"
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition-all cursor-pointer shrink-0"
+              style={{
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.08)",
+              }}
+              onMouseEnter={e => e.currentTarget.style.border = "1px solid rgba(99,91,255,0.3)"}
+              onMouseLeave={e => e.currentTarget.style.border = "1px solid rgba(255,255,255,0.08)"}
+            >
+              <RefreshCw size={16} strokeWidth={2} className={isRefreshing ? "animate-spin text-[#635BFF]" : ""} />
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.04, boxShadow: "0 0 28px rgba(99,91,255,0.55)" }}
+              whileTap={{ scale: 0.96 }}
+              onClick={() => {
+                handleSelectModel(AI_MODELS[0]);
+                toast.success("Activated Skillora AI Pro model!");
+              }}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer transition-all shrink-0"
+              style={{
+                background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)",
+                boxShadow: "0 0 20px rgba(99,91,255,0.35)",
+                border: "1px solid rgba(255,255,255,0.15)",
+              }}
+            >
+              <Sparkles size={15} strokeWidth={2.5} /> Skillora AI Pro
+            </motion.button>
+          </div>
         </motion.div>
 
         {/* ── Main Layout Container (100% Identical to Messages / Projects Layout) ── */}

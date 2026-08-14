@@ -12,6 +12,7 @@ import Modal from "../../components/ui/Modal";
 import { SkeletonRow } from "../../components/ui/Skeleton";
 import SubpageStatCard from "../../components/dashboard/SubpageStatCard";
 import { formatCurrency, formatDate } from "../../utils/helpers";
+import { processRazorpayPayment } from "../../services/razorpayService";
 
 const PAGE_SIZE = 10;
 
@@ -36,22 +37,33 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-// ── Glass Container Card (Matches Admin Theme) ─────────────────────────────
-const GCard = ({ children, delay, className, glow }) => (
+// ── Glass Container Card (Client Portal Standard) ──────────────────────────
+const GCard = ({ children, delay, className = "", glow, onClick }) => (
   <motion.div
-    initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: delay || 0, duration: 0.45, ease: [0.16,1,0.3,1] }}
-    className={"relative overflow-hidden rounded-2xl " + (className || "")}
+    initial={{ opacity: 0, y: 16 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: delay || 0, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+    onClick={onClick}
+    className={`relative overflow-hidden rounded-2xl transition-all duration-300 ${className}`}
     style={{
-      background: "rgba(255,255,255,0.03)", backdropFilter: "blur(16px)",
-      border: "1px solid rgba(255,255,255,0.07)",
-      boxShadow: glow ? ("0 0 50px " + glow + "10") : "0 0 30px rgba(99,91,255,0.04)",
+      background: "linear-gradient(145deg, rgba(15,23,42,0.85) 0%, rgba(9,14,26,0.92) 100%)",
+      backdropFilter: "blur(20px)",
+      WebkitBackdropFilter: "blur(20px)",
+      border: "1px solid rgba(255,255,255,0.09)",
+      boxShadow: glow
+        ? `0 10px 30px -10px ${glow}20, 0 0 20px ${glow}10`
+        : "0 10px 30px -10px rgba(0,0,0,0.5), 0 0 20px rgba(99,91,255,0.05)",
     }}
   >
-    <div className="absolute inset-x-0 top-0 h-px pointer-events-none"
-      style={{ background: glow
-        ? ("linear-gradient(90deg,transparent," + glow + "50,transparent)")
-        : "linear-gradient(90deg,transparent,rgba(99,91,255,0.25),transparent)" }} />
+    {/* Top Shimmer Accent Line */}
+    <div
+      className="absolute inset-x-0 top-0 h-px pointer-events-none"
+      style={{
+        background: glow
+          ? `linear-gradient(90deg, transparent, ${glow}70, transparent)`
+          : "linear-gradient(90deg, transparent, rgba(99,91,255,0.35), transparent)",
+      }}
+    />
     {children}
   </motion.div>
 );
@@ -172,6 +184,37 @@ const InvoiceDetailModal = ({ invoiceId, onClose }) => {
               <p className="text-xs font-medium" style={{ color: "rgba(209,213,219,0.9)" }}>{invoice.notes}</p>
             </div>
           )}
+
+          {invoice.status !== "paid" && invoice.status !== "cancelled" && (
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => {
+                processRazorpayPayment({
+                  invoiceId: invoice._id,
+                  amount: invoice.total,
+                  currency: invoice.currency || "INR",
+                  name: `Invoice #${invoice.invoiceNumber}`,
+                  description: `Client Invoice Payment ${invoice.invoiceNumber}`,
+                  userEmail: invoice.owner?.email || "",
+                  userName: invoice.owner?.name || "",
+                  onSuccess: () => {
+                    fetchInvoices();
+                    onClose();
+                  },
+                });
+              }}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold text-white cursor-pointer transition-all mt-3"
+              style={{
+                background: "linear-gradient(135deg, #635BFF 0%, #00D4FF 100%)",
+                boxShadow: "0 0 20px rgba(99,91,255,0.35)",
+                border: "1px solid rgba(255,255,255,0.2)",
+              }}
+            >
+              <CreditCard size={15} strokeWidth={2.5} />
+              <span>Pay Now via Razorpay</span>
+            </motion.button>
+          )}
         </div>
       )}
     </Modal>
@@ -257,6 +300,7 @@ const ClientInvoices = () => {
               }}>
               Invoices
             </h1>
+            {/* Review invoice status, totals, and billing history */}
             <p className="text-xs lg:text-sm mt-1 font-medium text-slate-400">
               Review invoice status, totals, and billing history
             </p>
@@ -280,8 +324,8 @@ const ClientInvoices = () => {
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               onClick={handleExportCSV}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-bold text-white cursor-pointer"
-              style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)", boxShadow: "0 0 20px rgba(99,91,255,0.3)" }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer transition-all shrink-0"
+              style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)", boxShadow: "0 0 20px rgba(99,91,255,0.3)", border: "1px solid rgba(255,255,255,0.15)" }}
             >
               <Download size={14} />
               <span>Export CSV</span>
@@ -328,11 +372,11 @@ const ClientInvoices = () => {
       </div>
 
       {/* Invoices Table Container */}
-      <GCard delay={0.2} glow="#635BFF" className="p-0">
+      <GCard delay={0.2} glow="#635BFF" className="p-0 min-h-[380px] flex flex-col justify-between">
         {loading.invoices && invoices.length === 0 ? (
           <div className="p-6 space-y-2">{[...Array(5)].map((_, i) => <SkeletonRow key={i} />)}</div>
         ) : error.invoices && invoices.length === 0 ? (
-          <div className="flex flex-col items-center py-16 gap-3">
+          <div className="flex flex-col items-center justify-center py-16 px-4 my-auto gap-3">
             <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: "rgba(239,68,68,0.1)" }}>
               <AlertCircle size={24} style={{ color: "#EF4444" }} />
             </div>
@@ -343,19 +387,16 @@ const ClientInvoices = () => {
             </button>
           </div>
         ) : paginated.length === 0 ? (
-          <div
-            className="flex flex-col items-center justify-center py-20 text-center space-y-3 rounded-3xl"
-            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", backdropFilter: "blur(16px)" }}
-          >
+          <div className="flex flex-col items-center justify-center min-h-[380px] py-16 px-4 text-center space-y-3 my-auto">
             <div
               className="w-14 h-14 rounded-2xl flex items-center justify-center mb-1 shadow-lg shadow-indigo-500/10"
               style={{ background: "rgba(99,91,255,0.12)", border: "1px solid rgba(99,91,255,0.25)" }}
             >
               <FileText size={26} style={{ color: "#A78BFA" }} />
             </div>
-            <p className="text-base font-bold text-white">
+            <h3 className="text-base font-bold text-white">
               {filtered.length === 0 && invoices.length > 0 ? "No invoices found" : "No invoices yet"}
-            </p>
+            </h3>
             <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
               {invoices.length > 0
                 ? "No invoice records match your active search terms or filters."
@@ -363,23 +404,23 @@ const ClientInvoices = () => {
             </p>
             {search || statusFilter !== "all" ? (
               <motion.button
-                whileHover={{ scale: 1.04 }}
+                whileHover={{ scale: 1.04, boxShadow: "0 0 24px rgba(99,91,255,0.4)" }}
                 whileTap={{ scale: 0.96 }}
                 onClick={() => { setSearch(""); setStatus("all"); }}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer mt-1"
-                style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)", boxShadow: "0 0 20px rgba(99,91,255,0.35)" }}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white cursor-pointer mt-2"
+                style={{ background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)", border: "1px solid rgba(255,255,255,0.15)", boxShadow: "0 0 20px rgba(99,91,255,0.35)" }}
               >
                 <span>Clear Search & Filters</span>
               </motion.button>
             ) : (
-              <Link to="/client-portal/projects">
+              <Link to="/client/projects">
                 <motion.button
-                  whileHover={{ scale: 1.04 }}
+                  whileHover={{ scale: 1.04, boxShadow: "0 0 24px rgba(99,91,255,0.4)" }}
                   whileTap={{ scale: 0.96 }}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer mt-1"
-                  style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)", boxShadow: "0 0 20px rgba(99,91,255,0.35)" }}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white cursor-pointer mt-2"
+                  style={{ background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)", border: "1px solid rgba(255,255,255,0.15)", boxShadow: "0 0 20px rgba(99,91,255,0.35)" }}
                 >
-                  <Plus size={15} />
+                  <Plus size={15} strokeWidth={2.5} />
                   <span>Post New Project</span>
                 </motion.button>
               </Link>
@@ -390,7 +431,7 @@ const ClientInvoices = () => {
             {/* Table Header */}
             <div className="hidden sm:grid grid-cols-[1fr_auto_auto_auto_auto] gap-4 px-6 py-3.5"
               style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)" }}>
-              {["INVOICE NUMBER","TOTAL AMOUNT","DUE DATE","STATUS","ACTION"].map((h, idx) => (
+              {["INVOICE #","AMOUNT","DUE DATE","STATUS","ACTIONS"].map((h, idx) => (
                 <span key={h} className={`text-[10px] font-bold tracking-wider uppercase ${idx === 4 ? "text-right" : ""}`} style={{ color: "rgba(148,163,184,0.55)" }}>{h}</span>
               ))}
             </div>

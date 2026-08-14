@@ -284,6 +284,18 @@ const ClientDashboard = () => {
     patchInvoice, patchProject,
   } = useClientPortalStore();
 
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([fetchDashboard(), fetchAnalytics()]);
+    } catch (e) {
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 500);
+    }
+  };
+
   useEffect(() => {
     fetchDashboard();
     fetchAnalytics();
@@ -385,14 +397,14 @@ const ClientDashboard = () => {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => { fetchDashboard(); fetchAnalytics(); }}
+              onClick={handleRefresh}
               title="Refresh Data"
               className="w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer"
               style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.09)", color: "rgba(148,163,184,0.75)" }}
               onMouseEnter={e => { e.currentTarget.style.background = "rgba(99,91,255,0.12)"; e.currentTarget.style.color = "#A78BFA"; }}
               onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "rgba(148,163,184,0.75)"; }}
             >
-              <RefreshCw size={15} className={loading.dashboard ? "animate-spin text-indigo-400" : ""} />
+              <RefreshCw size={15} className={(loading.dashboard || isRefreshing) ? "animate-spin text-indigo-400" : ""} />
             </motion.button>
 
             <Link to="/client/projects">

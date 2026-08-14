@@ -1005,8 +1005,8 @@ const ClientProjects = () => {
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               onClick={handleExportCSV}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-300 transition-all cursor-pointer"
-              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.09)" }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer transition-all shrink-0"
+              style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)", boxShadow: "0 0 20px rgba(99,91,255,0.3)", border: "1px solid rgba(255,255,255,0.15)" }}
             >
               <Download size={14} />
               <span>Export CSV</span>
@@ -1016,8 +1016,8 @@ const ClientProjects = () => {
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => setPostModalOpen(true)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
-              style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)", boxShadow: "0 0 20px rgba(99,91,255,0.35)" }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer transition-all shrink-0"
+              style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)", boxShadow: "0 0 20px rgba(99,91,255,0.35)", border: "1px solid rgba(255,255,255,0.15)" }}
             >
               <Plus size={16} />
               <span>New Project</span>
@@ -1114,33 +1114,32 @@ const ClientProjects = () => {
             </button>
           </div>
         ) : filtered.length === 0 ? (
-          <div
-            className="flex flex-col items-center justify-center py-20 text-center space-y-3 rounded-3xl"
-            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", backdropFilter: "blur(16px)" }}
-          >
-            <div
-              className="w-14 h-14 rounded-2xl flex items-center justify-center mb-1"
-              style={{ background: "rgba(99,91,255,0.12)", border: "1px solid rgba(99,91,255,0.25)" }}
-            >
-              <FolderKanban size={26} style={{ color: "#A78BFA" }} />
+          <GCard delay={0.2} glow="#635BFF" className="p-0 min-h-[380px] flex flex-col items-center justify-center">
+            <div className="flex flex-col items-center justify-center py-16 px-4 text-center space-y-3 my-auto">
+              <div
+                className="w-14 h-14 rounded-2xl flex items-center justify-center mb-1 shadow-lg shadow-indigo-500/10"
+                style={{ background: "rgba(99,91,255,0.12)", border: "1px solid rgba(99,91,255,0.25)" }}
+              >
+                <FolderKanban size={26} style={{ color: "#A78BFA" }} />
+              </div>
+              <p className="text-base font-bold text-white">No projects found</p>
+              <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
+                {search || statusFilter !== "all" || categoryFilter !== "all"
+                  ? "No project listings match your selected search filters."
+                  : "Post your first project to receive proposals from qualified freelancers."}
+              </p>
+              <motion.button
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
+                onClick={() => setPostModalOpen(true)}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer mt-1"
+                style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)", boxShadow: "0 0 20px rgba(99,91,255,0.35)", border: "1px solid rgba(255,255,255,0.15)" }}
+              >
+                <Plus size={15} />
+                <span>Post New Project</span>
+              </motion.button>
             </div>
-            <p className="text-base font-bold text-white">No projects found</p>
-            <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
-              {search || statusFilter !== "all" || categoryFilter !== "all"
-                ? "No project listings match your selected search filters."
-                : "Post your first project to receive proposals from qualified freelancers."}
-            </p>
-            <motion.button
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.96 }}
-              onClick={() => setPostModalOpen(true)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer mt-1"
-              style={{ background: "linear-gradient(135deg,#635BFF,#8B5CF6)", boxShadow: "0 0 20px rgba(99,91,255,0.35)" }}
-            >
-              <Plus size={15} />
-              <span>Post New Project</span>
-            </motion.button>
-          </div>
+          </GCard>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {filtered.map((proj, idx) => (

@@ -2,18 +2,19 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  ArrowLeft, Send, Copy, CheckCircle, XCircle,
+  ArrowLeft, Send, Copy, CheckCircle, XCircle, CreditCard,
 } from "lucide-react";
 import useInvoiceStore from "../../store/invoiceStore";
 import { formatDate, formatCurrency } from "../../utils/helpers";
+import { processRazorpayPayment } from "../../services/razorpayService";
 
 const STATUS_ACTIONS = {
-  draft:     [{ label: "Send Invoice", action: "send",   icon: Send,         color: "#635BFF" }],
-  sent:      [{ label: "Mark Paid",    action: "paid",   icon: CheckCircle,  color: "#22C55E" },
-              { label: "Cancel",       action: "cancel", icon: XCircle,      color: "#EF4444" }],
-  viewed:    [{ label: "Mark Paid",    action: "paid",   icon: CheckCircle,  color: "#22C55E" },
-              { label: "Cancel",       action: "cancel", icon: XCircle,      color: "#EF4444" }],
-  overdue:   [{ label: "Mark Paid",    action: "paid",   icon: CheckCircle,  color: "#22C55E" }],
+  draft:     [{ label: "Send Invoice", action: "send",   icon: Send,        color: "#635BFF" }],
+  sent:      [{ label: "Mark Paid",    action: "paid",   icon: CheckCircle, color: "#22C55E" },
+              { label: "Cancel",       action: "cancel", icon: XCircle,     color: "#EF4444" }],
+  viewed:    [{ label: "Mark Paid",    action: "paid",   icon: CheckCircle, color: "#22C55E" },
+              { label: "Cancel",       action: "cancel", icon: XCircle,     color: "#EF4444" }],
+  overdue:   [{ label: "Mark Paid",    action: "paid",   icon: CheckCircle, color: "#22C55E" }],
   paid:      [],
   cancelled: [],
 };
@@ -49,29 +50,61 @@ const InvoiceDetail = () => {
     navigate(`/payments/${newInv._id}`);
   };
 
+  const handleRazorpay = () => {
+    processRazorpayPayment({
+      invoiceId: inv._id,
+      amount: inv.total,
+      currency: inv.currency || "INR",
+      name: `Invoice #${inv.invoiceNumber}`,
+      description: `Payment for invoice ${inv.invoiceNumber}`,
+      userEmail: inv.clientId?.email || "",
+      userName: inv.clientId?.name || "",
+      onSuccess: () => fetchInvoice(id),
+    });
+  };
+
   const actions = STATUS_ACTIONS[inv.status] || [];
 
   return (
     <div className="min-h-screen p-6 lg:p-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto space-y-6">
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <button onClick={() => navigate("/payments")}
-            className="flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors">
+            className="flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors cursor-pointer">
             <ArrowLeft size={14} /> Back to Payments
           </button>
-          <div className="flex items-center gap-2">
+
+          <div className="flex items-center gap-2.5 flex-wrap">
+            {inv.status !== "paid" && inv.status !== "cancelled" && (
+              <motion.button
+                whileHover={{ scale: 1.04, boxShadow: "0 0 24px rgba(99,91,255,0.5)" }}
+                whileTap={{ scale: 0.96 }}
+                onClick={handleRazorpay}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white cursor-pointer transition-all"
+                style={{
+                  background: "linear-gradient(135deg, #635BFF 0%, #00D4FF 100%)",
+                  boxShadow: "0 0 20px rgba(99,91,255,0.35)",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                }}
+              >
+                <CreditCard size={15} strokeWidth={2.5} />
+                <span>Pay via Razorpay</span>
+              </motion.button>
+            )}
+
             <button onClick={handleDuplicate}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium text-slate-300 border border-white/10 hover:border-white/20 transition-colors">
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-300 border border-white/10 hover:border-white/20 transition-colors cursor-pointer">
               <Copy size={13} /> Duplicate
             </button>
+
             {actions.map((a) => (
               <motion.button key={a.action}
                 whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
                 onClick={() => handleAction(a.action)}
                 disabled={loading}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-white cursor-pointer"
                 style={{ background: a.color, boxShadow: `0 0 16px ${a.color}50` }}>
                 <a.icon size={13} /> {a.label}
               </motion.button>
@@ -92,9 +125,9 @@ const InvoiceDetail = () => {
               </p>
             </div>
             <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider
-              ${inv.status === "paid" ? "bg-green-500/15 text-green-400" :
-                inv.status === "overdue" ? "bg-red-500/15 text-red-400" :
-                "bg-brand/15 text-brand"}`}>
+              ${inv.status === "paid" ? "bg-green-500/15 text-green-400 border border-green-500/30" :
+                inv.status === "overdue" ? "bg-red-500/15 text-red-400 border border-red-500/30" :
+                "bg-indigo-500/15 text-indigo-400 border border-indigo-500/30"}`}>
               {inv.status}
             </span>
           </div>
