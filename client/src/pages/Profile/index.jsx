@@ -4,10 +4,12 @@ import {
   User, Mail, Shield, Lock, Eye, EyeOff,
   Camera, Save, Key, UserCheck, Phone, Briefcase, FileText,
   ShieldCheck, Clock, CheckCircle2, Calendar, Check, Trash2, AlertCircle,
+  QrCode, Copy, Download, Smartphone,
 } from "lucide-react";
 import useAuthStore from "../../store/authStore";
 import api from "../../services/api";
 import toast from "react-hot-toast";
+import Modal from "../../components/ui/Modal";
 import SubpageStatCard from "../../components/dashboard/SubpageStatCard";
 import { getInitials } from "../../utils/helpers";
 
@@ -118,11 +120,19 @@ const compressImage = (file, maxWidth = 400, maxHeight = 400, quality = 0.85) =>
 
 // ── MAIN FREELANCER PROFILE COMPONENT ───────────────────────────────────────
 const Profile = () => {
-  const { user, setUser } = useAuthStore();
+  const { user, setUser, setup2FA, enable2FA, disable2FA } = useAuthStore();
   const fileInputRef = useRef(null);
 
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [deletingAvatar, setDeletingAvatar]   = useState(false);
+
+  // 2FA state
+  const [show2FAModal, setShow2FAModal]         = useState(false);
+  const [showDisableModal, setShowDisableModal] = useState(false);
+  const [setupData, setSetupData]               = useState(null);
+  const [totpInput, setTotpInput]               = useState("");
+  const [backupCodes, setBackupCodes]           = useState(null);
+  const [loading2FA, setLoading2FA]             = useState(false);
 
   const [formData, setFormData] = useState({
     name: user?.name || "",
@@ -137,6 +147,51 @@ const Profile = () => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [saving, setSaving]           = useState(false);
   const [changing, setChanging]       = useState(false);
+
+  const handleInitiate2FA = async () => {
+    setLoading2FA(true);
+    try {
+      const data = await setup2FA();
+      setSetupData(data);
+      setTotpInput("");
+      setBackupCodes(null);
+      setShow2FAModal(true);
+    } catch (err) {
+      // toast in store
+    } finally {
+      setLoading2FA(false);
+    }
+  };
+
+  const handleConfirmEnable2FA = async (e) => {
+    e.preventDefault();
+    if (!totpInput.trim()) return;
+    setLoading2FA(true);
+    try {
+      const data = await enable2FA(totpInput.trim());
+      setBackupCodes(data.backupCodes);
+      toast.success("2FA activated successfully!");
+    } catch (err) {
+      // error in store
+    } finally {
+      setLoading2FA(false);
+    }
+  };
+
+  const handleConfirmDisable2FA = async (e) => {
+    e.preventDefault();
+    if (!totpInput.trim()) return;
+    setLoading2FA(true);
+    try {
+      await disable2FA(totpInput.trim());
+      setShowDisableModal(false);
+      setTotpInput("");
+    } catch (err) {
+      // error in store
+    } finally {
+      setLoading2FA(false);
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -634,28 +689,65 @@ const Profile = () => {
               </div>
             </GCard>
 
-            {/* Account Protections Summary Card */}
-            <GCard delay={0.36} className="p-6">
-              <h2 className="text-base font-bold text-white mb-1">Account Protections</h2>
-              <p className="text-xs mb-4" style={{ color: "rgba(148,163,184,0.65)" }}>
-                Active security safeguards
+            {/* Two-Factor Authentication Card */}
+            <GCard delay={0.4} className="p-6">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0"
+                    style={{
+                      background: user?.isTwoFactorEnabled ? "rgba(16,185,129,0.15)" : "rgba(99,91,255,0.15)",
+                      border: user?.isTwoFactorEnabled ? "1px solid rgba(16,185,129,0.3)" : "1px solid rgba(99,91,255,0.3)",
+                    }}>
+                    <Smartphone size={20} style={{ color: user?.isTwoFactorEnabled ? "#10B981" : "#A78BFA" }} />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-white">2FA Authenticator</h2>
+                    <p className="text-xs text-slate-400">TOTP (Google, Authy, 1Password)</p>
+                  </div>
+                </div>
+                <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                  user?.isTwoFactorEnabled
+                    ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                    : "bg-slate-500/15 text-slate-400 border border-slate-500/30"
+                }`}>
+                  {user?.isTwoFactorEnabled ? "Active" : "Disabled"}
+                </span>
+              </div>
+
+              <p className="text-xs leading-relaxed text-slate-300 my-4">
+                Require a 6-digit passcode from your authenticator app each time you sign in to protect your account.
               </p>
 
-              <div className="space-y-2.5">
-                {[
-                  "Encrypted Password Storage (bcrypt)",
-                  "JWT Session Access Token",
-                  "Verified Account Role Permissions",
-                  "Active SSL/TLS Encryption",
-                ].map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-2.5 text-xs font-medium" style={{ color: "rgba(148,163,184,0.85)" }}>
-                    <div className="w-4 h-4 rounded-full flex items-center justify-center bg-purple-500/20 text-purple-300 shrink-0">
-                      <Check size={10} />
-                    </div>
-                    <span>{item}</span>
+              {user?.isTwoFactorEnabled ? (
+                <div className="space-y-3">
+                  <div className="p-3 rounded-xl flex items-center gap-2 text-xs font-medium bg-emerald-500/10 border border-emerald-500/20 text-emerald-300">
+                    <CheckCircle2 size={14} className="shrink-0 text-emerald-400" />
+                    <span>Two-Factor Authentication is active on your account.</span>
                   </div>
-                ))}
-              </div>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                    onClick={() => { setTotpInput(""); setShowDisableModal(true); }}
+                    className="w-full py-2.5 rounded-xl text-xs font-bold text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-all cursor-pointer"
+                  >
+                    Disable 2FA
+                  </motion.button>
+                </div>
+              ) : (
+                <motion.button
+                  whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                  onClick={handleInitiate2FA}
+                  disabled={loading2FA}
+                  className="w-full py-2.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 border border-indigo-400/30 shadow-lg shadow-indigo-600/20 transition-all cursor-pointer flex items-center justify-center gap-2"
+                >
+                  {loading2FA ? (
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <QrCode size={15} /> Enable 2FA Authenticator App
+                    </>
+                  )}
+                </motion.button>
+              )}
             </GCard>
 
           </div>
@@ -663,6 +755,183 @@ const Profile = () => {
         </div>
 
       </div>
+
+      {/* 2FA Setup Modal */}
+      <Modal
+        isOpen={show2FAModal}
+        onClose={() => setShow2FAModal(false)}
+        title="Set Up Two-Factor Authentication"
+        description="Scan the QR code with Google Authenticator, Authy, or 1Password"
+        icon={Smartphone}
+        size="md"
+      >
+        {backupCodes ? (
+          <div className="space-y-4">
+            <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs">
+              <p className="font-bold text-sm mb-1 text-emerald-400">🎉 Two-Factor Authentication Enabled!</p>
+              <p>Save these 10 single-use backup codes in a safe place. You can use them to access your account if you lose your phone or authenticator app.</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 p-4 rounded-2xl bg-slate-900/80 border border-white/10 font-mono text-center text-sm text-purple-300 select-all">
+              {backupCodes.map((code, idx) => (
+                <div key={idx} className="p-2 rounded-lg bg-black/40 border border-white/5">{code}</div>
+              ))}
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(backupCodes.join("\n"));
+                  toast.success("Backup codes copied to clipboard!");
+                }}
+                className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white bg-slate-800 hover:bg-slate-700 border border-white/10 flex items-center justify-center gap-2 transition-all cursor-pointer"
+              >
+                <Copy size={14} /> Copy All
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const blob = new Blob([`Skillora 2FA Backup Codes:\n\n${backupCodes.join("\n")}`], { type: "text/plain" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = "skillora-2fa-backup-codes.txt";
+                  a.click();
+                  URL.revokeObjectURL(url);
+                  toast.success("Backup codes downloaded!");
+                }}
+                className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 border border-indigo-400/30 flex items-center justify-center gap-2 transition-all cursor-pointer"
+              >
+                <Download size={14} /> Download (.txt)
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShow2FAModal(false)}
+              className="w-full py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 transition-all cursor-pointer mt-2"
+            >
+              Done
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-5">
+            {/* Step 1: QR code display */}
+            <div className="flex flex-col items-center justify-center p-6 rounded-2xl bg-white/5 border border-white/10 text-center">
+              {setupData?.qrCodeUrl ? (
+                <img
+                  src={setupData.qrCodeUrl}
+                  alt="2FA QR Code"
+                  className="w-48 h-48 rounded-xl p-2 bg-white shadow-xl"
+                />
+              ) : (
+                <div className="w-48 h-48 rounded-xl bg-slate-800 flex items-center justify-center">
+                  <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                </div>
+              )}
+
+              <p className="text-xs text-slate-400 mt-4 max-w-xs">
+                Scan this QR code using <strong>Google Authenticator</strong>, <strong>Authy</strong>, or <strong>1Password</strong>.
+              </p>
+
+              {setupData?.secret && (
+                <div className="mt-3 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/40 border border-white/10 text-[11px] font-mono text-purple-300 select-all">
+                  <span>Secret: <strong>{setupData.secret}</strong></span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(setupData.secret);
+                      toast.success("Secret copied to clipboard!");
+                    }}
+                    className="text-slate-400 hover:text-white transition-colors ml-1 cursor-pointer"
+                  >
+                    <Copy size={12} />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Step 2: Verification code input */}
+            <form onSubmit={handleConfirmEnable2FA} className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-slate-300 block mb-1.5">
+                  Enter 6-Digit Passcode from Authenticator App
+                </label>
+                <input
+                  type="text"
+                  placeholder="123456"
+                  maxLength={6}
+                  value={totpInput}
+                  onChange={(e) => setTotpInput(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl text-center font-mono text-lg tracking-widest bg-white/5 border border-white/10 text-white outline-none focus:border-indigo-400 transition-all"
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={!totpInput.trim() || loading2FA}
+                className="w-full py-3 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                {loading2FA ? (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  "Verify & Activate 2FA"
+                )}
+              </button>
+            </form>
+          </div>
+        )}
+      </Modal>
+
+      {/* 2FA Disable Modal */}
+      <Modal
+        isOpen={showDisableModal}
+        onClose={() => setShowDisableModal(false)}
+        title="Disable Two-Factor Authentication"
+        description="Confirm disabling 2FA on your account"
+        icon={Smartphone}
+        size="sm"
+      >
+        <form onSubmit={handleConfirmDisable2FA} className="space-y-4">
+          <p className="text-xs text-slate-300 leading-relaxed">
+            Enter your current 6-digit authenticator passcode to confirm disabling 2FA.
+          </p>
+
+          <input
+            type="text"
+            placeholder="123456"
+            maxLength={6}
+            value={totpInput}
+            onChange={(e) => setTotpInput(e.target.value)}
+            className="w-full px-4 py-2.5 rounded-xl text-center font-mono text-lg tracking-widest bg-white/5 border border-white/10 text-white outline-none focus:border-red-400 transition-all"
+            required
+          />
+
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => setShowDisableModal(false)}
+              className="flex-1 py-2.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 transition-all cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={!totpInput.trim() || loading2FA}
+              className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-500 disabled:opacity-50 transition-all cursor-pointer flex items-center justify-center gap-2"
+            >
+              {loading2FA ? (
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                "Disable 2FA"
+              )}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };

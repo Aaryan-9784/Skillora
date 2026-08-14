@@ -15,7 +15,11 @@ const Login = () => {
   const [role, setRole]     = useState("freelancer");
   const [form, setForm]     = useState({ email: "", password: "" });
   const [showPw, setShowPw] = useState(false);
-  const { login, isLoading, errors, clearErrors } = useAuthStore();
+  const [mfaSession, setMfaSession] = useState(null); // { mfaToken }
+  const [totpCode, setTotpCode]     = useState("");
+  const [useBackup, setUseBackup]   = useState(false);
+
+  const { login, verify2FALogin, isLoading, errors, clearErrors } = useAuthStore();
   const navigate = useNavigate();
   const [params] = useSearchParams();
 
@@ -32,10 +36,26 @@ const Login = () => {
 
   const handleSubmit = async e => {
     e.preventDefault();
-    const { success, role: userRole } = await login(form);
-    if (success) {
-      if (userRole === "admin")       navigate("/admin");
-      else if (userRole === "client") navigate("/client/dashboard");
+    const res = await login(form);
+    if (res.require2FA) {
+      setMfaSession({ mfaToken: res.mfaToken });
+      toast("Two-factor authentication required.", { icon: "🔐" });
+      return;
+    }
+    if (res.success) {
+      if (res.role === "admin")       navigate("/admin");
+      else if (res.role === "client") navigate("/client/dashboard");
+      else                            navigate("/dashboard");
+    }
+  };
+
+  const handle2FASubmit = async e => {
+    e.preventDefault();
+    if (!totpCode.trim()) return;
+    const res = await verify2FALogin(mfaSession.mfaToken, totpCode.trim());
+    if (res.success) {
+      if (res.role === "admin")       navigate("/admin");
+      else if (res.role === "client") navigate("/client/dashboard");
       else                            navigate("/dashboard");
     }
   };
@@ -172,78 +192,150 @@ const Login = () => {
             </div>
 
             <GlassCard>
-              {/* header */}
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 }} className="mb-7">
-                <h2 className="font-extrabold text-white mb-1.5"
-                  style={{ fontFamily: "'Sora', 'Inter', sans-serif", fontSize: "1.75rem", letterSpacing: "-0.03em",
-                    background: "linear-gradient(135deg,#FFFFFF 30%,#C4B5FD 70%,#818CF8 100%)",
-                    WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                  Welcome back
-                </h2>
-                <p className="text-[13px] font-medium" style={{ color: "#94A3B8" }}>Sign in to continue</p>
-              </motion.div>
-
-              {/* error */}
-              <AnimatePresence>
-                {errors?.general && (
-                  <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
-                    className="flex items-start gap-2.5 p-3.5 mb-5 rounded-2xl"
-                    style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.2)" }}>
-                    <AlertCircle size={13} style={{ color: "#F87171", flexShrink: 0, marginTop: 1 }} />
-                    <p className="text-[13px]" style={{ color: "rgba(252,165,165,0.9)" }}>{errors.general}</p>
+              {mfaSession ? (
+                <div>
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4"
+                      style={{ background: "rgba(99,91,255,0.15)", border: "1px solid rgba(99,91,255,0.3)" }}>
+                      <ShieldCheck size={22} style={{ color: "#A78BFA" }} />
+                    </div>
+                    <h2 className="font-extrabold text-white mb-1.5"
+                      style={{ fontFamily: "'Sora', 'Inter', sans-serif", fontSize: "1.5rem", letterSpacing: "-0.03em" }}>
+                      Two-Factor Authentication 🔐
+                    </h2>
+                    <p className="text-[13px] font-medium leading-relaxed" style={{ color: "#94A3B8" }}>
+                      {useBackup
+                        ? "Enter one of your 8-character single-use backup codes."
+                        : "Open your authenticator app (Google Authenticator, Authy, 1Password) and enter the 6-digit code."}
+                    </p>
                   </motion.div>
-                )}
-              </AnimatePresence>
 
-              {/* form */}
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}>
-                  <AuthInput label="Email" icon={Mail} type="email" name="email"
-                    placeholder="you@example.com" value={form.email} onChange={handleChange}
-                    error={errors?.email} required autoComplete="email" />
-                </motion.div>
+                  <AnimatePresence>
+                    {errors?.general && (
+                      <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+                        className="flex items-start gap-2.5 p-3.5 mb-5 rounded-2xl"
+                        style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.2)" }}>
+                        <AlertCircle size={13} style={{ color: "#F87171", flexShrink: 0, marginTop: 1 }} />
+                        <p className="text-[13px]" style={{ color: "rgba(252,165,165,0.9)" }}>{errors.general}</p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
 
-                <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.36 }}>
-                  <AuthInput label="Password" icon={Lock}
-                    type={showPw ? "text" : "password"} name="password"
-                    placeholder="••••••••" value={form.password} onChange={handleChange}
-                    error={errors?.password} required autoComplete="current-password"
-                    labelRight={
-                      <Link to="/forgot-password" className="text-[12px] font-semibold transition-colors duration-200"
-                        style={{ fontFamily: "'Sora', 'Inter', sans-serif", color: "#A78BFA" }}
-                        onMouseEnter={e => e.currentTarget.style.color = "#C4B5FD"}
-                        onMouseLeave={e => e.currentTarget.style.color = "#A78BFA"}>
-                        Forgot password?
-                      </Link>
-                    }
-                    suffix={
-                      <motion.button type="button" whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.9 }}
-                        onClick={() => setShowPw(s => !s)}
-                        style={{ color: "#94A3B8", transition: "color 0.25s" }}
-                        onMouseEnter={e => e.currentTarget.style.color = "#A78BFA"}
-                        onMouseLeave={e => e.currentTarget.style.color = "#94A3B8"}>
-                        {showPw ? <EyeOff size={13} /> : <Eye size={13} />}
-                      </motion.button>
-                    }
-                  />
-                </motion.div>
+                  <form onSubmit={handle2FASubmit} className="space-y-4">
+                    <AuthInput
+                      label={useBackup ? "Backup Code" : "6-Digit Authenticator Code"}
+                      icon={Lock}
+                      type="text"
+                      name="totpCode"
+                      placeholder={useBackup ? "A1B2C3D4" : "123456"}
+                      value={totpCode}
+                      onChange={(e) => setTotpCode(e.target.value)}
+                      required
+                      autoFocus
+                    />
 
-                {/* CTA */}
-                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.48 }}>
-                  <CTAButton disabled={!canSubmit} isLoading={isLoading}>
-                    {isLoading
-                      ? <><div className="w-4 h-4 border-[1.5px] border-white/25 border-t-white rounded-full animate-spin" />Signing in…</>
-                      : <>Sign in <ArrowRight size={15} strokeWidth={2.5} /></>
-                    }
-                  </CTAButton>
-                </motion.div>
+                    <CTAButton disabled={!totpCode.trim()} isLoading={isLoading}>
+                      {isLoading
+                        ? <><div className="w-4 h-4 border-[1.5px] border-white/25 border-t-white rounded-full animate-spin" />Verifying…</>
+                        : <>Verify & Continue <ArrowRight size={15} strokeWidth={2.5} /></>
+                      }
+                    </CTAButton>
 
-                {/* OAuth — below CTA */}
-                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.54 }}>
-                  <OAuthButtons apiBase={apiBase} role={role} />
-                </motion.div>
-              </form>
+                    <div className="pt-2 flex flex-col gap-2 items-center text-[12px]">
+                      <button
+                        type="button"
+                        onClick={() => { setUseBackup(!useBackup); setTotpCode(""); }}
+                        className="font-semibold text-purple-400 hover:text-purple-300 transition-colors cursor-pointer"
+                      >
+                        {useBackup ? "← Use Authenticator App" : "Use a backup code instead"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setMfaSession(null); setTotpCode(""); }}
+                        className="text-slate-400 hover:text-slate-200 transition-colors mt-1 cursor-pointer"
+                      >
+                        ← Back to Sign In
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              ) : (
+                <>
+                  {/* header */}
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15 }} className="mb-7">
+                    <h2 className="font-extrabold text-white mb-1.5"
+                      style={{ fontFamily: "'Sora', 'Inter', sans-serif", fontSize: "1.75rem", letterSpacing: "-0.03em",
+                        background: "linear-gradient(135deg,#FFFFFF 30%,#C4B5FD 70%,#818CF8 100%)",
+                        WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                      Welcome back
+                    </h2>
+                    <p className="text-[13px] font-medium" style={{ color: "#94A3B8" }}>Sign in to continue</p>
+                  </motion.div>
+
+                  {/* error */}
+                  <AnimatePresence>
+                    {errors?.general && (
+                      <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+                        className="flex items-start gap-2.5 p-3.5 mb-5 rounded-2xl"
+                        style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.2)" }}>
+                        <AlertCircle size={13} style={{ color: "#F87171", flexShrink: 0, marginTop: 1 }} />
+                        <p className="text-[13px]" style={{ color: "rgba(252,165,165,0.9)" }}>{errors.general}</p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* form */}
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}>
+                      <AuthInput label="Email" icon={Mail} type="email" name="email"
+                        placeholder="you@example.com" value={form.email} onChange={handleChange}
+                        error={errors?.email} required autoComplete="email" />
+                    </motion.div>
+
+                    <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.36 }}>
+                      <AuthInput label="Password" icon={Lock}
+                        type={showPw ? "text" : "password"} name="password"
+                        placeholder="••••••••" value={form.password} onChange={handleChange}
+                        error={errors?.password} required autoComplete="current-password"
+                        labelRight={
+                          <Link to="/forgot-password" className="text-[12px] font-semibold transition-colors duration-200"
+                            style={{ fontFamily: "'Sora', 'Inter', sans-serif", color: "#A78BFA" }}
+                            onMouseEnter={e => e.currentTarget.style.color = "#C4B5FD"}
+                            onMouseLeave={e => e.currentTarget.style.color = "#A78BFA"}>
+                            Forgot password?
+                          </Link>
+                        }
+                        suffix={
+                          <motion.button type="button" whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.9 }}
+                            onClick={() => setShowPw(s => !s)}
+                            style={{ color: "#94A3B8", transition: "color 0.25s" }}
+                            onMouseEnter={e => e.currentTarget.style.color = "#A78BFA"}
+                            onMouseLeave={e => e.currentTarget.style.color = "#94A3B8"}>
+                            {showPw ? <EyeOff size={13} /> : <Eye size={13} />}
+                          </motion.button>
+                        }
+                      />
+                    </motion.div>
+
+                    {/* CTA */}
+                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.48 }}>
+                      <CTAButton disabled={!canSubmit} isLoading={isLoading}>
+                        {isLoading
+                          ? <><div className="w-4 h-4 border-[1.5px] border-white/25 border-t-white rounded-full animate-spin" />Signing in…</>
+                          : <>Sign in <ArrowRight size={15} strokeWidth={2.5} /></>
+                        }
+                      </CTAButton>
+                    </motion.div>
+
+                    {/* OAuth — below CTA */}
+                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.54 }}>
+                      <OAuthButtons apiBase={apiBase} role={role} />
+                    </motion.div>
+                  </form>
+                </>
+              )}
+            </GlassCard>
 
               {/* trust */}
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.55 }}
@@ -259,7 +351,6 @@ const Login = () => {
                   Sign up free
                 </Link>
               </p>
-            </GlassCard>
           </motion.div>
         </div>
       </div>

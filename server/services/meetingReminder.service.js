@@ -1,7 +1,9 @@
 const cron     = require("node-cron");
 const Meeting  = require("../models/Meeting");
+const User     = require("../models/User");
 const notify   = require("../utils/notify");
 const logger   = require("../utils/logger");
+const { sendMeetingReminder } = require("./email.service");
 
 const startMeetingCron = () => {
   // Runs every 5 minutes to check for upcoming meeting reminders
@@ -21,9 +23,9 @@ const startMeetingCron = () => {
         const participantIds = (meeting.participants || [])
           .map((p) => p?._id || p)
           .filter(Boolean);
-        const recipients = Array.from(new Set([organizerId, ...participantIds].filter(Boolean)));
+        const recipientIds = Array.from(new Set([organizerId, ...participantIds].filter(Boolean)));
         
-        for (const rId of recipients) {
+        for (const rId of recipientIds) {
           await notify({
             recipient: rId,
             type: "system",
@@ -31,6 +33,16 @@ const startMeetingCron = () => {
             message: `Your scheduled meeting starts in 15 minutes. Join room: ${meeting.roomLink}`,
             link: meeting.roomLink,
           });
+
+          // Fetch user details & dispatch Meeting Email Card
+          try {
+            const recipientUser = await User.findById(rId).select("name email");
+            if (recipientUser?.email) {
+              sendMeetingReminder(recipientUser.email, recipientUser.name, meeting).catch(() => {});
+            }
+          } catch (e) {
+            logger.warn(`Meeting email dispatch warning: ${e.message}`);
+          }
         }
 
         meeting.reminderSent = true;

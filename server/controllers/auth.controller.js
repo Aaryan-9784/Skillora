@@ -13,9 +13,17 @@ const register = asyncHandler(async (req, res) => {
 
 const login = asyncHandler(async (req, res) => {
   const ip = req.ip || req.headers["x-forwarded-for"] || "";
-  const { user, accessToken, refreshToken } = await authService.login({ ...req.body, ip });
-  authService.setTokenCookies(res, accessToken, refreshToken);
-  ApiResponse.success(res, "Login successful", { user, accessToken });
+  const result = await authService.login({ ...req.body, ip });
+
+  if (result.require2FA) {
+    return ApiResponse.success(res, "2FA authentication required", {
+      require2FA: true,
+      mfaToken: result.mfaToken,
+    });
+  }
+
+  authService.setTokenCookies(res, result.accessToken, result.refreshToken);
+  ApiResponse.success(res, "Login successful", { user: result.user, accessToken: result.accessToken });
 });
 
 const refresh = asyncHandler(async (req, res) => {
@@ -51,7 +59,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
     const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
     const resetUrl  = `${clientUrl}/reset-password/${resetToken}`;
     const emailService = require("../services/email.service");
-    emailService.sendPasswordReset(user, resetUrl);
+    await emailService.sendPasswordReset(user, resetUrl);
   }
 
   const data = process.env.NODE_ENV === "development" && result ? { resetToken: result.resetToken } : {};
@@ -90,11 +98,39 @@ const oauthCallback = (provider) =>
     res.redirect(`${process.env.CLIENT_URL}/oauth/callback#token=${accessToken}`);
   });
 
+const setup2FA = asyncHandler(async (req, res) => {
+  const data = await authService.setup2FA(req.user._id);
+  ApiResponse.success(res, "2FA setup initiated", data);
+});
+
+const enable2FA = asyncHandler(async (req, res) => {
+  const { token } = req.body;
+  if (!token) throw ApiError.badRequest("Verification token is required");
+  const data = await authService.enable2FA(req.user._id, token);
+  ApiResponse.success(res, "2FA enabled successfully", data);
+});
+
+const disable2FA = asyncHandler(async (req, res) => {
+  const { token } = req.body;
+  if (!token) throw ApiError.badRequest("Verification token is required");
+  await authService.disable2FA(req.user._id, token);
+  ApiResponse.success(res, "2FA disabled successfully");
+});
+
+const verify2FALogin = asyncHandler(async (req, res) => {
+  const ip = req.ip || req.headers["x-forwarded-for"] || "";
+  const { mfaToken, code } = req.body;
+  const { user, accessToken, refreshToken } = await authService.verify2FALogin({ mfaToken, code, ip });
+  authService.setTokenCookies(res, accessToken, refreshToken);
+  ApiResponse.success(res, "2FA verification successful", { user, accessToken });
+});
+
 const googleCallback  = oauthCallback("google");
 const githubCallback  = oauthCallback("github");
 
 module.exports = {
   register, login, refresh, logout, logoutAll, me,
   forgotPassword, resetPassword,
+  setup2FA, enable2FA, disable2FA, verify2FALogin,
   googleCallback, githubCallback,
 };

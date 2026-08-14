@@ -3,6 +3,8 @@ const ApiResponse  = require("../utils/ApiResponse");
 const ApiError    = require("../utils/ApiError");
 const Submission  = require("../models/Submission");
 const Project     = require("../models/Project");
+const User        = require("../models/User");
+const { sendDeliverableNotification } = require("../services/email.service");
 
 /**
  * Freelancer submits project deliverables
@@ -30,6 +32,16 @@ exports.createSubmission = asyncHandler(async (req, res) => {
   if (project.status === "active") {
     project.status = "on_hold"; // Pending client review
     await project.save();
+  }
+
+  // Send Deliverable Email Card to Client
+  const clientUserId = project.clientUser || project.owner;
+  if (clientUserId) {
+    User.findById(clientUserId).select("name email").then((clientUserObj) => {
+      if (clientUserObj?.email) {
+        sendDeliverableNotification(clientUserObj.email, clientUserObj.name, submission, project, "submitted").catch(() => {});
+      }
+    }).catch(() => {});
   }
 
   ApiResponse.created(res, "Work deliverable submitted successfully", { submission });
@@ -63,13 +75,22 @@ exports.approveSubmission = asyncHandler(async (req, res) => {
   const { submissionId } = req.params;
   const { clientFeedback } = req.body;
 
-  const submission = await Submission.findById(submissionId);
+  const submission = await Submission.findById(submissionId).populate("project");
   if (!submission) throw new ApiError(404, "Submission not found");
 
   submission.status = "approved";
   submission.clientFeedback = clientFeedback || "Deliverable approved!";
   submission.reviewedAt = new Date();
   await submission.save();
+
+  // Send Deliverable Approved Email Card to Freelancer
+  if (submission.freelancer) {
+    User.findById(submission.freelancer).select("name email").then((freelancerObj) => {
+      if (freelancerObj?.email) {
+        sendDeliverableNotification(freelancerObj.email, freelancerObj.name, submission, submission.project, "approved").catch(() => {});
+      }
+    }).catch(() => {});
+  }
 
   ApiResponse.success(res, "Deliverable approved successfully", { submission });
 });

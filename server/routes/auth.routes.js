@@ -3,6 +3,7 @@ const passport = require("../config/passport");
 const {
   register, login, refresh, logout, logoutAll, me,
   forgotPassword, resetPassword,
+  setup2FA, enable2FA, disable2FA, verify2FALogin,
   googleCallback, githubCallback,
 } = require("../controllers/auth.controller");
 const {
@@ -19,6 +20,12 @@ router.post("/refresh",   refresh);
 router.post("/logout",    protect, logout);
 router.post("/logout-all", protect, logoutAll);
 router.get("/me",         protect, me);
+
+// ── 2FA Routes ────────────────────────────────────────────
+router.post("/2fa/setup",        protect, setup2FA);
+router.post("/2fa/enable",       protect, enable2FA);
+router.post("/2fa/disable",      protect, disable2FA);
+router.post("/2fa/verify-login", authLimiter, verify2FALogin);
 
 // ── Password reset ────────────────────────────────────────
 router.post("/forgot-password", authLimiter, validateForgotPassword, forgotPassword);

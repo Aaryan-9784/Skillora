@@ -80,6 +80,14 @@ const userSchema = new Schema(
     passwordResetToken:   { type: String, select: false },
     passwordResetExpires: { type: Date, select: false },
 
+    // Two-Factor Authentication (TOTP)
+    isTwoFactorEnabled:   { type: Boolean, default: false },
+    twoFactorSecret:      { type: String, select: false, default: null },
+    twoFactorBackupCodes: [{
+      code: { type: String, select: false },
+      used: { type: Boolean, default: false },
+    }],
+
     // Soft delete
     isDeleted:  { type: Boolean, default: false, select: false },
     deletedAt:  { type: Date, select: false },
@@ -153,6 +161,7 @@ userSchema.methods.toJSON = function () {
   const obj = this.toObject({ virtuals: false });
   const STRIP = ["password","refreshToken","tokenVersion","loginAttempts",
                  "lockUntil","passwordResetToken","passwordResetExpires",
+                 "twoFactorSecret","twoFactorBackupCodes",
                  "isDeleted","deletedAt",
                  "subscription.razorpayCustomerId","subscription.razorpaySubscriptionId"];
   STRIP.forEach((k) => {

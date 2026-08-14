@@ -4,6 +4,7 @@ const User       = require("../models/User");
 const ApiError   = require("../utils/ApiError");
 const notify     = require("../utils/notify");
 const QueryBuilder = require("../utils/queryBuilder");
+const { sendProposalNotification } = require("./email.service");
 
 /**
  * Client posts a new open project.
@@ -105,6 +106,11 @@ const submitProposal = async (freelancerId, projectId, data) => {
     refModel: "Project",
     refId: projectId,
   });
+
+  const clientUserObj = await User.findById(clientUserId).select("name email");
+  if (clientUserObj?.email) {
+    sendProposalNotification(clientUserObj.email, clientUserObj.name, proposal, project, "new_proposal").catch(() => {});
+  }
 
   return proposal;
 };
@@ -217,6 +223,11 @@ const respondToProposal = async (clientUserId, proposalId, action) => {
       refModel: "Project",
       refId: proposal.project._id,
     });
+
+    const freelancerObj = await User.findById(proposal.freelancer).select("name email");
+    if (freelancerObj?.email) {
+      sendProposalNotification(freelancerObj.email, freelancerObj.name, proposal, proposal.project, "proposal_approved").catch(() => {});
+    }
   } else if (action === "shortlist") {
     proposal.status = "shortlisted";
     await proposal.save();

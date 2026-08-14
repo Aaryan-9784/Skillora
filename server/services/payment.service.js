@@ -2,9 +2,11 @@ const Razorpay   = require("razorpay");
 const crypto     = require("crypto");
 const Payment    = require("../models/Payment");
 const Invoice    = require("../models/Invoice");
+const User       = require("../models/User");
 const ApiError   = require("../utils/ApiError");
 const QueryBuilder = require("../utils/queryBuilder");
 const notify     = require("../utils/notify");
+const { sendPaymentReceipt } = require("./email.service");
 
 const getRazorpayInstance = () => {
   const key_id     = process.env.RAZORPAY_KEY_ID;
@@ -74,8 +76,9 @@ const verifyRazorpayPayment = async (userId, { razorpay_order_id, razorpay_payme
     }
   }
 
+  const recipientUserId = inv ? inv.owner : userId;
   const paymentObj = await Payment.create({
-    owner:         inv ? inv.owner : userId,
+    owner:         recipientUserId,
     clientId:      inv ? inv.clientId : undefined,
     projectId:     inv ? inv.projectId : undefined,
     invoiceId:     invoiceId || undefined,
@@ -88,13 +91,19 @@ const verifyRazorpayPayment = async (userId, { razorpay_order_id, razorpay_payme
   });
 
   await notify({
-    recipient: inv ? inv.owner : userId,
+    recipient: recipientUserId,
     type:      "payment_received",
     title:     "Razorpay Payment Verified 🎉",
     message:   `Razorpay payment of ${paymentObj.currency} ${paymentObj.amount} was verified successfully. Txn ID: ${razorpay_payment_id}`,
     refModel:  "Payment",
     refId:     paymentObj._id,
   });
+
+  // Send Payment Receipt Email Card
+  const recipientUser = await User.findById(recipientUserId).select("name email");
+  if (recipientUser) {
+    sendPaymentReceipt(recipientUser, paymentObj).catch(() => {});
+  }
 
   return { payment: paymentObj, invoice: inv };
 };

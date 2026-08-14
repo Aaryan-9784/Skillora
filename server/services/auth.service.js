@@ -1,8 +1,10 @@
-const jwt    = require("jsonwebtoken");
-const crypto = require("crypto");
-const User   = require("../models/User");
-const ApiError = require("../utils/ApiError");
-const logger   = require("../utils/logger");
+const jwt       = require("jsonwebtoken");
+const crypto    = require("crypto");
+const speakeasy = require("speakeasy");
+const QRCode    = require("qrcode");
+const User      = require("../models/User");
+const ApiError  = require("../utils/ApiError");
+const logger    = require("../utils/logger");
 
 // ── Token generation ──────────────────────────────────────
 
@@ -91,11 +93,12 @@ const register = async ({ name, email, password, role = "freelancer" }) => {
 // ── Login ─────────────────────────────────────────────────
 
 const login = async ({ email, password, ip = "" }) => {
-  const user = await User.findOne({ email })
+  const normalizedEmail = (email || "").toLowerCase().trim();
+  const user = await User.findOne({ email: normalizedEmail, isDeleted: { $ne: true } })
     .select("+password +refreshToken +loginAttempts +lockUntil");
 
   // Generic message to prevent user enumeration
-  if (!user || user.provider !== "local") {
+  if (!user || !user.password) {
     throw ApiError.unauthorized("Invalid email or password");
   }
 
@@ -113,8 +116,18 @@ const login = async ({ email, password, ip = "" }) => {
     throw ApiError.unauthorized("Invalid email or password");
   }
 
-  // Successful login — reset attempts
+  // Successful password check — reset attempts
   await user.resetLoginAttempts();
+
+  // If 2FA enabled, return mfaToken challenge
+  if (user.isTwoFactorEnabled) {
+    const mfaToken = jwt.sign(
+      { id: user._id, mfa: true },
+      process.env.JWT_ACCESS_SECRET,
+      { expiresIn: "5m" }
+    );
+    return { require2FA: true, mfaToken };
+  }
 
   const { accessToken, refreshToken } = generateTokens(user);
   user.refreshToken = refreshToken;
@@ -198,7 +211,8 @@ const logoutAll = async (userId) => {
 // ── Password reset token ──────────────────────────────────
 
 const createPasswordResetToken = async (email) => {
-  const user = await User.findOne({ email, provider: "local" });
+  const normalizedEmail = (email || "").toLowerCase().trim();
+  const user = await User.findOne({ email: normalizedEmail, isDeleted: { $ne: true } });
   if (!user) {
     // Don't reveal whether email exists
     return null;
@@ -230,6 +244,134 @@ const resetPassword = async (token, newPassword) => {
   return user;
 };
 
+// ── Two-Factor Authentication (TOTP) ──────────────────────
+
+const setup2FA = async (userId) => {
+  const user = await User.findById(userId).select("+twoFactorSecret");
+  if (!user) throw ApiError.notFound("User not found");
+
+  let secret = user.twoFactorSecret;
+  let otpauth;
+
+  if (!secret) {
+    const generated = speakeasy.generateSecret({
+      length: 20,
+      name: `Skillora (${user.email})`,
+      issuer: "Skillora",
+    });
+    secret = generated.base32;
+    otpauth = generated.otpauth_url;
+    user.twoFactorSecret = secret;
+    await user.save({ validateBeforeSave: false });
+  } else {
+    otpauth = speakeasy.otpauthURL({
+      secret,
+      label: `Skillora (${user.email})`,
+      issuer: "Skillora",
+      encoding: "base32",
+    });
+  }
+
+  const qrCodeUrl = await QRCode.toDataURL(otpauth);
+  return { secret, qrCodeUrl, otpauth };
+};
+
+const enable2FA = async (userId, token) => {
+  const user = await User.findById(userId).select("+twoFactorSecret +twoFactorBackupCodes");
+  if (!user) throw ApiError.notFound("User not found");
+  if (!user.twoFactorSecret) throw ApiError.badRequest("Please request 2FA setup QR code first");
+
+  const isValid = speakeasy.totp.verify({
+    secret:   user.twoFactorSecret,
+    encoding: "base32",
+    token:    token.trim(),
+  });
+  if (!isValid) throw ApiError.badRequest("Invalid 2FA passcode. Please check your authenticator app.");
+
+  // Generate 10 single-use 8-character backup codes
+  const plainBackupCodes = Array.from({ length: 10 }, () =>
+    crypto.randomBytes(4).toString("hex").toUpperCase()
+  );
+
+  user.isTwoFactorEnabled = true;
+  user.twoFactorBackupCodes = plainBackupCodes.map((code) => ({ code, used: false }));
+  await user.save({ validateBeforeSave: false });
+
+  logger.info(`2FA enabled for user ${user.email}`);
+  return { backupCodes: plainBackupCodes };
+};
+
+const disable2FA = async (userId, token) => {
+  const user = await User.findById(userId).select("+twoFactorSecret +twoFactorBackupCodes");
+  if (!user) throw ApiError.notFound("User not found");
+  if (!user.isTwoFactorEnabled) throw ApiError.badRequest("2FA is not enabled on this account");
+
+  const isValid = speakeasy.totp.verify({
+    secret:   user.twoFactorSecret,
+    encoding: "base32",
+    token:    token.trim(),
+  });
+  if (!isValid) throw ApiError.badRequest("Invalid 2FA passcode");
+
+  user.isTwoFactorEnabled = false;
+  user.twoFactorSecret = null;
+  user.twoFactorBackupCodes = [];
+  await user.save({ validateBeforeSave: false });
+
+  logger.info(`2FA disabled for user ${user.email}`);
+  return true;
+};
+
+const verify2FALogin = async ({ mfaToken, code, ip = "" }) => {
+  if (!mfaToken || !code) throw ApiError.badRequest("MFA token and verification code are required");
+
+  let decoded;
+  try {
+    decoded = jwt.verify(mfaToken, process.env.JWT_ACCESS_SECRET);
+    if (!decoded.mfa) throw new Error("Invalid token type");
+  } catch {
+    throw ApiError.unauthorized("MFA session expired. Please sign in again.");
+  }
+
+  const user = await User.findById(decoded.id).select("+twoFactorSecret +twoFactorBackupCodes +tokenVersion +refreshToken");
+  if (!user || !user.isActive) throw ApiError.unauthorized("User account invalid");
+
+  let isValid = false;
+  let isBackupCode = false;
+
+  // Check 6-digit TOTP code
+  if (code.length === 6 && /^\d+$/.test(code) && user.twoFactorSecret) {
+    isValid = speakeasy.totp.verify({
+      secret:   user.twoFactorSecret,
+      encoding: "base32",
+      token:    code.trim(),
+    });
+  }
+
+  // Check backup code if TOTP failed or code length matches 8
+  if (!isValid && user.twoFactorBackupCodes?.length > 0) {
+    const backupIndex = user.twoFactorBackupCodes.findIndex(
+      (b) => !b.used && b.code.toUpperCase() === code.trim().toUpperCase()
+    );
+    if (backupIndex !== -1) {
+      isValid = true;
+      isBackupCode = true;
+      user.twoFactorBackupCodes[backupIndex].used = true;
+    }
+  }
+
+  if (!isValid) throw ApiError.unauthorized("Invalid 2FA code or backup code");
+
+  const { accessToken, refreshToken } = generateTokens(user);
+  user.refreshToken = refreshToken;
+  user.lastLogin    = new Date();
+  user.lastLoginIp  = ip;
+  await user.save({ validateBeforeSave: false });
+
+  logger.info(`User ${user.email} completed 2FA login (via ${isBackupCode ? "backup code" : "authenticator app"})`);
+  return { user, accessToken, refreshToken };
+};
+
 module.exports = {
   generateTokens,
   setTokenCookies,
@@ -242,4 +384,8 @@ module.exports = {
   logoutAll,
   createPasswordResetToken,
   resetPassword,
+  setup2FA,
+  enable2FA,
+  disable2FA,
+  verify2FALogin,
 };

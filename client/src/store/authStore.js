@@ -48,6 +48,9 @@ const useAuthStore = create((set, get) => ({
     set({ isLoading: true, errors: {} });
     try {
       const { data } = await authService.login(credentials);
+      if (data.data?.require2FA) {
+        return { require2FA: true, mfaToken: data.data.mfaToken };
+      }
       tokenStore.set(data.data.accessToken);
       sessionStorage.setItem("sk_has_session", "1");
       set({ user: data.data.user, isAuthenticated: true });
@@ -60,6 +63,60 @@ const useAuthStore = create((set, get) => ({
       return { success: false, errors };
     } finally {
       set({ isLoading: false });
+    }
+  },
+
+  // ── 2FA verification & setup ────────────────────────────
+  verify2FALogin: async (mfaToken, code) => {
+    set({ isLoading: true, errors: {} });
+    try {
+      const { data } = await authService.verify2FALogin(mfaToken, code);
+      tokenStore.set(data.data.accessToken);
+      sessionStorage.setItem("sk_has_session", "1");
+      set({ user: data.data.user, isAuthenticated: true });
+      useAiStore.getState().syncUserSession(data.data.user._id);
+      toast.success(`Welcome back, ${data.data.user.name.split(" ")[0]}!`);
+      return { success: true, role: data.data.user.role };
+    } catch (err) {
+      const errors = extractErrors(err);
+      set({ errors });
+      return { success: false, errors };
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  setup2FA: async () => {
+    try {
+      const { data } = await authService.setup2FA();
+      return data.data;
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to initiate 2FA setup");
+      throw err;
+    }
+  },
+
+  enable2FA: async (token) => {
+    try {
+      const { data } = await authService.enable2FA(token);
+      set((s) => ({ user: s.user ? { ...s.user, isTwoFactorEnabled: true } : s.user }));
+      toast.success("2FA enabled successfully!");
+      return data.data;
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to enable 2FA");
+      throw err;
+    }
+  },
+
+  disable2FA: async (token) => {
+    try {
+      await authService.disable2FA(token);
+      set((s) => ({ user: s.user ? { ...s.user, isTwoFactorEnabled: false } : s.user }));
+      toast.success("2FA disabled successfully");
+      return true;
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to disable 2FA");
+      throw err;
     }
   },
 
