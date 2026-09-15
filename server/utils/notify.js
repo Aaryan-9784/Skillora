@@ -7,11 +7,15 @@ const logger       = require("./logger");
  */
 const notify = async (opts) => {
   try {
-    const notification = await Notification.create(opts);
+    const payload = { ...opts };
+    if (!payload.recipient && payload.recipientId) {
+      payload.recipient = payload.recipientId;
+    }
+    const notification = await Notification.create(payload);
 
     // Lazy-require to avoid circular deps
     const { emitNotification } = require("../config/socket");
-    emitNotification(opts.recipient, notification);
+    emitNotification(payload.recipient, notification);
   } catch (err) {
     logger.error(`Failed to create notification: ${err.message}`);
   }

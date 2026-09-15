@@ -83,9 +83,10 @@ const resetPassword = asyncHandler(async (req, res) => {
  */
 const oauthCallback = (provider) =>
   asyncHandler(async (req, res) => {
+    const clientUrl = (process.env.CLIENT_URL || "http://localhost:5173").replace(/\/$/, "");
     if (!req.user) {
       return res.redirect(
-        `${process.env.CLIENT_URL}/login?error=oauth_failed&provider=${provider}`
+        `${clientUrl}/login?error=oauth_failed&provider=${provider}`
       );
     }
 
@@ -95,7 +96,7 @@ const oauthCallback = (provider) =>
 
     // Redirect to frontend with access token in URL fragment (never in query string)
     // Frontend reads it once, stores in memory, then removes from URL
-    res.redirect(`${process.env.CLIENT_URL}/oauth/callback#token=${accessToken}`);
+    res.redirect(`${clientUrl}/oauth/callback#token=${accessToken}`);
   });
 
 const setup2FA = asyncHandler(async (req, res) => {

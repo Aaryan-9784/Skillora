@@ -253,12 +253,18 @@ const useClientPortalStore = create((set, get) => ({
   },
 
   appendMessage: (projectId, message) =>
-    set((s) => ({
-      messagesByProject: {
-        ...s.messagesByProject,
-        [projectId]: [...(s.messagesByProject[projectId] || []), message],
-      },
-    })),
+    set((s) => {
+      const existing = s.messagesByProject[projectId] || [];
+      if (existing.some((m) => m._id?.toString() === message._id?.toString())) {
+        return s;
+      }
+      return {
+        messagesByProject: {
+          ...s.messagesByProject,
+          [projectId]: [...existing, message],
+        },
+      };
+    }),
 
   // ── Activity ──────────────────────────────────────────
   fetchActivity: async (page = 1) => {

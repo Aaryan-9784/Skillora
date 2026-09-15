@@ -43,6 +43,7 @@ const start = async () => {
       gray:  "\x1b[90m",
     };
 
+    // eslint-disable-next-line no-control-regex
     const stripAnsi = (str) => str.replace(/\x1b\[[0-9;]*m/g, "");
     const width = 50;
 

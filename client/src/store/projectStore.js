@@ -14,7 +14,8 @@ const useProjectStore = create((set) => ({
     set({ isLoading: true });
     try {
       const { data } = await api.get("/projects", { params });
-      set({ projects: data.data.projects || [] });
+      const list = data.data?.data || data.data?.projects || (Array.isArray(data.data) ? data.data : []);
+      set({ projects: list });
     } catch (err) {
       set({ error: err.message });
     } finally {

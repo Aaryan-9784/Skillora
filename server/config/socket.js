@@ -7,11 +7,12 @@ const logger     = require("../utils/logger");
 
 let io = null;
 const userSockets = new Map(); // Map<userId, Set<socketId>>
+const activeCalls = new Map(); // Map<callKey, { caller, receiver, type, projectId, startedAt }>
 
 const initSocket = (httpServer) => {
   io = new Server(httpServer, {
     cors: {
-      origin:      [process.env.CLIENT_URL, "http://localhost:5173"],
+      origin:      (origin, callback) => callback(null, true),
       credentials: true,
     },
     pingInterval: 25000,
@@ -120,6 +121,13 @@ const initSocket = (httpServer) => {
     // 📞 WebRTC Call Signaling (Voice & Video)
     socket.on("call:initiate", ({ targetUserId, offer, callType, projectId }) => {
       if (!targetUserId || !offer) return;
+      activeCalls.set(`${userId}:${targetUserId}`, {
+        caller: userId,
+        receiver: targetUserId,
+        type: callType || "video",
+        projectId: projectId || undefined,
+        startedAt: new Date(),
+      });
       io.to(`user:${targetUserId}`).emit("call:incoming", {
         callerId: userId,
         offer,
@@ -138,12 +146,50 @@ const initSocket = (httpServer) => {
       io.to(`user:${targetUserId}`).emit("call:ice_candidate", { candidate });
     });
 
-    socket.on("call:reject", ({ callerId }) => {
-      if (callerId) io.to(`user:${callerId}`).emit("call:rejected", { userId });
+    socket.on("call:reject", async ({ callerId }) => {
+      if (callerId) {
+        io.to(`user:${callerId}`).emit("call:rejected", { userId });
+        try {
+          const CallLog = require("../models/CallLog");
+          await CallLog.create({
+            caller: callerId,
+            receiver: userId,
+            type: "voice",
+            status: "rejected",
+            startedAt: new Date(),
+            endedAt: new Date(),
+            durationSeconds: 0,
+          });
+          activeCalls.delete(`${callerId}:${userId}`);
+        } catch (e) {
+          logger.warn(`Failed to log rejected call: ${e.message}`);
+        }
+      }
     });
 
-    socket.on("call:end", ({ targetUserId }) => {
-      if (targetUserId) io.to(`user:${targetUserId}`).emit("call:ended");
+    socket.on("call:end", async ({ targetUserId, durationSeconds }) => {
+      if (targetUserId) {
+        io.to(`user:${targetUserId}`).emit("call:ended");
+        try {
+          const CallLog = require("../models/CallLog");
+          const callData = activeCalls.get(`${userId}:${targetUserId}`) || activeCalls.get(`${targetUserId}:${userId}`);
+          const duration = Number(durationSeconds) || (callData ? Math.max(0, Math.round((Date.now() - callData.startedAt.getTime()) / 1000)) : 0);
+          await CallLog.create({
+            caller: callData?.caller || userId,
+            receiver: callData?.receiver || targetUserId,
+            projectId: callData?.projectId || undefined,
+            type: callData?.type || "video",
+            status: "answered",
+            startedAt: callData?.startedAt || new Date(),
+            endedAt: new Date(),
+            durationSeconds: duration,
+          });
+          activeCalls.delete(`${userId}:${targetUserId}`);
+          activeCalls.delete(`${targetUserId}:${userId}`);
+        } catch (e) {
+          logger.warn(`Failed to log ended call: ${e.message}`);
+        }
+      }
     });
 
     // Ping/pong health

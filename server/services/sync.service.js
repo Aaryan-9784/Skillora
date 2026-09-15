@@ -30,7 +30,7 @@ const onInvoiceSent = async (invoice, freelancerId) => {
 
   if (clientUser) {
     await notify({
-      recipientId: clientUser._id,
+      recipient: clientUser._id,
       type:    "invoice_sent",
       title:   "New invoice received",
       message: `Invoice #${invoice.invoiceNumber} for ${invoice.currency} ${invoice.total?.toLocaleString()} is ready.`,
@@ -45,7 +45,7 @@ const onInvoiceSent = async (invoice, freelancerId) => {
 
 const onInvoiceViewed = async (invoice) => {
   await notify({
-    recipientId: invoice.owner,
+    recipient: invoice.owner,
     type:    "invoice_viewed",
     title:   "Invoice viewed",
     message: `Your invoice #${invoice.invoiceNumber} was viewed by the client.`,
@@ -63,7 +63,7 @@ const onInvoicePaid = async (invoice, freelancerId) => {
 
   if (clientUser) {
     await notify({
-      recipientId: clientUser._id,
+      recipient: clientUser._id,
       type:    "invoice_paid",
       title:   "Payment confirmed",
       message: `Invoice #${invoice.invoiceNumber} has been marked as paid. Thank you!`,
@@ -96,7 +96,7 @@ const onProjectStatusChanged = async (project, newStatus) => {
   };
 
   await notify({
-    recipientId: clientUser._id,
+    recipient: clientUser._id,
     type:    "project_status_changed",
     title:   `Project update: ${project.title}`,
     message: `Your project "${project.title}" ${statusLabels[newStatus] || "was updated"}.`,
@@ -116,7 +116,7 @@ const onProjectStatusChanged = async (project, newStatus) => {
 
 const onClientPortalJoined = async (clientUser, freelancerId) => {
   await notify({
-    recipientId: freelancerId,
+    recipient: freelancerId,
     type:    "client_portal_joined",
     title:   "Client joined portal",
     message: `${clientUser.name} has accepted their portal invite and can now view invoices.`,
@@ -128,7 +128,7 @@ const onClientPortalJoined = async (clientUser, freelancerId) => {
 
 const onPlanChanged = async (userId, newPlan) => {
   await notify({
-    recipientId: userId,
+    recipient: userId,
     type:    "plan_changed",
     title:   "Your plan was updated",
     message: `An admin has changed your plan to ${newPlan}.`,

@@ -41,9 +41,24 @@ app.use(helmet({
   contentSecurityPolicy: process.env.NODE_ENV === "production" ? undefined : false,
 }));
 
-// ── CORS ──────────────────────────────────────────────────
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  process.env.CLIENT_URL?.replace(/\/$/, ""),
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://localhost:3000",
+  "http://127.0.0.1:5173",
+].filter(Boolean);
+
 app.use(cors({
-  origin:      process.env.CLIENT_URL,
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin) || allowedOrigins.includes(origin.replace(/\/$/, ""))) {
+      return callback(null, true);
+    }
+    // Permissive for staging/preview deployments
+    return callback(null, true);
+  },
   credentials: true,
   methods:     ["GET","POST","PUT","PATCH","DELETE","OPTIONS"],
 }));

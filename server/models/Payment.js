@@ -4,7 +4,7 @@ const { Schema, model } = mongoose;
 const paymentSchema = new Schema(
   {
     owner:     { type: Schema.Types.ObjectId, ref: "User",    required: true },
-    clientId:  { type: Schema.Types.ObjectId, ref: "Client",  required: true },
+    clientId:  { type: Schema.Types.ObjectId, ref: "Client",  default: null },
     projectId: { type: Schema.Types.ObjectId, ref: "Project", default: null },
     invoiceId: { type: Schema.Types.ObjectId, ref: "Invoice", default: null },
 
@@ -19,7 +19,7 @@ const paymentSchema = new Schema(
 
     paymentMethod: {
       type: String,
-      enum: ["bank_transfer", "paypal", "stripe", "crypto", "cash", "check", "other"],
+      enum: ["bank_transfer", "paypal", "stripe", "razorpay", "crypto", "cash", "check", "other"],
       default: "other",
     },
 

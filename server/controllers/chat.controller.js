@@ -273,6 +273,10 @@ const sendMessage = asyncHandler(async (req, res) => {
     createdAt: message.createdAt,
   };
 
+  if (!conversation.unreadCounts || typeof conversation.unreadCounts.get !== "function") {
+    conversation.unreadCounts = new Map();
+  }
+
   conversation.participants.forEach((pId) => {
     if (pId.toString() !== senderId.toString()) {
       const cur = conversation.unreadCounts.get(pId.toString()) || 0;

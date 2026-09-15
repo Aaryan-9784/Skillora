@@ -119,13 +119,15 @@ const useChatStore = create((set, get) => ({
   },
 
   appendMessage: (message) => {
+    if (!message) return;
     set((state) => {
-      if (state.activeConversation?._id === message.conversationId) {
-        const exists = state.messages.some((m) => m._id === message._id);
-        if (exists) return state;
-        return { messages: [...state.messages, message] };
-      }
-      return state;
+      const activeId = state.activeConversation?._id?.toString();
+      const msgConvId = (message.conversationId?._id || message.conversationId)?.toString();
+      if (!activeId || activeId !== msgConvId) return state;
+      const msgId = message._id?.toString();
+      const exists = state.messages.some((m) => m._id?.toString() === msgId);
+      if (exists) return state;
+      return { messages: [...state.messages, message] };
     });
   },
 

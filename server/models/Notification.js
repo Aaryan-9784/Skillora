@@ -8,7 +8,7 @@ const notificationSchema = new Schema(
     type: {
       type: String,
       enum: [
-        "project_created", "project_updated", "project_completed",
+        "project_created", "project_updated", "project_completed", "project_deleted",
         "task_assigned", "task_due_soon", "task_overdue",
         "invoice_sent", "invoice_paid", "invoice_overdue",
         "payment_received",
@@ -20,6 +20,11 @@ const notificationSchema = new Schema(
         "plan_changed",
         "account_deactivated",
         "project_status_changed",
+        // Proposals
+        "proposal_received",
+        "proposal_approved",
+        "proposal_shortlisted",
+        "proposal_rejected",
       ],
       required: true,
     },

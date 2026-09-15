@@ -163,8 +163,9 @@ const updatePayment = async (paymentId, ownerId, updates) => {
 };
 
 const getEarningsSummary = async (ownerId) => {
+  const ownerObjId = new mongoose.Types.ObjectId(ownerId);
   return Payment.aggregate([
-    { $match: { owner: ownerId, status: "completed", isDeleted: { $ne: true } } },
+    { $match: { owner: ownerObjId, status: "completed", isDeleted: { $ne: true } } },
     {
       $group: {
         _id:          "$currency",
