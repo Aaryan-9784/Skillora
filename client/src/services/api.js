@@ -3,8 +3,18 @@ import toast from "react-hot-toast";
 import tokenStore from "./tokenStore";
 import { updateSocketToken } from "./socketService";
 
+const getBaseUrl = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  if (import.meta.env.VITE_SERVER_URL) {
+    return `${import.meta.env.VITE_SERVER_URL.replace(/\/$/, "")}/api`;
+  }
+  return "/api";
+};
+
 const api = axios.create({
-  baseURL:         import.meta.env.VITE_API_URL || "/api",
+  baseURL:         getBaseUrl(),
   withCredentials: true,
   timeout:         30000,
 });
