@@ -1,32 +1,40 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Sparkles, CheckCircle2, ArrowRight, Shield, Zap,
-  Briefcase, Code2, Users, FileText, ChevronRight, Check
+import {
+  ArrowRight, Check, Code2, Briefcase, Sparkles, CheckCircle2,
+  ShieldCheck, Zap, Users, Kanban, FileText, ChevronRight, LogOut,
 } from "lucide-react";
 import useAuthStore from "../../store/authStore";
+import { GlassCard, CTAButton, CursorGlow } from "./_authShared";
 
-const FREELANCER_PERKS = [
-  "Create & manage projects with Kanban board",
-  "Send professional invoices & receive instant payments",
-  "Build rich developer profile & showcase portfolio",
-  "Built-in AI Assistant for task breakdown & rate calculation",
-  "Direct real-time chat, voice notes & HD video calling"
-];
-
-const CLIENT_PERKS = [
-  "Post project requirements & hire verified freelancers",
-  "Deposit funds in secure escrow protection",
-  "Review milestone deliverables before releasing payouts",
-  "Real-time team chat, file sharing & WebRTC video calls",
-  "Download invoices, receipts & financial statements"
-];
+// ── Left Column Feature Item (matches Register/Login) ──────────────────────
+const Feature = ({ icon: Icon, text, delay }) => (
+  <motion.div
+    initial={{ opacity: 0, x: -16 }}
+    animate={{ opacity: 1, x: 0 }}
+    transition={{ duration: 0.5, delay, ease: [0.16, 1, 0.3, 1] }}
+    className="flex items-center gap-3"
+  >
+    <div
+      className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+      style={{ background: "rgba(99,91,255,0.25)", border: "1px solid rgba(163,154,255,0.4)" }}
+    >
+      <Icon size={14} style={{ color: "#C4B5FD" }} />
+    </div>
+    <span
+      className="text-[13px] font-semibold text-white"
+      style={{ textShadow: "0 2px 8px rgba(0,0,0,0.85)" }}
+    >
+      {text}
+    </span>
+  </motion.div>
+);
 
 const Onboarding = () => {
   const [selectedRole, setSelectedRole] = useState("freelancer");
   const [submitting, setSubmitting] = useState(false);
-  const { user, setRoleAndCompleteOnboarding } = useAuthStore();
+  const { user, setRoleAndCompleteOnboarding, logout } = useAuthStore();
   const navigate = useNavigate();
 
   const handleContinue = async () => {
@@ -46,264 +54,607 @@ const Onboarding = () => {
 
   const firstName = user?.name ? user.name.split(" ")[0] : "there";
 
+  const freelancerFeatures = [
+    { icon: Kanban, text: "Kanban board & milestone tracking" },
+    { icon: Zap, text: "AI task breakdown & automated invoices" },
+    { icon: FileText, text: "Zero commission on all contracts" },
+    { icon: Users, text: "Real-time client chat & video calls" },
+  ];
+
+  const clientFeatures = [
+    { icon: Briefcase, text: "Hire verified talent & post jobs" },
+    { icon: ShieldCheck, text: "Milestone-based escrow payment security" },
+    { icon: Kanban, text: "Real-time project oversight & reviews" },
+    { icon: FileText, text: "Download invoices & financial statements" },
+  ];
+
   return (
-    <div className="relative min-h-screen flex flex-col justify-between overflow-x-hidden text-slate-100"
-         style={{ background: "#04070F" }}>
-      
-      {/* Background looping video matches theme */}
+    <div className="relative min-h-screen overflow-hidden" style={{ background: "#04070F" }}>
+
+      {/* ── video background ── */}
       <video
         autoPlay
         muted
         loop
         playsInline
-        className="absolute inset-0 z-0 w-full h-full object-cover opacity-60 pointer-events-none"
-        style={{ filter: "brightness(0.4) contrast(1.15) saturate(1.1) blur(1px)" }}
+        className="absolute inset-0 z-0 w-full h-full object-cover opacity-85"
+        style={{ filter: "brightness(0.55) contrast(1.15) saturate(1.1) blur(0.3px)" }}
       >
+        <source src="/videos/login-bg.mp4" type="video/mp4" />
         <source src="/videos/landing-bg.mp4" type="video/mp4" />
       </video>
 
-      {/* Atmospheric dark gradient overlays */}
-      <div className="absolute inset-0 z-[1] pointer-events-none" 
-           style={{ background: "radial-gradient(ellipse 80% 60% at 50% 20%, rgba(99, 91, 255, 0.15) 0%, rgba(4, 7, 15, 0.95) 75%)" }} />
-      <div className="absolute inset-0 z-[1] pointer-events-none"
-           style={{ background: "linear-gradient(to bottom, rgba(4,7,15,0.7) 0%, rgba(4,7,15,0.95) 100%)" }} />
+      {/* ── overlay stack: dark on left for text, lighter on right ── */}
+      <div className="absolute inset-0 z-[1]" style={{ background: "rgba(4,7,18,0.15)" }} />
+      <div
+        className="absolute inset-0 z-[2]"
+        style={{
+          background:
+            "linear-gradient(to right, rgba(4,7,18,0.88) 0%, rgba(4,7,18,0.7) 40%, rgba(4,7,18,0.2) 70%, rgba(4,7,18,0.05) 100%)",
+        }}
+      />
+      <div
+        className="absolute inset-0 z-[2]"
+        style={{ background: "linear-gradient(to top, rgba(4,7,18,0.35) 0%, transparent 40%)" }}
+      />
+      <div
+        className="absolute inset-0 z-[2] pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(ellipse 70% 85% at 20% 50%, rgba(4,7,18,0.75) 0%, transparent 85%)",
+        }}
+      />
 
-      {/* Top Brand Header */}
-      <header className="relative z-10 w-full max-w-6xl mx-auto px-6 py-8 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center font-extrabold text-white text-lg shadow-lg"
-               style={{ background: "linear-gradient(135deg, #635BFF 0%, #38BDF8 100%)", boxShadow: "0 0 20px rgba(99,91,255,0.4)" }}>
-            S
-          </div>
-          <span style={{ fontFamily: "'Sora', 'Inter', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: "-0.03em" }}
-                className="text-white">
-            Skillora
-          </span>
-        </div>
+      {/* ── animated mesh orbs ── */}
+      <motion.div
+        className="absolute rounded-full pointer-events-none z-[1]"
+        animate={{ x: [0, 60, 0], y: [0, -40, 0], scale: [1, 1.15, 1] }}
+        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+        style={{
+          width: 700,
+          height: 700,
+          top: "-20%",
+          left: "-15%",
+          background: "radial-gradient(circle,rgba(99,91,255,0.1) 0%,transparent 65%)",
+        }}
+      />
+      <motion.div
+        className="absolute rounded-full pointer-events-none z-[1]"
+        animate={{ x: [0, -50, 0], y: [0, 60, 0] }}
+        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut", delay: 5 }}
+        style={{
+          width: 500,
+          height: 500,
+          bottom: "-10%",
+          right: "5%",
+          background: "radial-gradient(circle,rgba(56,189,248,0.07) 0%,transparent 65%)",
+        }}
+      />
 
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-md text-xs text-slate-300">
-          <Sparkles size={13} className="text-violet-400 animate-pulse" />
-          <span>Step 2 of 2: Workspace Setup</span>
-        </div>
-      </header>
+      {/* ── brand glow ── */}
+      <div
+        className="absolute inset-0 z-[3] pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(ellipse 50% 60% at 85% 50%,rgba(99,91,255,0.11) 0%,transparent 70%)",
+        }}
+      />
 
-      {/* Center Body */}
-      <main className="relative z-10 w-full max-w-5xl mx-auto px-6 py-6 flex-1 flex flex-col items-center justify-center">
-        
-        {/* Title & Welcome */}
-        <div className="text-center max-w-2xl mb-10">
+      {/* ── cursor glow ── */}
+      <CursorGlow />
+
+      {/* ── floating particles ── */}
+      {[
+        { top: "18%", left: "68%", s: 2, d: 0.3 },
+        { top: "44%", left: "79%", s: 1.5, d: 1.4 },
+        { top: "70%", left: "73%", s: 2, d: 0.9 },
+        { top: "28%", left: "86%", s: 1.5, d: 2.2 },
+        { top: "58%", left: "91%", s: 1, d: 1.8 },
+      ].map((p, i) => (
+        <motion.div
+          key={i}
+          className="absolute rounded-full pointer-events-none z-[5]"
+          style={{
+            top: p.top,
+            left: p.left,
+            width: p.s,
+            height: p.s,
+            background: "rgba(167,139,250,0.5)",
+          }}
+          animate={{ y: [0, -12, 0], opacity: [0.1, 0.5, 0.1] }}
+          transition={{ duration: 5 + i * 0.8, repeat: Infinity, delay: p.d, ease: "easeInOut" }}
+        />
+      ))}
+
+      {/* ── 2-column layout (identical to Login / Register) ── */}
+      <div className="relative z-10 min-h-screen grid grid-cols-1 lg:grid-cols-[1fr_520px]">
+
+        {/* ── LEFT COLUMN: Brand Hero ── */}
+        <div className="hidden lg:flex flex-col justify-between px-16 py-14 select-none">
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider mb-3 text-indigo-300 bg-indigo-500/10 border border-indigo-500/20"
+            transition={{ duration: 0.5 }}
           >
-            <Zap size={13} /> Welcome aboard, {firstName}
+            <Link to="/" style={{ textDecoration: "none" }}>
+              <span
+                style={{
+                  fontFamily: "'Sora','Inter',sans-serif",
+                  fontSize: 26,
+                  fontWeight: 800,
+                  letterSpacing: "-0.04em",
+                  color: "#fff",
+                  lineHeight: 1,
+                  cursor: "pointer",
+                  textShadow: "0 2px 12px rgba(0,0,0,0.8)",
+                }}
+              >
+                Skillora
+              </span>
+            </Link>
           </motion.div>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-3"
-            style={{ fontFamily: "'Sora', 'Inter', sans-serif" }}
-          >
-            How do you plan to use <span className="bg-gradient-to-r from-violet-400 via-indigo-300 to-sky-400 bg-clip-text text-transparent">Skillora</span>?
-          </motion.h1>
+          <div className="space-y-10 max-w-[520px]">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-extrabold tracking-[0.2em] uppercase border"
+              style={{
+                fontFamily: "'Sora', 'Inter', sans-serif",
+                color: "#A78BFA",
+                background: "rgba(139,92,246,0.1)",
+                borderColor: "rgba(139,92,246,0.25)",
+                textShadow: "0 2px 10px rgba(0,0,0,0.8)",
+              }}
+            >
+              <Sparkles size={12} className="text-violet-400" />
+              Step 2 of 2 • Workspace Setup
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              whileHover={{ y: -4 }}
+              transition={{ duration: 0.7, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="space-y-5"
+              style={{ cursor: "default" }}
+            >
+              <h1
+                className="font-extrabold leading-[1.1] text-white"
+                style={{
+                  fontFamily: "'Sora', 'Inter', sans-serif",
+                  fontSize: "clamp(2.4rem,3.5vw,3.2rem)",
+                  letterSpacing: "-0.035em",
+                  textShadow: "0 4px 16px rgba(0,0,0,0.9)",
+                }}
+              >
+                How do you plan<br />to use{" "}
+                <span
+                  style={{
+                    background: "linear-gradient(135deg,#A78BFA 0%,#818CF8 50%,#38BDF8 100%)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    filter: "drop-shadow(0 0 25px rgba(167,139,250,0.55))",
+                  }}
+                >
+                  Skillora?
+                </span>
+              </h1>
+              <p
+                className="text-[15px] leading-[1.7] font-medium"
+                style={{ color: "#94A3B8", maxWidth: "42ch", textShadow: "0 2px 8px rgba(0,0,0,0.9)" }}
+              >
+                {selectedRole === "freelancer"
+                  ? "Your complete freelancer OS. Track projects, automate invoices with 0% commission, and scale your independent business."
+                  : "Your enterprise-grade client portal. Post contracts, hire verified talent, and protect payments with milestone escrow."}
+              </p>
+            </motion.div>
+
+            {/* Dynamic Features List */}
+            <motion.div
+              key={selectedRole}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-4"
+              style={{ cursor: "default" }}
+            >
+              {(selectedRole === "freelancer" ? freelancerFeatures : clientFeatures).map(
+                (feat, idx) => (
+                  <Feature
+                    key={feat.text}
+                    icon={feat.icon}
+                    text={feat.text}
+                    delay={0.35 + idx * 0.08}
+                  />
+                )
+              )}
+            </motion.div>
+
+            {/* Social Proof */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.75 }}
+              whileHover={{ y: -3 }}
+              className="inline-flex items-center gap-2.5"
+              style={{ cursor: "default" }}
+            >
+              <div className="flex -space-x-1.5">
+                {[
+                  { initial: "A", bg: "linear-gradient(135deg,#635BFF,#8B5CF6)" },
+                  { initial: "S", bg: "linear-gradient(135deg,#10B981,#059669)" },
+                  { initial: "M", bg: "linear-gradient(135deg,#F59E0B,#D97706)" },
+                  { initial: "K", bg: "linear-gradient(135deg,#00D4FF,#0284C7)" },
+                ].map((a) => (
+                  <div
+                    key={a.initial}
+                    className="w-5 h-5 rounded-full border border-black/40 flex items-center justify-center text-[9px] font-bold text-white shadow-sm shrink-0 select-none"
+                    style={{ background: a.bg }}
+                  >
+                    {a.initial}
+                  </div>
+                ))}
+              </div>
+              <span
+                className="text-[12px] font-medium"
+                style={{ color: "#94A3B8", textShadow: "0 1px 6px rgba(0,0,0,0.8)" }}
+              >
+                Trusted by{" "}
+                <span
+                  style={{
+                    fontFamily: "'Sora', 'Inter', sans-serif",
+                    color: "#C4B5FD",
+                    fontWeight: 700,
+                  }}
+                >
+                  10,000+
+                </span>{" "}
+                freelancers &amp; clients
+              </span>
+            </motion.div>
+          </div>
 
           <motion.p
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-slate-400 text-sm sm:text-base font-normal max-w-lg mx-auto"
+            className="text-[11px] font-medium"
+            style={{ color: "#94A3B8", textShadow: "0 1px 6px rgba(0,0,0,0.8)", cursor: "default" }}
+            whileHover={{ color: "rgba(203,213,225,0.9)", y: -1 }}
+            transition={{ duration: 0.2 }}
           >
-            Select your account type. We will configure your workspace, tools, and navigation tailored to your daily workflow.
+            © 2025 Skillora. All rights reserved.
           </motion.p>
         </div>
 
-        {/* 2 Role Choice Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
-          
-          {/* CARD 1: Freelancer */}
+        {/* ── RIGHT COLUMN: Role Selection Card ── */}
+        <div className="flex items-center justify-center px-6 py-12 lg:px-10 lg:py-0">
           <motion.div
-            whileHover={{ y: -4, transition: { duration: 0.2 } }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setSelectedRole("freelancer")}
-            className={`group relative rounded-3xl p-7 cursor-pointer transition-all duration-300 flex flex-col justify-between ${
-              selectedRole === "freelancer"
-                ? "bg-slate-900/90 border-2 border-indigo-500 shadow-[0_0_40px_rgba(99,91,255,0.25)] ring-1 ring-indigo-400/40"
-                : "bg-slate-900/40 border border-white/10 hover:border-white/20 hover:bg-slate-900/60 shadow-xl"
-            }`}
-            style={{ backdropFilter: "blur(20px)" }}
+            initial={{ opacity: 0, x: 28, scale: 0.97 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+            className="w-full max-w-[460px]"
           >
-            {/* Active Selection Badge */}
-            <div className="flex items-start justify-between mb-6">
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-105"
-                   style={{
-                     background: selectedRole === "freelancer" 
-                       ? "linear-gradient(135deg, #635BFF 0%, #818CF8 100%)" 
-                       : "rgba(255,255,255,0.06)",
-                     boxShadow: selectedRole === "freelancer" ? "0 4px 20px rgba(99,91,255,0.4)" : "none"
-                   }}>
-                <Code2 size={26} className={selectedRole === "freelancer" ? "text-white" : "text-slate-400"} />
-              </div>
-
-              <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
-                selectedRole === "freelancer"
-                  ? "bg-indigo-500 text-white shadow-md shadow-indigo-500/50 scale-110"
-                  : "border-2 border-slate-600 group-hover:border-slate-400"
-              }`}>
-                {selectedRole === "freelancer" && <Check size={16} strokeWidth={3} />}
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center gap-2 mb-1.5">
-                <h3 className="text-xl font-bold text-white tracking-tight" style={{ fontFamily: "'Sora', sans-serif" }}>
-                  I'm a Freelancer / Pro
-                </h3>
-                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                  Talent
+            {/* Mobile Logo */}
+            <div className="mb-8 lg:hidden">
+              <Link to="/" style={{ textDecoration: "none" }}>
+                <span
+                  style={{
+                    fontFamily: "'Sora','Inter',sans-serif",
+                    fontSize: 26,
+                    fontWeight: 800,
+                    letterSpacing: "-0.04em",
+                    color: "#fff",
+                    lineHeight: 1,
+                    cursor: "pointer",
+                  }}
+                >
+                  Skillora
                 </span>
-              </div>
-              <p className="text-xs sm:text-sm text-slate-400 mb-6 leading-relaxed">
-                I want to manage client projects, track tasks, send automated invoices, and get paid with 0% commission.
-              </p>
+              </Link>
+            </div>
 
-              {/* Perk checklist */}
-              <div className="space-y-2.5 pt-4 border-t border-white/10">
-                {FREELANCER_PERKS.map((perk, idx) => (
-                  <div key={idx} className="flex items-start gap-2.5 text-xs text-slate-300 font-medium">
-                    <CheckCircle2 size={15} className={selectedRole === "freelancer" ? "text-indigo-400 shrink-0 mt-0.5" : "text-slate-500 shrink-0 mt-0.5"} />
-                    <span>{perk}</span>
+            <GlassCard className="!p-7 sm:!p-8">
+              {/* Header */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+                className="mb-6"
+              >
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <span
+                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold tracking-wider uppercase border"
+                    style={{
+                      background: "rgba(99,91,255,0.12)",
+                      borderColor: "rgba(139,92,246,0.3)",
+                      color: "#C4B5FD",
+                    }}
+                  >
+                    <Zap size={11} className="text-violet-400" />
+                    Welcome aboard, {firstName}
+                  </span>
+                  <span className="text-[11px] font-semibold text-slate-400">Step 2 of 2</span>
+                </div>
+
+                <h2
+                  className="font-extrabold text-white mb-1.5"
+                  style={{
+                    fontFamily: "'Sora', 'Inter', sans-serif",
+                    fontSize: "1.65rem",
+                    letterSpacing: "-0.03em",
+                    background: "linear-gradient(135deg,#FFFFFF 30%,#C4B5FD 70%,#818CF8 100%)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                  }}
+                >
+                  Select your role
+                </h2>
+                <p className="text-[13px] font-medium leading-relaxed" style={{ color: "#94A3B8" }}>
+                  Choose your account type to configure your workspace navigation, tools, and widgets.
+                </p>
+              </motion.div>
+
+              {/* Role Cards */}
+              <div className="space-y-3.5 mb-6">
+
+                {/* 1. Freelancer Option */}
+                <motion.div
+                  whileHover={{ scale: 1.015, y: -1 }}
+                  whileTap={{ scale: 0.985 }}
+                  onClick={() => setSelectedRole("freelancer")}
+                  className="relative p-4 sm:p-4.5 rounded-2xl cursor-pointer transition-all duration-300 overflow-hidden"
+                  style={{
+                    background:
+                      selectedRole === "freelancer"
+                        ? "linear-gradient(145deg, rgba(99,91,255,0.18) 0%, rgba(15,20,40,0.85) 100%)"
+                        : "rgba(255,255,255,0.04)",
+                    border:
+                      selectedRole === "freelancer"
+                        ? "1px solid rgba(139,92,246,0.8)"
+                        : "1px solid rgba(255,255,255,0.12)",
+                    boxShadow:
+                      selectedRole === "freelancer"
+                        ? "0 0 24px rgba(99,91,255,0.22), inset 0 1px 0 rgba(255,255,255,0.15)"
+                        : "inset 0 1px 0 rgba(255,255,255,0.04)",
+                  }}
+                >
+                  {selectedRole === "freelancer" && (
+                    <div
+                      className="absolute top-0 inset-x-0 h-px pointer-events-none"
+                      style={{
+                        background:
+                          "linear-gradient(90deg, transparent, rgba(167,139,250,0.9), transparent)",
+                      }}
+                    />
+                  )}
+
+                  <div className="flex items-start gap-3.5">
+                    {/* Icon */}
+                    <div
+                      className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300"
+                      style={{
+                        background:
+                          selectedRole === "freelancer"
+                            ? "linear-gradient(135deg, #635BFF 0%, #818CF8 100%)"
+                            : "rgba(255,255,255,0.07)",
+                        boxShadow:
+                          selectedRole === "freelancer"
+                            ? "0 4px 16px rgba(99,91,255,0.4)"
+                            : "none",
+                      }}
+                    >
+                      <Code2
+                        size={20}
+                        className={selectedRole === "freelancer" ? "text-white" : "text-slate-400"}
+                      />
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span
+                          className="text-[14.5px] font-bold text-white tracking-tight"
+                          style={{ fontFamily: "'Sora', 'Inter', sans-serif" }}
+                        >
+                          I'm a Freelancer / Pro
+                        </span>
+                        <span
+                          className="text-[9.5px] uppercase font-extrabold tracking-wider px-2 py-0.5 rounded-md"
+                          style={{
+                            background: "rgba(99,91,255,0.2)",
+                            color: "#C4B5FD",
+                            border: "1px solid rgba(139,92,246,0.3)",
+                          }}
+                        >
+                          Talent
+                        </span>
+                      </div>
+                      <p className="text-[12px] leading-relaxed text-slate-400 font-medium">
+                        Manage client projects, send invoices &amp; keep 100% of your earnings.
+                      </p>
+                    </div>
+
+                    {/* Radio Indicator */}
+                    <div
+                      className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 transition-all"
+                      style={{
+                        background:
+                          selectedRole === "freelancer"
+                            ? "linear-gradient(135deg,#3B82F6,#8B5CF6)"
+                            : "transparent",
+                        border:
+                          selectedRole === "freelancer"
+                            ? "none"
+                            : "1.5px solid rgba(255,255,255,0.25)",
+                        boxShadow:
+                          selectedRole === "freelancer"
+                            ? "0 0 12px rgba(139,92,246,0.6)"
+                            : "none",
+                      }}
+                    >
+                      {selectedRole === "freelancer" && (
+                        <Check size={12} strokeWidth={3} className="text-white" />
+                      )}
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
+                </motion.div>
 
-            <div className="mt-8 pt-4">
-              <div className={`text-xs font-semibold flex items-center gap-1.5 transition-colors ${
-                selectedRole === "freelancer" ? "text-indigo-300" : "text-slate-500 group-hover:text-slate-400"
-              }`}>
-                <span>Freelancer Dashboard & Tools</span>
-                <ChevronRight size={14} />
-              </div>
-            </div>
-          </motion.div>
+                {/* 2. Client Option */}
+                <motion.div
+                  whileHover={{ scale: 1.015, y: -1 }}
+                  whileTap={{ scale: 0.985 }}
+                  onClick={() => setSelectedRole("client")}
+                  className="relative p-4 sm:p-4.5 rounded-2xl cursor-pointer transition-all duration-300 overflow-hidden"
+                  style={{
+                    background:
+                      selectedRole === "client"
+                        ? "linear-gradient(145deg, rgba(236,72,153,0.18) 0%, rgba(15,20,40,0.85) 100%)"
+                        : "rgba(255,255,255,0.04)",
+                    border:
+                      selectedRole === "client"
+                        ? "1px solid rgba(236,72,153,0.8)"
+                        : "1px solid rgba(255,255,255,0.12)",
+                    boxShadow:
+                      selectedRole === "client"
+                        ? "0 0 24px rgba(236,72,153,0.22), inset 0 1px 0 rgba(255,255,255,0.15)"
+                        : "inset 0 1px 0 rgba(255,255,255,0.04)",
+                  }}
+                >
+                  {selectedRole === "client" && (
+                    <div
+                      className="absolute top-0 inset-x-0 h-px pointer-events-none"
+                      style={{
+                        background:
+                          "linear-gradient(90deg, transparent, rgba(244,114,182,0.9), transparent)",
+                      }}
+                    />
+                  )}
 
-          {/* CARD 2: Client */}
-          <motion.div
-            whileHover={{ y: -4, transition: { duration: 0.2 } }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setSelectedRole("client")}
-            className={`group relative rounded-3xl p-7 cursor-pointer transition-all duration-300 flex flex-col justify-between ${
-              selectedRole === "client"
-                ? "bg-slate-900/90 border-2 border-pink-500 shadow-[0_0_40px_rgba(236,72,153,0.25)] ring-1 ring-pink-400/40"
-                : "bg-slate-900/40 border border-white/10 hover:border-white/20 hover:bg-slate-900/60 shadow-xl"
-            }`}
-            style={{ backdropFilter: "blur(20px)" }}
-          >
-            {/* Active Selection Badge */}
-            <div className="flex items-start justify-between mb-6">
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-105"
-                   style={{
-                     background: selectedRole === "client" 
-                       ? "linear-gradient(135deg, #EC4899 0%, #F43F5E 100%)" 
-                       : "rgba(255,255,255,0.06)",
-                     boxShadow: selectedRole === "client" ? "0 4px 20px rgba(236,72,153,0.4)" : "none"
-                   }}>
-                <Briefcase size={26} className={selectedRole === "client" ? "text-white" : "text-slate-400"} />
-              </div>
+                  <div className="flex items-start gap-3.5">
+                    {/* Icon */}
+                    <div
+                      className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300"
+                      style={{
+                        background:
+                          selectedRole === "client"
+                            ? "linear-gradient(135deg, #EC4899 0%, #F43F5E 100%)"
+                            : "rgba(255,255,255,0.07)",
+                        boxShadow:
+                          selectedRole === "client"
+                            ? "0 4px 16px rgba(236,72,153,0.4)"
+                            : "none",
+                      }}
+                    >
+                      <Briefcase
+                        size={20}
+                        className={selectedRole === "client" ? "text-white" : "text-slate-400"}
+                      />
+                    </div>
 
-              <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
-                selectedRole === "client"
-                  ? "bg-pink-500 text-white shadow-md shadow-pink-500/50 scale-110"
-                  : "border-2 border-slate-600 group-hover:border-slate-400"
-              }`}>
-                {selectedRole === "client" && <Check size={16} strokeWidth={3} />}
-              </div>
-            </div>
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span
+                          className="text-[14.5px] font-bold text-white tracking-tight"
+                          style={{ fontFamily: "'Sora', 'Inter', sans-serif" }}
+                        >
+                          I'm a Client / Business
+                        </span>
+                        <span
+                          className="text-[9.5px] uppercase font-extrabold tracking-wider px-2 py-0.5 rounded-md"
+                          style={{
+                            background: "rgba(236,72,153,0.2)",
+                            color: "#F472B6",
+                            border: "1px solid rgba(236,72,153,0.3)",
+                          }}
+                        >
+                          Employer
+                        </span>
+                      </div>
+                      <p className="text-[12px] leading-relaxed text-slate-400 font-medium">
+                        Hire vetted talent, manage deliverables &amp; secure payments with escrow.
+                      </p>
+                    </div>
 
-            <div>
-              <div className="flex items-center gap-2 mb-1.5">
-                <h3 className="text-xl font-bold text-white tracking-tight" style={{ fontFamily: "'Sora', sans-serif" }}>
-                  I'm a Client / Business
-                </h3>
-                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md bg-pink-500/20 text-pink-300 border border-pink-500/30">
-                  Employer
-                </span>
-              </div>
-              <p className="text-xs sm:text-sm text-slate-400 mb-6 leading-relaxed">
-                I want to hire top freelancers, manage projects, protect payments with escrow, and approve deliverables.
-              </p>
-
-              {/* Perk checklist */}
-              <div className="space-y-2.5 pt-4 border-t border-white/10">
-                {CLIENT_PERKS.map((perk, idx) => (
-                  <div key={idx} className="flex items-start gap-2.5 text-xs text-slate-300 font-medium">
-                    <CheckCircle2 size={15} className={selectedRole === "client" ? "text-pink-400 shrink-0 mt-0.5" : "text-slate-500 shrink-0 mt-0.5"} />
-                    <span>{perk}</span>
+                    {/* Radio Indicator */}
+                    <div
+                      className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 transition-all"
+                      style={{
+                        background:
+                          selectedRole === "client"
+                            ? "linear-gradient(135deg,#EC4899,#F43F5E)"
+                            : "transparent",
+                        border:
+                          selectedRole === "client"
+                            ? "none"
+                            : "1.5px solid rgba(255,255,255,0.25)",
+                        boxShadow:
+                          selectedRole === "client"
+                            ? "0 0 12px rgba(236,72,153,0.6)"
+                            : "none",
+                      }}
+                    >
+                      {selectedRole === "client" && (
+                        <Check size={12} strokeWidth={3} className="text-white" />
+                      )}
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
+                </motion.div>
 
-            <div className="mt-8 pt-4">
-              <div className={`text-xs font-semibold flex items-center gap-1.5 transition-colors ${
-                selectedRole === "client" ? "text-pink-300" : "text-slate-500 group-hover:text-slate-400"
-              }`}>
-                <span>Client Portal & Escrow Controls</span>
-                <ChevronRight size={14} />
               </div>
-            </div>
+
+              {/* Action Button */}
+              <CTAButton
+                disabled={submitting}
+                isLoading={submitting}
+                onClick={handleContinue}
+                type="button"
+              >
+                {submitting ? (
+                  <>
+                    <div className="w-4 h-4 border-[1.5px] border-white/25 border-t-white rounded-full animate-spin" />
+                    <span>Configuring workspace…</span>
+                  </>
+                ) : (
+                  <>
+                    <span>
+                      Continue to {selectedRole === "client" ? "Client Portal" : "Freelancer Dashboard"}
+                    </span>
+                    <ArrowRight size={15} strokeWidth={2.5} />
+                  </>
+                )}
+              </CTAButton>
+
+              {/* Bottom helpers */}
+              <div className="mt-5 pt-4 border-t border-white/10 flex flex-col items-center gap-2.5 text-center">
+                <p className="text-[11px] font-medium text-slate-400">
+                  You can also switch or update your role anytime in settings.
+                </p>
+
+                {user?.email && (
+                  <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
+                    <span>Signed in as <span className="text-slate-300">{user.email}</span></span>
+                    <span>•</span>
+                    <button
+                      type="button"
+                      onClick={() => logout?.()}
+                      className="text-violet-400 hover:text-violet-300 font-semibold cursor-pointer transition-colors"
+                    >
+                      Sign out
+                    </button>
+                  </div>
+                )}
+              </div>
+
+            </GlassCard>
           </motion.div>
-
         </div>
 
-        {/* CTA Launch Button */}
-        <div className="w-full max-w-md mt-10 flex flex-col items-center gap-3">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleContinue}
-            disabled={submitting}
-            className="w-full py-4 px-8 rounded-2xl font-bold text-sm tracking-wide text-white flex items-center justify-center gap-2 shadow-2xl transition-all disabled:opacity-50 cursor-pointer"
-            style={{
-              background: selectedRole === "client"
-                ? "linear-gradient(135deg, #EC4899 0%, #8B5CF6 100%)"
-                : "linear-gradient(135deg, #635BFF 0%, #38BDF8 100%)",
-              boxShadow: selectedRole === "client"
-                ? "0 10px 30px -5px rgba(236,72,153,0.4)"
-                : "0 10px 30px -5px rgba(99,91,255,0.4)",
-            }}
-          >
-            {submitting ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                <span>Configuring your workspace...</span>
-              </>
-            ) : (
-              <>
-                <span>Continue to {selectedRole === "client" ? "Client Portal" : "Freelancer Dashboard"}</span>
-                <ArrowRight size={16} strokeWidth={2.5} />
-              </>
-            )}
-          </motion.button>
-
-          <p className="text-[11px] text-slate-500 text-center font-medium">
-            You can also switch or update your role anytime from your account settings.
-          </p>
-        </div>
-
-      </main>
-
-      {/* Footer */}
-      <footer className="relative z-10 w-full max-w-6xl mx-auto px-6 py-6 text-center text-xs text-slate-500">
-        © 2025 Skillora Technologies Inc. All rights reserved.
-      </footer>
+      </div>
 
     </div>
   );
 };
 
 export default Onboarding;
+
