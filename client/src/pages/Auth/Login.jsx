@@ -43,7 +43,9 @@ const Login = () => {
       return;
     }
     if (res.success) {
-      if (res.role === "admin")       navigate("/admin");
+      const currentUser = useAuthStore.getState().user;
+      if (!currentUser?.isOnboarded && res.role !== "admin") navigate("/onboarding");
+      else if (res.role === "admin")       navigate("/admin");
       else if (res.role === "client") navigate("/client/dashboard");
       else                            navigate("/dashboard");
     }
@@ -54,7 +56,9 @@ const Login = () => {
     if (!totpCode.trim()) return;
     const res = await verify2FALogin(mfaSession.mfaToken, totpCode.trim());
     if (res.success) {
-      if (res.role === "admin")       navigate("/admin");
+      const currentUser = useAuthStore.getState().user;
+      if (!currentUser?.isOnboarded && res.role !== "admin") navigate("/onboarding");
+      else if (res.role === "admin")       navigate("/admin");
       else if (res.role === "client") navigate("/client/dashboard");
       else                            navigate("/dashboard");
     }

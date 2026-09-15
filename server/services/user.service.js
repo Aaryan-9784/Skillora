@@ -8,10 +8,15 @@ const getProfile = async (userId) => {
 };
 
 const updateProfile = async (userId, updates) => {
-  const allowed = ["name", "avatar", "phone", "title", "bio", "company", "address", "preferences"];
+  const allowed = ["name", "avatar", "phone", "title", "bio", "company", "address", "preferences", "role", "isOnboarded"];
   const filtered = Object.fromEntries(
     Object.entries(updates).filter(([k]) => allowed.includes(k))
   );
+
+  // Security: prevent elevating to admin via profile update
+  if (filtered.role && !["freelancer", "client"].includes(filtered.role)) {
+    delete filtered.role;
+  }
 
   const user = await User.findByIdAndUpdate(userId, filtered, {
     new: true,

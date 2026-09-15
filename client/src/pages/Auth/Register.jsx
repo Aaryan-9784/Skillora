@@ -71,10 +71,9 @@ const Register = () => {
   const handleChange = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
   const handleSubmit = async e => {
     e.preventDefault();
-    const { success, role: userRole } = await register({ ...form, role });
+    const { success } = await register({ ...form, role: "freelancer" });
     if (success) {
-      if (userRole === "client") navigate("/client/dashboard");
-      else navigate("/dashboard");
+      navigate("/onboarding");
     }
   };
 
@@ -250,26 +249,6 @@ const Register = () => {
 
               {/* form */}
               <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Role Selector */}
-                <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="mb-2">
-                  <div className="flex items-center justify-between mb-1.5 px-0.5">
-                    <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "#94A3B8" }}>
-                      Join Skillora as
-                    </span>
-                    <span className="text-[11px] font-medium" style={{ color: role === "client" ? "#EC4899" : "#38BDF8" }}>
-                      {role === "client" ? "💼 Hire & manage talent" : "⚡ Work & get paid"}
-                    </span>
-                  </div>
-                  <RoleToggle
-                    value={role}
-                    onChange={setRole}
-                    options={[
-                      { value: "freelancer", label: "⚡ Freelancer" },
-                      { value: "client",     label: "💼 Client" },
-                    ]}
-                  />
-                </motion.div>
-
                 <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}>
                   <AuthInput label="Full name" icon={User} type="text" name="name"
                     placeholder="Jane Doe" value={form.name} onChange={handleChange}

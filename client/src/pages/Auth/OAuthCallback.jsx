@@ -41,9 +41,15 @@ const OAuthCallback = () => {
     handleOAuthToken(tokenParam).then((ok) => {
       if (ok) {
         const { user } = useAuthStore.getState();
-        if (user?.role === "admin")       navigate("/admin",            { replace: true });
-        else if (user?.role === "client") navigate("/client/dashboard", { replace: true });
-        else                              navigate("/dashboard",        { replace: true });
+        if (!user?.isOnboarded && user?.role !== "admin") {
+          navigate("/onboarding", { replace: true });
+        } else if (user?.role === "admin") {
+          navigate("/admin", { replace: true });
+        } else if (user?.role === "client") {
+          navigate("/client/dashboard", { replace: true });
+        } else {
+          navigate("/dashboard", { replace: true });
+        }
       } else {
         toast.error("Failed to complete sign-in. Please try again.");
         navigate("/login", { replace: true });

@@ -12,6 +12,10 @@ const ClientRoute = () => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  if (!user?.isOnboarded && user?.role !== "admin") {
+    return <Navigate to="/onboarding" replace />;
+  }
+
   if (user?.role !== "client") {
     const redirectPath = user?.role === "admin" ? "/admin" : "/dashboard";
     return <Navigate to={redirectPath} replace />;

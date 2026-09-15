@@ -211,6 +211,23 @@ const useAuthStore = create((set) => ({
       set({ isLoading: false });
     }
   },
+
+  // ── Complete Onboarding (Set Role) ──────────────────────
+  setRoleAndCompleteOnboarding: async (role) => {
+    set({ isLoading: true });
+    try {
+      const { data } = await authService.updateProfile({ role, isOnboarded: true });
+      const updatedUser = data.data.user;
+      set({ user: updatedUser });
+      toast.success(`Role set as ${role === "client" ? "Client" : "Freelancer"}!`);
+      return { success: true, role: updatedUser.role };
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to update role");
+      return { success: false };
+    } finally {
+      set({ isLoading: false });
+    }
+  },
 }));
 
 // ── Helper: extract validation errors from API response ───

@@ -12,6 +12,10 @@ const FreelancerRoute = () => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  if (!user?.isOnboarded && user?.role !== "admin") {
+    return <Navigate to="/onboarding" replace />;
+  }
+
   if (user?.role === "admin") {
     return <Navigate to="/admin" replace />;
   }

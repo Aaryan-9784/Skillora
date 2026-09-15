@@ -11,3 +11,4 @@ export const setup2FA        = ()      => api.post("/auth/2fa/setup");
 export const enable2FA       = (token) => api.post("/auth/2fa/enable", { token });
 export const disable2FA      = (token) => api.post("/auth/2fa/disable", { token });
 export const verify2FALogin  = (mfaToken, code) => api.post("/auth/2fa/verify-login", { mfaToken, code });
+export const updateProfile   = (data) => api.patch("/users/profile", data);

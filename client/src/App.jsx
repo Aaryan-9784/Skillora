@@ -22,6 +22,7 @@ const TITLE_MAP = {
   "/": "Skillora — Freelancer OS & Client Portal",
   "/login": "Sign In — Skillora",
   "/register": "Create Account — Skillora",
+  "/onboarding": "Welcome to Skillora — Choose Your Role",
   "/forgot-password": "Reset Password — Skillora",
   "/dashboard": "Dashboard — Skillora",
   "/projects": "Projects — Skillora",
@@ -79,6 +80,7 @@ import useAuthStore    from "./store/authStore";
 const Landing        = lazy(() => import("./pages/Landing"));
 const Login          = lazy(() => import("./pages/Auth/Login"));
 const Register       = lazy(() => import("./pages/Auth/Register"));
+const Onboarding     = lazy(() => import("./pages/Auth/Onboarding"));
 const ForgotPassword = lazy(() => import("./pages/Auth/ForgotPassword"));
 const ResetPassword  = lazy(() => import("./pages/Auth/ResetPassword"));
 import OAuthCallback  from "./pages/Auth/OAuthCallback";
@@ -208,6 +210,11 @@ const App = () => {
             <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="/oauth/callback"        element={<OAuthCallback />} />
             <Route path="/auth/callback"         element={<OAuthCallback />} />
+          </Route>
+
+          {/* Post-Signup Onboarding */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/onboarding" element={<Onboarding />} />
           </Route>
 
           {/* Freelancer dashboard */}
