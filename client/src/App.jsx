@@ -81,7 +81,7 @@ const Login          = lazy(() => import("./pages/Auth/Login"));
 const Register       = lazy(() => import("./pages/Auth/Register"));
 const ForgotPassword = lazy(() => import("./pages/Auth/ForgotPassword"));
 const ResetPassword  = lazy(() => import("./pages/Auth/ResetPassword"));
-const OAuthCallback  = lazy(() => import("./pages/Auth/OAuthCallback"));
+import OAuthCallback  from "./pages/Auth/OAuthCallback";
 
 // Freelancer
 const Dashboard      = lazy(() => import("./pages/Dashboard"));
@@ -207,6 +207,7 @@ const App = () => {
             <Route path="/forgot-password"       element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="/oauth/callback"        element={<OAuthCallback />} />
+            <Route path="/auth/callback"         element={<OAuthCallback />} />
           </Route>
 
           {/* Freelancer dashboard */}

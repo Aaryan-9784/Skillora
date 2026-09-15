@@ -53,7 +53,6 @@ const startMeetingCron = () => {
     }
   });
 
-  logger.info("📅 Meeting Reminder Cron Service initialized");
 };
 
 module.exports = startMeetingCron;

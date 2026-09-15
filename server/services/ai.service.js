@@ -21,11 +21,11 @@ const getClient = () => {
 
 const MODEL_NAME = (requestedModel) => {
   if (requestedModel && typeof requestedModel === "string") {
-    if (requestedModel.includes("pro") || requestedModel.includes("1.5-pro")) return "gemini-1.5-pro";
-    if (requestedModel.includes("1.5")) return "gemini-1.5-flash";
-    if (requestedModel.includes("flash")) return "gemini-1.5-flash";
+    if (requestedModel.includes("pro") || requestedModel.includes("2.5-pro")) return "gemini-2.5-pro";
+    if (requestedModel.includes("2.5") || requestedModel.includes("1.5")) return "gemini-2.5-flash";
+    if (requestedModel.includes("flash")) return "gemini-2.5-flash";
   }
-  return process.env.GEMINI_MODEL || "gemini-1.5-flash";
+  return process.env.GEMINI_MODEL || "gemini-2.5-flash";
 };
 
 // Safety settings — permissive for business content
@@ -208,11 +208,14 @@ const streamChat = async ({ userId, messages, feature = "chat", projectId, model
 
     for (const mName of uniqueModels) {
       try {
-        const model = genAI.getGenerativeModel({
-          model:            mName,
-          safetySettings:   SAFETY_SETTINGS,
-          generationConfig: GENERATION_CONFIG,
-        });
+        const model = genAI.getGenerativeModel(
+          {
+            model:            mName,
+            safetySettings:   SAFETY_SETTINGS,
+            generationConfig: GENERATION_CONFIG,
+          },
+          { apiVersion: "v1beta" }
+        );
 
         const chat = model.startChat({
           history:          geminiHistory,
@@ -313,11 +316,14 @@ const streamChat = async ({ userId, messages, feature = "chat", projectId, model
  */
 const complete = async (prompt, systemOverride) => {
   const genAI = getClient();
-  const model = genAI.getGenerativeModel({
-    model:            MODEL_NAME(),
-    safetySettings:   SAFETY_SETTINGS,
-    generationConfig: { ...GENERATION_CONFIG, maxOutputTokens: 1500 },
-  });
+  const model = genAI.getGenerativeModel(
+    {
+      model:            MODEL_NAME(),
+      safetySettings:   SAFETY_SETTINGS,
+      generationConfig: { ...GENERATION_CONFIG, maxOutputTokens: 1500 },
+    },
+    { apiVersion: "v1beta" }
+  );
 
   const fullPrompt = `${systemOverride || SYSTEM_PROMPT}\n\n---\n\n${prompt}`;
   const result     = await model.generateContent(fullPrompt);

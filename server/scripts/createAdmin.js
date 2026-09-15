@@ -14,27 +14,43 @@ async function main() {
 
   await mongoose.connect(MONGO_URI);
 
-  const email    = process.env.ADMIN_EMAIL    || "admin@skillora.io";
-  const password = process.env.ADMIN_PASSWORD || "Admin@123456";
-  const name     = "Skillora Admin";
+  const email = process.env.ADMIN_EMAIL || "admin@skillora.io";
+  const name  = "Skillora Admin";
 
   // Dynamically require User after mongoose connects
   const User = require("../models/User");
 
+  const existingUser = await User.findOne({ email });
+
+  if (existingUser) {
+    existingUser.role = "admin";
+    existingUser.isEmailVerified = true;
+    await existingUser.save();
+    console.log(`✅ Existing user promoted to admin: ${existingUser.email} (role: ${existingUser.role})`);
+    await mongoose.disconnect();
+    process.exit(0);
+  }
+
+  // If user does not exist yet, take password from command line argument
+  const password = process.argv[2];
+  if (!password) {
+    console.error("❌ User does not exist in database yet.");
+    console.error("👉 Option 1: Register your account on the website first, then run: node scripts/createAdmin.js");
+    console.error("👉 Option 2: Provide a password directly: node scripts/createAdmin.js <your_password>");
+    await mongoose.disconnect();
+    process.exit(1);
+  }
+
   const hashed = await bcrypt.hash(password, 12);
 
-  const admin = await User.findOneAndUpdate(
-    { email },
-    {
-      name,
-      email,
-      password: hashed,
-      role: "admin",
-      isEmailVerified: true,
-      provider: "local",
-    },
-    { upsert: true, new: true, setDefaultsOnInsert: true }
-  );
+  const admin = await User.create({
+    name,
+    email,
+    password: hashed,
+    role: "admin",
+    isEmailVerified: true,
+    provider: "local",
+  });
 
   console.log(`✅ Admin ready: ${admin.email} (role: ${admin.role})`);
   await mongoose.disconnect();

@@ -45,6 +45,11 @@ const getFreelancers = asyncHandler(async (req, res) => {
 });
 
 const getUserById = asyncHandler(async (req, res) => {
+  const mongoose = require("mongoose");
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    throw ApiError.notFound("User profile not found");
+  }
+
   const user = await User.findById(req.params.id)
     .populate("skills", "name category")
     .select("-password -refreshToken");

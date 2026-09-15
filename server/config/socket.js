@@ -165,7 +165,6 @@ const initSocket = (httpServer) => {
     });
   });
 
-  logger.info("Socket.io engine & signaling initialized");
   return io;
 };
 

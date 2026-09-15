@@ -17,8 +17,7 @@ const connectDB = async () => {
   // Attempt 1: Default DNS & primary MONGO_URI
   try {
     const conn = await attemptConnection(primaryUri);
-    logger.info(`MongoDB connected: ${conn.connection.host}`);
-    return;
+    return conn;
   } catch (primaryError) {
     logger.warn(`Primary MongoDB connection failed (${primaryError.message}). Attempting DNS fallback...`);
   }
@@ -27,8 +26,7 @@ const connectDB = async () => {
   try {
     dns.setServers(["8.8.8.8", "1.1.1.1"]);
     const conn = await attemptConnection(primaryUri);
-    logger.info(`MongoDB connected via public DNS fallback: ${conn.connection.host}`);
-    return;
+    return conn;
   } catch (dnsError) {
     logger.warn(`Public DNS fallback attempt failed: ${dnsError.message}`);
   }
@@ -36,10 +34,8 @@ const connectDB = async () => {
   // Attempt 3: Try Local MongoDB if configured/running
   if (localUri && localUri !== primaryUri) {
     try {
-      logger.info(`Attempting local MongoDB connection fallback (${localUri})...`);
       const conn = await attemptConnection(localUri);
-      logger.info(`MongoDB connected locally: ${conn.connection.host}`);
-      return;
+      return conn;
     } catch (localError) {
       logger.warn(`Local MongoDB connection fallback failed: ${localError.message}`);
     }
