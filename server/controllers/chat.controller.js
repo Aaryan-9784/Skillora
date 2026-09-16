@@ -524,7 +524,26 @@ const getIceServersConfig = asyncHandler(async (req, res) => {
     try {
       const cleanDomain = meteredDomain.replace(/^https?:\/\//, "").replace(/\/$/, "");
       const host = cleanDomain.includes(".") ? cleanDomain : `${cleanDomain}.metered.live`;
-      const url = `https://${host}/api/v1/turn/credentials?apiKey=${encodeURIComponent(meteredApiKey)}`;
+      
+      let effectiveApiKey = meteredApiKey;
+
+      // If apiKey is invalid or only secretKey is present, generate a fresh credential with apiKey
+      if (process.env.METERED_SECRET_KEY && (!effectiveApiKey || effectiveApiKey === process.env.METERED_SECRET_KEY)) {
+        try {
+          const createRes = await fetch(`https://${host}/api/v1/turn/credential?secretKey=${encodeURIComponent(process.env.METERED_SECRET_KEY)}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ expiryInSeconds: 86400, label: "skillora" }),
+            signal: AbortSignal.timeout(4000),
+          });
+          if (createRes.ok) {
+            const created = await createRes.json();
+            if (created?.apiKey) effectiveApiKey = created.apiKey;
+          }
+        } catch (e) {}
+      }
+
+      const url = `https://${host}/api/v1/turn/credentials?apiKey=${encodeURIComponent(effectiveApiKey)}`;
 
       const response = await fetch(url, {
         method: "GET",
