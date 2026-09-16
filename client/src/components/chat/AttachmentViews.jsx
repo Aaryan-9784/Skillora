@@ -169,8 +169,8 @@ export const downloadFile = async (url, fileName) => {
   const fullUrl = getMediaUrl(url);
   const name = fileName || "download";
 
-  // If it's a Cloudinary URL, use fl_attachment transformation to trigger direct browser download
-  if (fullUrl.includes("cloudinary.com") && fullUrl.includes("/upload/")) {
+  // If it's a Cloudinary image or video URL, use fl_attachment transformation to trigger direct browser download
+  if (fullUrl.includes("cloudinary.com") && (fullUrl.includes("/image/upload/") || fullUrl.includes("/video/upload/"))) {
     const downloadUrl = fullUrl.replace("/upload/", "/upload/fl_attachment/");
     const a = document.createElement("a");
     a.href = downloadUrl;

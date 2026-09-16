@@ -5,6 +5,7 @@ const { protect } = require("../middlewares/auth.middleware");
 const upload      = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
 const {
   getProjectConversation,
+  getOrCreateDirectConversation,
   getMessages,
   sendMessage,
   uploadAttachment,
@@ -16,6 +17,8 @@ router.use(protect);
 
 router.get("/project", getProjectConversation);
 router.get("/project/:projectId", getProjectConversation);
+router.get("/direct/:recipientId", getOrCreateDirectConversation);
+router.post("/direct", getOrCreateDirectConversation);
 router.get("/conversations/:conversationId/messages", getMessages);
 router.post("/conversations/:conversationId/messages", sendMessage);
 router.delete("/messages/:messageId", deleteMessage);

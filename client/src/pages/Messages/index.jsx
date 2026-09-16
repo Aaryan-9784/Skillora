@@ -45,7 +45,7 @@ const Messages = () => {
   const {
     activeConversation, messages, typingUsers, onlinePresence,
     fetchProjectConversation, fetchConversations, fetchMessages, sendMessage, appendMessage, deleteMessage,
-    replyingTo, setReplyTo, clearReplyTo, toggleReaction
+    replyingTo, setReplyTo, clearReplyTo, toggleReaction, openDirectChat
   } = useChatStore();
 
   const [inputText, setInputText]           = useState("");
@@ -429,7 +429,14 @@ const Messages = () => {
                 return (
                   <button
                     key={contact.id}
-                    onClick={() => setSelectedContactId(contact.id)}
+                    onClick={async () => {
+                      setSelectedContactId(contact.id);
+                      try {
+                        await openDirectChat(contact.id);
+                      } catch (err) {
+                        console.error("Direct chat error:", err);
+                      }
+                    }}
                     className={`w-full p-2.5 rounded-xl flex items-center gap-3 transition-all text-left cursor-pointer ${
                       isSelected
                         ? "bg-indigo-600/20 border-l-4 border-indigo-500 text-white shadow-md shadow-indigo-500/10"
@@ -535,14 +542,14 @@ const Messages = () => {
                   <button
                     onClick={() => handleInitiateCall("video")}
                     className="p-2.5 rounded-full hover:bg-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer"
-                    title="Video call (Requires Scheduled Meeting)"
+                    title="Start Video Call"
                   >
                     <Video size={18} />
                   </button>
                   <button
                     onClick={() => handleInitiateCall("voice")}
                     className="p-2.5 rounded-full hover:bg-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer"
-                    title="Voice call (Requires Scheduled Meeting)"
+                    title="Start Voice Call"
                   >
                     <Phone size={18} />
                   </button>

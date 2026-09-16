@@ -23,6 +23,11 @@ export const useWebRTC = (targetUserId, defaultCallType = "video") => {
   const timerRef              = useRef(null);
   const screenTrackRef        = useRef(null);
   const iceCandidatesQueueRef = useRef([]);
+  const targetUserIdRef       = useRef(targetUserId);
+
+  useEffect(() => {
+    targetUserIdRef.current = targetUserId;
+  }, [targetUserId]);
 
   useEffect(() => {
     if (callState === "connected") {
@@ -217,15 +222,17 @@ export const useWebRTC = (targetUserId, defaultCallType = "video") => {
 
       pc.ontrack = (e) => setRemoteStream(e.streams[0]);
       pc.onicecandidate = (e) => {
-        if (e.candidate && targetUserId) {
-          socket.emit("call:ice_candidate", { targetUserId, candidate: e.candidate });
+        const destId = targetUserIdRef.current || targetUserId;
+        if (e.candidate && destId) {
+          socket.emit("call:ice_candidate", { targetUserId: destId, candidate: e.candidate });
         }
       };
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      socket.emit("call:initiate", { targetUserId, offer, callType: type });
+      const destId = targetUserIdRef.current || targetUserId;
+      socket.emit("call:initiate", { targetUserId: destId, offer, callType: type });
       toast.loading(`Calling...`, { id: "call-status" });
     } catch (err) {
       toast.error(`Media access failed: ${err.message}`, { id: "call-status" });
@@ -276,7 +283,7 @@ export const useWebRTC = (targetUserId, defaultCallType = "video") => {
 
   const endCall = () => {
     const socket = getSocket();
-    const target = targetUserId || incomingCall?.callerId;
+    const target = targetUserIdRef.current || targetUserId || incomingCall?.callerId;
     if (target && socket) socket.emit("call:end", { targetUserId: target });
     toast.dismiss("call-status");
     endCallCleanup();

@@ -45,6 +45,28 @@ const useChatStore = create((set, get) => ({
     return get().fetchProjectConversation(projectId);
   },
 
+  openDirectChat: async (recipientId) => {
+    if (!recipientId) return;
+    set({ loading: true });
+    try {
+      const { data } = await api.get(`/chat/direct/${recipientId}`);
+      const conv = data.data.conversation;
+      const prevConv = get().activeConversation;
+      const socket = getSocket();
+      if (socket && prevConv?._id && prevConv._id !== conv._id) {
+        socket.emit("chat:leave", { conversationId: prevConv._id });
+      }
+      if (socket && conv?._id) {
+        socket.emit("chat:join", { conversationId: conv._id });
+      }
+      set({ activeConversation: conv });
+      if (conv?._id) await get().fetchMessages(conv._id);
+      return conv;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
   fetchMessages: async (conversationId, page = 1) => {
     set({ loading: true });
     try {

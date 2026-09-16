@@ -118,17 +118,34 @@ const initSocket = (httpServer) => {
       }
     });
 
+    // Helper to resolve a target ID (User ID or Client ID) to the connected User ID
+    const resolveUserId = async (id) => {
+      if (!id) return null;
+      const strId = id.toString();
+      if (userSockets.has(strId)) return strId;
+      try {
+        if (strId.match(/^[0-9a-fA-F]{24}$/)) {
+          const u = await User.findOne({
+            $or: [{ _id: strId }, { clientRef: strId }]
+          }).select("_id").lean();
+          if (u) return u._id.toString();
+        }
+      } catch (err) {}
+      return strId;
+    };
+
     // 📞 WebRTC Call Signaling (Voice & Video)
-    socket.on("call:initiate", ({ targetUserId, offer, callType, projectId }) => {
+    socket.on("call:initiate", async ({ targetUserId, offer, callType, projectId }) => {
       if (!targetUserId || !offer) return;
-      activeCalls.set(`${userId}:${targetUserId}`, {
+      const resolvedTargetId = await resolveUserId(targetUserId);
+      activeCalls.set(`${userId}:${resolvedTargetId}`, {
         caller: userId,
-        receiver: targetUserId,
+        receiver: resolvedTargetId,
         type: callType || "video",
         projectId: projectId || undefined,
         startedAt: new Date(),
       });
-      io.to(`user:${targetUserId}`).emit("call:incoming", {
+      io.to(`user:${resolvedTargetId}`).emit("call:incoming", {
         callerId: userId,
         offer,
         callType: callType || "video",
@@ -136,23 +153,26 @@ const initSocket = (httpServer) => {
       });
     });
 
-    socket.on("call:answer", ({ callerId, answer }) => {
+    socket.on("call:answer", async ({ callerId, answer }) => {
       if (!callerId || !answer) return;
-      io.to(`user:${callerId}`).emit("call:answered", { answer });
+      const resolvedCallerId = await resolveUserId(callerId);
+      io.to(`user:${resolvedCallerId}`).emit("call:answered", { answer });
     });
 
-    socket.on("call:ice_candidate", ({ targetUserId, candidate }) => {
+    socket.on("call:ice_candidate", async ({ targetUserId, candidate }) => {
       if (!targetUserId || !candidate) return;
-      io.to(`user:${targetUserId}`).emit("call:ice_candidate", { candidate });
+      const resolvedTargetId = await resolveUserId(targetUserId);
+      io.to(`user:${resolvedTargetId}`).emit("call:ice_candidate", { candidate });
     });
 
     socket.on("call:reject", async ({ callerId }) => {
       if (callerId) {
-        io.to(`user:${callerId}`).emit("call:rejected", { userId });
+        const resolvedCallerId = await resolveUserId(callerId);
+        io.to(`user:${resolvedCallerId}`).emit("call:rejected", { userId });
         try {
           const CallLog = require("../models/CallLog");
           await CallLog.create({
-            caller: callerId,
+            caller: resolvedCallerId,
             receiver: userId,
             type: "voice",
             status: "rejected",
@@ -160,7 +180,8 @@ const initSocket = (httpServer) => {
             endedAt: new Date(),
             durationSeconds: 0,
           });
-          activeCalls.delete(`${callerId}:${userId}`);
+          activeCalls.delete(`${resolvedCallerId}:${userId}`);
+          activeCalls.delete(`${userId}:${resolvedCallerId}`);
         } catch (e) {
           logger.warn(`Failed to log rejected call: ${e.message}`);
         }
@@ -169,14 +190,15 @@ const initSocket = (httpServer) => {
 
     socket.on("call:end", async ({ targetUserId, durationSeconds }) => {
       if (targetUserId) {
-        io.to(`user:${targetUserId}`).emit("call:ended");
+        const resolvedTargetId = await resolveUserId(targetUserId);
+        io.to(`user:${resolvedTargetId}`).emit("call:ended");
         try {
           const CallLog = require("../models/CallLog");
-          const callData = activeCalls.get(`${userId}:${targetUserId}`) || activeCalls.get(`${targetUserId}:${userId}`);
+          const callData = activeCalls.get(`${userId}:${resolvedTargetId}`) || activeCalls.get(`${resolvedTargetId}:${userId}`);
           const duration = Number(durationSeconds) || (callData ? Math.max(0, Math.round((Date.now() - callData.startedAt.getTime()) / 1000)) : 0);
           await CallLog.create({
             caller: callData?.caller || userId,
-            receiver: callData?.receiver || targetUserId,
+            receiver: callData?.receiver || resolvedTargetId,
             projectId: callData?.projectId || undefined,
             type: callData?.type || "video",
             status: "answered",
@@ -184,8 +206,8 @@ const initSocket = (httpServer) => {
             endedAt: new Date(),
             durationSeconds: duration,
           });
-          activeCalls.delete(`${userId}:${targetUserId}`);
-          activeCalls.delete(`${targetUserId}:${userId}`);
+          activeCalls.delete(`${userId}:${resolvedTargetId}`);
+          activeCalls.delete(`${resolvedTargetId}:${userId}`);
         } catch (e) {
           logger.warn(`Failed to log ended call: ${e.message}`);
         }

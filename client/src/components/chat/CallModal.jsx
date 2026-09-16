@@ -119,9 +119,17 @@ const CallModal = ({
                 <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" />
               )}
               
-              {/* Hidden audio element for remote stream in voice mode */}
-              {isVoiceCall && remoteStream && (
-                <audio ref={(el) => { if (el) el.srcObject = remoteStream; }} autoPlay />
+              {/* Ensure remote audio plays seamlessly across all call types and camera toggles */}
+              {remoteStream && (
+                <audio
+                  ref={(el) => {
+                    if (el && el.srcObject !== remoteStream) {
+                      el.srcObject = remoteStream;
+                    }
+                  }}
+                  autoPlay
+                  playsInline
+                />
               )}
 
               {/* Local Stream PIP Window (For Video Calls) */}

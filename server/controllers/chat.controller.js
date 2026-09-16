@@ -4,10 +4,12 @@ const ApiError       = require("../utils/ApiError");
 const Conversation   = require("../models/Conversation");
 const Message        = require("../models/Message");
 const Project        = require("../models/Project");
-const logger       = require("../utils/logger");
+const User           = require("../models/User");
+const Client         = require("../models/Client");
+const logger         = require("../utils/logger");
 const { cloudinary } = require("../middlewares/upload");
 const notify         = require("../utils/notify");
-const { getIO } = require("../config/socket");
+const { getIO }      = require("../config/socket");
 
 const uploadToCloudinary = (fileBuffer, originalname, mimetype) => {
   return new Promise((resolve, reject) => {
@@ -20,9 +22,11 @@ const uploadToCloudinary = (fileBuffer, originalname, mimetype) => {
       ext = "wav";
     } else if (mimetype.includes("ogg")) {
       ext = "ogg";
+    } else if (mimetype.includes("pdf")) {
+      ext = "pdf";
     }
 
-    let baseName = originalname || "voice-note";
+    let baseName = originalname || "file";
     if (baseName.includes(".")) {
       baseName = baseName.substring(0, baseName.lastIndexOf("."));
     }
@@ -39,7 +43,7 @@ const uploadToCloudinary = (fileBuffer, originalname, mimetype) => {
     const uploadOptions = {
       folder: "skillora/chat",
       resource_type,
-      public_id: `${Date.now()}_${cleanFilename}`,
+      public_id: resource_type === "raw" ? `${Date.now()}_${cleanFilename}.${ext}` : `${Date.now()}_${cleanFilename}`,
       format: isAudioOrVideo ? ext : undefined,
     };
 
@@ -75,6 +79,27 @@ const getProjectConversation = asyncHandler(async (req, res) => {
         $or: [{ owner: req.user._id }, { assignedFreelancer: req.user._id }],
         isDeleted: { $ne: true }
       }).sort({ updatedAt: -1 }).populate("clientId owner assignedFreelancer clientUser");
+    }
+  }
+
+  // If project has a clientId but clientUser is not linked, attempt to link it now
+  if (project?.clientId && !project.clientUser) {
+    try {
+      const clientDoc = await Client.findById(project.clientId._id || project.clientId).lean();
+      if (clientDoc) {
+        const clientUser = await User.findOne({
+          $or: [
+            { clientRef: clientDoc._id },
+            { email: clientDoc.email?.toLowerCase() }
+          ]
+        }).select("_id");
+        if (clientUser) {
+          project.clientUser = clientUser._id;
+          await Project.findByIdAndUpdate(project._id, { clientUser: clientUser._id });
+        }
+      }
+    } catch (e) {
+      logger.warn(`Could not link clientUser for project: ${e.message}`);
     }
   }
 
@@ -326,16 +351,17 @@ const uploadAttachment = asyncHandler(async (req, res) => {
   }
 
   let fileUrl = "";
-  if (process.env.CLOUDINARY_CLOUD_NAME) {
+  if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
     try {
       const cloudResult = await uploadToCloudinary(req.file.buffer, originalname, mimetype);
       fileUrl = cloudResult.secure_url;
     } catch (err) {
-      logger.error(`Cloudinary upload failed: ${err.message}`);
-      throw ApiError.internal("Failed to upload file to Cloudinary: " + err.message);
+      logger.warn(`Cloudinary upload failed, falling back to local storage: ${err.message}`);
     }
-  } else {
-    // Local disk fallback for memoryStorage uploads
+  }
+
+  // Local disk fallback if Cloudinary is unconfigured or failed
+  if (!fileUrl) {
     if (req.file.path) {
       fileUrl = req.file.path;
     } else if (req.file.filename) {
@@ -347,15 +373,34 @@ const uploadAttachment = asyncHandler(async (req, res) => {
       if (!fs.existsSync(uploadsDir)) {
         fs.mkdirSync(uploadsDir, { recursive: true });
       }
+
       let ext = "";
       if (originalname && originalname.includes(".")) {
-        ext = originalname.substring(originalname.lastIndexOf("."));
+        ext = originalname.substring(originalname.lastIndexOf(".")).toLowerCase();
       } else if (mimetype.includes("webm")) {
         ext = ".webm";
+      } else if (mimetype.includes("mp3")) {
+        ext = ".mp3";
+      } else if (mimetype.includes("wav")) {
+        ext = ".wav";
+      } else if (mimetype.includes("ogg")) {
+        ext = ".ogg";
+      } else if (mimetype.includes("pdf")) {
+        ext = ".pdf";
+      } else if (mimetype.includes("zip")) {
+        ext = ".zip";
+      } else if (mimetype.startsWith("image/")) {
+        ext = mimetype.includes("png") ? ".png" : ".jpg";
       } else {
-        ext = ".webm";
+        ext = ".bin";
       }
-      const safeFilename = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}${ext}`;
+
+      let baseName = originalname || "attachment";
+      if (baseName.includes(".")) {
+        baseName = baseName.substring(0, baseName.lastIndexOf("."));
+      }
+      const cleanName = baseName.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 50);
+      const safeFilename = `${Date.now()}_${cleanName}${ext}`;
       fs.writeFileSync(path.join(uploadsDir, safeFilename), req.file.buffer);
       fileUrl = `/uploads/${safeFilename}`;
     }
@@ -372,4 +417,78 @@ const uploadAttachment = asyncHandler(async (req, res) => {
   ApiResponse.success(res, "File uploaded successfully", { attachment });
 });
 
-module.exports = { getProjectConversation, getMessages, sendMessage, uploadAttachment, deleteMessage, toggleReaction };
+// Get or Create direct conversation between two users (e.g. Freelancer & CRM Client)
+const getOrCreateDirectConversation = asyncHandler(async (req, res) => {
+  const recipientId = req.params.recipientId || req.body.recipientId;
+  if (!recipientId) throw ApiError.badRequest("Recipient ID is required");
+
+  const currentUserId = req.user._id;
+
+  // 1. Resolve target user
+  let targetUser = null;
+  if (recipientId.toString().match(/^[0-9a-fA-F]{24}$/)) {
+    targetUser = await User.findById(recipientId).select("name email avatar role isOnline lastSeen clientRef");
+  }
+
+  // If not found directly in User collection, check Client collection
+  if (!targetUser && recipientId.toString().match(/^[0-9a-fA-F]{24}$/)) {
+    const clientDoc = await Client.findById(recipientId);
+    if (clientDoc) {
+      targetUser = await User.findOne({
+        $or: [
+          { clientRef: clientDoc._id },
+          { email: (clientDoc.email || "").toLowerCase() }
+        ]
+      }).select("name email avatar role isOnline lastSeen clientRef");
+
+      // If still no User account exists for this CRM client, create one so direct chat & WebRTC calls work
+      if (!targetUser) {
+        const crypto = require("crypto");
+        targetUser = await User.create({
+          name: clientDoc.name || "Client",
+          email: (clientDoc.email || `client_${Date.now()}@skillora.local`).toLowerCase(),
+          role: "client",
+          clientRef: clientDoc._id,
+          avatar: clientDoc.avatar || "",
+          password: crypto.randomBytes(24).toString("hex"),
+          isOnboarded: true,
+          isEmailVerified: true,
+        });
+      }
+    }
+  }
+
+  if (!targetUser) {
+    throw ApiError.notFound("User or client contact not found");
+  }
+
+  if (targetUser._id.toString() === currentUserId.toString()) {
+    throw ApiError.badRequest("Cannot start a conversation with yourself");
+  }
+
+  // 2. Find or create direct conversation
+  let conversation = await Conversation.findOne({
+    type: "direct",
+    participants: { $all: [currentUserId, targetUser._id] },
+  });
+
+  if (!conversation) {
+    conversation = await Conversation.create({
+      type: "direct",
+      participants: [currentUserId, targetUser._id],
+    });
+  }
+
+  await conversation.populate("participants", "name avatar role isOnline lastSeen email");
+  ApiResponse.success(res, "Direct conversation ready", { conversation, partner: targetUser });
+});
+
+module.exports = {
+  getProjectConversation,
+  getOrCreateDirectConversation,
+  getMessages,
+  sendMessage,
+  uploadAttachment,
+  deleteMessage,
+  toggleReaction,
+};
