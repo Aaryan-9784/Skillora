@@ -9,22 +9,20 @@ export const RTC_CONFIG = {
     { urls: "stun:stun3.l.google.com:19302" },
     { urls: "stun:stun4.l.google.com:19302" },
     { urls: "stun:stun.cloudflare.com:3478" },
-    // 100% Free Public OpenRelay TURN Servers (Metered Community - Zero Cost)
+    { urls: "stun:stun.relay.metered.ca:80" },
+    // Metered TURN Relay Endpoints
     {
-      urls: "stun:openrelay.metered.ca:80",
-    },
-    {
-      urls: "turn:openrelay.metered.ca:80",
+      urls: "turn:standard.relay.metered.ca:80",
       username: "openrelayproject",
       credential: "openrelayproject",
     },
     {
-      urls: "turn:openrelay.metered.ca:443",
+      urls: "turn:standard.relay.metered.ca:443",
       username: "openrelayproject",
       credential: "openrelayproject",
     },
     {
-      urls: "turn:openrelay.metered.ca:443?transport=tcp",
+      urls: "turn:standard.relay.metered.ca:443?transport=tcp",
       username: "openrelayproject",
       credential: "openrelayproject",
     },
@@ -42,9 +40,11 @@ export const RTC_CONFIG = {
 };
 
 let cachedConfig = null;
+let lastFetchTime = 0;
 
 export const getResolvedRTCConfig = async () => {
-  if (cachedConfig) return cachedConfig;
+  const now = Date.now();
+  if (cachedConfig && now - lastFetchTime < 1000 * 60 * 15) return cachedConfig;
   try {
     const { data } = await api.get("/chat/ice-servers");
     if (data?.data?.iceServers && Array.isArray(data.data.iceServers) && data.data.iceServers.length > 0) {
@@ -52,6 +52,7 @@ export const getResolvedRTCConfig = async () => {
         ...RTC_CONFIG,
         iceServers: data.data.iceServers,
       };
+      lastFetchTime = now;
       return cachedConfig;
     }
   } catch {

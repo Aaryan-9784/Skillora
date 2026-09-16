@@ -507,8 +507,46 @@ const getOrCreateDirectConversation = asyncHandler(async (req, res) => {
   ApiResponse.success(res, "Direct conversation ready", { conversation: convObj, partner: partnerObj });
 });
 
-// Provide production-ready high-availability ICE servers (STUN + TURN)
+let cachedMeteredIce = null;
+let cachedMeteredExpiresAt = 0;
+
+// Provide production-ready high-availability ICE servers (Metered dynamic TURN + STUN)
 const getIceServersConfig = asyncHandler(async (req, res) => {
+  const meteredDomain = process.env.METERED_DOMAIN;
+  const meteredApiKey = process.env.METERED_API_KEY || process.env.METERED_SECRET_KEY;
+
+  if (meteredDomain && meteredApiKey) {
+    const now = Date.now();
+    if (cachedMeteredIce && cachedMeteredExpiresAt > now) {
+      return ApiResponse.success(res, "Metered ICE servers (cached)", { iceServers: cachedMeteredIce });
+    }
+
+    try {
+      const cleanDomain = meteredDomain.replace(/^https?:\/\//, "").replace(/\/$/, "");
+      const host = cleanDomain.includes(".") ? cleanDomain : `${cleanDomain}.metered.live`;
+      const url = `https://${host}/api/v1/turn/credentials?apiKey=${encodeURIComponent(meteredApiKey)}`;
+
+      const response = await fetch(url, {
+        method: "GET",
+        signal: AbortSignal.timeout(5000),
+      });
+
+      if (response.ok) {
+        const meteredServers = await response.json();
+        if (Array.isArray(meteredServers) && meteredServers.length > 0) {
+          cachedMeteredIce = meteredServers;
+          cachedMeteredExpiresAt = now + 1000 * 60 * 30; // cache for 30 minutes
+          logger.info(`[WebRTC] Successfully fetched dynamic Metered TURN credentials from ${host}`);
+          return ApiResponse.success(res, "Metered dynamic ICE servers", { iceServers: meteredServers });
+        }
+      } else {
+        logger.warn(`[WebRTC] Metered API returned status ${response.status}`);
+      }
+    } catch (meteredErr) {
+      logger.warn(`[WebRTC] Metered TURN fetch failed: ${meteredErr.message}, falling back to static config`);
+    }
+  }
+
   const defaultIceServers = [
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
@@ -516,19 +554,19 @@ const getIceServersConfig = asyncHandler(async (req, res) => {
     { urls: "stun:stun3.l.google.com:19302" },
     { urls: "stun:stun4.l.google.com:19302" },
     { urls: "stun:stun.cloudflare.com:3478" },
-    { urls: "stun:openrelay.metered.ca:80" },
+    { urls: "stun:stun.relay.metered.ca:80" },
     {
-      urls: "turn:openrelay.metered.ca:80",
+      urls: "turn:standard.relay.metered.ca:80",
       username: "openrelayproject",
       credential: "openrelayproject",
     },
     {
-      urls: "turn:openrelay.metered.ca:443",
+      urls: "turn:standard.relay.metered.ca:443",
       username: "openrelayproject",
       credential: "openrelayproject",
     },
     {
-      urls: "turn:openrelay.metered.ca:443?transport=tcp",
+      urls: "turn:standard.relay.metered.ca:443?transport=tcp",
       username: "openrelayproject",
       credential: "openrelayproject",
     },
