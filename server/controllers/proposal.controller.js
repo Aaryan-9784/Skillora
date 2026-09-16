@@ -25,7 +25,7 @@ const submitProposal = asyncHandler(async (req, res) => {
 
 // Client gets proposals for a project
 const getProjectProposals = asyncHandler(async (req, res) => {
-  const proposals = await proposalService.getProjectProposals(req.user._id, req.params.projectId);
+  const proposals = await proposalService.getProjectProposals(req.user, req.params.projectId);
   ApiResponse.success(res, "Proposals fetched", { proposals });
 });
 
@@ -38,7 +38,7 @@ const getMyProposals = asyncHandler(async (req, res) => {
 // Client responds (approve/reject) to proposal
 const respondToProposal = asyncHandler(async (req, res) => {
   const { action } = req.body;
-  const proposal = await proposalService.respondToProposal(req.user._id, req.params.proposalId, action);
+  const proposal = await proposalService.respondToProposal(req.user, req.params.proposalId, action);
   ApiResponse.success(res, `Proposal ${action}d successfully`, { proposal });
 });
 

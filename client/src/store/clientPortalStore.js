@@ -151,7 +151,7 @@ const useClientPortalStore = create((set, get) => ({
       const { data } = await svc.getProjectProposals(projectId);
       return data.data.proposals || [];
     } catch (err) {
-      toast.error("Failed to load proposals");
+      toast.error(err.response?.data?.message || "Failed to load proposals");
       return [];
     }
   },

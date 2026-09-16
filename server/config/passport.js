@@ -48,6 +48,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
         callbackURL:  `${SERVER_URL}/api/auth/google/callback`,
         scope:        ["profile", "email"],
         passReqToCallback: true,
+        proxy:        true,
       },
       async (req, accessToken, refreshToken, profile, done) => {
         try {
@@ -64,6 +65,8 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
       }
     )
   );
+} else {
+  logger.warn("Google OAuth credentials missing (GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET). Google sign-in will not be available.");
 }
 
 // ── GitHub ────────────────────────────────────────────────

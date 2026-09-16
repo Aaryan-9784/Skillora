@@ -25,7 +25,10 @@ const Login = () => {
 
   useEffect(() => {
     if (params.get("session") === "expired") toast.error("Session expired. Please sign in again.");
-    if (params.get("error"))                 toast.error("OAuth sign-in failed. Please try again.");
+    const err = params.get("error");
+    if (err === "google_not_configured") toast.error("Google OAuth credentials are not set on the server.");
+    else if (err === "github_not_configured") toast.error("GitHub OAuth credentials are not set on the server.");
+    else if (err) toast.error("OAuth sign-in failed. Please try again.");
     return () => clearErrors?.();
   }, []);
 
@@ -64,7 +67,10 @@ const Login = () => {
     }
   };
 
-  const apiBase   = import.meta.env.VITE_SERVER_URL || "http://localhost:5000";
+  const apiBase =
+    import.meta.env.VITE_SERVER_URL ||
+    (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, "") : "") ||
+    "http://localhost:5000";
   const canSubmit = form.email && form.password;
 
   return (

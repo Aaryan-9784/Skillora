@@ -44,10 +44,12 @@ const parseExpiry = (str = "15m") => {
   return (map[unit] || 60_000) * val;
 };
 
+const isProduction = process.env.NODE_ENV === "production";
+
 const COOKIE_OPTS = (maxAge) => ({
   httpOnly: true,
-  secure:   process.env.NODE_ENV === "production",
-  sameSite: "lax",
+  secure:   isProduction,
+  sameSite: isProduction ? "none" : "lax",
   maxAge,
 });
 

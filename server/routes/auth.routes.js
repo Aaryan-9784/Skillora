@@ -33,6 +33,10 @@ router.post("/reset-password/:token", authLimiter, validateResetPassword, resetP
 
 // ── Google OAuth ──────────────────────────────────────────
 router.get("/google", (req, res, next) => {
+  const clientUrl = (process.env.CLIENT_URL || "http://localhost:5173").replace(/\/$/, "");
+  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+    return res.redirect(`${clientUrl}/login?error=google_not_configured`);
+  }
   const role = ["freelancer", "client"].includes(req.query.role) ? req.query.role : "freelancer";
   passport.authenticate("google", {
     scope: ["profile", "email"],
@@ -42,12 +46,22 @@ router.get("/google", (req, res, next) => {
 });
 router.get(
   "/google/callback",
-  passport.authenticate("google", { failureRedirect: `${process.env.CLIENT_URL}/login?error=google_failed`, session: false }),
+  (req, res, next) => {
+    const clientUrl = (process.env.CLIENT_URL || "http://localhost:5173").replace(/\/$/, "");
+    passport.authenticate("google", {
+      failureRedirect: `${clientUrl}/login?error=google_failed`,
+      session: false,
+    })(req, res, next);
+  },
   googleCallback
 );
 
 // ── GitHub OAuth ──────────────────────────────────────────
 router.get("/github", (req, res, next) => {
+  const clientUrl = (process.env.CLIENT_URL || "http://localhost:5173").replace(/\/$/, "");
+  if (!process.env.GITHUB_CLIENT_ID || !process.env.GITHUB_CLIENT_SECRET) {
+    return res.redirect(`${clientUrl}/login?error=github_not_configured`);
+  }
   const role = ["freelancer", "client"].includes(req.query.role) ? req.query.role : "freelancer";
   passport.authenticate("github", {
     scope: ["user:email"],
@@ -57,7 +71,13 @@ router.get("/github", (req, res, next) => {
 });
 router.get(
   "/github/callback",
-  passport.authenticate("github", { failureRedirect: `${process.env.CLIENT_URL}/login?error=github_failed`, session: false }),
+  (req, res, next) => {
+    const clientUrl = (process.env.CLIENT_URL || "http://localhost:5173").replace(/\/$/, "");
+    passport.authenticate("github", {
+      failureRedirect: `${clientUrl}/login?error=github_failed`,
+      session: false,
+    })(req, res, next);
+  },
   githubCallback
 );
 

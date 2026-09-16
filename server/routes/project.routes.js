@@ -15,6 +15,7 @@ router.use(protect);
 // Marketplace & Proposals
 router.get("/explore",                  proposalController.getOpenProjects);
 router.post("/:projectId/proposals",    proposalController.submitProposal);
+router.get("/:projectId/proposals",     proposalController.getProjectProposals);
 router.get("/proposals/my",             proposalController.getMyProposals);
 
 // Projects

@@ -90,7 +90,7 @@ const requireEmailVerified = (req, res, next) => {
 // Shorthand role guards (must be used after protect)
 const requireAdmin      = authorize("admin");
 const requireFreelancer = authorize("freelancer");
-const requireClient     = authorize("client");
+const requireClient     = authorize("client", "admin");
 const requireAny        = authorize("admin", "freelancer", "client");
 
 module.exports = { protect, optionalAuth, authorize, requireEmailVerified, requireAdmin, requireFreelancer, requireClient, requireAny };

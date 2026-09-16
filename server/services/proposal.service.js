@@ -85,7 +85,15 @@ const submitProposal = async (freelancerId, projectId, data) => {
     throw ApiError.badRequest("You have already submitted a proposal for this project");
   }
 
-  const clientUserId = project.clientUser || project.owner;
+  let clientUserId = project.clientUser || project.owner;
+  if (!project.clientUser && project.clientId) {
+    const clientUser = await User.findOne({ clientRef: project.clientId, role: "client" });
+    if (clientUser) {
+      clientUserId = clientUser._id;
+      project.clientUser = clientUser._id;
+      await project.save();
+    }
+  }
 
   const proposal = await Proposal.create({
     project: projectId,
@@ -122,13 +130,80 @@ const submitProposal = async (freelancerId, projectId, data) => {
 };
 
 /**
+ * Checks if a user has client/owner authorization for a project.
+ */
+const isAuthorizedClientForProject = async (userOrId, project) => {
+  if (!userOrId || !project) return false;
+
+  let user = userOrId;
+  if (!user._id) {
+    user = await User.findById(userOrId).lean();
+    if (!user) return false;
+  }
+
+  const userId = user._id.toString();
+
+  // 1. Admin has access
+  if (user.role === "admin") return true;
+
+  // 2. Project owner (client or freelancer creator)
+  if (project.owner && project.owner.toString() === userId) return true;
+
+  // 3. Assigned client user
+  if (project.clientUser && project.clientUser.toString() === userId) return true;
+
+  // 4. Client user whose clientRef matches project's clientId
+  if (user.clientRef && project.clientId && project.clientId.toString() === user.clientRef.toString()) {
+    if (!project.clientUser) {
+      await Project.findByIdAndUpdate(project._id, { clientUser: user._id });
+    }
+    return true;
+  }
+
+  // 5. Look up Client document by project.clientId
+  if (project.clientId) {
+    const Client = require("../models/Client");
+    const clientDoc = await Client.findById(project.clientId).lean();
+    if (clientDoc) {
+      if (user.email && clientDoc.email && clientDoc.email.toLowerCase() === user.email.toLowerCase()) {
+        if (!project.clientUser) {
+          await Project.findByIdAndUpdate(project._id, { clientUser: user._id });
+        }
+        return true;
+      }
+      if (clientDoc.owner && clientDoc.owner.toString() === userId) {
+        return true;
+      }
+    }
+  }
+
+  // 6. Check if any Client doc matching user's email is linked to this project
+  if (user.email && project.clientId) {
+    const Client = require("../models/Client");
+    const clientMatch = await Client.findOne({
+      _id: project.clientId,
+      email: user.email.toLowerCase(),
+    }).lean();
+    if (clientMatch) {
+      if (!project.clientUser) {
+        await Project.findByIdAndUpdate(project._id, { clientUser: user._id });
+      }
+      return true;
+    }
+  }
+
+  return false;
+};
+
+/**
  * Client fetches proposals submitted for a specific project.
  */
-const getProjectProposals = async (clientUserId, projectId) => {
+const getProjectProposals = async (userOrId, projectId) => {
   const project = await Project.findOne({ _id: projectId, isDeleted: { $ne: true } });
   if (!project) throw ApiError.notFound("Project not found");
 
-  if (project.clientUser?.toString() !== clientUserId.toString() && project.owner.toString() !== clientUserId.toString()) {
+  const isAuthorized = await isAuthorizedClientForProject(userOrId, project);
+  if (!isAuthorized) {
     throw ApiError.forbidden("Access denied to project proposals");
   }
 
@@ -159,13 +234,33 @@ const getMyProposals = async (freelancerId) => {
 /**
  * Client approves or rejects a proposal.
  */
-const respondToProposal = async (clientUserId, proposalId, action) => {
+const respondToProposal = async (userOrId, proposalId, action) => {
   const proposal = await Proposal.findById(proposalId).populate("project");
   if (!proposal) throw ApiError.notFound("Proposal not found");
 
-  if (proposal.client.toString() !== clientUserId.toString()) {
+  const project = proposal.project;
+  if (!project) throw ApiError.notFound("Project not found");
+
+  let user = userOrId;
+  if (!user._id) {
+    user = await User.findById(userOrId);
+    if (!user) throw ApiError.unauthorized("User not found");
+  }
+  const userId = user._id.toString();
+
+  const isAuthorized = await isAuthorizedClientForProject(user, project);
+  const isDirectClient = proposal.client && proposal.client.toString() === userId;
+
+  if (!isAuthorized && !isDirectClient) {
     throw ApiError.forbidden("Only the project owner client can respond to this proposal");
   }
+
+  // Ensure proposal.client reflects this client user
+  if (!proposal.client || proposal.client.toString() !== userId) {
+    proposal.client = user._id;
+  }
+
+  const clientUserId = user._id;
 
   if (action === "approve") {
     proposal.status = "approved";

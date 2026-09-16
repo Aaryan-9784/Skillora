@@ -34,6 +34,9 @@ const disputeRoutes      = require("./routes/dispute.routes");
 
 const app = express();
 
+// Enable trust proxy for reverse proxies (Render, Heroku, Cloudflare, etc.)
+app.set("trust proxy", 1);
+
 // ── Security headers ──────────────────────────────────────
 app.use(helmet({
   crossOriginEmbedderPolicy: false,
