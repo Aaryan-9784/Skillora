@@ -149,6 +149,8 @@ const NotFoundRedirect = () => {
   return <Navigate to="/dashboard" replace />;
 };
 
+import { CallProvider } from "./context/CallContext";
+
 const App = () => {
   const fetchMe = useAuthStore((s) => s.fetchMe);
   useEffect(() => {
@@ -156,7 +158,7 @@ const App = () => {
   }, []);
 
   return (
-    <>
+    <CallProvider>
       <TitleUpdater />
       <Toaster
         position="top-right"
@@ -260,7 +262,7 @@ const App = () => {
           <Route path="*" element={<NotFoundRedirect />} />
         </Routes>
       </Suspense>
-    </>
+    </CallProvider>
   );
 };
 

@@ -39,7 +39,16 @@ const clientMe = asyncHandler(async (req, res) => {
 
 const getClientInvoices = asyncHandler(async (req, res) => {
   const { status, search } = req.query;
-  const filter = { clientId: req.user.clientRef, isDeleted: { $ne: true } };
+  const orConditions = [
+    { clientUser: req.user._id },
+  ];
+  if (req.user.clientRef) {
+    orConditions.push({ clientId: req.user.clientRef });
+  }
+  const filter = {
+    $or: orConditions,
+    isDeleted: { $ne: true },
+  };
   if (status) filter.status = status;
   if (search) {
     filter.invoiceNumber = { $regex: search, $options: "i" };
@@ -55,12 +64,15 @@ const getClientInvoices = asyncHandler(async (req, res) => {
 
 const getClientProjects = asyncHandler(async (req, res) => {
   const { status, search } = req.query;
+  const orConditions = [
+    { clientUser: req.user._id },
+    { owner: req.user._id },
+  ];
+  if (req.user.clientRef) {
+    orConditions.push({ clientId: req.user.clientRef });
+  }
   const filter = {
-    $or: [
-      { clientId: req.user.clientRef },
-      { clientUser: req.user._id },
-      { owner: req.user._id },
-    ],
+    $or: orConditions,
     isDeleted: { $ne: true },
   };
   if (status) filter.status = status;

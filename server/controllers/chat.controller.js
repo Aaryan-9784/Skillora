@@ -43,6 +43,8 @@ const uploadToCloudinary = (fileBuffer, originalname, mimetype) => {
     const uploadOptions = {
       folder: "skillora/chat",
       resource_type,
+      access_mode: "public",
+      type: "upload",
       public_id: resource_type === "raw" ? `${Date.now()}_${cleanFilename}.${ext}` : `${Date.now()}_${cleanFilename}`,
       format: isAudioOrVideo ? ext : undefined,
     };
@@ -69,9 +71,17 @@ const getProjectConversation = asyncHandler(async (req, res) => {
 
   // Fallback to active project if specific ID not provided or not found
   if (!project) {
+    const clientOr = [
+      { owner: req.user._id },
+      { clientUser: req.user._id },
+    ];
+    if (req.user.clientRef) {
+      clientOr.push({ clientId: req.user.clientRef });
+    }
+
     if (req.user.role === "client" || req.user.clientRef) {
       project = await Project.findOne({
-        $or: [{ owner: req.user._id }, { clientUser: req.user._id }, { clientId: req.user.clientRef }],
+        $or: clientOr,
         isDeleted: { $ne: true }
       }).sort({ updatedAt: -1 }).populate("clientId owner assignedFreelancer clientUser");
     } else {
@@ -602,13 +612,94 @@ const getIceServersConfig = asyncHandler(async (req, res) => {
   ApiResponse.success(res, "ICE servers fetched", { iceServers: defaultIceServers });
 });
 
+// Fetch all conversations for the authenticated user
+const getUserConversations = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+
+  const conversations = await Conversation.find({
+    participants: userId,
+    isArchived: { $ne: true },
+  })
+    .populate("participants", "name avatar role isOnline lastSeen email")
+    .populate("projectId", "title status budget currency deadline")
+    .sort({ updatedAt: -1 })
+    .lean();
+
+  const formatted = conversations.map((conv) => {
+    let participants = conv.participants || [];
+    participants = participants.map((p) => {
+      const pId = (p._id || p).toString();
+      return {
+        ...p,
+        isOnline: typeof isUserOnline === "function" ? isUserOnline(pId) : Boolean(p.isOnline),
+      };
+    });
+    return {
+      ...conv,
+      participants,
+    };
+  });
+
+  ApiResponse.success(res, "User conversations fetched", { conversations: formatted });
+});
+
+// Proxy download for files to ensure 100% reliable downloads (bypassing Cloudinary 401 ACL blocks)
+const downloadAttachmentProxy = asyncHandler(async (req, res) => {
+  const { url, name } = req.query;
+  if (!url) return res.status(400).json({ success: false, message: "URL is required" });
+
+  const fileName = name || "download";
+
+  try {
+    const resp = await fetch(url);
+    if (resp.ok) {
+      const contentType = resp.headers.get("content-type") || "application/octet-stream";
+      res.setHeader("Content-Type", contentType);
+      res.setHeader("Content-Disposition", `attachment; filename="${encodeURIComponent(fileName)}"`);
+      const buffer = await resp.arrayBuffer();
+      return res.send(Buffer.from(buffer));
+    }
+  } catch (e) {
+    logger.warn(`Direct fetch in download proxy failed: ${e.message}`);
+  }
+
+  // Fallback for Cloudinary authenticated retrieval
+  if (url.includes("cloudinary.com")) {
+    try {
+      const cleanUrl = url.split("?")[0];
+      const match = cleanUrl.match(/\/upload\/(?:v\d+\/)?(.+)$/);
+      if (match && match[1]) {
+        const publicId = match[1];
+        const cloudinary = require("cloudinary").v2;
+        const zipUrl = cloudinary.utils.download_zip_url({
+          public_ids: [publicId],
+          resource_type: "raw",
+        });
+        const zResp = await fetch(zipUrl);
+        if (zResp.ok) {
+          res.setHeader("Content-Type", "application/zip");
+          res.setHeader("Content-Disposition", `attachment; filename="${encodeURIComponent(fileName)}.zip"`);
+          const zBuffer = await zResp.arrayBuffer();
+          return res.send(Buffer.from(zBuffer));
+        }
+      }
+    } catch (err) {
+      logger.warn(`Cloudinary fallback download failed: ${err.message}`);
+    }
+  }
+
+  return res.status(404).json({ success: false, message: "File download unavailable" });
+});
+
 module.exports = {
   getProjectConversation,
+  getUserConversations,
   getOrCreateDirectConversation,
   getIceServersConfig,
   getMessages,
   sendMessage,
   uploadAttachment,
+  downloadAttachmentProxy,
   deleteMessage,
   toggleReaction,
 };

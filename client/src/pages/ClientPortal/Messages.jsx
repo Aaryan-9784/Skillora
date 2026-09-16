@@ -3,13 +3,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   MessageSquare, Video, Phone, Send, Search, Paperclip, Mic,
   MoreVertical, Calendar, RefreshCw, X, FileText, CheckCheck, Users, Plus, Trash2, Ban, UserX,
-  Reply, Copy, Smile
+  Reply, Copy, Smile, ArrowLeft
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import useAuthStore from "../../store/authStore";
 import useChatStore from "../../store/chatStore";
-import { useWebRTC } from "../../hooks/useWebRTC";
-import CallModal from "../../components/chat/CallModal";
+import { useCall } from "../../context/CallContext";
 import VoiceRecorder from "../../components/chat/VoiceRecorder";
 import ScheduleMeetingModal from "../../components/chat/ScheduleMeetingModal";
 import { CustomVoicePlayer, FileAttachmentCard, ImageAttachmentCard } from "../../components/chat/AttachmentViews";
@@ -40,6 +39,7 @@ const GCard = ({ children, delay, className, glow }) => (
 const ClientMessages = () => {
   const user = useAuthStore((state) => state.user);
   const {
+    conversations, fetchUserConversations, setConversation,
     activeConversation, messages, typingUsers, onlinePresence, presenceSynced,
     fetchProjectConversation, fetchConversations, sendMessage,
     fetchMessages, deleteMessage, toggleReaction,
@@ -61,6 +61,7 @@ const ClientMessages = () => {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
+      await fetchUserConversations();
       if (fetchConversations) await fetchConversations();
       if (activeConversation?._id && fetchMessages) await fetchMessages(activeConversation._id);
       const s = getSocket();
@@ -124,7 +125,38 @@ const ClientMessages = () => {
       };
     });
 
-  const contactsList = dbParticipants;
+  // Combine conversations from database and activeConversation
+  const contactsMap = new Map();
+  (conversations || []).forEach((conv) => {
+    const otherPart = (conv.participants || []).find((p) => {
+      const pId = (p._id || p.id || (typeof p === "string" ? p : "")).toString();
+      const myId = (user?._id || user?.id || "").toString();
+      return pId && myId && pId !== myId;
+    });
+    if (otherPart) {
+      const id = (otherPart._id || otherPart.id || (typeof otherPart === "string" ? otherPart : "")).toString();
+      const pres = getContactPresence(otherPart);
+      contactsMap.set(id, {
+        id,
+        conversationId: conv._id,
+        conv,
+        name: otherPart.name || otherPart.email || "Freelancer Lead",
+        role: otherPart.role === "freelancer" ? "Freelancer Lead" : (conv.projectId?.title || "Project Team"),
+        avatar: otherPart.avatar || "",
+        isOnline: pres.isOnline,
+        lastSeen: pres.lastSeen,
+        lastMsg: conv.lastMessage?.text || "Project conversation ready",
+        time: conv.updatedAt ? relativeTime(conv.updatedAt) : "Just now",
+        badge: "Team",
+      });
+    }
+  });
+
+  (dbParticipants || []).forEach((p) => {
+    if (!contactsMap.has(p.id)) contactsMap.set(p.id, p);
+  });
+
+  const contactsList = Array.from(contactsMap.values());
 
   const filteredContacts = contactsList.filter(c =>
     c.name.toLowerCase().includes(contactSearch.toLowerCase()) ||
@@ -135,26 +167,30 @@ const ClientMessages = () => {
 
   const isTyping = Boolean(typingUsers[activeConversation?._id]?.length > 0);
 
-  const {
-    startCall, acceptCall, rejectCall, endCall,
-    toggleMute, toggleVideo, toggleScreenShare,
-    localStream, remoteStream, callState, activeCallType, incomingCall,
-    isMuted, isVideoOff, isScreenSharing, callDuration
-  } = useWebRTC(partnerUserId, "video");
+  const { startCall } = useCall();
 
   const handleInitiateCall = (callType) => {
     if (!partnerUserId) {
       toast.error("No project contact selected or available to call.");
       return;
     }
-    startCall(callType);
+    startCall(partnerUserId, callType, partner?.name || "Freelancer Lead", partner?.avatar || "");
   };
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
+    fetchUserConversations().catch(() => {});
     fetchProjectConversation().catch(() => {});
     const s = getSocket();
-    if (s && s.connected) s.emit("presence:query");
+    if (s && s.connected) {
+      s.emit("presence:query");
+      s.on("chat:conversation_updated", () => {
+        fetchUserConversations().catch(() => {});
+      });
+    }
+    return () => {
+      if (s) s.off("chat:conversation_updated");
+    };
   }, []);
 
   useEffect(() => {
@@ -323,7 +359,7 @@ const ClientMessages = () => {
         <GCard delay={0.15} glow="#635BFF" className="h-[520px] lg:h-[560px] flex p-0 overflow-hidden shadow-2xl shrink-0">
         
         {/* ── Left Sidebar: Users / Contacts List ── */}
-        <div className="w-72 sm:w-80 lg:w-88 border-r border-slate-800/80 bg-[#111b21]/90 backdrop-blur-xl flex flex-col shrink-0">
+        <div className={`w-full md:w-72 sm:w-80 lg:w-88 border-r border-slate-800/80 bg-[#111b21]/90 backdrop-blur-xl flex flex-col shrink-0 ${partner ? "hidden md:flex" : "flex"}`}>
           
           {/* Sidebar Header: Skillora & Chats */}
           <div className="h-16 px-4 flex items-center justify-between border-b border-slate-800 shrink-0 bg-[#111b21]">
@@ -361,7 +397,7 @@ const ClientMessages = () => {
                     className="absolute right-0 top-11 z-50 w-52 bg-[#182229] border border-slate-700/60 rounded-2xl shadow-2xl p-1.5 backdrop-blur-xl"
                   >
                     <button
-                      onClick={() => { setSidebarMenuOpen(false); fetchProjectConversation(); toast.success("Refreshed chats"); }}
+                      onClick={() => { setSidebarMenuOpen(false); fetchUserConversations(); fetchProjectConversation(); toast.success("Refreshed chats"); }}
                       className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-200 hover:bg-white/10 rounded-xl transition-all text-left cursor-pointer"
                     >
                       <RefreshCw size={15} className="text-emerald-400" />
@@ -408,16 +444,20 @@ const ClientMessages = () => {
               </div>
             ) : (
               filteredContacts.map((contact) => {
-                const isSelected = selectedContactId === contact.id || partner;
+                const isSelected = (partner && (partner._id || partner.id || "").toString() === contact.id) || selectedContactId === contact.id;
                 return (
                   <button
                     key={contact.id}
                     onClick={async () => {
                       setSelectedContactId(contact.id);
-                      try {
-                        await openDirectChat(contact.id);
-                      } catch (err) {
-                        console.error("Direct chat error:", err);
+                      if (contact.conv) {
+                        setConversation(contact.conv);
+                      } else {
+                        try {
+                          await openDirectChat(contact.id);
+                        } catch (err) {
+                          console.error("Direct chat error:", err);
+                        }
                       }
                     }}
                     className={`w-full p-2.5 rounded-xl flex items-center gap-3 transition-all text-left cursor-pointer ${
@@ -464,7 +504,7 @@ const ClientMessages = () => {
         </div>
 
         {/* ── Right Panel: Chat Area (100% Identical to Freelancer Messages) ── */}
-        <div className="flex-1 flex flex-col min-w-0 bg-[#0B1120]/40 relative overflow-hidden">
+        <div className={`flex-1 flex flex-col min-w-0 bg-[#0B1120]/40 relative overflow-hidden ${!partner ? "hidden md:flex" : "flex"}`}>
           {!partner ? (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-[#0B1120]/60 relative">
               <motion.div
@@ -487,7 +527,14 @@ const ClientMessages = () => {
               <div className="h-16 px-4 lg:px-6 flex items-center justify-between border-b border-slate-800 shrink-0 bg-[#111b21]/90 backdrop-blur-md">
                 
                 {/* User Profile & Status */}
-                <div className="flex items-center gap-3 cursor-pointer group">
+                <div className="flex items-center gap-3 cursor-pointer group min-w-0">
+                  <button
+                    onClick={() => setConversation(null)}
+                    className="md:hidden p-1.5 -ml-1 text-slate-400 hover:text-white rounded-lg cursor-pointer shrink-0"
+                    title="Back to contacts"
+                  >
+                    <ArrowLeft size={18} />
+                  </button>
                   <div className="relative shrink-0">
                     <div className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white overflow-hidden ring-1 ring-white/15 shadow-md shadow-indigo-600/20"
                       style={{ background: partner?.avatar ? "transparent" : "linear-gradient(135deg,#635BFF 0%,#8579FF 100%)" }}>
@@ -887,25 +934,6 @@ const ClientMessages = () => {
         </GCard>
       </div>
 
-      {/* WebRTC Video/Voice Call Modal Overlay */}
-      <CallModal
-        callState={callState}
-        callType={activeCallType}
-        localStream={localStream}
-        remoteStream={remoteStream}
-        onEndCall={endCall}
-        onAccept={acceptCall}
-        onReject={rejectCall}
-        isMuted={isMuted}
-        isVideoOff={isVideoOff}
-        isScreenSharing={isScreenSharing}
-        onToggleMute={toggleMute}
-        onToggleVideo={toggleVideo}
-        onToggleScreenShare={toggleScreenShare}
-        callDuration={callDuration}
-        partnerName={incomingCall?.callerName || partner?.name || "Skillora Team"}
-        partnerAvatar={incomingCall?.callerAvatar || partner?.avatar || ""}
-      />
 
       {/* Schedule Meeting Modal */}
       <ScheduleMeetingModal

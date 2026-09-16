@@ -197,15 +197,29 @@ export const downloadFile = async (url, fileName) => {
     document.body.removeChild(a);
     setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000);
   } catch (e) {
-    console.warn("Direct blob download failed, fallback to direct anchor:", e);
-    const a = document.createElement("a");
-    a.href = fullUrl;
-    a.download = name;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    console.warn("Direct blob download failed, trying server download proxy:", e);
+    // Try backend proxy download
+    try {
+      const proxyUrl = `/api/chat/download-proxy?url=${encodeURIComponent(fullUrl)}&name=${encodeURIComponent(name)}`;
+      const pRes = await fetch(proxyUrl);
+      if (pRes.ok) {
+        const pBlob = await pRes.blob();
+        const pBlobUrl = window.URL.createObjectURL(pBlob);
+        const a = document.createElement("a");
+        a.href = pBlobUrl;
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => window.URL.revokeObjectURL(pBlobUrl), 1000);
+        return;
+      }
+    } catch (proxyErr) {
+      console.warn("Proxy download failed:", proxyErr);
+    }
+
+    // Fallback: open directly in new window
+    window.open(fullUrl, "_blank", "noopener,noreferrer");
   }
 };
 

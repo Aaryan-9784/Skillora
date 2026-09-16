@@ -3,6 +3,7 @@ import api from "../services/api";
 import { getSocket } from "../services/socketService";
 
 const useChatStore = create((set, get) => ({
+  conversations: [],
   activeConversation: null,
   messages: [],
   typingUsers: {}, // { conversationId: [userName] }
@@ -11,10 +12,25 @@ const useChatStore = create((set, get) => ({
   presenceSynced: false,
   onlineUsers: new Set(),
 
+  fetchUserConversations: async () => {
+    try {
+      const { data } = await api.get("/chat/conversations");
+      const convs = data.data?.conversations || [];
+      set({ conversations: convs });
+      convs.forEach((c) => {
+        if (c.participants) get().syncParticipantsPresence(c.participants);
+      });
+      return convs;
+    } catch (err) {
+      console.warn("Failed to fetch user conversations:", err);
+      return [];
+    }
+  },
+
   setConversation: (conv) => {
     const prevConv = get().activeConversation;
     const socket = getSocket();
-    if (socket && prevConv?._id) {
+    if (socket && prevConv?._id && prevConv._id !== conv?._id) {
       socket.emit("chat:leave", { conversationId: prevConv._id });
     }
     set({ activeConversation: conv });

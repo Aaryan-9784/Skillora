@@ -5,11 +5,13 @@ const { protect } = require("../middlewares/auth.middleware");
 const upload      = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
 const {
   getProjectConversation,
+  getUserConversations,
   getOrCreateDirectConversation,
   getIceServersConfig,
   getMessages,
   sendMessage,
   uploadAttachment,
+  downloadAttachmentProxy,
   deleteMessage,
   toggleReaction,
 } = require("../controllers/chat.controller");
@@ -17,6 +19,8 @@ const {
 router.use(protect);
 
 router.get("/ice-servers", getIceServersConfig);
+router.get("/conversations", getUserConversations);
+router.get("/download-proxy", downloadAttachmentProxy);
 router.get("/project", getProjectConversation);
 router.get("/project/:projectId", getProjectConversation);
 router.get("/direct/:recipientId", getOrCreateDirectConversation);

@@ -315,6 +315,20 @@ const respondToProposal = async (userOrId, proposalId, action) => {
       });
     }
 
+    try {
+      const { emitToUser } = require("../config/socket");
+      const payload = {
+        conversationId: conversation._id,
+        projectId: proposal.project._id,
+        projectTitle: proposal.project.title,
+        clientUser: clientUserId,
+        freelancer: proposal.freelancer,
+      };
+      emitToUser(clientUserId, "chat:conversation_updated", payload);
+      emitToUser(proposal.freelancer, "chat:conversation_updated", payload);
+      emitToUser(proposal.freelancer, "project:proposal_approved", payload);
+    } catch (sockErr) {}
+
     await notify({
       recipient: proposal.freelancer,
       type: "proposal_approved",
