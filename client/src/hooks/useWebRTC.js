@@ -181,20 +181,57 @@ export const useWebRTC = (targetUserId, defaultCallType = "video") => {
   const getMediaStream = async (requestVideo) => {
     try {
       return await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: requestVideo,
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+        video: requestVideo
+          ? {
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+            }
+          : false,
       });
     } catch (err) {
       if (requestVideo) {
-        console.warn("Camera locked by another application/tab, falling back to audio stream:", err.message);
-        toast("Camera busy in another tab, connecting voice stream...", { icon: "🎙️" });
-        return await navigator.mediaDevices.getUserMedia({
-          audio: true,
-          video: false,
-        });
+        console.warn("Primary camera constraints failed, retrying simple video: true", err?.message);
+        try {
+          return await navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video: true,
+          });
+        } catch (videoErr) {
+          console.warn("Camera locked or unavailable, falling back to audio stream:", videoErr?.message);
+          toast("Camera unavailable, connecting audio stream...", { icon: "🎙️" });
+          return await navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video: false,
+          });
+        }
       }
       throw err;
     }
+  };
+
+  const bindRemoteTracks = (pc) => {
+    pc.ontrack = (e) => {
+      if (e.streams && e.streams[0]) {
+        const stream = e.streams[0];
+        setRemoteStream(new MediaStream(stream.getTracks()));
+        stream.onaddtrack = () => {
+          setRemoteStream(new MediaStream(stream.getTracks()));
+        };
+        stream.onremovetrack = () => {
+          setRemoteStream(new MediaStream(stream.getTracks()));
+        };
+      } else if (e.track) {
+        setRemoteStream((prev) => {
+          const currentTracks = prev ? prev.getTracks().filter((t) => t.id !== e.track.id) : [];
+          return new MediaStream([...currentTracks, e.track]);
+        });
+      }
+    };
   };
 
   const startCall = async (type = defaultCallType) => {
@@ -228,7 +265,8 @@ export const useWebRTC = (targetUserId, defaultCallType = "video") => {
 
       stream.getTracks().forEach((t) => pc.addTrack(t, stream));
 
-      pc.ontrack = (e) => setRemoteStream(e.streams[0]);
+      bindRemoteTracks(pc);
+
       pc.onicecandidate = (e) => {
         const destId = targetUserIdRef.current || targetUserId;
         if (e.candidate && destId) {
@@ -236,7 +274,10 @@ export const useWebRTC = (targetUserId, defaultCallType = "video") => {
         }
       };
 
-      const offer = await pc.createOffer();
+      const offer = await pc.createOffer({
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: type === "video",
+      });
       await pc.setLocalDescription(offer);
 
       const destId = targetUserIdRef.current || targetUserId;
@@ -253,6 +294,7 @@ export const useWebRTC = (targetUserId, defaultCallType = "video") => {
     if (!incomingCall || !socket) return;
     toast.dismiss("call-status");
     setCallState("connected");
+    targetUserIdRef.current = incomingCall.callerId;
     try {
       const stream = await getMediaStream(incomingCall.callType === "video");
       setLocalStream(stream);
@@ -270,7 +312,8 @@ export const useWebRTC = (targetUserId, defaultCallType = "video") => {
 
       stream.getTracks().forEach((t) => pc.addTrack(t, stream));
 
-      pc.ontrack = (e) => setRemoteStream(e.streams[0]);
+      bindRemoteTracks(pc);
+
       pc.onicecandidate = (e) => {
         if (e.candidate) {
           socket.emit("call:ice_candidate", { targetUserId: incomingCall.callerId, candidate: e.candidate });
@@ -280,7 +323,10 @@ export const useWebRTC = (targetUserId, defaultCallType = "video") => {
       await pc.setRemoteDescription(new RTCSessionDescription(incomingCall.offer));
       await processIceQueue();
 
-      const answer = await pc.createAnswer();
+      const answer = await pc.createAnswer({
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: incomingCall.callType === "video",
+      });
       await pc.setLocalDescription(answer);
 
       socket.emit("call:answer", { callerId: incomingCall.callerId, answer });

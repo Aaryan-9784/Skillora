@@ -43,7 +43,7 @@ const ClientMessages = () => {
     activeConversation, messages, typingUsers, onlinePresence, presenceSynced,
     fetchProjectConversation, fetchConversations, sendMessage,
     fetchMessages, deleteMessage, toggleReaction,
-    replyingTo, setReplyTo, clearReplyTo
+    replyingTo, setReplyTo, clearReplyTo, openDirectChat
   } = useChatStore();
 
   const [inputText, setInputText]               = useState("");

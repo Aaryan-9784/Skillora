@@ -25,19 +25,49 @@ const CallModal = ({
 }) => {
   const localVideoRef  = useRef(null);
   const remoteVideoRef = useRef(null);
+  const remoteAudioRef = useRef(null);
 
   useEffect(() => {
-    if (localVideoRef.current && localStream) localVideoRef.current.srcObject = localStream;
-  }, [localStream]);
+    if (localVideoRef.current && localStream) {
+      if (localVideoRef.current.srcObject !== localStream) {
+        localVideoRef.current.srcObject = localStream;
+      }
+      localVideoRef.current.play().catch(() => {});
+    }
+  }, [localStream, isVideoOff]);
 
   useEffect(() => {
-    if (remoteVideoRef.current && remoteStream) remoteVideoRef.current.srcObject = remoteStream;
+    if (remoteVideoRef.current && remoteStream) {
+      if (remoteVideoRef.current.srcObject !== remoteStream) {
+        remoteVideoRef.current.srcObject = remoteStream;
+      }
+      remoteVideoRef.current.play().catch((err) => {
+        console.warn("[CallModal] remote video play warning:", err);
+      });
+    }
+  }, [remoteStream]);
+
+  useEffect(() => {
+    if (remoteAudioRef.current && remoteStream) {
+      if (remoteAudioRef.current.srcObject !== remoteStream) {
+        remoteAudioRef.current.srcObject = remoteStream;
+      }
+      remoteAudioRef.current.play().catch((err) => {
+        console.warn("[CallModal] remote audio play warning:", err);
+      });
+    }
   }, [remoteStream]);
 
   if (callState === "idle") return null;
 
   const formatTime = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
   const isVoiceCall = callType === "voice";
+
+  const hasRemoteVideo = Boolean(
+    remoteStream &&
+    remoteStream.getVideoTracks().length > 0 &&
+    remoteStream.getVideoTracks().some((t) => t.enabled && t.readyState === "live")
+  );
 
   return (
     <AnimatePresence>
@@ -92,8 +122,30 @@ const CallModal = ({
             {/* Video / Voice Audio Feed Layout */}
             <div className="relative flex-1 bg-gradient-to-b from-slate-950 via-slate-900 to-indigo-950/40 flex items-center justify-center overflow-hidden">
               
-              {/* Voice Call Avatar UI */}
-              {(isVoiceCall || isVideoOff) ? (
+              {/* Remote Video Stream (Main Window) */}
+              {!isVoiceCall && (
+                <video
+                  ref={(el) => {
+                    remoteVideoRef.current = el;
+                    if (el && remoteStream && el.srcObject !== remoteStream) {
+                      el.srcObject = remoteStream;
+                      el.play().catch(() => {});
+                    }
+                  }}
+                  autoPlay
+                  playsInline
+                  muted
+                  onLoadedMetadata={(e) => {
+                    e.target.play().catch(() => {});
+                  }}
+                  className={`w-full h-full object-cover transition-opacity duration-300 ${
+                    hasRemoteVideo ? "opacity-100" : "opacity-0 absolute pointer-events-none"
+                  }`}
+                />
+              )}
+
+              {/* Voice Call / Waiting for remote video Avatar UI */}
+              {(isVoiceCall || !hasRemoteVideo) && (
                 <div className="flex flex-col items-center justify-center space-y-4">
                   <div className="relative">
                     <div className="w-32 h-32 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center border-4 border-indigo-500/40 shadow-2xl overflow-hidden ring-4 ring-indigo-500/20">
@@ -110,21 +162,24 @@ const CallModal = ({
                   <div className="text-center">
                     <h3 className="text-lg font-bold text-white">{partnerName}</h3>
                     <p className="text-xs text-indigo-400 font-medium">
-                      {callState === "calling" ? "Calling..." : isVoiceCall ? "Voice Call Connected" : "Video Off"}
+                      {callState === "calling"
+                        ? "Calling..."
+                        : isVoiceCall
+                        ? "Voice Call Connected"
+                        : "Connecting video..."}
                     </p>
                   </div>
                 </div>
-              ) : (
-                /* Remote Video Stream (Main Window) */
-                <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" />
               )}
               
               {/* Ensure remote audio plays seamlessly across all call types and camera toggles */}
               {remoteStream && (
                 <audio
                   ref={(el) => {
+                    remoteAudioRef.current = el;
                     if (el && el.srcObject !== remoteStream) {
                       el.srcObject = remoteStream;
+                      el.play().catch(() => {});
                     }
                   }}
                   autoPlay
@@ -134,8 +189,20 @@ const CallModal = ({
 
               {/* Local Stream PIP Window (For Video Calls) */}
               {!isVoiceCall && !isVideoOff && (
-                <div className="absolute bottom-6 right-6 w-44 h-32 rounded-2xl overflow-hidden border-2 border-white/20 shadow-2xl bg-slate-900">
-                  <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+                <div className="absolute bottom-6 right-6 w-44 h-32 rounded-2xl overflow-hidden border-2 border-white/20 shadow-2xl bg-slate-900 z-10">
+                  <video
+                    ref={(el) => {
+                      localVideoRef.current = el;
+                      if (el && localStream && el.srcObject !== localStream) {
+                        el.srcObject = localStream;
+                        el.play().catch(() => {});
+                      }
+                    }}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               )}
             </div>
