@@ -47,12 +47,16 @@ const ClientMessages = () => {
   } = useChatStore();
 
   const [inputText, setInputText]               = useState("");
-  const [isRefreshing, setIsRefreshing]         = useState(false);
-  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
-  const [uploadingFile, setUploadingFile]       = useState(false);
   const [stagedAttachment, setStagedAttachment] = useState(null);
+  const [showVoiceRecorder, setShowVoice]       = useState(false);
+  const [showScheduleModal, setShowSchedule]   = useState(false);
+  const [uploadingFile, setUploadingFile]       = useState(false);
+  const [searchOpen, setSearchOpen]             = useState(false);
+  const [searchQuery, setSearchQuery]           = useState("");
   const [moreMenuOpen, setMoreMenuOpen]         = useState(false);
   const [sidebarMenuOpen, setSidebarMenuOpen]   = useState(false);
+  const [deleteModalMsg, setDeleteModalMsg]     = useState(null);
+  const [isRefreshing, setIsRefreshing]         = useState(false);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
