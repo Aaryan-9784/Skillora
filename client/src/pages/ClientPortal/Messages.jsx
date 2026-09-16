@@ -56,6 +56,7 @@ const ClientMessages = () => {
   } = useChatStore();
 
   const [inputText, setInputText]           = useState("");
+  const [stagedAttachment, setStagedAttachment] = useState(null);
   const [showVoiceRecorder, setShowVoice]  = useState(false);
   const [showScheduleModal, setShowSchedule]= useState(false);
   const [uploadingFile, setUploadingFile]   = useState(false);
@@ -149,13 +150,22 @@ const ClientMessages = () => {
 
   const handleSendText = async (e) => {
     e?.preventDefault();
-    if (!inputText.trim() || !activeConversation?._id) return;
+    if ((!inputText.trim() && !stagedAttachment) || !activeConversation?._id) return;
 
     const text = inputText.trim();
+    const attachment = stagedAttachment;
+
     setInputText("");
+    setStagedAttachment(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
 
     try {
-      await sendMessage({ conversationId: activeConversation._id, content: text });
+      await sendMessage({
+        conversationId: activeConversation._id,
+        content: text,
+        attachments: attachment ? [attachment] : [],
+        type: attachment ? (attachment.fileType === "audio" ? "voice_note" : "media") : "text",
+      });
     } catch (err) {
       toast.error(err.message || "Failed to send message");
     }
@@ -208,14 +218,8 @@ const ClientMessages = () => {
       });
 
       const attachment = data.data.attachment;
-
-      await sendMessage({
-        conversationId: activeConversation._id,
-        content: "",
-        attachments: [attachment],
-        type: attachment.fileType === "audio" ? "voice_note" : "media",
-      });
-      toast.success("Attachment sent!");
+      setStagedAttachment(attachment);
+      toast.success("File attached! Click Send or press Enter to send.");
     } catch (err) {
       toast.error(err.response?.data?.message || err.message || "Failed to upload file");
     } finally {
@@ -761,6 +765,34 @@ const ClientMessages = () => {
 
               {/* Message Input Footer */}
               <div className="p-3 bg-[#111b21] border-t border-slate-800 shrink-0">
+                {/* Staged File Attachment Preview Card (Wait for Send Button Click) */}
+                {stagedAttachment && (
+                  <div className="mb-2.5 p-2.5 rounded-xl bg-indigo-950/60 border border-indigo-500/40 flex items-center justify-between gap-3 text-xs shadow-lg">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-lg bg-indigo-600/30 border border-indigo-500/30 flex items-center justify-center text-indigo-300 shrink-0 font-bold text-[10px]">
+                        <FileText size={16} />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="font-semibold text-white block truncate">{stagedAttachment.fileName}</span>
+                        <span className="text-[10px] text-indigo-300/90 font-medium">
+                          {stagedAttachment.sizeBytes ? `${Math.round(stagedAttachment.sizeBytes / 1024)} KB` : "File attached"} • Click Send or press Enter
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStagedAttachment(null);
+                        if (fileInputRef.current) fileInputRef.current.value = "";
+                      }}
+                      className="p-1.5 rounded-lg hover:bg-white/15 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                      title="Remove attachment"
+                    >
+                      <X size={15} />
+                    </button>
+                  </div>
+                )}
+
                 {showVoiceRecorder ? (
                   <VoiceRecorder onSendVoiceNote={handleSendVoiceNote} onCancel={() => setShowVoice(false)} />
                 ) : (
@@ -794,7 +826,7 @@ const ClientMessages = () => {
 
                     <input
                       type="text"
-                      placeholder="Write a message to your project team..."
+                      placeholder={stagedAttachment ? "Add a message caption (optional)..." : "Write a message to your project team..."}
                       value={inputText}
                       onChange={(e) => setInputText(e.target.value)}
                       className="flex-1 px-4 py-3 rounded-xl text-xs font-medium text-white placeholder-gray-500 outline-none transition-all"
@@ -805,7 +837,7 @@ const ClientMessages = () => {
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
                       type="submit"
-                      disabled={!inputText.trim()}
+                      disabled={(!inputText.trim() && !stagedAttachment) || uploadingFile}
                       className="px-5 py-3 rounded-xl text-xs font-bold text-white flex items-center gap-2 disabled:opacity-40 transition-all cursor-pointer shrink-0"
                       style={{
                         background: "linear-gradient(135deg,#635BFF 0%,#8B5CF6 100%)",
@@ -813,7 +845,7 @@ const ClientMessages = () => {
                         border: "1px solid rgba(255,255,255,0.15)",
                       }}
                     >
-                      <span>Send</span>
+                      <span>{uploadingFile ? "Uploading..." : "Send"}</span>
                       <Send size={13} />
                     </motion.button>
                   </form>
