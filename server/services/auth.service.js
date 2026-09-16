@@ -196,7 +196,7 @@ const refreshAccessToken = async (incomingRefreshToken) => {
 // ── Logout ────────────────────────────────────────────────
 
 const logout = async (userId) => {
-  await User.findByIdAndUpdate(userId, { refreshToken: null });
+  await User.findByIdAndUpdate(userId, { refreshToken: null, isOnline: false, lastSeen: new Date() });
 };
 
 /**
@@ -206,6 +206,8 @@ const logout = async (userId) => {
 const logoutAll = async (userId) => {
   await User.findByIdAndUpdate(userId, {
     refreshToken: null,
+    isOnline: false,
+    lastSeen: new Date(),
     $inc: { tokenVersion: 1 },
   });
 };

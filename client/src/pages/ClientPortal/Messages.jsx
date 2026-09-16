@@ -40,7 +40,7 @@ const GCard = ({ children, delay, className, glow }) => (
 const ClientMessages = () => {
   const user = useAuthStore((state) => state.user);
   const {
-    activeConversation, messages, typingUsers, onlinePresence,
+    activeConversation, messages, typingUsers, onlinePresence, presenceSynced,
     fetchProjectConversation, fetchConversations, sendMessage,
     fetchMessages, deleteMessage, toggleReaction,
     replyingTo, setReplyTo, clearReplyTo
@@ -85,7 +85,7 @@ const ClientMessages = () => {
     if (email && onlinePresence[email] !== undefined) return onlinePresence[email];
 
     return {
-      isOnline: Boolean(c.isOnline),
+      isOnline: presenceSynced ? false : Boolean(c.isOnline),
       lastSeen: c.lastSeen || null,
     };
   };

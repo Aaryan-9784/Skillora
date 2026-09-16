@@ -8,6 +8,8 @@ const useChatStore = create((set, get) => ({
   typingUsers: {}, // { conversationId: [userName] }
   loading: false,
   onlinePresence: {}, // { userId: { isOnline, lastSeen } }
+  presenceSynced: false,
+  onlineUsers: new Set(),
 
   setConversation: (conv) => {
     const prevConv = get().activeConversation;
@@ -194,80 +196,108 @@ const useChatStore = create((set, get) => ({
     if (!Array.isArray(participants)) return;
     set((state) => {
       const updated = { ...state.onlinePresence };
+      const { onlineUsers, presenceSynced } = state;
+
       participants.forEach((p) => {
         if (!p) return;
         const id = (p._id || p.id || (typeof p === "string" ? p : "")).toString();
         const clientRef = p.clientRef ? p.clientRef.toString() : "";
         const email = p.email ? p.email.toString().toLowerCase() : "";
+
+        // If presence has already synced via socket, the socket truth overrides everything!
+        const isOnline = presenceSynced
+          ? Boolean(
+              (id && onlineUsers?.has(id)) ||
+              (clientRef && onlineUsers?.has(clientRef)) ||
+              (email && onlineUsers?.has(email))
+            )
+          : Boolean(p.isOnline);
+
         const presenceData = {
-          isOnline: Boolean(p.isOnline),
+          isOnline,
           lastSeen: p.lastSeen || null,
         };
-        // If not already in onlinePresence, seed it with DB values
-        if (id && updated[id] === undefined) updated[id] = presenceData;
-        if (clientRef && updated[clientRef] === undefined) updated[clientRef] = presenceData;
-        if (email && updated[email] === undefined) updated[email] = presenceData;
+
+        if (id) updated[id] = presenceData;
+        if (clientRef) updated[clientRef] = presenceData;
+        if (email) updated[email] = presenceData;
       });
+
       return { onlinePresence: updated };
     });
   },
 
   setOnlinePresenceBatch: (onlineUserIds = []) => {
     set((state) => {
-      const updated = { ...state.onlinePresence };
-      const onlineSet = new Set((onlineUserIds || []).map((id) => id?.toString()));
-      const onlineSetLower = new Set((onlineUserIds || []).map((id) => id?.toString().toLowerCase()));
-
-      // Update existing entries: if not in onlineSet, mark offline
-      Object.keys(updated).forEach((key) => {
-        if (!onlineSet.has(key) && !onlineSetLower.has(key.toLowerCase())) {
-          updated[key] = {
-            ...updated[key],
-            isOnline: false,
-          };
+      const onlineSet = new Set();
+      (onlineUserIds || []).forEach((id) => {
+        if (id) {
+          const str = id.toString();
+          onlineSet.add(str);
+          onlineSet.add(str.toLowerCase());
         }
       });
 
-      // Mark all incoming online IDs as online
-      (onlineUserIds || []).forEach((id) => {
-        if (!id) return;
-        const idStr = id.toString();
-        updated[idStr] = {
-          ...(updated[idStr] || {}),
-          isOnline: true,
-          lastSeen: null,
+      const updated = { ...state.onlinePresence };
+      // Update all known keys in onlinePresence
+      Object.keys(updated).forEach((key) => {
+        const isOnline = onlineSet.has(key) || onlineSet.has(key.toLowerCase());
+        updated[key] = {
+          ...updated[key],
+          isOnline,
+          lastSeen: isOnline ? null : (updated[key]?.lastSeen || new Date()),
         };
-        updated[idStr.toLowerCase()] = {
-          ...(updated[idStr.toLowerCase()] || {}),
+      });
+
+      // Also ensure all currently online IDs are explicitly true in updated
+      onlineSet.forEach((key) => {
+        updated[key] = {
+          ...(updated[key] || {}),
           isOnline: true,
           lastSeen: null,
         };
       });
 
-      return { onlinePresence: updated };
+      return {
+        onlineUsers: onlineSet,
+        onlinePresence: updated,
+        presenceSynced: true,
+      };
     });
   },
 
   updatePresence: (userId, isOnline, lastSeen, clientRef, email) => {
     set((state) => {
+      const onlineSet = new Set(state.onlineUsers || []);
       const updated = { ...state.onlinePresence };
       const statusObj = {
         isOnline: Boolean(isOnline),
         lastSeen: lastSeen || (isOnline ? null : new Date()),
       };
-      if (userId) {
-        const uId = userId.toString();
-        updated[uId] = statusObj;
-      }
-      if (clientRef) {
-        const cRef = clientRef.toString();
-        updated[cRef] = statusObj;
-      }
-      if (email) {
-        const em = email.toString().toLowerCase();
-        updated[em] = statusObj;
-      }
-      return { onlinePresence: updated };
+
+      const applyId = (id) => {
+        if (!id) return;
+        const str = id.toString();
+        const lower = str.toLowerCase();
+        if (isOnline) {
+          onlineSet.add(str);
+          onlineSet.add(lower);
+        } else {
+          onlineSet.delete(str);
+          onlineSet.delete(lower);
+        }
+        updated[str] = statusObj;
+        updated[lower] = statusObj;
+      };
+
+      applyId(userId);
+      applyId(clientRef);
+      applyId(email);
+
+      return {
+        onlineUsers: onlineSet,
+        onlinePresence: updated,
+      };
     });
   },
 }));

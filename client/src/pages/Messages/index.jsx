@@ -44,7 +44,7 @@ const Messages = () => {
   const { user } = useAuthStore();
   const { clients, fetchClients } = useClientStore();
   const {
-    activeConversation, messages, typingUsers, onlinePresence,
+    activeConversation, messages, typingUsers, onlinePresence, presenceSynced,
     fetchProjectConversation, fetchConversations, fetchMessages, sendMessage, appendMessage, deleteMessage,
     replyingTo, setReplyTo, clearReplyTo, toggleReaction, openDirectChat
   } = useChatStore();
@@ -57,7 +57,7 @@ const Messages = () => {
   const [searchOpen, setSearchOpen]         = useState(false);
   const [searchQuery, setSearchQuery]       = useState("");
   const [moreMenuOpen, setMoreMenuOpen]     = useState(false);
-  const [sidebarMenuOpen, setSidebarMenuOpen] = useState(false);
+  const [sidebarMenuOpen, setSidebarMenuOpen]   = useState(false);
   const [deleteModalMsg, setDeleteModalMsg] = useState(null);
   const [isRefreshing, setIsRefreshing]     = useState(false);
 
@@ -92,7 +92,7 @@ const Messages = () => {
     if (email && onlinePresence[email] !== undefined) return onlinePresence[email];
 
     return {
-      isOnline: Boolean(c.isOnline),
+      isOnline: presenceSynced ? false : Boolean(c.isOnline),
       lastSeen: c.lastSeen || null,
     };
   };

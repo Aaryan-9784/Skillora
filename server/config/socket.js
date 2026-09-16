@@ -312,4 +312,20 @@ const broadcast = (event, data) => {
 
 const getIO = () => io;
 
-module.exports = { initSocket, emitToUser, emitNotification, broadcast, getIO };
+const isUserOnline = (userId) => {
+  if (!userId) return false;
+  const sockets = userSockets.get(userId.toString());
+  return Boolean(sockets && sockets.size > 0);
+};
+
+const getOnlineUserIds = () => Array.from(userSockets.keys());
+
+module.exports = {
+  initSocket,
+  emitToUser,
+  emitNotification,
+  broadcast,
+  getIO,
+  isUserOnline,
+  getOnlineUserIds,
+};

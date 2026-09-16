@@ -36,12 +36,38 @@ const refresh = asyncHandler(async (req, res) => {
 const logout = asyncHandler(async (req, res) => {
   await authService.logout(req.user._id);
   authService.clearTokenCookies(res);
+  try {
+    const { getIO } = require("../config/socket");
+    const io = getIO();
+    if (io) {
+      io.emit("presence:update", {
+        userId: req.user._id,
+        clientRef: req.user.clientRef ? req.user.clientRef.toString() : null,
+        email: req.user.email ? req.user.email.toLowerCase() : null,
+        isOnline: false,
+        lastSeen: new Date(),
+      });
+    }
+  } catch (e) {}
   ApiResponse.success(res, "Logged out successfully");
 });
 
 const logoutAll = asyncHandler(async (req, res) => {
   await authService.logoutAll(req.user._id);
   authService.clearTokenCookies(res);
+  try {
+    const { getIO } = require("../config/socket");
+    const io = getIO();
+    if (io) {
+      io.emit("presence:update", {
+        userId: req.user._id,
+        clientRef: req.user.clientRef ? req.user.clientRef.toString() : null,
+        email: req.user.email ? req.user.email.toLowerCase() : null,
+        isOnline: false,
+        lastSeen: new Date(),
+      });
+    }
+  } catch (e) {}
   ApiResponse.success(res, "Logged out from all devices");
 });
 

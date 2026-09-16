@@ -9,7 +9,7 @@ const Client         = require("../models/Client");
 const logger         = require("../utils/logger");
 const { cloudinary } = require("../middlewares/upload");
 const notify         = require("../utils/notify");
-const { getIO }      = require("../config/socket");
+const { getIO, isUserOnline } = require("../config/socket");
 
 const uploadToCloudinary = (fileBuffer, originalname, mimetype) => {
   return new Promise((resolve, reject) => {
@@ -157,7 +157,17 @@ const getProjectConversation = asyncHandler(async (req, res) => {
   }
 
   await conversation.populate("participants", "name avatar role isOnline lastSeen email");
-  ApiResponse.success(res, "Conversation fetched", { conversation });
+  const convObj = conversation.toObject ? conversation.toObject() : JSON.parse(JSON.stringify(conversation));
+  if (convObj && Array.isArray(convObj.participants)) {
+    convObj.participants = convObj.participants.map((p) => {
+      const pId = (p._id || p).toString();
+      return {
+        ...p,
+        isOnline: typeof isUserOnline === "function" ? isUserOnline(pId) : Boolean(p.isOnline),
+      };
+    });
+  }
+  ApiResponse.success(res, "Conversation fetched", { conversation: convObj });
 });
 
 // Fetch paginated messages
@@ -480,7 +490,21 @@ const getOrCreateDirectConversation = asyncHandler(async (req, res) => {
   }
 
   await conversation.populate("participants", "name avatar role isOnline lastSeen email");
-  ApiResponse.success(res, "Direct conversation ready", { conversation, partner: targetUser });
+  const convObj = conversation.toObject ? conversation.toObject() : JSON.parse(JSON.stringify(conversation));
+  if (convObj && Array.isArray(convObj.participants)) {
+    convObj.participants = convObj.participants.map((p) => {
+      const pId = (p._id || p).toString();
+      return {
+        ...p,
+        isOnline: typeof isUserOnline === "function" ? isUserOnline(pId) : Boolean(p.isOnline),
+      };
+    });
+  }
+  let partnerObj = targetUser ? (targetUser.toObject ? targetUser.toObject() : JSON.parse(JSON.stringify(targetUser))) : null;
+  if (partnerObj) {
+    partnerObj.isOnline = typeof isUserOnline === "function" ? isUserOnline(partnerObj._id) : Boolean(partnerObj.isOnline);
+  }
+  ApiResponse.success(res, "Direct conversation ready", { conversation: convObj, partner: partnerObj });
 });
 
 // Provide production-ready high-availability ICE servers (STUN + TURN)
