@@ -483,9 +483,48 @@ const getOrCreateDirectConversation = asyncHandler(async (req, res) => {
   ApiResponse.success(res, "Direct conversation ready", { conversation, partner: targetUser });
 });
 
+// Provide production-ready high-availability ICE servers (STUN + TURN)
+const getIceServersConfig = asyncHandler(async (req, res) => {
+  const defaultIceServers = [
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun1.l.google.com:19302" },
+    { urls: "stun:stun2.l.google.com:19302" },
+    { urls: "stun:stun3.l.google.com:19302" },
+    { urls: "stun:stun4.l.google.com:19302" },
+    { urls: "stun:stun.cloudflare.com:3478" },
+    { urls: "stun:openrelay.metered.ca:80" },
+    {
+      urls: "turn:openrelay.metered.ca:80",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+    {
+      urls: "turn:openrelay.metered.ca:443",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+    {
+      urls: "turn:openrelay.metered.ca:443?transport=tcp",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+  ];
+
+  if (process.env.TURN_SERVER_URL) {
+    defaultIceServers.unshift({
+      urls: process.env.TURN_SERVER_URL,
+      username: process.env.TURN_USERNAME || "",
+      credential: process.env.TURN_PASSWORD || "",
+    });
+  }
+
+  ApiResponse.success(res, "ICE servers fetched", { iceServers: defaultIceServers });
+});
+
 module.exports = {
   getProjectConversation,
   getOrCreateDirectConversation,
+  getIceServersConfig,
   getMessages,
   sendMessage,
   uploadAttachment,

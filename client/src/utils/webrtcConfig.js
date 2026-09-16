@@ -1,3 +1,5 @@
+import api from "../services/api";
+
 export const RTC_CONFIG = {
   iceServers: [
     // 100% Free Global STUN Servers (Google & Cloudflare) - Zero Cost Forever
@@ -37,4 +39,23 @@ export const RTC_CONFIG = {
       : []),
   ],
   iceCandidatePoolSize: 10,
+};
+
+let cachedConfig = null;
+
+export const getResolvedRTCConfig = async () => {
+  if (cachedConfig) return cachedConfig;
+  try {
+    const { data } = await api.get("/chat/ice-servers");
+    if (data?.data?.iceServers && Array.isArray(data.data.iceServers) && data.data.iceServers.length > 0) {
+      cachedConfig = {
+        ...RTC_CONFIG,
+        iceServers: data.data.iceServers,
+      };
+      return cachedConfig;
+    }
+  } catch {
+    // Graceful fallback to static RTC_CONFIG
+  }
+  return RTC_CONFIG;
 };

@@ -6,6 +6,7 @@ const upload      = multer({ storage: multer.memoryStorage(), limits: { fileSize
 const {
   getProjectConversation,
   getOrCreateDirectConversation,
+  getIceServersConfig,
   getMessages,
   sendMessage,
   uploadAttachment,
@@ -15,6 +16,7 @@ const {
 
 router.use(protect);
 
+router.get("/ice-servers", getIceServersConfig);
 router.get("/project", getProjectConversation);
 router.get("/project/:projectId", getProjectConversation);
 router.get("/direct/:recipientId", getOrCreateDirectConversation);

@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { getSocket, connectSocket } from "../services/socketService";
-import { RTC_CONFIG } from "../utils/webrtcConfig";
+import { RTC_CONFIG, getResolvedRTCConfig } from "../utils/webrtcConfig";
 import toast from "react-hot-toast";
 
 // Safety shim for react-hot-toast info calls across all browser bundles
@@ -215,8 +215,16 @@ export const useWebRTC = (targetUserId, defaultCallType = "video") => {
       const stream = await getMediaStream(type === "video");
       setLocalStream(stream);
 
-      const pc = new RTCPeerConnection(RTC_CONFIG);
+      const rtcConfig = await getResolvedRTCConfig();
+      const pc = new RTCPeerConnection(rtcConfig);
       peerConnectionRef.current = pc;
+
+      pc.oniceconnectionstatechange = () => {
+        if (pc.iceConnectionState === "failed" && typeof pc.restartIce === "function") {
+          console.warn("ICE connection failed, attempting auto-restart...");
+          pc.restartIce();
+        }
+      };
 
       stream.getTracks().forEach((t) => pc.addTrack(t, stream));
 
@@ -249,8 +257,16 @@ export const useWebRTC = (targetUserId, defaultCallType = "video") => {
       const stream = await getMediaStream(incomingCall.callType === "video");
       setLocalStream(stream);
 
-      const pc = new RTCPeerConnection(RTC_CONFIG);
+      const rtcConfig = await getResolvedRTCConfig();
+      const pc = new RTCPeerConnection(rtcConfig);
       peerConnectionRef.current = pc;
+
+      pc.oniceconnectionstatechange = () => {
+        if (pc.iceConnectionState === "failed" && typeof pc.restartIce === "function") {
+          console.warn("ICE connection failed, attempting auto-restart...");
+          pc.restartIce();
+        }
+      };
 
       stream.getTracks().forEach((t) => pc.addTrack(t, stream));
 
