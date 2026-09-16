@@ -14,6 +14,7 @@ import VoiceRecorder from "../../components/chat/VoiceRecorder";
 import ScheduleMeetingModal from "../../components/chat/ScheduleMeetingModal";
 import { CustomVoicePlayer, FileAttachmentCard, ImageAttachmentCard } from "../../components/chat/AttachmentViews";
 import { getInitials, relativeTime, formatMessageTime } from "../../utils/helpers";
+import { getSocket } from "../../services/socketService";
 import api from "../../services/api";
 import toast from "react-hot-toast";
 
@@ -39,39 +40,27 @@ const GCard = ({ children, delay, className, glow }) => (
 const ClientMessages = () => {
   const user = useAuthStore((state) => state.user);
   const {
-    activeConversation,
-    messages,
-    onlinePresence,
-    fetchProjectConversation,
-    fetchConversations,
-    fetchMessages,
-    sendMessage,
-    isTyping,
-    deleteMessage,
-    replyingTo,
-    setReplyTo,
-    clearReplyTo,
-    toggleReaction,
-    openDirectChat,
+    activeConversation, messages, typingUsers, onlinePresence,
+    fetchProjectConversation, fetchConversations, sendMessage,
+    fetchMessages, deleteMessage, toggleReaction,
+    replyingTo, setReplyTo, clearReplyTo
   } = useChatStore();
 
-  const [inputText, setInputText]           = useState("");
+  const [inputText, setInputText]               = useState("");
+  const [isRefreshing, setIsRefreshing]         = useState(false);
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
+  const [uploadingFile, setUploadingFile]       = useState(false);
   const [stagedAttachment, setStagedAttachment] = useState(null);
-  const [showVoiceRecorder, setShowVoice]  = useState(false);
-  const [showScheduleModal, setShowSchedule]= useState(false);
-  const [uploadingFile, setUploadingFile]   = useState(false);
-  const [searchOpen, setSearchOpen]         = useState(false);
-  const [searchQuery, setSearchQuery]       = useState("");
-  const [moreMenuOpen, setMoreMenuOpen]     = useState(false);
-  const [sidebarMenuOpen, setSidebarMenuOpen] = useState(false);
-  const [deleteModalMsg, setDeleteModalMsg] = useState(null);
-  const [isRefreshing, setIsRefreshing]     = useState(false);
+  const [moreMenuOpen, setMoreMenuOpen]         = useState(false);
+  const [sidebarMenuOpen, setSidebarMenuOpen]   = useState(false);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
       if (fetchConversations) await fetchConversations();
       if (activeConversation?._id && fetchMessages) await fetchMessages(activeConversation._id);
+      const s = getSocket();
+      if (s && s.connected) s.emit("presence:query");
     } catch (e) {
     } finally {
       setTimeout(() => setIsRefreshing(false), 500);
@@ -85,20 +74,51 @@ const ClientMessages = () => {
   const [selectedContactId, setSelectedContactId] = useState("");
   const [contactSearch, setContactSearch]       = useState("");
 
-  const partner = activeConversation?.participants?.find((p) => (p._id || p) !== user?._id) || null;
+  const getContactPresence = (c) => {
+    if (!c) return { isOnline: false, lastSeen: null };
+    const id = (c._id || c.id || (typeof c === "string" ? c : "")).toString();
+    const email = (c.email || "").toLowerCase();
+    const clientRef = c.clientRef ? c.clientRef.toString() : "";
 
-  const presence = partner ? (onlinePresence[partner._id || partner] || { isOnline: true, lastSeen: new Date() }) : { isOnline: false };
+    if (id && onlinePresence[id] !== undefined) return onlinePresence[id];
+    if (clientRef && onlinePresence[clientRef] !== undefined) return onlinePresence[clientRef];
+    if (email && onlinePresence[email] !== undefined) return onlinePresence[email];
 
-  const dbParticipants = (activeConversation?.participants || []).filter(p => (p._id || p) !== user?._id).map((p) => ({
-    id: p._id || p,
-    name: p.name || p.email || "Freelancer Lead",
-    role: p.role === "freelancer" ? "Freelancer Lead" : "Project Team",
-    avatar: p.avatar || "",
-    isOnline: true,
-    lastMsg: messages.length > 0 ? (messages[messages.length - 1].content || "Sent an attachment") : "Project conversation ready",
-    time: messages.length > 0 ? relativeTime(messages[messages.length - 1].createdAt) : "Just now",
-    badge: "Team",
-  }));
+    return {
+      isOnline: Boolean(c.isOnline),
+      lastSeen: c.lastSeen || null,
+    };
+  };
+
+  const partner = activeConversation?.participants?.find((p) => {
+    const pId = (p._id || p.id || (typeof p === "string" ? p : "")).toString();
+    const myId = (user?._id || user?.id || "").toString();
+    return pId && myId && pId !== myId;
+  }) || null;
+
+  const presence = getContactPresence(partner);
+
+  const dbParticipants = (activeConversation?.participants || [])
+    .filter((p) => {
+      const pId = (p._id || p.id || (typeof p === "string" ? p : "")).toString();
+      const myId = (user?._id || user?.id || "").toString();
+      return pId && myId && pId !== myId;
+    })
+    .map((p) => {
+      const id = (p._id || p.id || (typeof p === "string" ? p : "")).toString();
+      const pres = getContactPresence(p);
+      return {
+        id,
+        name: p.name || p.email || "Freelancer Lead",
+        role: p.role === "freelancer" ? "Freelancer Lead" : "Project Team",
+        avatar: p.avatar || "",
+        isOnline: pres.isOnline,
+        lastSeen: pres.lastSeen,
+        lastMsg: messages.length > 0 ? (messages[messages.length - 1].content || "Sent an attachment") : "Project conversation ready",
+        time: messages.length > 0 ? relativeTime(messages[messages.length - 1].createdAt) : "Just now",
+        badge: "Team",
+      };
+    });
 
   const contactsList = dbParticipants;
 
@@ -108,6 +128,8 @@ const ClientMessages = () => {
   );
 
   const partnerUserId = partner?._id || partner?.id || (typeof partner === "string" ? partner : "") || selectedContactId;
+
+  const isTyping = Boolean(typingUsers[activeConversation?._id]?.length > 0);
 
   const {
     startCall, acceptCall, rejectCall, endCall,
@@ -127,6 +149,8 @@ const ClientMessages = () => {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
     fetchProjectConversation().catch(() => {});
+    const s = getSocket();
+    if (s && s.connected) s.emit("presence:query");
   }, []);
 
   useEffect(() => {
@@ -407,8 +431,8 @@ const ClientMessages = () => {
                           getInitials(contact.name)
                         )}
                       </div>
-                      {contact.isOnline ? (
-                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-[#111b21] absolute bottom-0 right-0" />
+                      {getContactPresence(contact).isOnline ? (
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-[#111b21] absolute bottom-0 right-0 shadow-sm" />
                       ) : (
                         <span className="w-2.5 h-2.5 rounded-full bg-slate-500 border-2 border-[#111b21] absolute bottom-0 right-0" />
                       )}
@@ -486,7 +510,9 @@ const ClientMessages = () => {
                       ) : presence.isOnline ? (
                         <span className="text-emerald-400 font-medium">online</span>
                       ) : (
-                        <span className="text-slate-400">offline</span>
+                        <span className="text-slate-400">
+                          {presence.lastSeen ? `last seen ${relativeTime(presence.lastSeen)}` : "offline"}
+                        </span>
                       )}
                     </p>
                   </div>

@@ -42,8 +42,16 @@ const useSyncEvents = () => {
       chatStore.setTyping(conversationId, "", false);
     };
 
-    const onPresenceUpdate = ({ userId, isOnline, lastSeen }) => {
-      chatStore.updatePresence(userId, isOnline, lastSeen);
+    const onPresenceSync = ({ onlineUserIds }) => {
+      chatStore.setOnlinePresenceBatch(onlineUserIds);
+    };
+
+    const onPresenceUpdate = ({ userId, isOnline, lastSeen, clientRef, email }) => {
+      chatStore.updatePresence(userId, isOnline, lastSeen, clientRef, email);
+    };
+
+    const onSocketConnect = () => {
+      socket.emit("presence:query");
     };
 
     // ── Freelancer / shared events ──────────────────────
@@ -121,6 +129,12 @@ const useSyncEvents = () => {
     socket.on("chat:typing",         onChatTyping);
     socket.on("chat:stop_typing",    onChatStopTyping);
     socket.on("presence:update",     onPresenceUpdate);
+    socket.on("presence:sync",       onPresenceSync);
+    socket.on("connect",             onSocketConnect);
+
+    if (socket.connected) {
+      socket.emit("presence:query");
+    }
 
     return () => {
       socket.off("notification",        onNotification);
@@ -138,6 +152,8 @@ const useSyncEvents = () => {
       socket.off("chat:typing",         onChatTyping);
       socket.off("chat:stop_typing",    onChatStopTyping);
       socket.off("presence:update",     onPresenceUpdate);
+      socket.off("presence:sync",       onPresenceSync);
+      socket.off("connect",             onSocketConnect);
     };
   }, [user?.role]);
 };

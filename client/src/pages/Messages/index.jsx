@@ -17,6 +17,7 @@ import CallModal from "../../components/chat/CallModal";
 import ScheduleMeetingModal from "../../components/chat/ScheduleMeetingModal";
 import { CustomVoicePlayer, FileAttachmentCard, ImageAttachmentCard } from "../../components/chat/AttachmentViews";
 import { getInitials, relativeTime, formatMessageTime } from "../../utils/helpers";
+import { getSocket } from "../../services/socketService";
 import api from "../../services/api";
 import toast from "react-hot-toast";
 
@@ -65,6 +66,8 @@ const Messages = () => {
     try {
       if (fetchConversations) await fetchConversations();
       if (activeConversation?._id && fetchMessages) await fetchMessages(activeConversation._id);
+      const s = getSocket();
+      if (s && s.connected) s.emit("presence:query");
     } catch (e) {
     } finally {
       setTimeout(() => setIsRefreshing(false), 500);
@@ -78,37 +81,71 @@ const Messages = () => {
   const [selectedContactId, setSelectedContactId] = useState("");
   const [contactSearch, setContactSearch]       = useState("");
 
-  const partner = activeConversation?.participants?.find((p) => (p._id || p) !== user?._id) || null;
+  const getContactPresence = (c) => {
+    if (!c) return { isOnline: false, lastSeen: null };
+    const id = (c._id || c.id || (typeof c === "string" ? c : "")).toString();
+    const email = (c.email || "").toLowerCase();
+    const clientRef = c.clientRef ? c.clientRef.toString() : "";
 
-  const presence = partner ? (onlinePresence[partner._id || partner] || { isOnline: true, lastSeen: new Date() }) : { isOnline: false };
+    if (id && onlinePresence[id] !== undefined) return onlinePresence[id];
+    if (clientRef && onlinePresence[clientRef] !== undefined) return onlinePresence[clientRef];
+    if (email && onlinePresence[email] !== undefined) return onlinePresence[email];
+
+    return {
+      isOnline: Boolean(c.isOnline),
+      lastSeen: c.lastSeen || null,
+    };
+  };
+
+  const partner = activeConversation?.participants?.find((p) => {
+    const pId = (p._id || p.id || (typeof p === "string" ? p : "")).toString();
+    const myId = (user?._id || user?.id || "").toString();
+    return pId && myId && pId !== myId;
+  }) || null;
+
+  const presence = getContactPresence(partner);
 
   // Participants from active project conversation (e.g. approved proposals / client projects)
   const convParticipants = (activeConversation?.participants || [])
-    .filter((p) => (p._id || p) !== user?._id)
-    .map((p) => ({
-      id: p._id || p,
-      email: p.email || "",
-      name: p.name || p.email || "Client Contact",
-      role: p.role === "client" ? "Client / Project Owner" : (p.company || "Client"),
-      avatar: p.avatar || "",
-      isOnline: true,
-      lastMsg: messages.length > 0 ? (messages[messages.length - 1].content || "Sent an attachment") : (activeConversation?.lastMessage?.text || "Project conversation ready"),
-      time: messages.length > 0 ? relativeTime(messages[messages.length - 1].createdAt) : relativeTime(activeConversation?.updatedAt),
-      badge: "Client",
-    }));
+    .filter((p) => {
+      const pId = (p._id || p.id || (typeof p === "string" ? p : "")).toString();
+      const myId = (user?._id || user?.id || "").toString();
+      return pId && myId && pId !== myId;
+    })
+    .map((p) => {
+      const id = (p._id || p.id || (typeof p === "string" ? p : "")).toString();
+      const pres = getContactPresence(p);
+      return {
+        id,
+        email: p.email || "",
+        name: p.name || p.email || "Client Contact",
+        role: p.role === "client" ? "Client / Project Owner" : (p.company || "Client"),
+        avatar: p.avatar || "",
+        isOnline: pres.isOnline,
+        lastSeen: pres.lastSeen,
+        lastMsg: messages.length > 0 ? (messages[messages.length - 1].content || "Sent an attachment") : (activeConversation?.lastMessage?.text || "Project conversation ready"),
+        time: messages.length > 0 ? relativeTime(messages[messages.length - 1].createdAt) : relativeTime(activeConversation?.updatedAt),
+        badge: "Client",
+      };
+    });
 
   // CRM client contacts fallback
-  const crmContacts = (clients || []).map((c) => ({
-    id: c._id,
-    email: c.email || "",
-    name: c.name || c.company || "Client Contact",
-    role: c.company || c.email || "Client",
-    avatar: c.avatar || "",
-    isOnline: true,
-    lastMsg: "Project conversation ready",
-    time: relativeTime(c.updatedAt || c.createdAt),
-    badge: "Client",
-  }));
+  const crmContacts = (clients || []).map((c) => {
+    const id = (c._id || c.id || "").toString();
+    const pres = getContactPresence(c);
+    return {
+      id,
+      email: c.email || "",
+      name: c.name || c.company || "Client Contact",
+      role: c.company || c.email || "Client",
+      avatar: c.avatar || "",
+      isOnline: pres.isOnline,
+      lastSeen: pres.lastSeen,
+      lastMsg: "Project conversation ready",
+      time: relativeTime(c.updatedAt || c.createdAt),
+      badge: "Client",
+    };
+  });
 
   // Deduplicate active conversation participants and CRM contacts by ID and Email
   const existingEmails = new Set(convParticipants.map((c) => (c.email || "").toLowerCase()).filter(Boolean));
@@ -152,6 +189,8 @@ const Messages = () => {
     window.scrollTo({ top: 0, behavior: "instant" });
     fetchProjectConversation().catch(() => {});
     fetchClients().catch(() => {});
+    const s = getSocket();
+    if (s && s.connected) s.emit("presence:query");
   }, []);
 
   useEffect(() => {
@@ -456,8 +495,8 @@ const Messages = () => {
                           getInitials(contact.name)
                         )}
                       </div>
-                      {contact.isOnline ? (
-                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-[#111b21] absolute bottom-0 right-0" />
+                      {getContactPresence(contact).isOnline ? (
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-[#111b21] absolute bottom-0 right-0 shadow-sm" />
                       ) : (
                         <span className="w-2.5 h-2.5 rounded-full bg-slate-500 border-2 border-[#111b21] absolute bottom-0 right-0" />
                       )}
@@ -535,7 +574,9 @@ const Messages = () => {
                       ) : presence.isOnline ? (
                         <span className="text-emerald-400 font-medium">online</span>
                       ) : (
-                        <span className="text-slate-400">offline</span>
+                        <span className="text-slate-400">
+                          {presence.lastSeen ? `last seen ${relativeTime(presence.lastSeen)}` : "offline"}
+                        </span>
                       )}
                     </p>
                   </div>

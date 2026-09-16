@@ -10,6 +10,14 @@ const PORT = process.env.PORT || 5000;
 const start = async () => {
   const conn = await connectDB();
 
+  // Reset dangling online statuses from any prior process crash/restart
+  try {
+    const User = require("./models/User");
+    await User.updateMany({ isOnline: true }, { isOnline: false });
+  } catch (err) {
+    logger.warn(`Could not reset user online states: ${err.message}`);
+  }
+
   // Schedule cron jobs after DB is connected
   try {
     const cron = require("node-cron");

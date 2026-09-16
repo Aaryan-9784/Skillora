@@ -35,6 +35,9 @@ const useChatStore = create((set, get) => ({
         socket.emit("chat:join", { conversationId: conv._id });
       }
       set({ activeConversation: conv });
+      if (conv?.participants) {
+        get().syncParticipantsPresence(conv.participants);
+      }
       if (conv?._id) get().fetchMessages(conv._id);
     } finally {
       set({ loading: false });
@@ -60,6 +63,9 @@ const useChatStore = create((set, get) => ({
         socket.emit("chat:join", { conversationId: conv._id });
       }
       set({ activeConversation: conv });
+      if (conv?.participants) {
+        get().syncParticipantsPresence(conv.participants);
+      }
       if (conv?._id) await get().fetchMessages(conv._id);
       return conv;
     } finally {
@@ -184,13 +190,85 @@ const useChatStore = create((set, get) => ({
     }));
   },
 
-  updatePresence: (userId, isOnline, lastSeen) => {
-    set((state) => ({
-      onlinePresence: {
-        ...state.onlinePresence,
-        [userId]: { isOnline, lastSeen },
-      },
-    }));
+  syncParticipantsPresence: (participants) => {
+    if (!Array.isArray(participants)) return;
+    set((state) => {
+      const updated = { ...state.onlinePresence };
+      participants.forEach((p) => {
+        if (!p) return;
+        const id = (p._id || p.id || (typeof p === "string" ? p : "")).toString();
+        const clientRef = p.clientRef ? p.clientRef.toString() : "";
+        const email = p.email ? p.email.toString().toLowerCase() : "";
+        const presenceData = {
+          isOnline: Boolean(p.isOnline),
+          lastSeen: p.lastSeen || null,
+        };
+        // If not already in onlinePresence, seed it with DB values
+        if (id && updated[id] === undefined) updated[id] = presenceData;
+        if (clientRef && updated[clientRef] === undefined) updated[clientRef] = presenceData;
+        if (email && updated[email] === undefined) updated[email] = presenceData;
+      });
+      return { onlinePresence: updated };
+    });
+  },
+
+  setOnlinePresenceBatch: (onlineUserIds = []) => {
+    set((state) => {
+      const updated = { ...state.onlinePresence };
+      const onlineSet = new Set((onlineUserIds || []).map((id) => id?.toString()));
+      const onlineSetLower = new Set((onlineUserIds || []).map((id) => id?.toString().toLowerCase()));
+
+      // Update existing entries: if not in onlineSet, mark offline
+      Object.keys(updated).forEach((key) => {
+        if (!onlineSet.has(key) && !onlineSetLower.has(key.toLowerCase())) {
+          updated[key] = {
+            ...updated[key],
+            isOnline: false,
+          };
+        }
+      });
+
+      // Mark all incoming online IDs as online
+      (onlineUserIds || []).forEach((id) => {
+        if (!id) return;
+        const idStr = id.toString();
+        updated[idStr] = {
+          ...(updated[idStr] || {}),
+          isOnline: true,
+          lastSeen: null,
+        };
+        updated[idStr.toLowerCase()] = {
+          ...(updated[idStr.toLowerCase()] || {}),
+          isOnline: true,
+          lastSeen: null,
+        };
+      });
+
+      return { onlinePresence: updated };
+    });
+  },
+
+  updatePresence: (userId, isOnline, lastSeen, clientRef, email) => {
+    set((state) => {
+      const updated = { ...state.onlinePresence };
+      const statusObj = {
+        isOnline: Boolean(isOnline),
+        lastSeen: lastSeen || (isOnline ? null : new Date()),
+      };
+      if (userId) {
+        const uId = userId.toString();
+        updated[uId] = statusObj;
+      }
+      if (clientRef) {
+        const cRef = clientRef.toString();
+        updated[cRef] = statusObj;
+      }
+      if (email) {
+        const em = email.toString().toLowerCase();
+        updated[em] = statusObj;
+      }
+      return { onlinePresence: updated };
+    });
   },
 }));
 

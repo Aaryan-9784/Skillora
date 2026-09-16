@@ -47,6 +47,24 @@ const initSocket = (httpServer) => {
     }
   });
 
+  const getOnlineIdentifiers = async () => {
+    try {
+      const onlineUserIds = Array.from(userSockets.keys());
+      if (!onlineUserIds.length) return [];
+      const users = await User.find({ _id: { $in: onlineUserIds } }).select("_id clientRef email").lean();
+      const ids = [];
+      users.forEach((u) => {
+        ids.push(u._id.toString());
+        if (u.clientRef) ids.push(u.clientRef.toString());
+        if (u.email) ids.push(u.email.toLowerCase());
+      });
+      return Array.from(new Set(ids));
+    } catch (e) {
+      logger.warn(`Failed getting online identifiers: ${e.message}`);
+      return Array.from(userSockets.keys());
+    }
+  };
+
   // 🔌 Connection handler
   io.on("connection", async (socket) => {
     const { userId } = socket;
@@ -60,15 +78,30 @@ const initSocket = (httpServer) => {
 
     // Update presence in DB & broadcast to all connected clients
     try {
-      const user = await User.findById(userId).select("role").lean();
+      const user = await User.findById(userId).select("role clientRef email").lean();
       if (user?.role === "admin")  socket.join("role:admin");
       if (user?.role === "client") socket.join("role:client");
 
       await User.findByIdAndUpdate(userId, { isOnline: true, lastSeen: new Date() });
-      io.emit("presence:update", { userId, isOnline: true });
+      io.emit("presence:update", {
+        userId,
+        clientRef: user?.clientRef ? user.clientRef.toString() : null,
+        email: user?.email ? user.email.toLowerCase() : null,
+        isOnline: true,
+      });
+
+      // Send initial snapshot of all currently online users to this socket
+      const onlineUserIds = await getOnlineIdentifiers();
+      socket.emit("presence:sync", { onlineUserIds });
     } catch (e) {
       logger.error(`Failed presence update: ${e.message}`);
     }
+
+    // 📡 Client query for real-time presence snapshot
+    socket.on("presence:query", async () => {
+      const onlineUserIds = await getOnlineIdentifiers();
+      socket.emit("presence:sync", { onlineUserIds });
+    });
 
     // 💬 Conversation Room Joins
     socket.on("chat:join", ({ conversationId }) => {
@@ -238,8 +271,22 @@ const initSocket = (httpServer) => {
         if (sockets.size === 0) {
           userSockets.delete(userId);
           const lastSeen = new Date();
-          await User.findByIdAndUpdate(userId, { isOnline: false, lastSeen });
-          io.emit("presence:update", { userId, isOnline: false, lastSeen });
+          let clientRef = null;
+          let email = null;
+          try {
+            const user = await User.findByIdAndUpdate(userId, { isOnline: false, lastSeen }).select("clientRef email").lean();
+            if (user?.clientRef) clientRef = user.clientRef.toString();
+            if (user?.email) email = user.email.toLowerCase();
+          } catch (e) {
+            logger.error(`Failed presence disconnect update: ${e.message}`);
+          }
+          io.emit("presence:update", {
+            userId,
+            clientRef,
+            email,
+            isOnline: false,
+            lastSeen,
+          });
         }
       }
       logger.info(`🔌 Socket disconnected: ${socket.id}`);
