@@ -890,8 +890,8 @@ const Messages = () => {
         onToggleVideo={toggleVideo}
         onToggleScreenShare={toggleScreenShare}
         callDuration={callDuration}
-        partnerName={partner?.name || "Client"}
-        partnerAvatar={partner?.avatar || ""}
+        partnerName={incomingCall?.callerName || partner?.name || "Client"}
+        partnerAvatar={incomingCall?.callerAvatar || partner?.avatar || ""}
       />
 
       {/* Schedule Meeting Modal */}

@@ -74,11 +74,11 @@ export const useWebRTC = (targetUserId, defaultCallType = "video") => {
     const setupListeners = (sock) => {
       if (!sock) return null;
 
-      const onIncoming = ({ callerId, offer, callType, projectId }) => {
-        setIncomingCall({ callerId, offer, callType, projectId });
+      const onIncoming = ({ callerId, callerName, callerAvatar, offer, callType, projectId }) => {
+        setIncomingCall({ callerId, callerName, callerAvatar, offer, callType, projectId });
         setActiveCallType(callType || "video");
         setCallState("incoming");
-        toast(`Incoming ${callType === "voice" ? "voice" : "video"} call…`, { icon: "📞" });
+        toast(`Incoming ${callType === "voice" ? "voice" : "video"} call from ${callerName || "User"}…`, { icon: "📞" });
       };
 
       const onAnswered = async ({ answer }) => {

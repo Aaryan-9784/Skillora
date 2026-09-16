@@ -841,8 +841,8 @@ const ClientMessages = () => {
         onToggleVideo={toggleVideo}
         onToggleScreenShare={toggleScreenShare}
         callDuration={callDuration}
-        partnerName={partner?.name || "Skillora Team"}
-        partnerAvatar={partner?.avatar || ""}
+        partnerName={incomingCall?.callerName || partner?.name || "Skillora Team"}
+        partnerAvatar={incomingCall?.callerAvatar || partner?.avatar || ""}
       />
 
       {/* Schedule Meeting Modal */}

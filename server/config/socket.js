@@ -135,7 +135,7 @@ const initSocket = (httpServer) => {
     };
 
     // 📞 WebRTC Call Signaling (Voice & Video)
-    socket.on("call:initiate", async ({ targetUserId, offer, callType, projectId }) => {
+    socket.on("call:initiate", async ({ targetUserId, offer, callType, projectId, callerName, callerAvatar }) => {
       if (!targetUserId || !offer) return;
       const resolvedTargetId = await resolveUserId(targetUserId);
       activeCalls.set(`${userId}:${resolvedTargetId}`, {
@@ -145,8 +145,21 @@ const initSocket = (httpServer) => {
         projectId: projectId || undefined,
         startedAt: new Date(),
       });
+
+      let name = callerName;
+      let avatar = callerAvatar;
+      if (!name) {
+        try {
+          const callerUser = await User.findById(userId).select("name avatar").lean();
+          name = callerUser?.name || "User";
+          avatar = callerUser?.avatar || "";
+        } catch (e) {}
+      }
+
       io.to(`user:${resolvedTargetId}`).emit("call:incoming", {
         callerId: userId,
+        callerName: name || "User",
+        callerAvatar: avatar || "",
         offer,
         callType: callType || "video",
         projectId,
