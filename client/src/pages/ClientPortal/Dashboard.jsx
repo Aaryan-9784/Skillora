@@ -279,7 +279,7 @@ const ProjectRow = ({ project, delay }) => {
 const ClientDashboard = () => {
   const {
     invoices, projects, loading, error,
-    revenueAnalytics, outstandingBalance, aiInsights,
+    revenueAnalytics, aiInsights,
     fetchDashboard, fetchAnalytics, fetchAiInsights,
     patchInvoice, patchProject,
   } = useClientPortalStore();

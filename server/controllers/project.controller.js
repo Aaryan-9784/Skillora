@@ -4,6 +4,30 @@ const projectService  = require("../services/project.service");
 const aiService       = require("../services/ai.service");
 const { emitToUser }  = require("../config/socket");
 
+/**
+ * Broadcast event to all project stakeholders (owner, assigned freelancer, clientUser).
+ */
+const broadcastProjectEvent = async (projectId, event, data, alsoRefreshDashboard = false) => {
+  if (!projectId) return;
+  try {
+    const Project = require("../models/Project");
+    const proj = await Project.findById(projectId).select("owner clientUser assignedFreelancer").lean();
+    if (!proj) return;
+    const recipients = new Set([
+      proj.owner?.toString(),
+      proj.clientUser?.toString(),
+      proj.assignedFreelancer?.toString(),
+    ]);
+    recipients.delete(undefined);
+    recipients.forEach((userId) => {
+      emitToUser(userId, event, data);
+      if (alsoRefreshDashboard) {
+        emitToUser(userId, "dashboard:refresh", {});
+      }
+    });
+  } catch (e) {}
+};
+
 // ── Projects ──────────────────────────────────────────────
 const createProject = asyncHandler(async (req, res) => {
   const project = await projectService.createProject(req.user._id, req.body);
@@ -26,12 +50,7 @@ const getProject = asyncHandler(async (req, res) => {
 
 const updateProject = asyncHandler(async (req, res) => {
   const project = await projectService.updateProject(req.params.id, req.user._id, req.body);
-  try {
-    emitToUser(req.user._id, "project:updated", { projectId: project._id, status: project.status });
-    if (project.clientUser) emitToUser(project.clientUser, "project:updated", { projectId: project._id, status: project.status });
-    if (project.assignedFreelancer) emitToUser(project.assignedFreelancer, "project:updated", { projectId: project._id, status: project.status });
-    emitToUser(req.user._id, "dashboard:refresh", {});
-  } catch (e) {}
+  broadcastProjectEvent(project._id, "project:updated", { projectId: project._id, status: project.status }, true);
   ApiResponse.success(res, "Project updated", { project });
 });
 
@@ -52,10 +71,8 @@ const getProjectStats = asyncHandler(async (req, res) => {
 // ── Tasks ─────────────────────────────────────────────────
 const createTask = asyncHandler(async (req, res) => {
   const task = await projectService.createTask(req.user._id, req.body);
-  try {
-    emitToUser(req.user._id, "task:updated", { projectId: task.project, taskId: task._id });
-    emitToUser(req.user._id, "dashboard:refresh", {});
-  } catch (e) {}
+  const pId = task.projectId ? task.projectId.toString() : req.body.projectId;
+  broadcastProjectEvent(pId, "task:updated", { projectId: pId, taskId: task._id }, true);
   ApiResponse.created(res, "Task created", { task });
 });
 
@@ -66,25 +83,21 @@ const getTasksByProject = asyncHandler(async (req, res) => {
 
 const updateTask = asyncHandler(async (req, res) => {
   const task = await projectService.updateTask(req.params.id, req.user._id, req.body);
-  try {
-    emitToUser(req.user._id, "task:updated", { projectId: task?.project, taskId: task?._id || req.params.id });
-  } catch (e) {}
+  const pId = task?.projectId ? task.projectId.toString() : null;
+  broadcastProjectEvent(pId, "task:updated", { projectId: pId, taskId: task?._id || req.params.id }, false);
   ApiResponse.success(res, "Task updated", { task });
 });
 
 const reorderTasks = asyncHandler(async (req, res) => {
   await projectService.reorderTasks(req.user._id, req.params.id, req.body.orderedIds);
-  try {
-    emitToUser(req.user._id, "task:updated", { projectId: req.params.id });
-  } catch (e) {}
+  broadcastProjectEvent(req.params.id, "task:updated", { projectId: req.params.id }, false);
   ApiResponse.success(res, "Tasks reordered");
 });
 
 const deleteTask = asyncHandler(async (req, res) => {
-  await projectService.deleteTask(req.params.id, req.user._id);
-  try {
-    emitToUser(req.user._id, "task:updated", { taskId: req.params.id });
-  } catch (e) {}
+  const result = await projectService.deleteTask(req.params.id, req.user._id);
+  const pId = result?.projectId ? result.projectId.toString() : null;
+  broadcastProjectEvent(pId, "task:updated", { taskId: req.params.id, projectId: pId }, false);
   ApiResponse.success(res, "Task deleted");
 });
 

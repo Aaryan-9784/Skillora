@@ -3,6 +3,8 @@ const ApiResponse  = require("../utils/ApiResponse");
 const ApiError    = require("../utils/ApiError");
 const Review      = require("../models/Review");
 const Project     = require("../models/Project");
+const User        = require("../models/User");
+const notify      = require("../utils/notify");
 
 /**
  * Create a new project review
@@ -31,6 +33,30 @@ exports.createReview = asyncHandler(async (req, res) => {
     deadlineRating: deadlineRating || 5,
     comment,
   });
+
+  // Recalculate average rating & total reviews for reviewee
+  const userReviews = await Review.find({ reviewee: revieweeId });
+  const totalReviews = userReviews.length;
+  const avgRating = totalReviews > 0
+    ? Math.round((userReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / totalReviews) * 10) / 10
+    : 0;
+
+  await User.findByIdAndUpdate(revieweeId, {
+    averageRating: avgRating,
+    totalReviews: totalReviews,
+  });
+
+  try {
+    await notify({
+      recipient: revieweeId,
+      type: "review_received",
+      title: "New Review Received",
+      message: `${req.user.name || "A user"} gave you a ${rating}-star review on "${project.title}".`,
+      link: `/profile/${revieweeId}`,
+      refModel: "Review",
+      refId: review._id,
+    });
+  } catch (e) {}
 
   ApiResponse.created(res, "Review submitted successfully", { review });
 });

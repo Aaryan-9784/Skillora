@@ -2,7 +2,7 @@ import { create } from "zustand";
 import api from "../services/api";
 import toast from "react-hot-toast";
 
-const useProjectStore = create((set) => ({
+const useProjectStore = create((set, get) => ({
   projects:       [],
   myProposals:   [],
   currentProject: null,
@@ -44,6 +44,10 @@ const useProjectStore = create((set) => ({
     } finally {
       set({ isLoading: false });
     }
+  },
+
+  fetchProject: async (id) => {
+    return get().fetchProjectById(id);
   },
 
   createProject: async (projectData) => {

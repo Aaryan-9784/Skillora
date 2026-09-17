@@ -1,9 +1,35 @@
+const mongoose     = require("mongoose");
 const Project      = require("../models/Project");
 const Task         = require("../models/Task");
 const Client       = require("../models/Client");
 const ApiError     = require("../utils/ApiError");
 const QueryBuilder = require("../utils/queryBuilder");
 const notify       = require("../utils/notify");
+
+/**
+ * Helper to check if a user is authorized to access a project
+ * (as owner, assigned freelancer, clientUser, or linked client).
+ */
+const findAccessibleProject = async (projectId, userOrId) => {
+  if (!projectId || !mongoose.Types.ObjectId.isValid(projectId)) return null;
+  const userId = typeof userOrId === "object" && userOrId?._id ? userOrId._id : userOrId;
+  const clientRef = typeof userOrId === "object" ? userOrId.clientRef : null;
+
+  const orConditions = [
+    { owner: userId },
+    { assignedFreelancer: userId },
+    { clientUser: userId },
+  ];
+  if (clientRef) {
+    orConditions.push({ clientId: clientRef });
+  }
+
+  return Project.findOne({
+    _id: projectId,
+    $or: orConditions,
+    isDeleted: { $ne: true },
+  });
+};
 
 // ── Projects ──────────────────────────────────────────────
 
@@ -32,8 +58,16 @@ const createProject = async (ownerId, data) => {
   return project;
 };
 
-const getProjects = async (ownerId, reqQuery = {}) => {
-  const baseQuery = Project.find({ owner: ownerId });
+const getProjects = async (userId, reqQuery = {}) => {
+  const baseQuery = Project.find({
+    $or: [
+      { owner: userId },
+      { assignedFreelancer: userId },
+      { clientUser: userId },
+    ],
+    isDeleted: { $ne: true },
+  });
+
   return new QueryBuilder(baseQuery, reqQuery)
     .filter()
     .search(["title", "description"])
@@ -41,35 +75,63 @@ const getProjects = async (ownerId, reqQuery = {}) => {
     .paginate(10)
     .lean()
     .populate("clientId", "name email company avatar")
+    .populate("assignedFreelancer", "name email avatar")
+    .populate("owner", "name email avatar")
     .exec();
 };
 
-const getProjectById = async (projectId, ownerId) => {
-  const project = await Project.findOne({ _id: projectId, owner: ownerId })
+const getProjectById = async (projectId, userId) => {
+  const project = await Project.findOne({
+    _id: projectId,
+    $or: [
+      { owner: userId },
+      { assignedFreelancer: userId },
+      { clientUser: userId },
+    ],
+    isDeleted: { $ne: true },
+  })
     .populate("clientId", "name email company phone avatar")
+    .populate("assignedFreelancer", "name email avatar")
+    .populate("owner", "name email avatar")
     .lean({ virtuals: true });
   if (!project) throw ApiError.notFound("Project not found");
   return project;
 };
 
-const updateProject = async (projectId, ownerId, updates) => {
+const updateProject = async (projectId, userId, updates) => {
   const project = await Project.findOneAndUpdate(
-    { _id: projectId, owner: ownerId },
+    {
+      _id: projectId,
+      $or: [
+        { owner: userId },
+        { assignedFreelancer: userId },
+        { clientUser: userId },
+      ],
+      isDeleted: { $ne: true },
+    },
     updates,
     { new: true, runValidators: true }
-  ).populate("clientId", "name email company");
+  )
+    .populate("clientId", "name email company")
+    .populate("assignedFreelancer", "name email avatar")
+    .populate("owner", "name email avatar");
   if (!project) throw ApiError.notFound("Project not found");
 
   if (updates.status === "completed") {
-    await notify({
-      recipient: ownerId,
-      type: "project_completed",
-      title: "Project completed",
-      message: `Project "${project.title}" marked as completed.`,
-      link: `/projects/${project._id}`,
-      refModel: "Project",
-      refId: project._id,
-    });
+    const notifyId = project.owner?.toString() === userId.toString()
+      ? (project.assignedFreelancer || project.clientUser)
+      : project.owner;
+    if (notifyId) {
+      await notify({
+        recipient: notifyId,
+        type: "project_completed",
+        title: "Project completed",
+        message: `Project "${project.title}" marked as completed.`,
+        link: `/projects/${project._id}`,
+        refModel: "Project",
+        refId: project._id,
+      });
+    }
   }
   return project;
 };
@@ -125,11 +187,19 @@ const deleteProject = async (projectId, userId) => {
   return true;
 };
 
-const getProjectStats = async (ownerId) => {
-  const mongoose = require("mongoose");
-  const ownerObjId = new mongoose.Types.ObjectId(ownerId);
+const getProjectStats = async (userId) => {
+  const userObjId = new mongoose.Types.ObjectId(userId);
   const [stats] = await Project.aggregate([
-    { $match: { owner: ownerObjId, isDeleted: { $ne: true } } },
+    {
+      $match: {
+        $or: [
+          { owner: userObjId },
+          { assignedFreelancer: userObjId },
+          { clientUser: userObjId },
+        ],
+        isDeleted: { $ne: true },
+      },
+    },
     {
       $group: {
         _id: null,
@@ -149,17 +219,17 @@ const getProjectStats = async (ownerId) => {
 
 // ── Tasks ─────────────────────────────────────────────────
 
-const createTask = async (ownerId, data) => {
-  const project = await Project.findOne({ _id: data.projectId, owner: ownerId });
+const createTask = async (userId, data) => {
+  const project = await findAccessibleProject(data.projectId, userId);
   if (!project) throw ApiError.notFound("Project not found");
 
   const lastTask = await Task.findOne({ projectId: data.projectId, status: data.status || "todo" })
     .sort("-order").lean();
   const order = lastTask ? lastTask.order + 1 : 0;
 
-  const task = await Task.create({ ...data, owner: ownerId, order });
+  const task = await Task.create({ ...data, owner: userId, order });
 
-  if (data.assignedTo && data.assignedTo.toString() !== ownerId.toString()) {
+  if (data.assignedTo && data.assignedTo.toString() !== userId.toString()) {
     await notify({
       recipient: data.assignedTo,
       type: "task_assigned",
@@ -173,24 +243,12 @@ const createTask = async (ownerId, data) => {
   return task;
 };
 
-const mongoose = require("mongoose");
-
 const getTasksByProject = async (projectId, userOrId, reqQuery = {}) => {
   if (!projectId || projectId === "undefined" || !mongoose.Types.ObjectId.isValid(projectId)) {
     return { data: [], total: 0 };
   }
 
-  const userId = typeof userOrId === "object" ? userOrId._id : userOrId;
-  const clientRef = typeof userOrId === "object" ? userOrId.clientRef : null;
-
-  const projectFilter = { _id: projectId };
-  if (clientRef) {
-    projectFilter.$or = [{ owner: userId }, { clientId: clientRef }];
-  } else {
-    projectFilter.owner = userId;
-  }
-
-  const project = await Project.findOne(projectFilter).lean();
+  const project = await findAccessibleProject(projectId, userOrId);
   if (!project) throw ApiError.notFound("Project not found");
 
   const baseQuery = Task.find({ projectId, isDeleted: { $ne: true } });
@@ -203,23 +261,26 @@ const getTasksByProject = async (projectId, userOrId, reqQuery = {}) => {
     .exec();
 };
 
-const updateTask = async (taskId, ownerId, updates) => {
-  const task = await Task.findOneAndUpdate(
-    { _id: taskId, owner: ownerId },
-    updates,
-    { new: true, runValidators: true }
-  ).populate("assignedTo", "name avatar");
+const updateTask = async (taskId, userId, updates) => {
+  const task = await Task.findById(taskId);
   if (!task) throw ApiError.notFound("Task not found");
+
+  const project = await findAccessibleProject(task.projectId, userId);
+  if (!project) throw ApiError.forbidden("You do not have permission to update this task");
+
+  Object.assign(task, updates);
+  await task.save({ validateModifiedOnly: true });
+  await task.populate("assignedTo", "name avatar");
   return task;
 };
 
-const reorderTasks = async (ownerId, projectId, orderedIds) => {
-  const project = await Project.findOne({ _id: projectId, owner: ownerId });
+const reorderTasks = async (userId, projectId, orderedIds) => {
+  const project = await findAccessibleProject(projectId, userId);
   if (!project) throw ApiError.notFound("Project not found");
 
   const ops = orderedIds.map((id, index) => ({
     updateOne: {
-      filter: { _id: id, projectId, owner: ownerId },
+      filter: { _id: id, projectId },
       update: { $set: { order: index } },
     },
   }));
@@ -227,14 +288,19 @@ const reorderTasks = async (ownerId, projectId, orderedIds) => {
   return true;
 };
 
-const deleteTask = async (taskId, ownerId) => {
-  const task = await Task.findOne({ _id: taskId, owner: ownerId });
+const deleteTask = async (taskId, userId) => {
+  const task = await Task.findById(taskId);
   if (!task) throw ApiError.notFound("Task not found");
+
+  const project = await findAccessibleProject(task.projectId, userId);
+  if (!project) throw ApiError.forbidden("You do not have permission to delete this task");
+
+  const projectId = task.projectId;
   await task.softDelete();
-  return true;
+  return { projectId, taskId };
 };
 
 module.exports = {
   createProject, getProjects, getProjectById, updateProject, deleteProject, getProjectStats,
-  createTask, getTasksByProject, updateTask, reorderTasks, deleteTask,
+  createTask, getTasksByProject, updateTask, reorderTasks, deleteTask, findAccessibleProject,
 };

@@ -52,7 +52,7 @@ const useAdminStore = create((set) => ({
   updateUser: async (id, updates) => {
     try {
       const { data } = await adminService.updateUser(id, updates);
-      set((s) => ({ users: s.users.map((u) => u._id === id ? data.data.user : u) }));
+      set((s) => ({ users: (s.users || []).map((u) => u._id === id ? data.data.user : u) }));
       toast.success("User updated");
       return true;
     } catch {
@@ -64,7 +64,10 @@ const useAdminStore = create((set) => ({
   deleteUser: async (id) => {
     try {
       await adminService.deleteUser(id);
-      set((s) => ({ users: s.users.filter((u) => u._id !== id), total: s.total - 1 }));
+      set((s) => ({
+        users: (s.users || []).filter((u) => u._id !== id),
+        total: Math.max(0, (s.total || 1) - 1),
+      }));
       toast.success("User deleted");
       return true;
     } catch {

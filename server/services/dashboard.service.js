@@ -20,9 +20,18 @@ const getDashboardSummary = async (ownerId) => {
     upcomingTasks,
     unreadNotifications,
   ] = await Promise.all([
-    // Project counts by status
+    // Project counts by status (owned or assigned)
     Project.aggregate([
-      { $match: { owner: ownerObjId, isDeleted: { $ne: true } } },
+      {
+        $match: {
+          $or: [
+            { owner: ownerObjId },
+            { assignedFreelancer: ownerObjId },
+            { clientUser: ownerObjId },
+          ],
+          isDeleted: { $ne: true },
+        },
+      },
       {
         $group: {
           _id:       null,
@@ -34,9 +43,17 @@ const getDashboardSummary = async (ownerId) => {
       },
     ]),
 
-    // Task counts by status
+    // Task counts by status (owned or assigned)
     Task.aggregate([
-      { $match: { owner: ownerObjId, isDeleted: { $ne: true } } },
+      {
+        $match: {
+          $or: [
+            { owner: ownerObjId },
+            { assignedTo: ownerObjId },
+          ],
+          isDeleted: { $ne: true },
+        },
+      },
       {
         $group: {
           _id:         null,
@@ -65,17 +82,28 @@ const getDashboardSummary = async (ownerId) => {
       },
     ]),
 
-    // 5 most recent projects
-    Project.find({ owner: ownerId })
+    // 5 most recent projects (owned or assigned)
+    Project.find({
+      $or: [
+        { owner: ownerId },
+        { assignedFreelancer: ownerId },
+        { clientUser: ownerId },
+      ],
+      isDeleted: { $ne: true },
+    })
       .sort("-createdAt")
       .limit(5)
       .select("title status budget currency deadline progress taskStats")
       .populate("clientId", "name avatar")
+      .populate("assignedFreelancer", "name avatar")
       .lean({ virtuals: true }),
 
-    // Tasks due in next 7 days
+    // Tasks due in next 7 days (owned or assigned)
     Task.find({
-      owner:     ownerId,
+      $or: [
+        { owner: ownerId },
+        { assignedTo: ownerId },
+      ],
       status:    { $in: ["todo", "in_progress"] },
       dueDate:   { $gte: new Date(), $lte: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) },
       isDeleted: { $ne: true },
