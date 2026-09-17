@@ -44,10 +44,11 @@ const CallModal = ({
   partnerName = "User",
   partnerAvatar = "",
 }) => {
-  const localVideoRef  = useRef(null);
-  const remoteVideoRef = useRef(null);
-  const screenVideoRef = useRef(null);
-  const remoteAudioRef = useRef(null);
+  const localVideoRef     = useRef(null);
+  const remoteVideoRef    = useRef(null);
+  const screenVideoRef    = useRef(null);
+  const remotePipVideoRef = useRef(null);
+  const remoteAudioRef    = useRef(null);
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [videoFitMode, setVideoFitMode] = useState("cover"); // "cover" | "contain"
@@ -73,100 +74,68 @@ const CallModal = ({
 
   // Local webcam video sync
   useEffect(() => {
-    if (localVideoRef.current && localStream) {
-      if (localVideoRef.current.srcObject !== localStream) {
-        localVideoRef.current.srcObject = localStream;
+    const vEl = localVideoRef.current;
+    if (vEl && localStream) {
+      vEl.muted = true;
+      vEl.defaultMuted = true;
+      vEl.playsInline = true;
+      if (vEl.srcObject !== localStream) {
+        vEl.srcObject = localStream;
       }
-      localVideoRef.current.play().catch(() => {});
+      vEl.play().catch(() => {});
     }
   }, [localStream, isVideoOff]);
 
   // Local screen share stream sync
   useEffect(() => {
-    if (screenVideoRef.current && screenStream) {
-      if (screenVideoRef.current.srcObject !== screenStream) {
-        screenVideoRef.current.srcObject = screenStream;
+    const vEl = screenVideoRef.current;
+    if (vEl && screenStream) {
+      vEl.muted = true;
+      vEl.defaultMuted = true;
+      vEl.playsInline = true;
+      if (vEl.srcObject !== screenStream) {
+        vEl.srcObject = screenStream;
       }
-      screenVideoRef.current.play().catch(() => {});
+      vEl.play().catch(() => {});
     }
   }, [screenStream, isScreenSharing]);
 
-  const [hasRemoteFrames, setHasRemoteFrames] = useState(false);
-
-  const handleVideoPlaying = useCallback((e) => {
-    if (e?.target && e.target.videoWidth > 0 && e.target.videoHeight > 0) {
-      setHasRemoteFrames(true);
-    }
-  }, []);
-
-  // Monitor live frame reception on the remote video track
+  // Remote PIP video sync (when screen sharing)
   useEffect(() => {
-    if (!remoteStream) {
-      setHasRemoteFrames(false);
-      return;
-    }
-    const videoTracks = remoteStream.getVideoTracks();
-    if (videoTracks.length === 0) {
-      setHasRemoteFrames(false);
-      return;
-    }
-
-    const vTrack = videoTracks[0];
-    const updateFramesState = () => {
-      // In WebRTC: track.muted is TRUE when no video frames are arriving (e.g. Camera off or dummy transceiver)
-      // track.muted is FALSE when live camera/screen frames are actively received!
-      const isLive = vTrack.enabled && vTrack.readyState === "live" && !vTrack.muted;
-      setHasRemoteFrames(isLive);
-    };
-
-    updateFramesState();
-    vTrack.addEventListener("mute", updateFramesState);
-    vTrack.addEventListener("unmute", updateFramesState);
-    vTrack.addEventListener("ended", updateFramesState);
-
-    return () => {
-      vTrack.removeEventListener("mute", updateFramesState);
-      vTrack.removeEventListener("unmute", updateFramesState);
-      vTrack.removeEventListener("ended", updateFramesState);
-    };
-  }, [remoteStream]);
-
-  // Periodic check while connected to verify if video has decoded dimensions
-  useEffect(() => {
-    if (!remoteStream || callState !== "connected") return;
-    const interval = setInterval(() => {
-      const vEl = remoteVideoRef.current;
-      if (vEl && vEl.videoWidth > 0 && vEl.videoHeight > 0) {
-        setHasRemoteFrames(true);
-      }
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [remoteStream, callState]);
-
-  // Remote video sync (ensures muted property is set so Chrome Autoplay Policy never blocks video frames)
-  useEffect(() => {
-    const vEl = remoteVideoRef.current;
-    if (vEl && remoteStream) {
+    const vEl = remotePipVideoRef.current;
+    if (vEl && remoteStream && isScreenSharing) {
       vEl.muted = true;
       vEl.defaultMuted = true;
       vEl.playsInline = true;
       if (vEl.srcObject !== remoteStream) {
         vEl.srcObject = remoteStream;
       }
-      const playPromise = vEl.play();
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            if (vEl.videoWidth > 0 && vEl.videoHeight > 0) {
-              setHasRemoteFrames(true);
-            }
-          })
-          .catch((err) => {
-            console.warn("[CallModal] Remote video play warning:", err);
-          });
-      }
+      vEl.play().catch(() => {});
     }
-  }, [remoteStream, remoteIsSharingScreen, hasRemoteFrames]);
+  }, [remoteStream, isScreenSharing]);
+
+  // Remote video sync (ensures muted property is set so Chrome Autoplay Policy never blocks video frames)
+  useEffect(() => {
+    const vEl = remoteVideoRef.current;
+    if (!vEl || !remoteStream) return;
+
+    vEl.muted = true;
+    vEl.defaultMuted = true;
+    vEl.playsInline = true;
+
+    if (vEl.srcObject !== remoteStream) {
+      vEl.srcObject = remoteStream;
+    }
+
+    const playPromise = vEl.play();
+    if (playPromise !== undefined) {
+      playPromise.catch((err) => {
+        if (err.name !== "AbortError") {
+          console.warn("[CallModal] Remote video play warning:", err);
+        }
+      });
+    }
+  }, [remoteStream]);
 
   // Remote audio sync (plays remote sound cleanly)
   useEffect(() => {
@@ -189,11 +158,12 @@ const CallModal = ({
   const formatTime = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
   const isVoiceCall = callType === "voice";
 
-  // Check if remote stream has active, live video frames
+  // Check if remote stream has active video track
   const hasRemoteVideo = Boolean(
+    !isVoiceCall &&
     remoteStream &&
     remoteStream.getVideoTracks().length > 0 &&
-    (hasRemoteFrames || remoteIsSharingScreen)
+    remoteStream.getVideoTracks().some((t) => t.enabled)
   );
 
   const isAnyScreenSharing = isScreenSharing || remoteIsSharingScreen;
@@ -369,100 +339,69 @@ const CallModal = ({
             {/* Case 1: Local User is Screen Sharing -> Show local screen share feed */}
             {isScreenSharing && screenStream ? (
               <video
-                ref={(el) => {
-                  screenVideoRef.current = el;
-                  if (el && screenStream && el.srcObject !== screenStream) {
-                    el.srcObject = screenStream;
-                    el.play().catch(() => {});
-                  }
-                }}
+                ref={screenVideoRef}
                 autoPlay
                 playsInline
                 muted
                 className="w-full h-full object-contain bg-black"
               />
+            ) : hasRemoteVideo || remoteIsSharingScreen ? (
+              /* Case 2: Remote Peer is sharing screen OR sending camera feed */
+              <video
+                ref={remoteVideoRef}
+                autoPlay
+                playsInline
+                muted
+                className={`w-full h-full transition-all duration-300 ${
+                  remoteIsSharingScreen || videoFitMode === "contain"
+                    ? "object-contain bg-black"
+                    : "object-cover"
+                }`}
+              />
             ) : (
-              /* Case 2 & 3: Remote Peer Video / Screen Share or Avatar Stage */
-              <div className="relative w-full h-full flex items-center justify-center overflow-hidden bg-slate-950">
-                {/* Persistent remote video element: always connected to remoteStream so decoding starts instantly without DOM mounting delay */}
-                <video
-                  ref={(el) => {
-                    remoteVideoRef.current = el;
-                    if (el) {
-                      el.muted = true;
-                      el.defaultMuted = true;
-                      el.playsInline = true;
-                      if (remoteStream && el.srcObject !== remoteStream) {
-                        el.srcObject = remoteStream;
-                      }
-                      el.play().catch(() => {});
-                    }
-                  }}
-                  autoPlay
-                  playsInline
-                  muted
-                  onLoadedMetadata={handleVideoPlaying}
-                  onPlaying={handleVideoPlaying}
-                  onResize={handleVideoPlaying}
-                  className={`w-full h-full transition-opacity duration-300 ${
-                    remoteIsSharingScreen || videoFitMode === "contain"
-                      ? "object-contain bg-black"
-                      : "object-cover"
-                  } ${
-                    hasRemoteVideo || remoteIsSharingScreen
-                      ? "opacity-100 relative z-10"
-                      : "opacity-0 absolute inset-0 pointer-events-none"
-                  }`}
-                />
+              /* Case 3: Voice Call / Camera Off Avatar Stage */
+              <div className="relative w-full h-full flex flex-col items-center justify-center bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-950/40 via-slate-950 to-black px-4">
+                <div className="relative flex items-center justify-center">
+                  <div className="absolute w-64 h-64 rounded-full bg-indigo-500/10 animate-ping pointer-events-none" />
+                  <div className="absolute w-48 h-48 rounded-full bg-indigo-500/20 blur-xl pointer-events-none" />
 
-                {/* When remote peer has no video frames (camera off / audio-only / connecting), show Avatar Stage */}
-                {(!hasRemoteVideo && !remoteIsSharingScreen) && (
-                  <div className="absolute inset-0 z-0 flex flex-col items-center justify-center bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-950/40 via-slate-950 to-black px-4">
-                    <div className="relative flex items-center justify-center">
-                      <div className="absolute w-64 h-64 rounded-full bg-indigo-500/10 animate-ping pointer-events-none" />
-                      <div className="absolute w-48 h-48 rounded-full bg-indigo-500/20 blur-xl pointer-events-none" />
-
-                      <div className="relative w-36 h-36 sm:w-44 sm:h-44 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 p-1 ring-4 ring-indigo-500/30 shadow-2xl shadow-indigo-600/30 overflow-hidden flex items-center justify-center">
-                        {partnerAvatar ? (
-                          <img src={partnerAvatar} alt={partnerName} className="w-full h-full rounded-full object-cover" />
-                        ) : (
-                          <span className="text-5xl sm:text-6xl font-black text-white">
-                            {getInitials(partnerName)}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="text-center mt-6">
-                      <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">{partnerName}</h2>
-                      <p className="text-sm font-medium text-indigo-400 mt-1">
-                        {callState === "calling"
-                          ? "Calling…"
-                          : isVoiceCall
-                          ? "Voice Call Connected"
-                          : remoteStream && remoteStream.getVideoTracks().length > 0
-                          ? "Connecting video…"
-                          : "Camera turned off"}
-                      </p>
-
-                      {/* Audio Visualizer Waves */}
-                      {callState === "connected" && (
-                        <div className="flex items-center justify-center gap-1.5 mt-5">
-                          {[12, 24, 36, 20, 30, 16, 28].map((h, i) => (
-                            <span
-                              key={i}
-                              style={{
-                                height: `${h}px`,
-                                animationDelay: `${i * 0.15}s`,
-                              }}
-                              className="w-1.5 rounded-full bg-indigo-400/80 animate-pulse"
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                  <div className="relative w-36 h-36 sm:w-44 sm:h-44 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 p-1 ring-4 ring-indigo-500/30 shadow-2xl shadow-indigo-600/30 overflow-hidden flex items-center justify-center">
+                    {partnerAvatar ? (
+                      <img src={partnerAvatar} alt={partnerName} className="w-full h-full rounded-full object-cover" />
+                    ) : (
+                      <span className="text-5xl sm:text-6xl font-black text-white">
+                        {getInitials(partnerName)}
+                      </span>
+                    )}
                   </div>
-                )}
+                </div>
+
+                <div className="text-center mt-6">
+                  <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">{partnerName}</h2>
+                  <p className="text-sm font-medium text-indigo-400 mt-1">
+                    {callState === "calling"
+                      ? "Calling…"
+                      : isVoiceCall
+                      ? "Voice Call Connected"
+                      : "Camera turned off"}
+                  </p>
+
+                  {/* Audio Visualizer Waves */}
+                  {callState === "connected" && (
+                    <div className="flex items-center justify-center gap-1.5 mt-5">
+                      {[12, 24, 36, 20, 30, 16, 28].map((h, i) => (
+                        <span
+                          key={i}
+                          style={{
+                            height: `${h}px`,
+                            animationDelay: `${i * 0.15}s`,
+                          }}
+                          className="w-1.5 rounded-full bg-indigo-400/80 animate-pulse"
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -472,17 +411,7 @@ const CallModal = ({
               <div className="absolute bottom-24 sm:bottom-28 right-4 sm:right-8 w-44 sm:w-64 aspect-video rounded-2xl overflow-hidden border border-white/20 shadow-2xl bg-slate-900 z-20 backdrop-blur-md">
                 {hasRemoteVideo ? (
                   <video
-                    ref={(el) => {
-                      if (el) {
-                        el.muted = true;
-                        el.defaultMuted = true;
-                        el.playsInline = true;
-                        if (remoteStream && el.srcObject !== remoteStream) {
-                          el.srcObject = remoteStream;
-                        }
-                        el.play().catch(() => {});
-                      }
-                    }}
+                    ref={remotePipVideoRef}
                     autoPlay
                     playsInline
                     muted
@@ -503,13 +432,7 @@ const CallModal = ({
               <div className="absolute bottom-24 sm:bottom-28 right-4 sm:right-8 w-40 sm:w-60 aspect-video rounded-2xl overflow-hidden border border-white/20 shadow-2xl bg-slate-900 z-20 backdrop-blur-md transition-all hover:scale-105">
                 {!isVideoOff && localStream ? (
                   <video
-                    ref={(el) => {
-                      localVideoRef.current = el;
-                      if (el && localStream && el.srcObject !== localStream) {
-                        el.srcObject = localStream;
-                        el.play().catch(() => {});
-                      }
-                    }}
+                    ref={localVideoRef}
                     autoPlay
                     playsInline
                     muted
@@ -526,21 +449,6 @@ const CallModal = ({
                 </div>
               </div>
             ) : null}
-
-            {/* Remote Audio Track Player (Always active to ensure voice is delivered) */}
-            {remoteStream && (
-              <audio
-                ref={(el) => {
-                  remoteAudioRef.current = el;
-                  if (el && el.srcObject !== remoteStream) {
-                    el.srcObject = remoteStream;
-                    el.play().catch(() => {});
-                  }
-                }}
-                autoPlay
-                playsInline
-              />
-            )}
           </div>
 
           {/* ── Bottom Controls Dock Bar (Images 2 & 3 made properly workable) ── */}

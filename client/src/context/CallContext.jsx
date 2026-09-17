@@ -312,11 +312,14 @@ export const CallProvider = ({ children }) => {
   const bindRemoteTracks = (pc) => {
     pc.ontrack = (e) => {
       console.log("[WebRTC] ontrack received:", e.track.kind, "id:", e.track.id, "enabled:", e.track.enabled, "muted:", e.track.muted);
-      const incomingStream = e.streams && e.streams[0] ? e.streams[0] : null;
-      if (incomingStream) {
-        setRemoteStream(incomingStream);
-        incomingStream.onaddtrack = () => setRemoteStream(new MediaStream(incomingStream.getTracks()));
-        incomingStream.onremovetrack = () => setRemoteStream(new MediaStream(incomingStream.getTracks()));
+      if (e.streams && e.streams[0]) {
+        const incomingStream = e.streams[0];
+        setRemoteStream((prev) => {
+          if (prev && prev.id === incomingStream.id) {
+            return prev;
+          }
+          return incomingStream;
+        });
       } else if (e.track) {
         setRemoteStream((prev) => {
           const currentTracks = prev ? prev.getTracks().filter((t) => t.id !== e.track.id) : [];
@@ -371,16 +374,13 @@ export const CallProvider = ({ children }) => {
 
       if (type === "voice") {
         try {
-          pc.addTransceiver("video", { direction: "sendrecv" });
+          pc.addTransceiver("video", { direction: "recvonly" });
         } catch (e) {
           console.warn("Could not add video transceiver:", e);
         }
       }
 
-      const offer = await pc.createOffer({
-        offerToReceiveAudio: true,
-        offerToReceiveVideo: true,
-      });
+      const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
       socket.emit("call:initiate", {
@@ -430,7 +430,7 @@ export const CallProvider = ({ children }) => {
 
       if (incomingCall.callType === "voice") {
         try {
-          pc.addTransceiver("video", { direction: "sendrecv" });
+          pc.addTransceiver("video", { direction: "recvonly" });
         } catch (e) {
           console.warn("Could not add video transceiver:", e);
         }
@@ -439,10 +439,7 @@ export const CallProvider = ({ children }) => {
       await pc.setRemoteDescription(new RTCSessionDescription(incomingCall.offer));
       await processIceQueue();
 
-      const answer = await pc.createAnswer({
-        offerToReceiveAudio: true,
-        offerToReceiveVideo: true,
-      });
+      const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
 
       socket.emit("call:answer", { callerId: incomingCall.callerId, answer });
