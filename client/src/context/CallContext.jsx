@@ -28,6 +28,8 @@ export const CallProvider = ({ children }) => {
   const [isMuted, setIsMuted]               = useState(false);
   const [isVideoOff, setIsVideoOff]         = useState(false);
   const [isScreenSharing, setIsScreenShare] = useState(false);
+  const [remoteIsSharingScreen, setRemoteIsSharingScreen] = useState(false);
+  const [presenterName, setPresenterName]   = useState("");
   const [callDuration, setCallDuration]     = useState(0);
 
   const peerConnectionRef     = useRef(null);
@@ -121,6 +123,8 @@ export const CallProvider = ({ children }) => {
     setIncomingCall(null);
     setActivePartner(null);
     setIsScreenShare(false);
+    setRemoteIsSharingScreen(false);
+    setPresenterName("");
     setIsMuted(false);
     setIsVideoOff(false);
   }, [localStream, screenStream]);
@@ -183,6 +187,44 @@ export const CallProvider = ({ children }) => {
         }
       };
 
+      const onScreenShare = ({ isSharing, presenterName: name }) => {
+        setRemoteIsSharingScreen(Boolean(isSharing));
+        setPresenterName(name || "");
+        if (isSharing) {
+          toast(`${name || "Partner"} started sharing their screen`, { icon: "🖥️" });
+        } else {
+          toast(`${name || "Partner"} stopped sharing their screen`, { icon: "🖥️" });
+        }
+      };
+
+      const onRenegotiate = async ({ senderId, offer }) => {
+        const pc = peerConnectionRef.current;
+        if (!pc) return;
+        try {
+          await pc.setRemoteDescription(new RTCSessionDescription(offer));
+          await processIceQueue();
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          const s = getSocket();
+          if (s) {
+            s.emit("call:renegotiate_answer", { targetUserId: senderId, answer });
+          }
+        } catch (err) {
+          console.error("Renegotiate error on receiver:", err);
+        }
+      };
+
+      const onRenegotiateAnswer = async ({ answer }) => {
+        const pc = peerConnectionRef.current;
+        if (!pc) return;
+        try {
+          await pc.setRemoteDescription(new RTCSessionDescription(answer));
+          await processIceQueue();
+        } catch (err) {
+          console.error("Renegotiate answer error on sender:", err);
+        }
+      };
+
       const onRejected = () => {
         toast.error("Call was declined.");
         endCallCleanup();
@@ -193,18 +235,24 @@ export const CallProvider = ({ children }) => {
         endCallCleanup();
       };
 
-      sock.on("call:incoming",      onIncoming);
-      sock.on("call:answered",      onAnswered);
-      sock.on("call:ice_candidate", onIceCandidate);
-      sock.on("call:rejected",      onRejected);
-      sock.on("call:ended",         onEnded);
+      sock.on("call:incoming",            onIncoming);
+      sock.on("call:answered",            onAnswered);
+      sock.on("call:ice_candidate",       onIceCandidate);
+      sock.on("call:screen_share",        onScreenShare);
+      sock.on("call:renegotiate",         onRenegotiate);
+      sock.on("call:renegotiate_answer",  onRenegotiateAnswer);
+      sock.on("call:rejected",            onRejected);
+      sock.on("call:ended",               onEnded);
 
       return () => {
-        sock.off("call:incoming",      onIncoming);
-        sock.off("call:answered",      onAnswered);
-        sock.off("call:ice_candidate", onIceCandidate);
-        sock.off("call:rejected",      onRejected);
-        sock.off("call:ended",         onEnded);
+        sock.off("call:incoming",            onIncoming);
+        sock.off("call:answered",            onAnswered);
+        sock.off("call:ice_candidate",       onIceCandidate);
+        sock.off("call:screen_share",        onScreenShare);
+        sock.off("call:renegotiate",         onRenegotiate);
+        sock.off("call:renegotiate_answer",  onRenegotiateAnswer);
+        sock.off("call:rejected",            onRejected);
+        sock.off("call:ended",               onEnded);
       };
     };
 
@@ -495,6 +543,7 @@ export const CallProvider = ({ children }) => {
       if (sender) {
         const camTrack = localStream?.getVideoTracks()[0];
         if (camTrack && !isVideoOff) {
+          camTrack.contentHint = "motion";
           await sender.replaceTrack(camTrack).catch(() => {});
         } else {
           await sender.replaceTrack(null).catch(() => {});
@@ -503,19 +552,36 @@ export const CallProvider = ({ children }) => {
     }
 
     setIsScreenShare(false);
+
+    // Notify peer via socket that screen share stopped
+    const target = targetUserIdRef.current || incomingCall?.callerId || activePartner?.id;
+    const socket = getSocket();
+    if (target && socket) {
+      socket.emit("call:screen_share", {
+        targetUserId: target,
+        isSharing: false,
+      });
+    }
+
     toast("Screen sharing stopped", { icon: "🖥️" });
-  }, [localStream, isVideoOff]);
+  }, [localStream, isVideoOff, incomingCall, activePartner]);
 
   const toggleScreenShare = useCallback(async () => {
     if (!peerConnectionRef.current) return;
     if (!isScreenSharing) {
       try {
         const displayStream = await navigator.mediaDevices.getDisplayMedia({
-          video: { cursor: "always" },
+          video: {
+            cursor: "always",
+            displaySurface: "monitor",
+          },
           audio: false,
         });
         const screenTrack = displayStream.getVideoTracks()[0];
         if (!screenTrack) return;
+
+        // Hint to WebRTC encoder to optimize sharpness for text/details (Google Meet & Zoom standard)
+        screenTrack.contentHint = "detail";
         screenTrackRef.current = screenTrack;
         setScreenStream(displayStream);
 
@@ -524,7 +590,14 @@ export const CallProvider = ({ children }) => {
         if (sender) {
           await sender.replaceTrack(screenTrack);
         } else {
-          pc.addTrack(screenTrack, displayStream);
+          sender = pc.addTrack(screenTrack, displayStream);
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          const s = getSocket();
+          const target = targetUserIdRef.current || incomingCall?.callerId || activePartner?.id;
+          if (s && target) {
+            s.emit("call:renegotiate", { targetUserId: target, offer });
+          }
         }
 
         screenTrack.onended = () => {
@@ -533,6 +606,18 @@ export const CallProvider = ({ children }) => {
 
         setIsScreenShare(true);
         setActiveCallType("video");
+
+        // Notify peer via socket that screen share started
+        const target = targetUserIdRef.current || incomingCall?.callerId || activePartner?.id;
+        const socket = getSocket();
+        if (target && socket) {
+          socket.emit("call:screen_share", {
+            targetUserId: target,
+            isSharing: true,
+            presenterName: user?.name || "Partner",
+          });
+        }
+
         toast.success("Screen sharing started");
       } catch (e) {
         if (e.name !== "NotAllowedError") {
@@ -543,7 +628,7 @@ export const CallProvider = ({ children }) => {
     } else {
       await stopScreenShare();
     }
-  }, [isScreenSharing, stopScreenShare]);
+  }, [isScreenSharing, stopScreenShare, incomingCall, activePartner, user]);
 
   return (
     <CallContext.Provider
@@ -557,6 +642,7 @@ export const CallProvider = ({ children }) => {
         toggleScreenShare,
         localStream,
         remoteStream,
+        screenStream,
         callState,
         activeCallType,
         incomingCall,
@@ -564,6 +650,8 @@ export const CallProvider = ({ children }) => {
         isMuted,
         isVideoOff,
         isScreenSharing,
+        remoteIsSharingScreen,
+        presenterName,
         callDuration,
       }}
     >
@@ -582,6 +670,8 @@ export const CallProvider = ({ children }) => {
         isMuted={isMuted}
         isVideoOff={isVideoOff}
         isScreenSharing={isScreenSharing}
+        remoteIsSharingScreen={remoteIsSharingScreen}
+        presenterName={presenterName}
         onToggleMute={toggleMute}
         onToggleVideo={toggleVideo}
         onToggleScreenShare={toggleScreenShare}

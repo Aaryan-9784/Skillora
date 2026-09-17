@@ -12,6 +12,7 @@ import {
   Minimize2,
   ShieldCheck,
   User,
+  Radio,
 } from "lucide-react";
 
 const getInitials = (name = "") =>
@@ -34,6 +35,8 @@ const CallModal = ({
   isMuted,
   isVideoOff,
   isScreenSharing,
+  remoteIsSharingScreen,
+  presenterName,
   onToggleMute,
   onToggleVideo,
   onToggleScreenShare,
@@ -98,7 +101,7 @@ const CallModal = ({
         console.warn("[CallModal] Remote video play warning:", err);
       });
     }
-  }, [remoteStream]);
+  }, [remoteStream, remoteIsSharingScreen]);
 
   // Remote audio sync (plays remote sound cleanly)
   useEffect(() => {
@@ -123,6 +126,8 @@ const CallModal = ({
     remoteStream.getVideoTracks().length > 0 &&
     remoteStream.getVideoTracks().some((t) => t.enabled && t.readyState === "live")
   );
+
+  const isAnyScreenSharing = isScreenSharing || remoteIsSharingScreen;
 
   return (
     <AnimatePresence>
@@ -157,6 +162,7 @@ const CallModal = ({
 
             <div className="flex items-center gap-6 mt-2">
               <button
+                type="button"
                 onClick={onReject}
                 className="w-14 h-14 rounded-full bg-red-600 hover:bg-red-500 flex items-center justify-center text-white shadow-lg shadow-red-600/30 transition-all cursor-pointer hover:scale-105 active:scale-95"
                 title="Decline Call"
@@ -164,6 +170,7 @@ const CallModal = ({
                 <PhoneOff size={22} />
               </button>
               <button
+                type="button"
                 onClick={onAccept}
                 className="w-14 h-14 rounded-full bg-emerald-600 hover:bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-600/30 animate-pulse transition-all cursor-pointer hover:scale-105 active:scale-95"
                 title="Accept Call"
@@ -184,7 +191,7 @@ const CallModal = ({
           className="fixed inset-0 z-50 w-screen h-screen bg-slate-950 flex flex-col overflow-hidden select-none"
         >
           {/* Top Header Bar */}
-          <div className="absolute top-0 left-0 right-0 z-30 px-5 sm:px-8 py-4 flex items-center justify-between bg-gradient-to-b from-black/80 via-black/40 to-transparent pointer-events-auto">
+          <div className="absolute top-0 left-0 right-0 z-30 px-5 sm:px-8 py-4 flex items-center justify-between bg-gradient-to-b from-black/85 via-black/45 to-transparent pointer-events-auto">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-indigo-600/80 border border-white/20 flex items-center justify-center overflow-hidden shrink-0 shadow-md">
                 {partnerAvatar ? (
@@ -223,9 +230,10 @@ const CallModal = ({
 
             {/* Header Right Actions */}
             <div className="flex items-center gap-2">
-              {/* Fit / Fill toggle button for video calls */}
-              {(hasRemoteVideo || isScreenSharing) && (
+              {/* Fit / Fill toggle button for video feeds */}
+              {(hasRemoteVideo || isAnyScreenSharing) && (
                 <button
+                  type="button"
                   onClick={() => setVideoFitMode((m) => (m === "cover" ? "contain" : "cover"))}
                   className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs text-white transition-all cursor-pointer backdrop-blur-md"
                   title="Toggle video scale fit/cover"
@@ -236,6 +244,7 @@ const CallModal = ({
 
               {/* Fullscreen Button */}
               <button
+                type="button"
                 onClick={toggleFullscreen}
                 className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all cursor-pointer backdrop-blur-md"
                 title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
@@ -248,39 +257,33 @@ const CallModal = ({
           {/* Center Main Stage (Fills 100% of the viewport) */}
           <div className="relative flex-1 w-full h-full bg-slate-950 flex items-center justify-center overflow-hidden">
             
-            {/* Screen Share Active Banner */}
+            {/* ── Screen Share Banners ── */}
             {isScreenSharing && (
-              <div className="absolute top-20 z-20 flex items-center gap-2.5 px-4 py-2 rounded-full bg-emerald-500/20 border border-emerald-500/40 backdrop-blur-md text-emerald-300 text-xs font-semibold shadow-xl animate-fade-in">
-                <Monitor size={15} className="animate-pulse text-emerald-400" />
+              <div className="absolute top-20 z-20 flex items-center gap-2.5 px-4 py-2 rounded-full bg-emerald-500/20 border border-emerald-500/40 backdrop-blur-md text-emerald-300 text-xs font-semibold shadow-xl">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                <Monitor size={15} className="text-emerald-400" />
                 <span>You are sharing your screen</span>
                 <button
+                  type="button"
                   onClick={onToggleScreenShare}
-                  className="ml-2 px-2.5 py-0.5 rounded-full bg-red-600 hover:bg-red-500 text-white text-[11px] font-bold cursor-pointer transition-all"
+                  className="ml-2 px-3 py-1 rounded-full bg-red-600 hover:bg-red-500 text-white text-[11px] font-bold cursor-pointer transition-all shadow-md shadow-red-600/30"
                 >
-                  Stop
+                  Stop Sharing
                 </button>
               </div>
             )}
 
-            {/* 1. Remote Video Feed OR Local Screen Share Feed */}
-            {hasRemoteVideo ? (
-              <video
-                ref={(el) => {
-                  remoteVideoRef.current = el;
-                  if (el && remoteStream && el.srcObject !== remoteStream) {
-                    el.srcObject = remoteStream;
-                    el.play().catch(() => {});
-                  }
-                }}
-                autoPlay
-                playsInline
-                className={`w-full h-full transition-all duration-300 ${
-                  videoFitMode === "contain" || isScreenSharing
-                    ? "object-contain bg-black"
-                    : "object-cover"
-                }`}
-              />
-            ) : isScreenSharing && screenStream ? (
+            {!isScreenSharing && remoteIsSharingScreen && (
+              <div className="absolute top-20 z-20 flex items-center gap-2.5 px-4 py-2 rounded-full bg-indigo-500/20 border border-indigo-500/40 backdrop-blur-md text-indigo-200 text-xs font-semibold shadow-xl">
+                <Radio size={14} className="animate-pulse text-indigo-400" />
+                <Monitor size={15} className="text-indigo-400" />
+                <span>{presenterName || partnerName} is sharing their screen</span>
+              </div>
+            )}
+
+            {/* ── Main Stage Video Presentation ── */}
+            {/* Case 1: Local User is Screen Sharing -> Show local screen share feed */}
+            {isScreenSharing && screenStream ? (
               <video
                 ref={(el) => {
                   screenVideoRef.current = el;
@@ -294,17 +297,31 @@ const CallModal = ({
                 muted
                 className="w-full h-full object-contain bg-black"
               />
-            ) : null}
-
-            {/* 2. Voice Call / Camera Off Avatar View (When no video feed is live) */}
-            {!hasRemoteVideo && (!isScreenSharing || !screenStream) && (
+            ) : hasRemoteVideo || remoteIsSharingScreen ? (
+              /* Case 2: Remote Peer is sharing screen OR sending camera feed */
+              <video
+                ref={(el) => {
+                  remoteVideoRef.current = el;
+                  if (el && remoteStream && el.srcObject !== remoteStream) {
+                    el.srcObject = remoteStream;
+                    el.play().catch(() => {});
+                  }
+                }}
+                autoPlay
+                playsInline
+                className={`w-full h-full transition-all duration-300 ${
+                  remoteIsSharingScreen || videoFitMode === "contain"
+                    ? "object-contain bg-black"
+                    : "object-cover"
+                }`}
+              />
+            ) : (
+              /* Case 3: Voice Call / Camera Off Avatar Stage */
               <div className="relative w-full h-full flex flex-col items-center justify-center bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-950/40 via-slate-950 to-black px-4">
                 <div className="relative flex items-center justify-center">
-                  {/* Ambient glowing ripple rings */}
                   <div className="absolute w-64 h-64 rounded-full bg-indigo-500/10 animate-ping pointer-events-none" />
                   <div className="absolute w-48 h-48 rounded-full bg-indigo-500/20 blur-xl pointer-events-none" />
 
-                  {/* Center Avatar */}
                   <div className="relative w-36 h-36 sm:w-44 sm:h-44 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 p-1 ring-4 ring-indigo-500/30 shadow-2xl shadow-indigo-600/30 overflow-hidden flex items-center justify-center">
                     {partnerAvatar ? (
                       <img src={partnerAvatar} alt={partnerName} className="w-full h-full rounded-full object-cover" />
@@ -326,7 +343,7 @@ const CallModal = ({
                       : "Camera turned off"}
                   </p>
 
-                  {/* Dynamic Audio Visualizer Waves */}
+                  {/* Audio Visualizer Waves */}
                   {callState === "connected" && (
                     <div className="flex items-center justify-center gap-1.5 mt-5">
                       {[12, 24, 36, 20, 30, 16, 28].map((h, i) => (
@@ -345,8 +362,34 @@ const CallModal = ({
               </div>
             )}
 
-            {/* 3. Floating Picture-In-Picture (PIP) for Local Camera */}
-            {(!isVoiceCall || !isVideoOff) && (
+            {/* ── Floating Picture-In-Picture (PIP) Window ── */}
+            {/* If local user is screen sharing, PIP shows remote partner's face (Google Meet / Zoom pattern) */}
+            {isScreenSharing ? (
+              <div className="absolute bottom-24 sm:bottom-28 right-4 sm:right-8 w-44 sm:w-64 aspect-video rounded-2xl overflow-hidden border border-white/20 shadow-2xl bg-slate-900 z-20 backdrop-blur-md">
+                {hasRemoteVideo ? (
+                  <video
+                    ref={(el) => {
+                      if (el && remoteStream && el.srcObject !== remoteStream) {
+                        el.srcObject = remoteStream;
+                        el.play().catch(() => {});
+                      }
+                    }}
+                    autoPlay
+                    playsInline
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center bg-slate-900 text-slate-400">
+                    <User size={24} className="opacity-60" />
+                    <span className="text-[11px] font-medium mt-1">{partnerName}</span>
+                  </div>
+                )}
+                <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/60 backdrop-blur-sm text-[10px] font-bold text-white">
+                  {partnerName}
+                </div>
+              </div>
+            ) : (!isVoiceCall || !isVideoOff || remoteIsSharingScreen) ? (
+              /* If remote peer is sharing or it's a video call, PIP shows local webcam */
               <div className="absolute bottom-24 sm:bottom-28 right-4 sm:right-8 w-40 sm:w-60 aspect-video rounded-2xl overflow-hidden border border-white/20 shadow-2xl bg-slate-900 z-20 backdrop-blur-md transition-all hover:scale-105">
                 {!isVideoOff && localStream ? (
                   <video
@@ -372,7 +415,7 @@ const CallModal = ({
                   You
                 </div>
               </div>
-            )}
+            ) : null}
 
             {/* Remote Audio Track Player (Always active to ensure voice is delivered) */}
             {remoteStream && (
@@ -413,13 +456,17 @@ const CallModal = ({
                 type="button"
                 onClick={onToggleVideo}
                 className={`w-12 h-12 rounded-full flex items-center justify-center transition-all cursor-pointer ${
-                  isVideoOff || isVoiceCall
+                  isVideoOff || (isVoiceCall && !localStream?.getVideoTracks()?.length)
                     ? "bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white"
                     : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/40 hover:scale-105 active:scale-95 ring-2 ring-indigo-400/40"
                 }`}
                 title={isVideoOff ? "Turn Camera On" : "Turn Camera Off"}
               >
-                {isVideoOff || isVoiceCall ? <VideoOff size={20} /> : <Video size={20} />}
+                {isVideoOff || (isVoiceCall && !localStream?.getVideoTracks()?.length) ? (
+                  <VideoOff size={20} />
+                ) : (
+                  <Video size={20} />
+                )}
               </button>
 
               {/* Screen Share Toggle (Share Screen / Stop Sharing) */}

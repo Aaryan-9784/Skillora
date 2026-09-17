@@ -211,6 +211,34 @@ const initSocket = (httpServer) => {
       io.to(`user:${resolvedTargetId}`).emit("call:ice_candidate", { candidate });
     });
 
+    socket.on("call:screen_share", async ({ targetUserId, isSharing, presenterName }) => {
+      if (!targetUserId) return;
+      const resolvedTargetId = await resolveUserId(targetUserId);
+      io.to(`user:${resolvedTargetId}`).emit("call:screen_share", {
+        isSharing,
+        presenterId: userId,
+        presenterName,
+      });
+    });
+
+    socket.on("call:renegotiate", async ({ targetUserId, offer }) => {
+      if (!targetUserId || !offer) return;
+      const resolvedTargetId = await resolveUserId(targetUserId);
+      io.to(`user:${resolvedTargetId}`).emit("call:renegotiate", {
+        senderId: userId,
+        offer,
+      });
+    });
+
+    socket.on("call:renegotiate_answer", async ({ targetUserId, answer }) => {
+      if (!targetUserId || !answer) return;
+      const resolvedTargetId = await resolveUserId(targetUserId);
+      io.to(`user:${resolvedTargetId}`).emit("call:renegotiate_answer", {
+        senderId: userId,
+        answer,
+      });
+    });
+
     socket.on("call:reject", async ({ callerId }) => {
       if (callerId) {
         const resolvedCallerId = await resolveUserId(callerId);
