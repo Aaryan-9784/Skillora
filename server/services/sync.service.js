@@ -26,7 +26,21 @@ const notify = async ({ recipientId, type, title, message, link = "", refModel =
 
 const onInvoiceSent = async (invoice, freelancerId) => {
   const User = require("../models/User");
-  const clientUser = await User.findOne({ clientRef: invoice.clientId, role: "client" });
+  const Client = require("../models/Client");
+
+  let clientUser = null;
+  if (invoice.clientUser) {
+    clientUser = await User.findById(invoice.clientUser);
+  }
+  if (!clientUser && invoice.clientId) {
+    clientUser = await User.findOne({ clientRef: invoice.clientId, role: "client" });
+  }
+  if (!clientUser && invoice.clientId) {
+    const clientDoc = await Client.findById(invoice.clientId);
+    if (clientDoc?.email) {
+      clientUser = await User.findOne({ email: clientDoc.email.toLowerCase(), role: "client" });
+    }
+  }
 
   if (clientUser) {
     await notify({
@@ -38,6 +52,8 @@ const onInvoiceSent = async (invoice, freelancerId) => {
       refModel: "Invoice",
       refId:    invoice._id,
     });
+    emitToUser(clientUser._id, "invoice:updated", { invoiceId: invoice._id, status: invoice.status });
+    emitToUser(clientUser._id, "dashboard:refresh", {});
   }
 
   emitToUser(freelancerId, "invoice:updated", { invoiceId: invoice._id, status: invoice.status });
@@ -59,7 +75,21 @@ const onInvoiceViewed = async (invoice) => {
 
 const onInvoicePaid = async (invoice, freelancerId) => {
   const User = require("../models/User");
-  const clientUser = await User.findOne({ clientRef: invoice.clientId, role: "client" });
+  const Client = require("../models/Client");
+
+  let clientUser = null;
+  if (invoice.clientUser) {
+    clientUser = await User.findById(invoice.clientUser);
+  }
+  if (!clientUser && invoice.clientId) {
+    clientUser = await User.findOne({ clientRef: invoice.clientId, role: "client" });
+  }
+  if (!clientUser && invoice.clientId) {
+    const clientDoc = await Client.findById(invoice.clientId);
+    if (clientDoc?.email) {
+      clientUser = await User.findOne({ email: clientDoc.email.toLowerCase(), role: "client" });
+    }
+  }
 
   if (clientUser) {
     await notify({
@@ -71,8 +101,11 @@ const onInvoicePaid = async (invoice, freelancerId) => {
       refModel: "Invoice",
       refId:    invoice._id,
     });
+    emitToUser(clientUser._id, "invoice:updated", { invoiceId: invoice._id, status: "paid" });
+    emitToUser(clientUser._id, "dashboard:refresh", {});
   }
 
+  emitToUser(freelancerId, "invoice:updated", { invoiceId: invoice._id, status: "paid" });
   emitToUser(freelancerId, "dashboard:refresh", { reason: "invoice_paid" });
 
   const io = getIO();

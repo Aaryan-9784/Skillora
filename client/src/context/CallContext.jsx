@@ -345,7 +345,6 @@ export const CallProvider = ({ children }) => {
           throw audioErr;
         }
       }
-      throw err;
     }
   };
 

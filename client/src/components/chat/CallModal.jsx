@@ -261,7 +261,7 @@ const CallModal = ({
           className="fixed inset-0 z-50 bg-black flex flex-col overflow-hidden select-none"
         >
           {/* Audio Element for Remote Sound (kept active in DOM render tree) */}
-          <audio ref={remoteAudioRef} autoPlay playsInline className="fixed -top-96 -left-96 opacity-0 pointer-events-none w-1 h-1" />
+          <audio ref={remoteAudioRef} autoPlay className="fixed -top-96 -left-96 opacity-0 pointer-events-none w-1 h-1" />
 
           {/* Top Control Bar / Header Overlay */}
           <div className="absolute top-0 left-0 right-0 z-30 px-5 sm:px-8 py-4 flex items-center justify-between bg-gradient-to-b from-black/85 via-black/45 to-transparent pointer-events-auto">

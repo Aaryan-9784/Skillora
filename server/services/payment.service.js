@@ -1,8 +1,10 @@
+const mongoose   = require("mongoose");
 const Razorpay   = require("razorpay");
 const crypto     = require("crypto");
 const Payment    = require("../models/Payment");
 const Invoice    = require("../models/Invoice");
 const User       = require("../models/User");
+const Client     = require("../models/Client");
 const ApiError   = require("../utils/ApiError");
 const QueryBuilder = require("../utils/queryBuilder");
 const notify     = require("../utils/notify");
@@ -24,6 +26,9 @@ const createRazorpayOrder = async (userId, { amount, currency = "INR", invoiceId
   if (invoiceId) {
     const inv = await Invoice.findById(invoiceId);
     if (inv) {
+      if (inv.status === "paid") {
+        throw ApiError.badRequest("This invoice has already been paid.");
+      }
       finalAmount = inv.total;
       currency    = inv.currency || "INR";
     }
@@ -73,6 +78,13 @@ const verifyRazorpayPayment = async (userId, { razorpay_order_id, razorpay_payme
       inv.status = "paid";
       inv.paidAt = new Date();
       await inv.save();
+
+      // Update client stats
+      if (inv.clientId) {
+        await Client.findByIdAndUpdate(inv.clientId, {
+          $inc: { "stats.totalPaid": inv.total },
+        }).catch(() => {});
+      }
     }
   }
 
@@ -106,14 +118,22 @@ const verifyRazorpayPayment = async (userId, { razorpay_order_id, razorpay_payme
   }
 
   try {
-    const { emitToUser } = require("../config/socket");
+    const syncService = require("./sync.service");
     if (inv) {
-      emitToUser(inv.owner, "invoice:updated", { invoiceId: inv._id, status: "paid" });
-      emitToUser(inv.owner, "dashboard:refresh", {});
-      emitToUser(userId, "invoice:updated", { invoiceId: inv._id, status: "paid" });
-      emitToUser(userId, "dashboard:refresh", {});
+      await syncService.onInvoicePaid(inv, inv.owner);
     }
-  } catch (e) {}
+  } catch {
+    // Fallback socket broadcast
+    try {
+      const { emitToUser } = require("../config/socket");
+      if (inv) {
+        emitToUser(inv.owner, "invoice:updated", { invoiceId: inv._id, status: "paid" });
+        emitToUser(inv.owner, "dashboard:refresh", {});
+        emitToUser(userId, "invoice:updated", { invoiceId: inv._id, status: "paid" });
+        emitToUser(userId, "dashboard:refresh", {});
+      }
+    } catch {}
+  }
 
   return { payment: paymentObj, invoice: inv };
 };

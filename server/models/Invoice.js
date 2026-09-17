@@ -12,6 +12,8 @@ const invoiceSchema = new Schema(
   {
     owner:     { type: Schema.Types.ObjectId, ref: "User",    required: true },
     clientId:  { type: Schema.Types.ObjectId, ref: "Client",  required: true },
+    clientUser:{ type: Schema.Types.ObjectId, ref: "User",    default: null },
+    clientEmail:{ type: String, default: "", lowercase: true, trim: true },
     projectId: { type: Schema.Types.ObjectId, ref: "Project", default: null },
 
     invoiceNumber: { type: String, required: true, unique: true, trim: true },
@@ -55,6 +57,8 @@ invoiceSchema.index({ owner: 1, status: 1 });
 invoiceSchema.index({ owner: 1, createdAt: -1 });
 invoiceSchema.index({ clientId: 1, isDeleted: 1, createdAt: -1 });
 invoiceSchema.index({ owner: 1, isDeleted: 1, status: 1 });
+invoiceSchema.index({ clientUser: 1, isDeleted: 1, status: 1 }, { sparse: true });
+invoiceSchema.index({ clientEmail: 1, isDeleted: 1, status: 1 }, { sparse: true });
 invoiceSchema.index({ projectId: 1 }, { sparse: true });
 invoiceSchema.index({ dueDate: 1 }, { sparse: true });
 

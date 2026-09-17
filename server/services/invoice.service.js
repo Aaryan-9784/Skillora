@@ -1,5 +1,7 @@
+const mongoose     = require("mongoose");
 const Invoice      = require("../models/Invoice");
 const Client       = require("../models/Client");
+const User         = require("../models/User");
 const Counter      = require("../models/Counter");
 const ApiError     = require("../utils/ApiError");
 const QueryBuilder = require("../utils/queryBuilder");
@@ -35,8 +37,20 @@ const generateInvoiceNumber = async (ownerId) => {
 const createInvoice = async (ownerId, data) => {
   const invoiceNumber = await generateInvoiceNumber(ownerId);
 
+  // Resolve client details for seamless client portal queries
+  const clientDoc = data.clientId ? await Client.findById(data.clientId).select("email name") : null;
+  let clientEmail = data.clientEmail || clientDoc?.email || "";
+  let clientUser  = data.clientUser || null;
+
+  if (!clientUser && clientEmail) {
+    const matchedUser = await User.findOne({ email: clientEmail.toLowerCase(), role: "client" }).select("_id");
+    if (matchedUser) {
+      clientUser = matchedUser._id;
+    }
+  }
+
   // Calculate totals server-side — never trust client math
-  const lineItems = data.lineItems.map((item) => ({
+  const lineItems = (data.lineItems || []).map((item) => ({
     ...item,
     amount: parseFloat((item.quantity * item.rate).toFixed(2)),
   }));
@@ -48,6 +62,8 @@ const createInvoice = async (ownerId, data) => {
   const invoice = await Invoice.create({
     ...data,
     owner: ownerId,
+    clientEmail,
+    clientUser,
     invoiceNumber,
     lineItems,
     subtotal,
@@ -56,9 +72,31 @@ const createInvoice = async (ownerId, data) => {
   });
 
   // Update client stats
-  await Client.findByIdAndUpdate(data.clientId, {
-    $inc: { "stats.totalInvoiced": total },
-  });
+  if (data.clientId) {
+    await Client.findByIdAndUpdate(data.clientId, {
+      $inc: { "stats.totalInvoiced": total },
+    });
+  }
+
+  // If created with status "sent" (e.g. from UI modal), broadcast sync and send email
+  if (invoice.status === "sent") {
+    try {
+      const syncService = require("./sync.service");
+      await syncService.onInvoiceSent(invoice, ownerId);
+    } catch { /* sync service may not be available */ }
+
+    try {
+      const emailService = require("./email.service");
+      const owner = await User.findById(ownerId).select("name email");
+      const targetEmail = clientEmail || clientDoc?.email;
+      if (owner && targetEmail) {
+        emailService.sendInvoice(owner, invoice, targetEmail);
+      }
+    } catch (err) {
+      const logger = require("../utils/logger");
+      logger.error(`Failed to send invoice email: ${err.message}`);
+    }
+  }
 
   return invoice;
 };
@@ -121,8 +159,6 @@ const deleteInvoice = async (invoiceId, ownerId) => {
 /**
  * Revenue analytics — monthly breakdown for the last N months.
  */
-const mongoose = require("mongoose");
-
 const getRevenueAnalytics = async (ownerId, months = 12) => {
   const ownerObjId = new mongoose.Types.ObjectId(ownerId);
   const since = new Date();
@@ -218,20 +254,34 @@ const updateInvoiceStatus = async (invoiceId, ownerId, newStatus) => {
  */
 const sendInvoice = async (invoiceId, ownerId) => {
   const invoice = await updateInvoiceStatus(invoiceId, ownerId, "sent");
+
+  // Ensure clientUser and clientEmail are backfilled if missing
+  if (!invoice.clientEmail || !invoice.clientUser) {
+    const clientDoc = invoice.clientId ? await Client.findById(invoice.clientId).select("email") : null;
+    if (clientDoc) {
+      if (!invoice.clientEmail) invoice.clientEmail = clientDoc.email;
+      if (!invoice.clientUser) {
+        const matchedUser = await User.findOne({ email: clientDoc.email.toLowerCase(), role: "client" }).select("_id");
+        if (matchedUser) invoice.clientUser = matchedUser._id;
+      }
+      await invoice.save();
+    }
+  }
+
   try {
     const syncService = require("./sync.service");
     await syncService.onInvoiceSent(invoice, ownerId);
   } catch { /* sync service may not be available */ }
 
   try {
-    const User = require("../models/User");
     const emailService = require("./email.service");
     const [owner, client] = await Promise.all([
       User.findById(ownerId).select("name email"),
-      Client.findById(invoice.clientId).select("email"),
+      invoice.clientId ? Client.findById(invoice.clientId).select("email") : null,
     ]);
-    if (owner && client?.email) {
-      emailService.sendInvoice(owner, invoice, client.email);
+    const targetEmail = invoice.clientEmail || client?.email;
+    if (owner && targetEmail) {
+      emailService.sendInvoice(owner, invoice, targetEmail);
     }
   } catch (err) {
     const logger = require("../utils/logger");
@@ -251,14 +301,16 @@ const duplicateInvoice = async (invoiceId, ownerId) => {
   const invoiceNumber = await generateInvoiceNumber(ownerId);
 
   const duplicate = await Invoice.create({
-    owner:     ownerId,
-    clientId:  original.clientId,
-    projectId: original.projectId,
+    owner:       ownerId,
+    clientId:    original.clientId,
+    clientUser:  original.clientUser,
+    clientEmail: original.clientEmail,
+    projectId:   original.projectId,
     invoiceNumber,
-    lineItems: original.lineItems,
-    subtotal:  original.subtotal,
-    taxRate:   original.taxRate,
-    taxAmount: original.taxAmount,
+    lineItems:   original.lineItems,
+    subtotal:    original.subtotal,
+    taxRate:     original.taxRate,
+    taxAmount:   original.taxAmount,
     discount:  original.discount,
     total:     original.total,
     currency:  original.currency,

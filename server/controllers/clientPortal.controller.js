@@ -37,22 +37,53 @@ const clientMe = asyncHandler(async (req, res) => {
   ApiResponse.success(res, "Profile fetched", { user: req.user });
 });
 
-const getClientInvoices = asyncHandler(async (req, res) => {
-  const { status, search } = req.query;
-  const orConditions = [
-    { clientUser: req.user._id },
-  ];
-  if (req.user.clientRef) {
-    orConditions.push({ clientId: req.user.clientRef });
+/**
+ * Resolves all client identity criteria for the authenticated client user.
+ * Ensures invoices created via direct clientUser, clientRef, client email,
+ * or associated projects are all accurately matched.
+ */
+const buildClientInvoiceFilter = async (user, extra = {}) => {
+  const orConditions = [{ clientUser: user._id }];
+
+  if (user.clientRef) {
+    orConditions.push({ clientId: user.clientRef });
   }
-  const filter = {
+
+  if (user.email) {
+    const userEmail = user.email.toLowerCase();
+    orConditions.push({ clientEmail: userEmail });
+    const matchedClients = await Client.find({ email: userEmail }).select("_id").lean();
+    if (matchedClients.length > 0) {
+      orConditions.push({ clientId: { $in: matchedClients.map((c) => c._id) } });
+    }
+  }
+
+  // Also include invoices linked to projects owned or assigned to this client
+  const userProjects = await Project.find({
+    $or: [{ clientUser: user._id }, { owner: user._id }],
+    isDeleted: { $ne: true },
+  }).select("_id").lean();
+
+  if (userProjects.length > 0) {
+    orConditions.push({ projectId: { $in: userProjects.map((p) => p._id) } });
+  }
+
+  return {
     $or: orConditions,
     isDeleted: { $ne: true },
+    ...extra,
   };
-  if (status) filter.status = status;
+};
+
+const getClientInvoices = asyncHandler(async (req, res) => {
+  const { status, search } = req.query;
+  const extra = {};
+  if (status && status !== "all") extra.status = status;
   if (search) {
-    filter.invoiceNumber = { $regex: search, $options: "i" };
+    extra.invoiceNumber = { $regex: search, $options: "i" };
   }
+
+  const filter = await buildClientInvoiceFilter(req.user, extra);
 
   const invoices = await Invoice.find(filter)
     .populate("owner",     "name email avatar")
@@ -168,15 +199,8 @@ const updateClientProfile = asyncHandler(async (req, res) => {
 });
 
 const getInvoiceDetail = asyncHandler(async (req, res) => {
-  const invoice = await Invoice.findOne({
-    _id: req.params.id,
-    $or: [
-      { clientId: req.user.clientRef },
-      { clientEmail: req.user.email },
-      { clientUser: req.user._id },
-    ],
-    isDeleted: { $ne: true },
-  })
+  const filter = await buildClientInvoiceFilter(req.user, { _id: req.params.id });
+  const invoice = await Invoice.findOne(filter)
     .populate("owner",     "name email avatar")
     .populate("projectId", "title");
 
@@ -199,9 +223,8 @@ const getInvoiceDetail = asyncHandler(async (req, res) => {
  * Returns financial KPIs for the client dashboard.
  */
 const getFinanceSummary = asyncHandler(async (req, res) => {
-  const clientId = req.user.clientRef;
-
-  const invoices = await Invoice.find({ clientId, isDeleted: { $ne: true } });
+  const filter = await buildClientInvoiceFilter(req.user);
+  const invoices = await Invoice.find(filter);
 
   const totalPaid    = invoices.filter((i) => i.status === "paid").reduce((s, i) => s + i.total, 0);
   const totalPending = invoices.filter((i) => ["sent","viewed"].includes(i.status)).reduce((s, i) => s + i.total, 0);
@@ -226,6 +249,16 @@ const getFinanceSummary = asyncHandler(async (req, res) => {
 
   const trend = lastMonth > 0 ? Math.round(((thisMonth - lastMonth) / lastMonth) * 100) : null;
 
+  const projectFilter = {
+    $or: [
+      { clientUser: req.user._id },
+      { owner: req.user._id },
+      ...(req.user.clientRef ? [{ clientId: req.user.clientRef }] : []),
+    ],
+    status: "active",
+    isDeleted: { $ne: true },
+  };
+
   ApiResponse.success(res, "Finance summary", {
     totalPaid,
     totalPending,
@@ -234,7 +267,7 @@ const getFinanceSummary = asyncHandler(async (req, res) => {
     trend,
     overdueCount:  invoices.filter((i) => i.status === "overdue").length,
     pendingCount:  invoices.filter((i) => ["sent","viewed"].includes(i.status)).length,
-    activeProjects: await Project.countDocuments({ clientId, status: "active", isDeleted: { $ne: true } }),
+    activeProjects: await Project.countDocuments(projectFilter),
   });
 });
 
@@ -307,15 +340,8 @@ const markAllClientNotificationsRead = asyncHandler(async (req, res) => {
  * Initiates Razorpay payment for an invoice.
  */
 const initiateInvoicePayment = asyncHandler(async (req, res) => {
-  const invoice = await Invoice.findOne({
-    _id: req.params.id,
-    $or: [
-      { clientId: req.user.clientRef },
-      { clientEmail: req.user.email },
-      { clientUser: req.user._id },
-    ],
-    isDeleted: { $ne: true },
-  }).populate("owner", "name email");
+  const filter = await buildClientInvoiceFilter(req.user, { _id: req.params.id });
+  const invoice = await Invoice.findOne(filter).populate("owner", "name email");
 
   if (!invoice) throw ApiError.notFound("Invoice not found");
   if (invoice.status === "paid") throw ApiError.badRequest("Invoice is already paid");
@@ -362,15 +388,8 @@ const verifyInvoicePayment = asyncHandler(async (req, res) => {
     throw ApiError.badRequest("Payment verification failed — invalid signature");
   }
 
-  const invoice = await Invoice.findOne({
-    _id: req.params.id,
-    $or: [
-      { clientId: req.user.clientRef },
-      { clientEmail: req.user.email },
-      { clientUser: req.user._id },
-    ],
-    isDeleted: { $ne: true },
-  });
+  const filter = await buildClientInvoiceFilter(req.user, { _id: req.params.id });
+  const invoice = await Invoice.findOne(filter);
 
   if (!invoice) throw ApiError.notFound("Invoice not found");
 
@@ -611,20 +630,17 @@ const sendProjectMessage = asyncHandler(async (req, res) => {
 // ── Revenue analytics (client-scoped) ────────────────────
 const getRevenueAnalytics = asyncHandler(async (req, res) => {
   const Invoice = require("../models/Invoice");
-  const clientRef = req.user.clientRef;
 
   const since = new Date();
   since.setMonth(since.getMonth() - 12);
 
+  const filter = await buildClientInvoiceFilter(req.user, {
+    status:    "paid",
+    paidAt:    { $gte: since },
+  });
+
   const data = await Invoice.aggregate([
-    {
-      $match: {
-        clientId:  clientRef,
-        status:    "paid",
-        paidAt:    { $gte: since },
-        isDeleted: { $ne: true },
-      },
-    },
+    { $match: filter },
     {
       $group: {
         _id: { year: { $year: "$paidAt" }, month: { $month: "$paidAt" } },
@@ -651,11 +667,22 @@ const getRevenueAnalytics = asyncHandler(async (req, res) => {
 const getAiInsights = asyncHandler(async (req, res) => {
   const Invoice = require("../models/Invoice");
   const Project = require("../models/Project");
-  const clientRef = req.user.clientRef;
+
+  const filter = await buildClientInvoiceFilter(req.user);
+
+  const projectFilter = {
+    $or: [
+      { clientUser: req.user._id },
+      { owner: req.user._id },
+      ...(req.user.clientRef ? [{ clientId: req.user.clientRef }] : []),
+    ],
+    status: "active",
+    isDeleted: { $ne: true },
+  };
 
   const [invoiceStats, projectStats] = await Promise.all([
     Invoice.aggregate([
-      { $match: { clientId: clientRef, isDeleted: { $ne: true } } },
+      { $match: filter },
       {
         $group: {
           _id:         null,
@@ -667,7 +694,7 @@ const getAiInsights = asyncHandler(async (req, res) => {
         },
       },
     ]),
-    Project.countDocuments({ clientId: clientRef, status: "active", isDeleted: { $ne: true } }),
+    Project.countDocuments(projectFilter),
   ]);
 
   const inv = invoiceStats[0] || { total: 0, paid: 0, overdue: 0, totalAmount: 0, paidAmount: 0 };
