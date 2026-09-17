@@ -5,7 +5,11 @@ import { getSocket } from "../services/socketService";
 import useAuthStore from "../store/authStore";
 import useNotificationStore from "../store/notificationStore";
 import useClientPortalStore from "../store/clientPortalStore";
+import useDashboardStore from "../store/dashboardStore";
+import useProjectStore from "../store/projectStore";
+import useInvoiceStore from "../store/invoiceStore";
 import useChatStore from "../store/chatStore";
+import useSyncStore from "../store/syncStore";
 import tokenStore from "../services/tokenStore";
 
 const useSyncEvents = () => {
@@ -70,17 +74,56 @@ const useSyncEvents = () => {
 
     const onInvoiceUpdated = ({ invoiceId, status }) => {
       window.dispatchEvent(new CustomEvent("invoice:updated", { detail: { invoiceId, status } }));
-      if (isClient) clientStore.patchInvoice(invoiceId, { status });
+      if (isClient) {
+        clientStore.patchInvoice(invoiceId, { status });
+      } else {
+        useInvoiceStore.getState().fetchInvoices();
+      }
     };
 
     const onProjectUpdated = ({ projectId, status, progress }) => {
       window.dispatchEvent(new CustomEvent("project:updated", { detail: { projectId, status, progress } }));
-      if (isClient) clientStore.patchProject(projectId, { status, progress });
+      if (isClient) {
+        clientStore.patchProject(projectId, { status, progress });
+        clientStore.fetchDashboard();
+      } else {
+        useProjectStore.getState().fetchProjects();
+      }
+    };
+
+    const onTaskUpdated = ({ projectId, taskId }) => {
+      window.dispatchEvent(new CustomEvent("task:updated", { detail: { projectId, taskId } }));
+      if (isClient) {
+        clientStore.fetchDashboard();
+      } else {
+        if (projectId) {
+          useProjectStore.getState().fetchTasks(projectId);
+        }
+      }
+    };
+
+    const onProposalReceived = (data) => {
+      window.dispatchEvent(new CustomEvent("proposal:received", { detail: data }));
+      if (isClient) {
+        clientStore.fetchDashboard();
+        if (clientStore.fetchProjects) clientStore.fetchProjects();
+      }
+    };
+
+    const onProposalStatus = (data) => {
+      window.dispatchEvent(new CustomEvent("proposal:status_changed", { detail: data }));
+      useProjectStore.getState().fetchMyProposals();
+      useProjectStore.getState().fetchProjects();
     };
 
     const onDashboardRefresh = () => {
       window.dispatchEvent(new CustomEvent("dashboard:refresh"));
-      if (isClient) clientStore.fetchDashboard();
+      useSyncStore.getState().triggerRefresh(true);
+      if (isClient) {
+        clientStore.fetchDashboard();
+      } else {
+        useDashboardStore.getState().fetchSummary();
+      }
     };
 
     const onPlanChanged = ({ plan }) => {
@@ -114,46 +157,52 @@ const useSyncEvents = () => {
       }
     };
 
-    socket.on("notification",        onNotification);
-    socket.on("invoice:updated",     onInvoiceUpdated);
-    socket.on("project:updated",     onProjectUpdated);
-    socket.on("dashboard:refresh",   onDashboardRefresh);
-    socket.on("user:plan_changed",   onPlanChanged);
-    socket.on("auth:force_logout",   onForceLogout);
-    socket.on("admin:stats_refresh", onAdminStatsRefresh);
-    socket.on("message:new",         onMessageNew);
-    socket.on("milestone:updated",   onMilestoneUpdated);
-    socket.on("chat:message_new",    onChatMessageNew);
-    socket.on("chat:message_deleted", onChatMessageDeleted);
-    socket.on("chat:message_reaction", onChatMessageReaction);
-    socket.on("chat:typing",         onChatTyping);
-    socket.on("chat:stop_typing",    onChatStopTyping);
-    socket.on("presence:update",     onPresenceUpdate);
-    socket.on("presence:sync",       onPresenceSync);
-    socket.on("connect",             onSocketConnect);
+    socket.on("notification",              onNotification);
+    socket.on("invoice:updated",           onInvoiceUpdated);
+    socket.on("project:updated",           onProjectUpdated);
+    socket.on("task:updated",              onTaskUpdated);
+    socket.on("project:proposal_received", onProposalReceived);
+    socket.on("project:proposal_status",   onProposalStatus);
+    socket.on("dashboard:refresh",         onDashboardRefresh);
+    socket.on("user:plan_changed",         onPlanChanged);
+    socket.on("auth:force_logout",         onForceLogout);
+    socket.on("admin:stats_refresh",       onAdminStatsRefresh);
+    socket.on("message:new",               onMessageNew);
+    socket.on("milestone:updated",         onMilestoneUpdated);
+    socket.on("chat:message_new",          onChatMessageNew);
+    socket.on("chat:message_deleted",      onChatMessageDeleted);
+    socket.on("chat:message_reaction",     onChatMessageReaction);
+    socket.on("chat:typing",               onChatTyping);
+    socket.on("chat:stop_typing",          onChatStopTyping);
+    socket.on("presence:update",           onPresenceUpdate);
+    socket.on("presence:sync",             onPresenceSync);
+    socket.on("connect",                   onSocketConnect);
 
     if (socket.connected) {
       socket.emit("presence:query");
     }
 
     return () => {
-      socket.off("notification",        onNotification);
-      socket.off("invoice:updated",     onInvoiceUpdated);
-      socket.off("project:updated",     onProjectUpdated);
-      socket.off("dashboard:refresh",   onDashboardRefresh);
-      socket.off("user:plan_changed",   onPlanChanged);
-      socket.off("auth:force_logout",   onForceLogout);
-      socket.off("admin:stats_refresh", onAdminStatsRefresh);
-      socket.off("message:new",         onMessageNew);
-      socket.off("milestone:updated",   onMilestoneUpdated);
-      socket.off("chat:message_new",    onChatMessageNew);
-      socket.off("chat:message_deleted", onChatMessageDeleted);
-      socket.off("chat:message_reaction", onChatMessageReaction);
-      socket.off("chat:typing",         onChatTyping);
-      socket.off("chat:stop_typing",    onChatStopTyping);
-      socket.off("presence:update",     onPresenceUpdate);
-      socket.off("presence:sync",       onPresenceSync);
-      socket.off("connect",             onSocketConnect);
+      socket.off("notification",              onNotification);
+      socket.off("invoice:updated",           onInvoiceUpdated);
+      socket.off("project:updated",           onProjectUpdated);
+      socket.off("task:updated",              onTaskUpdated);
+      socket.off("project:proposal_received", onProposalReceived);
+      socket.off("project:proposal_status",   onProposalStatus);
+      socket.off("dashboard:refresh",         onDashboardRefresh);
+      socket.off("user:plan_changed",         onPlanChanged);
+      socket.off("auth:force_logout",         onForceLogout);
+      socket.off("admin:stats_refresh",       onAdminStatsRefresh);
+      socket.off("message:new",               onMessageNew);
+      socket.off("milestone:updated",         onMilestoneUpdated);
+      socket.off("chat:message_new",          onChatMessageNew);
+      socket.off("chat:message_deleted",      onChatMessageDeleted);
+      socket.off("chat:message_reaction",     onChatMessageReaction);
+      socket.off("chat:typing",               onChatTyping);
+      socket.off("chat:stop_typing",          onChatStopTyping);
+      socket.off("presence:update",           onPresenceUpdate);
+      socket.off("presence:sync",             onPresenceSync);
+      socket.off("connect",                   onSocketConnect);
     };
   }, [user?.role]);
 };

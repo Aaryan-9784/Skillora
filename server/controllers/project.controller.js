@@ -2,10 +2,15 @@ const asyncHandler    = require("../utils/asyncHandler");
 const ApiResponse     = require("../utils/ApiResponse");
 const projectService  = require("../services/project.service");
 const aiService       = require("../services/ai.service");
+const { emitToUser }  = require("../config/socket");
 
 // ── Projects ──────────────────────────────────────────────
 const createProject = asyncHandler(async (req, res) => {
   const project = await projectService.createProject(req.user._id, req.body);
+  try {
+    emitToUser(req.user._id, "project:updated", { projectId: project._id });
+    emitToUser(req.user._id, "dashboard:refresh", {});
+  } catch (e) {}
   ApiResponse.created(res, "Project created", { project });
 });
 
@@ -21,11 +26,21 @@ const getProject = asyncHandler(async (req, res) => {
 
 const updateProject = asyncHandler(async (req, res) => {
   const project = await projectService.updateProject(req.params.id, req.user._id, req.body);
+  try {
+    emitToUser(req.user._id, "project:updated", { projectId: project._id, status: project.status });
+    if (project.clientUser) emitToUser(project.clientUser, "project:updated", { projectId: project._id, status: project.status });
+    if (project.assignedFreelancer) emitToUser(project.assignedFreelancer, "project:updated", { projectId: project._id, status: project.status });
+    emitToUser(req.user._id, "dashboard:refresh", {});
+  } catch (e) {}
   ApiResponse.success(res, "Project updated", { project });
 });
 
 const deleteProject = asyncHandler(async (req, res) => {
   await projectService.deleteProject(req.params.id, req.user._id);
+  try {
+    emitToUser(req.user._id, "project:updated", { projectId: req.params.id, deleted: true });
+    emitToUser(req.user._id, "dashboard:refresh", {});
+  } catch (e) {}
   ApiResponse.success(res, "Project deleted");
 });
 
@@ -37,6 +52,10 @@ const getProjectStats = asyncHandler(async (req, res) => {
 // ── Tasks ─────────────────────────────────────────────────
 const createTask = asyncHandler(async (req, res) => {
   const task = await projectService.createTask(req.user._id, req.body);
+  try {
+    emitToUser(req.user._id, "task:updated", { projectId: task.project, taskId: task._id });
+    emitToUser(req.user._id, "dashboard:refresh", {});
+  } catch (e) {}
   ApiResponse.created(res, "Task created", { task });
 });
 
@@ -47,16 +66,25 @@ const getTasksByProject = asyncHandler(async (req, res) => {
 
 const updateTask = asyncHandler(async (req, res) => {
   const task = await projectService.updateTask(req.params.id, req.user._id, req.body);
+  try {
+    emitToUser(req.user._id, "task:updated", { projectId: task?.project, taskId: task?._id || req.params.id });
+  } catch (e) {}
   ApiResponse.success(res, "Task updated", { task });
 });
 
 const reorderTasks = asyncHandler(async (req, res) => {
   await projectService.reorderTasks(req.user._id, req.params.id, req.body.orderedIds);
+  try {
+    emitToUser(req.user._id, "task:updated", { projectId: req.params.id });
+  } catch (e) {}
   ApiResponse.success(res, "Tasks reordered");
 });
 
 const deleteTask = asyncHandler(async (req, res) => {
   await projectService.deleteTask(req.params.id, req.user._id);
+  try {
+    emitToUser(req.user._id, "task:updated", { taskId: req.params.id });
+  } catch (e) {}
   ApiResponse.success(res, "Task deleted");
 });
 

@@ -12,6 +12,7 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 import useAuthStore from "../../store/authStore";
 import useNotificationStore from "../../store/notificationStore";
 import NotificationsPanel from "./NotificationsPanel";
+import LiveSyncIndicator from "../common/LiveSyncIndicator";
 import CommandPalette from "../ui/CommandPalette";
 import useCommandPalette from "../../hooks/useCommandPalette";
 import useClickOutside from "../../hooks/useClickOutside";
@@ -123,7 +124,10 @@ const Navbar = ({ onCommandPalette }) => {
         </div>
 
         {/* ── RIGHT ACTIONS ── */}
-        <div className="flex items-center gap-3.5">
+        <div className="flex items-center gap-3">
+          {/* Live Auto-Refresh Status Indicator */}
+          <LiveSyncIndicator />
+
           {/* Notifications */}
           <div className="relative" ref={notifRef}>
             <motion.button whileHover={{ scale: 1.06, y: -1 }} whileTap={{ scale: 0.94 }}

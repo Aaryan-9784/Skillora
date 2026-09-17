@@ -126,6 +126,17 @@ const submitProposal = async (freelancerId, projectId, data) => {
     sendProposalNotification(clientUserObj.email, clientUserObj.name, proposal, project, "new_proposal").catch(() => {});
   }
 
+  try {
+    const { emitToUser } = require("../config/socket");
+    emitToUser(clientUserId, "project:proposal_received", {
+      projectId,
+      proposalId: proposal._id,
+      freelancerId,
+      projectTitle: project.title,
+    });
+    emitToUser(clientUserId, "dashboard:refresh", {});
+  } catch (sockErr) {}
+
   return proposal;
 };
 
@@ -342,6 +353,9 @@ const respondToProposal = async (userOrId, proposalId, action) => {
       emitToUser(clientUserId, "chat:conversation_updated", payload);
       emitToUser(proposal.freelancer, "chat:conversation_updated", payload);
       emitToUser(proposal.freelancer, "project:proposal_approved", payload);
+      emitToUser(proposal.freelancer, "project:proposal_status", { proposalId: proposal._id, status: "approved" });
+      emitToUser(clientUserId, "dashboard:refresh", {});
+      emitToUser(proposal.freelancer, "dashboard:refresh", {});
     } catch (sockErr) {}
 
     await notify({
@@ -362,6 +376,12 @@ const respondToProposal = async (userOrId, proposalId, action) => {
     proposal.status = "shortlisted";
     await proposal.save();
 
+    try {
+      const { emitToUser } = require("../config/socket");
+      emitToUser(proposal.freelancer, "project:proposal_status", { proposalId: proposal._id, status: "shortlisted" });
+      emitToUser(proposal.freelancer, "dashboard:refresh", {});
+    } catch (sockErr) {}
+
     await notify({
       recipient: proposal.freelancer,
       type: "proposal_shortlisted",
@@ -374,6 +394,12 @@ const respondToProposal = async (userOrId, proposalId, action) => {
   } else if (action === "reject") {
     proposal.status = "rejected";
     await proposal.save();
+
+    try {
+      const { emitToUser } = require("../config/socket");
+      emitToUser(proposal.freelancer, "project:proposal_status", { proposalId: proposal._id, status: "rejected" });
+      emitToUser(proposal.freelancer, "dashboard:refresh", {});
+    } catch (sockErr) {}
 
     await notify({
       recipient: proposal.freelancer,
