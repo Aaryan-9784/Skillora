@@ -17,10 +17,9 @@ const {
 } = require("../controllers/chat.controller");
 
 router.get("/download-proxy", downloadAttachmentProxy);
+router.get("/ice-servers", getIceServersConfig);
 
 router.use(protect);
-
-router.get("/ice-servers", getIceServersConfig);
 router.get("/conversations", getUserConversations);
 router.get("/project", getProjectConversation);
 router.get("/project/:projectId", getProjectConversation);

@@ -297,7 +297,11 @@ export const CallProvider = ({ children }) => {
           return await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
         } catch (videoErr) {
           console.warn("Camera unavailable, falling back to audio only:", videoErr?.message);
-          toast("Camera unavailable, using audio stream…", { icon: "🎙️" });
+          if (videoErr?.name === "NotReadableError") {
+            toast("Camera is in use by another tab or app. Using audio only.", { icon: "📷", duration: 5000 });
+          } else {
+            toast("Camera unavailable, using audio only…", { icon: "🎙️", duration: 4000 });
+          }
           return await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
         }
       }
@@ -307,15 +311,12 @@ export const CallProvider = ({ children }) => {
 
   const bindRemoteTracks = (pc) => {
     pc.ontrack = (e) => {
-      if (e.streams && e.streams[0]) {
-        const stream = e.streams[0];
-        setRemoteStream(new MediaStream(stream.getTracks()));
-        stream.onaddtrack = () => {
-          setRemoteStream(new MediaStream(stream.getTracks()));
-        };
-        stream.onremovetrack = () => {
-          setRemoteStream(new MediaStream(stream.getTracks()));
-        };
+      console.log("[WebRTC] ontrack received:", e.track.kind, "id:", e.track.id, "enabled:", e.track.enabled, "muted:", e.track.muted);
+      const incomingStream = e.streams && e.streams[0] ? e.streams[0] : null;
+      if (incomingStream) {
+        setRemoteStream(incomingStream);
+        incomingStream.onaddtrack = () => setRemoteStream(new MediaStream(incomingStream.getTracks()));
+        incomingStream.onremovetrack = () => setRemoteStream(new MediaStream(incomingStream.getTracks()));
       } else if (e.track) {
         setRemoteStream((prev) => {
           const currentTracks = prev ? prev.getTracks().filter((t) => t.id !== e.track.id) : [];
