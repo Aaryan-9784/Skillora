@@ -522,8 +522,8 @@ let cachedMeteredExpiresAt = 0;
 
 // Provide production-ready high-availability ICE servers (Metered dynamic TURN + STUN)
 const getIceServersConfig = asyncHandler(async (req, res) => {
-  const meteredDomain = process.env.METERED_DOMAIN;
-  const meteredApiKey = process.env.METERED_API_KEY || process.env.METERED_SECRET_KEY;
+  const meteredDomain = process.env.METERED_DOMAIN || "skillora.metered.live";
+  const meteredApiKey = process.env.METERED_API_KEY || "b4a13b28275e341060ea7ddb3e9095ff9672";
 
   if (meteredDomain && meteredApiKey) {
     const now = Date.now();

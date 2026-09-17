@@ -2,30 +2,12 @@ import api from "../services/api";
 
 export const RTC_CONFIG = {
   iceServers: [
-    // 100% Free Global STUN Servers (Google & Cloudflare) - Zero Cost Forever
+    // High-availability global STUN servers
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
     { urls: "stun:stun2.l.google.com:19302" },
-    { urls: "stun:stun3.l.google.com:19302" },
-    { urls: "stun:stun4.l.google.com:19302" },
     { urls: "stun:stun.cloudflare.com:3478" },
     { urls: "stun:stun.relay.metered.ca:80" },
-    // Metered TURN Relay Endpoints
-    {
-      urls: "turn:standard.relay.metered.ca:80",
-      username: "openrelayproject",
-      credential: "openrelayproject",
-    },
-    {
-      urls: "turn:standard.relay.metered.ca:443",
-      username: "openrelayproject",
-      credential: "openrelayproject",
-    },
-    {
-      urls: "turn:standard.relay.metered.ca:443?transport=tcp",
-      username: "openrelayproject",
-      credential: "openrelayproject",
-    },
     ...(import.meta.env.VITE_TURN_SERVER_URL
       ? [
           {
@@ -36,7 +18,7 @@ export const RTC_CONFIG = {
         ]
       : []),
   ],
-  iceCandidatePoolSize: 10,
+  iceCandidatePoolSize: 2,
 };
 
 let cachedConfig = null;
@@ -45,18 +27,53 @@ let lastFetchTime = 0;
 export const getResolvedRTCConfig = async () => {
   const now = Date.now();
   if (cachedConfig && now - lastFetchTime < 1000 * 60 * 15) return cachedConfig;
+
+  // 1. Try server endpoint first
   try {
     const { data } = await api.get("/chat/ice-servers");
     if (data?.data?.iceServers && Array.isArray(data.data.iceServers) && data.data.iceServers.length > 0) {
-      cachedConfig = {
-        ...RTC_CONFIG,
-        iceServers: data.data.iceServers,
-      };
-      lastFetchTime = now;
-      return cachedConfig;
+      const hasTurn = data.data.iceServers.some((s) => {
+        const u = Array.isArray(s.urls) ? s.urls.join(" ") : s.urls || "";
+        return u.includes("turn:");
+      });
+      if (hasTurn) {
+        cachedConfig = {
+          ...RTC_CONFIG,
+          iceServers: data.data.iceServers,
+        };
+        lastFetchTime = now;
+        return cachedConfig;
+      }
     }
-  } catch {
-    // Graceful fallback to static RTC_CONFIG
+  } catch (err) {
+    console.warn("[WebRTC] Backend ICE config fetch warning:", err?.message);
   }
+
+  // 2. Direct fetch from Metered TURN API (CORS enabled, highly resilient fallback)
+  try {
+    const res = await fetch(
+      "https://skillora.metered.live/api/v1/turn/credentials?apiKey=b4a13b28275e341060ea7ddb3e9095ff9672"
+    );
+    if (res.ok) {
+      const meteredServers = await res.json();
+      if (Array.isArray(meteredServers) && meteredServers.length > 0) {
+        cachedConfig = {
+          ...RTC_CONFIG,
+          iceServers: [
+            { urls: "stun:stun.l.google.com:19302" },
+            { urls: "stun:stun1.l.google.com:19302" },
+            { urls: "stun:stun.cloudflare.com:3478" },
+            ...meteredServers,
+          ],
+        };
+        lastFetchTime = now;
+        console.log("[WebRTC] Loaded active Metered TURN relay endpoints successfully");
+        return cachedConfig;
+      }
+    }
+  } catch (err) {
+    console.warn("[WebRTC] Direct Metered TURN fetch warning:", err?.message);
+  }
+
   return RTC_CONFIG;
 };
