@@ -105,6 +105,16 @@ const verifyRazorpayPayment = async (userId, { razorpay_order_id, razorpay_payme
     sendPaymentReceipt(recipientUser, paymentObj).catch(() => {});
   }
 
+  try {
+    const { emitToUser } = require("../config/socket");
+    if (inv) {
+      emitToUser(inv.owner, "invoice:updated", { invoiceId: inv._id, status: "paid" });
+      emitToUser(inv.owner, "dashboard:refresh", {});
+      emitToUser(userId, "invoice:updated", { invoiceId: inv._id, status: "paid" });
+      emitToUser(userId, "dashboard:refresh", {});
+    }
+  } catch (e) {}
+
   return { payment: paymentObj, invoice: inv };
 };
 
