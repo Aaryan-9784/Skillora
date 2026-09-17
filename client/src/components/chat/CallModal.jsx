@@ -114,6 +114,39 @@ const CallModal = ({
     }
   }, [remoteStream, isScreenSharing]);
 
+  const [hasDecodedVideo, setHasDecodedVideo] = useState(false);
+
+  // Monitor if remote video element actually has non-zero decoded frames
+  useEffect(() => {
+    const vEl = remoteVideoRef.current;
+    if (!vEl || !remoteStream) {
+      setHasDecodedVideo(false);
+      return;
+    }
+
+    const checkDimensions = () => {
+      if (vEl.videoWidth > 0 && vEl.videoHeight > 0) {
+        setHasDecodedVideo(true);
+      }
+    };
+
+    checkDimensions();
+    vEl.addEventListener("loadedmetadata", checkDimensions);
+    vEl.addEventListener("resize", checkDimensions);
+    vEl.addEventListener("playing", checkDimensions);
+    vEl.addEventListener("timeupdate", checkDimensions);
+
+    const interval = setInterval(checkDimensions, 400);
+
+    return () => {
+      vEl.removeEventListener("loadedmetadata", checkDimensions);
+      vEl.removeEventListener("resize", checkDimensions);
+      vEl.removeEventListener("playing", checkDimensions);
+      vEl.removeEventListener("timeupdate", checkDimensions);
+      clearInterval(interval);
+    };
+  }, [remoteStream]);
+
   // Remote video sync (ensures muted property is set so Chrome Autoplay Policy never blocks video frames)
   useEffect(() => {
     const vEl = remoteVideoRef.current;
@@ -345,63 +378,74 @@ const CallModal = ({
                 muted
                 className="w-full h-full object-contain bg-black"
               />
-            ) : hasRemoteVideo || remoteIsSharingScreen ? (
-              /* Case 2: Remote Peer is sharing screen OR sending camera feed */
-              <video
-                ref={remoteVideoRef}
-                autoPlay
-                playsInline
-                muted
-                className={`w-full h-full transition-all duration-300 ${
-                  remoteIsSharingScreen || videoFitMode === "contain"
-                    ? "object-contain bg-black"
-                    : "object-cover"
-                }`}
-              />
             ) : (
-              /* Case 3: Voice Call / Camera Off Avatar Stage */
-              <div className="relative w-full h-full flex flex-col items-center justify-center bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-950/40 via-slate-950 to-black px-4">
-                <div className="relative flex items-center justify-center">
-                  <div className="absolute w-64 h-64 rounded-full bg-indigo-500/10 animate-ping pointer-events-none" />
-                  <div className="absolute w-48 h-48 rounded-full bg-indigo-500/20 blur-xl pointer-events-none" />
+              /* Case 2 & 3: Remote Peer Video / Screen Share or Avatar Stage */
+              <div className="relative w-full h-full flex items-center justify-center overflow-hidden bg-slate-950">
+                {/* Persistent remote video element */}
+                <video
+                  ref={remoteVideoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className={`w-full h-full transition-opacity duration-300 ${
+                    remoteIsSharingScreen || videoFitMode === "contain"
+                      ? "object-contain bg-black"
+                      : "object-cover"
+                  } ${
+                    (hasRemoteVideo && hasDecodedVideo) || remoteIsSharingScreen
+                      ? "opacity-100 relative z-10"
+                      : "opacity-0 absolute inset-0 pointer-events-none"
+                  }`}
+                />
 
-                  <div className="relative w-36 h-36 sm:w-44 sm:h-44 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 p-1 ring-4 ring-indigo-500/30 shadow-2xl shadow-indigo-600/30 overflow-hidden flex items-center justify-center">
-                    {partnerAvatar ? (
-                      <img src={partnerAvatar} alt={partnerName} className="w-full h-full rounded-full object-cover" />
-                    ) : (
-                      <span className="text-5xl sm:text-6xl font-black text-white">
-                        {getInitials(partnerName)}
-                      </span>
-                    )}
-                  </div>
-                </div>
+                {/* When remote video has no decoded frames yet, show elegant Avatar stage */}
+                {(!hasRemoteVideo || !hasDecodedVideo) && !remoteIsSharingScreen && (
+                  <div className="absolute inset-0 z-0 flex flex-col items-center justify-center bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-950/40 via-slate-950 to-black px-4">
+                    <div className="relative flex items-center justify-center">
+                      <div className="absolute w-64 h-64 rounded-full bg-indigo-500/10 animate-ping pointer-events-none" />
+                      <div className="absolute w-48 h-48 rounded-full bg-indigo-500/20 blur-xl pointer-events-none" />
 
-                <div className="text-center mt-6">
-                  <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">{partnerName}</h2>
-                  <p className="text-sm font-medium text-indigo-400 mt-1">
-                    {callState === "calling"
-                      ? "Calling…"
-                      : isVoiceCall
-                      ? "Voice Call Connected"
-                      : "Camera turned off"}
-                  </p>
-
-                  {/* Audio Visualizer Waves */}
-                  {callState === "connected" && (
-                    <div className="flex items-center justify-center gap-1.5 mt-5">
-                      {[12, 24, 36, 20, 30, 16, 28].map((h, i) => (
-                        <span
-                          key={i}
-                          style={{
-                            height: `${h}px`,
-                            animationDelay: `${i * 0.15}s`,
-                          }}
-                          className="w-1.5 rounded-full bg-indigo-400/80 animate-pulse"
-                        />
-                      ))}
+                      <div className="relative w-36 h-36 sm:w-44 sm:h-44 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 p-1 ring-4 ring-indigo-500/30 shadow-2xl shadow-indigo-600/30 overflow-hidden flex items-center justify-center">
+                        {partnerAvatar ? (
+                          <img src={partnerAvatar} alt={partnerName} className="w-full h-full rounded-full object-cover" />
+                        ) : (
+                          <span className="text-5xl sm:text-6xl font-black text-white">
+                            {getInitials(partnerName)}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  )}
-                </div>
+
+                    <div className="text-center mt-6">
+                      <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">{partnerName}</h2>
+                      <p className="text-sm font-medium text-indigo-400 mt-1">
+                        {callState === "calling"
+                          ? "Calling…"
+                          : isVoiceCall
+                          ? "Voice Call Connected"
+                          : remoteStream && remoteStream.getVideoTracks().length > 0
+                          ? "Connecting live video…"
+                          : "Camera turned off"}
+                      </p>
+
+                      {/* Audio Visualizer Waves */}
+                      {callState === "connected" && (
+                        <div className="flex items-center justify-center gap-1.5 mt-5">
+                          {[12, 24, 36, 20, 30, 16, 28].map((h, i) => (
+                            <span
+                              key={i}
+                              style={{
+                                height: `${h}px`,
+                                animationDelay: `${i * 0.15}s`,
+                              }}
+                              className="w-1.5 rounded-full bg-indigo-400/80 animate-pulse"
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

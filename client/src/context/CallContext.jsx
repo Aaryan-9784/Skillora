@@ -4,6 +4,7 @@ import { getResolvedRTCConfig } from "../utils/webrtcConfig";
 import CallModal from "../components/chat/CallModal";
 import useAuthStore from "../store/authStore";
 import toast from "react-hot-toast";
+import { createVirtualVideoStream } from "../utils/virtualStream";
 
 const CallContext = createContext(null);
 
@@ -296,11 +297,25 @@ export const CallProvider = ({ children }) => {
         try {
           return await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
         } catch (videoErr) {
-          console.warn("Camera unavailable, falling back to audio only:", videoErr?.message);
-          if (videoErr?.name === "NotReadableError") {
-            toast("Camera is in use by another tab or app. Using audio only.", { icon: "📷", duration: 5000 });
-          } else {
-            toast("Camera unavailable, using audio only…", { icon: "🎙️", duration: 4000 });
+          console.warn("Physical camera unavailable, activating live virtual video stream:", videoErr?.name, videoErr?.message);
+          let audioStream = null;
+          try {
+            audioStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+          } catch (aErr) {
+            console.warn("Audio fallback access warning:", aErr?.message);
+          }
+
+          try {
+            const virtualStream = createVirtualVideoStream(user?.name || "Skillora User");
+            const vTrack = virtualStream.getVideoTracks()[0];
+            toast("Camera busy in another tab. Live virtual stream active.", { icon: "📹", duration: 4000 });
+            if (audioStream) {
+              return new MediaStream([...audioStream.getAudioTracks(), vTrack]);
+            }
+            return new MediaStream([vTrack]);
+          } catch (vErr) {
+            console.error("Virtual video stream creation failed:", vErr);
+            if (audioStream) return audioStream;
           }
           return await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
         }
@@ -485,10 +500,18 @@ export const CallProvider = ({ children }) => {
 
       if (currentVideoTracks.length === 0) {
         // Upgrade audio call to video by acquiring camera
-        const videoStream = await navigator.mediaDevices.getUserMedia({
-          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
-        });
-        const newTrack = videoStream.getVideoTracks()[0];
+        let newTrack = null;
+        try {
+          const videoStream = await navigator.mediaDevices.getUserMedia({
+            video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
+          });
+          newTrack = videoStream.getVideoTracks()[0];
+        } catch (camErr) {
+          console.warn("Camera busy on toggle, using live virtual video:", camErr?.message);
+          const virtualStream = createVirtualVideoStream(user?.name || "Skillora User");
+          newTrack = virtualStream.getVideoTracks()[0];
+          toast("Camera busy in another tab. Live virtual stream active.", { icon: "📹", duration: 4000 });
+        }
         if (!newTrack) return;
 
         if (localStream) {
