@@ -199,27 +199,43 @@ export const CallProvider = ({ children }) => {
         }
       };
 
-      const onRenegotiate = async ({ senderId, offer }) => {
+      const onRenegotiate = async ({ senderId, offer, callType }) => {
         const pc = peerConnectionRef.current;
         if (!pc) return;
         try {
+          if (callType === "video") {
+            setActiveCallType("video");
+            setIsVideoOff(true);
+            toast("Partner switched to video", { icon: "📹" });
+          }
+
+          let videoTransceiver = pc.getTransceivers().find(
+            (t) => t.receiver?.track?.kind === "video" || t.sender?.track?.kind === "video"
+          );
+          if (videoTransceiver && videoTransceiver.direction !== "sendrecv") {
+            videoTransceiver.direction = "sendrecv";
+          }
+
           await pc.setRemoteDescription(new RTCSessionDescription(offer));
           await processIceQueue();
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
           const s = getSocket();
           if (s) {
-            s.emit("call:renegotiate_answer", { targetUserId: senderId, answer });
+            s.emit("call:renegotiate_answer", { targetUserId: senderId, answer, callType });
           }
         } catch (err) {
           console.error("Renegotiate error on receiver:", err);
         }
       };
 
-      const onRenegotiateAnswer = async ({ answer }) => {
+      const onRenegotiateAnswer = async ({ answer, callType }) => {
         const pc = peerConnectionRef.current;
         if (!pc) return;
         try {
+          if (callType === "video") {
+            setActiveCallType("video");
+          }
           await pc.setRemoteDescription(new RTCSessionDescription(answer));
           await processIceQueue();
         } catch (err) {
@@ -319,6 +335,14 @@ export const CallProvider = ({ children }) => {
             if (audioStream) return audioStream;
           }
           return await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        }
+      } else {
+        console.warn("Primary audio constraints failed, falling back to basic audio:", err?.message);
+        try {
+          return await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        } catch (audioErr) {
+          console.error("Basic audio acquisition failed:", audioErr);
+          throw audioErr;
         }
       }
       throw err;
@@ -540,24 +564,51 @@ export const CallProvider = ({ children }) => {
         }
         if (!newTrack) return;
 
+        let updatedStream = localStream;
         if (localStream) {
           localStream.addTrack(newTrack);
+          updatedStream = new MediaStream(localStream.getTracks());
+          setLocalStream(updatedStream);
         } else {
-          setLocalStream(videoStream);
+          updatedStream = new MediaStream([newTrack]);
+          setLocalStream(updatedStream);
         }
 
         if (pc) {
-          let sender = pc.getSenders().find((s) => s.track?.kind === "video" || s.kind === "video");
-          if (sender) {
-            await sender.replaceTrack(newTrack);
+          let videoTransceiver = pc.getTransceivers().find(
+            (t) => t.receiver?.track?.kind === "video" || t.sender?.track?.kind === "video"
+          );
+
+          if (videoTransceiver) {
+            videoTransceiver.direction = "sendrecv";
+            await videoTransceiver.sender.replaceTrack(newTrack);
           } else {
-            pc.addTrack(newTrack, localStream || videoStream);
+            pc.addTrack(newTrack, updatedStream);
+          }
+
+          // Trigger WebRTC renegotiation so remote partner immediately receives the video stream!
+          const target = targetUserIdRef.current || incomingCall?.callerId || activePartner?.id;
+          if (target) {
+            try {
+              const offer = await pc.createOffer();
+              await pc.setLocalDescription(offer);
+              const s = getSocket();
+              if (s) {
+                s.emit("call:renegotiate", {
+                  targetUserId: target,
+                  offer,
+                  callType: "video",
+                });
+              }
+            } catch (negErr) {
+              console.warn("Renegotiation offer creation error:", negErr);
+            }
           }
         }
 
         setIsVideoOff(false);
         setActiveCallType("video");
-        toast.success("Camera enabled");
+        toast.success("Converted to video call");
       } else {
         const nextState = !isVideoOff;
         currentVideoTracks.forEach((t) => (t.enabled = !nextState));
@@ -575,7 +626,7 @@ export const CallProvider = ({ children }) => {
       console.error("Toggle camera error:", err);
       toast.error("Could not access camera: " + err.message);
     }
-  }, [localStream, isVideoOff]);
+  }, [localStream, isVideoOff, incomingCall, activePartner, user]);
 
   const stopScreenShare = useCallback(async () => {
     if (screenTrackRef.current) {

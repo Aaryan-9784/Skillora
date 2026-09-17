@@ -221,21 +221,23 @@ const initSocket = (httpServer) => {
       });
     });
 
-    socket.on("call:renegotiate", async ({ targetUserId, offer }) => {
+    socket.on("call:renegotiate", async ({ targetUserId, offer, callType }) => {
       if (!targetUserId || !offer) return;
       const resolvedTargetId = await resolveUserId(targetUserId);
       io.to(`user:${resolvedTargetId}`).emit("call:renegotiate", {
         senderId: userId,
         offer,
+        callType,
       });
     });
 
-    socket.on("call:renegotiate_answer", async ({ targetUserId, answer }) => {
+    socket.on("call:renegotiate_answer", async ({ targetUserId, answer, callType }) => {
       if (!targetUserId || !answer) return;
       const resolvedTargetId = await resolveUserId(targetUserId);
       io.to(`user:${resolvedTargetId}`).emit("call:renegotiate_answer", {
         senderId: userId,
         answer,
+        callType,
       });
     });
 

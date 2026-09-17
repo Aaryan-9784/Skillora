@@ -143,6 +143,10 @@ const CallModal = ({
   useEffect(() => {
     const aEl = remoteAudioRef.current;
     if (aEl && remoteStream) {
+      aEl.muted = false;
+      aEl.defaultMuted = false;
+      aEl.volume = 1.0;
+
       if (aEl.srcObject !== remoteStream) {
         aEl.srcObject = remoteStream;
       }
@@ -150,6 +154,19 @@ const CallModal = ({
       if (playPromise !== undefined) {
         playPromise.catch((err) => {
           console.warn("[CallModal] Remote audio play warning:", err);
+          // Unlock audio playback immediately on user interaction if blocked by browser policy
+          const unlock = () => {
+            if (aEl) {
+              aEl.muted = false;
+              aEl.play().catch(() => {});
+            }
+            window.removeEventListener("click", unlock);
+            window.removeEventListener("keydown", unlock);
+            window.removeEventListener("touchstart", unlock);
+          };
+          window.addEventListener("click", unlock, { once: true });
+          window.addEventListener("keydown", unlock, { once: true });
+          window.addEventListener("touchstart", unlock, { once: true });
         });
       }
     }
@@ -243,8 +260,8 @@ const CallModal = ({
           exit={{ opacity: 0, scale: 0.98 }}
           className="fixed inset-0 z-50 bg-black flex flex-col overflow-hidden select-none"
         >
-          {/* Hidden Audio Element for Remote Sound */}
-          <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
+          {/* Audio Element for Remote Sound (kept active in DOM render tree) */}
+          <audio ref={remoteAudioRef} autoPlay playsInline className="fixed -top-96 -left-96 opacity-0 pointer-events-none w-1 h-1" />
 
           {/* Top Control Bar / Header Overlay */}
           <div className="absolute top-0 left-0 right-0 z-30 px-5 sm:px-8 py-4 flex items-center justify-between bg-gradient-to-b from-black/85 via-black/45 to-transparent pointer-events-auto">
