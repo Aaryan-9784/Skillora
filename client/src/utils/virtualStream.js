@@ -11,6 +11,9 @@ export const createVirtualVideoStream = (userName = "User") => {
   let frame = 0;
   let active = true;
 
+  const stream = canvas.captureStream(30);
+  const track = stream.getVideoTracks()[0];
+
   const draw = () => {
     if (!active) return;
     frame++;
@@ -101,18 +104,50 @@ export const createVirtualVideoStream = (userName = "User") => {
     }
     ctx.restore();
 
+    if (track && typeof track.requestFrame === "function") {
+      try {
+        track.requestFrame();
+      } catch (err) {}
+    }
   };
 
   draw();
-  const timer = setInterval(draw, 1000 / 30);
 
-  const stream = canvas.captureStream(30);
-  const track = stream.getVideoTracks()[0];
+  let worker = null;
+  let fallbackTimer = null;
+
+  try {
+    const workerBlob = new Blob([
+      `let intervalId;
+      self.onmessage = function(e) {
+        if (e.data === 'start') {
+          intervalId = setInterval(() => self.postMessage('tick'), 1000 / 30);
+        } else if (e.data === 'stop') {
+          if (intervalId) clearInterval(intervalId);
+        }
+      };`
+    ], { type: "application/javascript" });
+    const workerUrl = URL.createObjectURL(workerBlob);
+    worker = new Worker(workerUrl);
+    worker.onmessage = () => {
+      draw();
+    };
+    worker.postMessage("start");
+  } catch (e) {
+    fallbackTimer = setInterval(draw, 1000 / 30);
+  }
+
   if (track) {
     const originalStop = track.stop.bind(track);
     track.stop = () => {
       active = false;
-      clearInterval(timer);
+      if (worker) {
+        try {
+          worker.postMessage("stop");
+          worker.terminate();
+        } catch (err) {}
+      }
+      if (fallbackTimer) clearInterval(fallbackTimer);
       originalStop();
     };
   }

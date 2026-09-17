@@ -114,61 +114,30 @@ const CallModal = ({
     }
   }, [remoteStream, isScreenSharing]);
 
-  const [hasDecodedVideo, setHasDecodedVideo] = useState(false);
-
-  // Monitor if remote video element actually has non-zero decoded frames
-  useEffect(() => {
-    const vEl = remoteVideoRef.current;
-    if (!vEl || !remoteStream) {
-      setHasDecodedVideo(false);
-      return;
-    }
-
-    const checkDimensions = () => {
-      if (vEl.videoWidth > 0 && vEl.videoHeight > 0) {
-        setHasDecodedVideo(true);
-      }
-    };
-
-    checkDimensions();
-    vEl.addEventListener("loadedmetadata", checkDimensions);
-    vEl.addEventListener("resize", checkDimensions);
-    vEl.addEventListener("playing", checkDimensions);
-    vEl.addEventListener("timeupdate", checkDimensions);
-
-    const interval = setInterval(checkDimensions, 400);
-
-    return () => {
-      vEl.removeEventListener("loadedmetadata", checkDimensions);
-      vEl.removeEventListener("resize", checkDimensions);
-      vEl.removeEventListener("playing", checkDimensions);
-      vEl.removeEventListener("timeupdate", checkDimensions);
-      clearInterval(interval);
-    };
-  }, [remoteStream]);
-
   // Remote video sync (ensures muted property is set so Chrome Autoplay Policy never blocks video frames)
   useEffect(() => {
     const vEl = remoteVideoRef.current;
-    if (!vEl || !remoteStream) return;
+    if (!vEl) return;
 
     vEl.muted = true;
     vEl.defaultMuted = true;
     vEl.playsInline = true;
 
-    if (vEl.srcObject !== remoteStream) {
+    if (remoteStream && vEl.srcObject !== remoteStream) {
       vEl.srcObject = remoteStream;
     }
 
-    const playPromise = vEl.play();
-    if (playPromise !== undefined) {
-      playPromise.catch((err) => {
-        if (err.name !== "AbortError") {
-          console.warn("[CallModal] Remote video play warning:", err);
-        }
-      });
+    if (remoteStream) {
+      const playPromise = vEl.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          if (err.name !== "AbortError") {
+            console.warn("[CallModal] Remote video play warning:", err);
+          }
+        });
+      }
     }
-  }, [remoteStream]);
+  }, [remoteStream, callState]);
 
   // Remote audio sync (plays remote sound cleanly)
   useEffect(() => {
@@ -184,7 +153,7 @@ const CallModal = ({
         });
       }
     }
-  }, [remoteStream]);
+  }, [remoteStream, callState]);
 
   if (callState === "idle") return null;
 
@@ -392,14 +361,14 @@ const CallModal = ({
                       ? "object-contain bg-black"
                       : "object-cover"
                   } ${
-                    (hasRemoteVideo && hasDecodedVideo) || remoteIsSharingScreen
+                    hasRemoteVideo || remoteIsSharingScreen
                       ? "opacity-100 relative z-10"
                       : "opacity-0 absolute inset-0 pointer-events-none"
                   }`}
                 />
 
-                {/* When remote video has no decoded frames yet, show elegant Avatar stage */}
-                {(!hasRemoteVideo || !hasDecodedVideo) && !remoteIsSharingScreen && (
+                {/* When remote peer has no video, show elegant Avatar stage */}
+                {!hasRemoteVideo && !remoteIsSharingScreen && (
                   <div className="absolute inset-0 z-0 flex flex-col items-center justify-center bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-950/40 via-slate-950 to-black px-4">
                     <div className="relative flex items-center justify-center">
                       <div className="absolute w-64 h-64 rounded-full bg-indigo-500/10 animate-ping pointer-events-none" />
@@ -423,8 +392,6 @@ const CallModal = ({
                           ? "Calling…"
                           : isVoiceCall
                           ? "Voice Call Connected"
-                          : remoteStream && remoteStream.getVideoTracks().length > 0
-                          ? "Connecting live video…"
                           : "Camera turned off"}
                       </p>
 

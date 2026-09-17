@@ -177,11 +177,12 @@ export const CallProvider = ({ children }) => {
       const onIceCandidate = async ({ candidate }) => {
         if (!candidate) return;
         const pc = peerConnectionRef.current;
-        if (pc && pc.remoteDescription) {
+        if (pc && pc.remoteDescription && pc.remoteDescription.type) {
           try {
             await pc.addIceCandidate(new RTCIceCandidate(candidate));
           } catch (e) {
-            console.error("Error adding ICE candidate:", e);
+            console.warn("Could not immediately add ICE candidate, queueing:", e);
+            iceCandidatesQueueRef.current.push(candidate);
           }
         } else {
           iceCandidatesQueueRef.current.push(candidate);
@@ -327,17 +328,33 @@ export const CallProvider = ({ children }) => {
   const bindRemoteTracks = (pc) => {
     pc.ontrack = (e) => {
       console.log("[WebRTC] ontrack received:", e.track.kind, "id:", e.track.id, "enabled:", e.track.enabled, "muted:", e.track.muted);
-      const incomingStream = e.streams && e.streams[0] ? e.streams[0] : null;
-      if (incomingStream) {
-        setRemoteStream(new MediaStream(incomingStream.getTracks()));
-        incomingStream.onaddtrack = () => {
+      
+      const refreshRemoteStream = () => {
+        const incomingStream = e.streams && e.streams[0] ? e.streams[0] : null;
+        if (incomingStream) {
           setRemoteStream(new MediaStream(incomingStream.getTracks()));
-        };
-      } else if (e.track) {
-        setRemoteStream((prev) => {
-          const currentTracks = prev ? prev.getTracks().filter((t) => t.id !== e.track.id) : [];
-          return new MediaStream([...currentTracks, e.track]);
-        });
+        } else if (e.track) {
+          setRemoteStream((prev) => {
+            const currentTracks = prev ? prev.getTracks().filter((t) => t.id !== e.track.id) : [];
+            return new MediaStream([...currentTracks, e.track]);
+          });
+        }
+      };
+
+      refreshRemoteStream();
+
+      e.track.onunmute = () => {
+        console.log("[WebRTC] Remote track unmuted (media flowing):", e.track.kind, e.track.id);
+        refreshRemoteStream();
+      };
+
+      e.track.onmute = () => {
+        console.log("[WebRTC] Remote track muted:", e.track.kind, e.track.id);
+      };
+
+      if (e.streams && e.streams[0]) {
+        e.streams[0].onaddtrack = refreshRemoteStream;
+        e.streams[0].onremovetrack = refreshRemoteStream;
       }
     };
   };
