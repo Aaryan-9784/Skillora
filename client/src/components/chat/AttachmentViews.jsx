@@ -194,7 +194,7 @@ export const downloadFile = async (url, fileName) => {
       const blobUrl = window.URL.createObjectURL(res.data);
       const a = document.createElement("a");
       a.href = blobUrl;
-      a.download = fileName;
+      a.download = name;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -214,7 +214,7 @@ export const downloadFile = async (url, fileName) => {
         const blobUrl = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = blobUrl;
-        a.download = fileName;
+        a.download = name;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -227,8 +227,8 @@ export const downloadFile = async (url, fileName) => {
   }
 
   // 3. Fallback: navigate directly to backend download-proxy endpoint
-  const backendBase = (api.defaults.baseURL || "").replace(/\/api\/?$/, "");
-  const fallbackUrl = `${backendBase}/api/chat/download-proxy?url=${encodeURIComponent(fullUrl)}&name=${encodeURIComponent(fileName)}`;
+  const backendBase = (api.defaults.baseURL || "").replace(/\/api\/?$/, "") || (import.meta.env.VITE_SERVER_URL || "https://skillora-hyf8.onrender.com");
+  const fallbackUrl = `${backendBase}/api/chat/download-proxy?url=${encodeURIComponent(fullUrl)}&name=${encodeURIComponent(name)}`;
   window.open(fallbackUrl, "_blank", "noopener,noreferrer");
 };
 
