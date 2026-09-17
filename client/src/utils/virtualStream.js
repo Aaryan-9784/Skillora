@@ -101,10 +101,10 @@ export const createVirtualVideoStream = (userName = "User") => {
     }
     ctx.restore();
 
-    requestAnimationFrame(draw);
   };
 
   draw();
+  const timer = setInterval(draw, 1000 / 30);
 
   const stream = canvas.captureStream(30);
   const track = stream.getVideoTracks()[0];
@@ -112,6 +112,7 @@ export const createVirtualVideoStream = (userName = "User") => {
     const originalStop = track.stop.bind(track);
     track.stop = () => {
       active = false;
+      clearInterval(timer);
       originalStop();
     };
   }
