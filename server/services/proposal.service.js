@@ -192,6 +192,21 @@ const isAuthorizedClientForProject = async (userOrId, project) => {
     }
   }
 
+  // 7. Check if user is the client targeted by any proposal on this project
+  const hasClientProposal = await Proposal.exists({ project: project._id, client: user._id });
+  if (hasClientProposal) {
+    if (!project.clientUser) {
+      await Project.findByIdAndUpdate(project._id, { clientUser: user._id });
+    }
+    return true;
+  }
+
+  // 8. Open client project fallback: If posted by client role and no clientUser assigned yet
+  if (project.createdByRole === "client" && !project.clientUser && user.role === "client") {
+    await Project.findByIdAndUpdate(project._id, { clientUser: user._id });
+    return true;
+  }
+
   return false;
 };
 

@@ -149,7 +149,7 @@ const useClientPortalStore = create((set, get) => ({
   fetchProposalsForProject: async (projectId) => {
     try {
       const { data } = await svc.getProjectProposals(projectId);
-      return data.data.proposals || [];
+      return data?.data?.proposals || data?.proposals || (Array.isArray(data?.data) ? data.data : []) || [];
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to load proposals");
       return [];

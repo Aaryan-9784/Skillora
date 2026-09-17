@@ -411,7 +411,9 @@ const ProposalsDrawer = ({ project, onClose }) => {
                 <Users size={18} className="text-cyan-400" />
                 <h2 className="text-base font-black text-white truncate max-w-md">Proposals for {project.title}</h2>
               </div>
-              <p className="text-xs font-medium text-slate-400 mt-0.5">{proposals.length} proposal(s) submitted by freelancers</p>
+              <p className="text-xs font-medium text-slate-400 mt-0.5">
+                {loading ? "Loading proposals..." : `${proposals.length} proposal(s) submitted by freelancers`}
+              </p>
             </div>
             <button onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer">
               <X size={18} />
