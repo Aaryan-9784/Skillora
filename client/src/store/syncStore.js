@@ -39,15 +39,15 @@ const useSyncStore = create((set, get) => ({
         })
       );
 
-      // 2. Role-specific and route-specific data fetching
+      // 2. Role-specific and route-specific data fetching (silent = true to avoid UI flickering)
       if (isClient) {
         const clientStore = useClientPortalStore.getState();
-        tasks.push(clientStore.fetchDashboard().catch(() => {}));
+        tasks.push(clientStore.fetchDashboard(true).catch(() => {}));
         if (pathname.includes("/projects") && clientStore.fetchProjects) {
-          tasks.push(clientStore.fetchProjects().catch(() => {}));
+          tasks.push(clientStore.fetchProjects({}, true).catch(() => {}));
         }
         if (pathname.includes("/invoices") && clientStore.fetchInvoices) {
-          tasks.push(clientStore.fetchInvoices().catch(() => {}));
+          tasks.push(clientStore.fetchInvoices({}, true).catch(() => {}));
         }
       } else if (isAdmin) {
         window.dispatchEvent(new CustomEvent("admin:stats_refresh"));
@@ -58,16 +58,16 @@ const useSyncStore = create((set, get) => ({
         const invStore = useInvoiceStore.getState();
 
         if (pathname === "/dashboard" || pathname === "/") {
-          tasks.push(dashStore.fetchSummary().catch(() => {}));
+          tasks.push(dashStore.fetchSummary(true).catch(() => {}));
         }
 
         if (pathname.startsWith("/projects") || pathname.startsWith("/marketplace")) {
-          tasks.push(projStore.fetchProjects().catch(() => {}));
+          tasks.push(projStore.fetchProjects({}, true).catch(() => {}));
           tasks.push(projStore.fetchMyProposals().catch(() => {}));
         }
 
         if (pathname.startsWith("/payments") || pathname.startsWith("/invoices")) {
-          tasks.push(invStore.fetchInvoices().catch(() => {}));
+          tasks.push(invStore.fetchInvoices({}, true).catch(() => {}));
         }
       }
 

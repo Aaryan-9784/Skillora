@@ -18,7 +18,6 @@ import CommandPalette from "../components/ui/CommandPalette";
 import FloatingAiButton from "../components/ai/FloatingAiButton";
 import useNotificationStore from "../store/notificationStore";
 import NotificationsPanel from "../components/dashboard/NotificationsPanel";
-import LiveSyncIndicator from "../components/common/LiveSyncIndicator";
 import useClickOutside from "../hooks/useClickOutside";
 
 const CLIENT_CONFIG = {
@@ -284,10 +283,7 @@ const ClientNavbar = ({ onSearch, mobileOpen, setMobileOpen }) => {
         </div>
 
         {/* ── RIGHT ACTIONS ── */}
-        <div className="flex items-center gap-3">
-          {/* Live Auto-Refresh Status Indicator */}
-          <LiveSyncIndicator />
-
+        <div className="flex items-center gap-3.5">
           {/* Notifications */}
           <div className="relative" ref={notifRef}>
             <motion.button whileHover={{ scale: 1.06, y: -1 }} whileTap={{ scale: 0.94 }}

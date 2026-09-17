@@ -36,9 +36,11 @@ const useClientPortalStore = create((set, get) => ({
     set((s) => ({ error: { ...s.error, [key]: val } })),
 
   // ── Dashboard (parallel fetch) ────────────────────────
-  fetchDashboard: async () => {
-    get()._setLoading("dashboard", true);
-    get()._setError("dashboard", null);
+  fetchDashboard: async (silent = false) => {
+    if (!silent) {
+      get()._setLoading("dashboard", true);
+      get()._setError("dashboard", null);
+    }
     try {
       const [invRes, projRes, finRes] = await Promise.all([
         svc.getInvoices(),
@@ -51,9 +53,9 @@ const useClientPortalStore = create((set, get) => ({
         financeSummary: finRes.data.data,
       });
     } catch (e) {
-      get()._setError("dashboard", e.message);
+      if (!silent) get()._setError("dashboard", e.message);
     } finally {
-      get()._setLoading("dashboard", false);
+      if (!silent) get()._setLoading("dashboard", false);
     }
   },
 
@@ -95,30 +97,34 @@ const useClientPortalStore = create((set, get) => ({
   },
 
   // ── Invoices ──────────────────────────────────────────
-  fetchInvoices: async (params = {}) => {
-    get()._setLoading("invoices", true);
-    get()._setError("invoices", null);
+  fetchInvoices: async (params = {}, silent = false) => {
+    if (!silent) {
+      get()._setLoading("invoices", true);
+      get()._setError("invoices", null);
+    }
     try {
       const { data } = await svc.getInvoices(params);
       set({ invoices: data.data.invoices || [] });
     } catch (e) {
-      get()._setError("invoices", e.message);
+      if (!silent) get()._setError("invoices", e.message);
     } finally {
-      get()._setLoading("invoices", false);
+      if (!silent) get()._setLoading("invoices", false);
     }
   },
 
   // ── Projects & Proposals ──────────────────────────────────
-  fetchProjects: async (params = {}) => {
-    get()._setLoading("projects", true);
-    get()._setError("projects", null);
+  fetchProjects: async (params = {}, silent = false) => {
+    if (!silent) {
+      get()._setLoading("projects", true);
+      get()._setError("projects", null);
+    }
     try {
       const { data } = await svc.getProjects(params);
       set({ projects: data.data.projects || [] });
     } catch (e) {
-      get()._setError("projects", e.message);
+      if (!silent) get()._setError("projects", e.message);
     } finally {
-      get()._setLoading("projects", false);
+      if (!silent) get()._setLoading("projects", false);
     }
   },
 

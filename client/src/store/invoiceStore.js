@@ -19,8 +19,8 @@ const useInvoiceStore = create((set, get) => ({
     set({ filters: { status: "", search: "", dateFrom: "", dateTo: "", sort: "-createdAt" } }),
 
   // ── Fetch list ────────────────────────────────────────
-  fetchInvoices: async (params = {}) => {
-    set({ isLoading: true });
+  fetchInvoices: async (params = {}, silent = false) => {
+    if (!silent) set({ isLoading: true });
     try {
       const { filters } = get();
       const query = { ...filters, ...params };
@@ -32,7 +32,7 @@ const useInvoiceStore = create((set, get) => ({
         pagination: d.pagination || { total: 0, page: 1, pages: 1, limit: 20 },
       });
     } finally {
-      set({ isLoading: false });
+      if (!silent) set({ isLoading: false });
     }
   },
 

@@ -6,16 +6,16 @@ const useDashboardStore = create((set) => ({
   isLoading: false,
   error:     null,
 
-  fetchSummary: async () => {
-    set({ isLoading: true, error: null });
+  fetchSummary: async (silent = false) => {
+    if (!silent) set({ isLoading: true, error: null });
     try {
       const { data } = await api.get("/dashboard");
       set({ summary: data, error: null });
     } catch (err) {
       console.warn("[dashboardStore] Failed to fetch summary:", err.message);
-      set({ error: err.message || "Failed to load dashboard" });
+      if (!silent) set({ error: err.message || "Failed to load dashboard" });
     } finally {
-      set({ isLoading: false });
+      if (!silent) set({ isLoading: false });
     }
   },
 }));

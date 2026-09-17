@@ -11,8 +11,12 @@ import useInvoiceStore from "../store/invoiceStore";
 import useChatStore from "../store/chatStore";
 import useSyncStore from "../store/syncStore";
 import tokenStore from "../services/tokenStore";
+import useAutoRefresh from "./useAutoRefresh";
 
 const useSyncEvents = () => {
+  // Mount silent background polling and tab-visibility revalidation internally
+  useAutoRefresh();
+
   const { updateUser, setUser, user } = useAuthStore();
   const { fetchUnreadCount }          = useNotificationStore();
   const navigate                      = useNavigate();
@@ -77,7 +81,7 @@ const useSyncEvents = () => {
       if (isClient) {
         clientStore.patchInvoice(invoiceId, { status });
       } else {
-        useInvoiceStore.getState().fetchInvoices();
+        useInvoiceStore.getState().fetchInvoices({}, true);
       }
     };
 
@@ -85,16 +89,16 @@ const useSyncEvents = () => {
       window.dispatchEvent(new CustomEvent("project:updated", { detail: { projectId, status, progress } }));
       if (isClient) {
         clientStore.patchProject(projectId, { status, progress });
-        clientStore.fetchDashboard();
+        clientStore.fetchDashboard(true);
       } else {
-        useProjectStore.getState().fetchProjects();
+        useProjectStore.getState().fetchProjects({}, true);
       }
     };
 
     const onTaskUpdated = ({ projectId, taskId }) => {
       window.dispatchEvent(new CustomEvent("task:updated", { detail: { projectId, taskId } }));
       if (isClient) {
-        clientStore.fetchDashboard();
+        clientStore.fetchDashboard(true);
       } else {
         if (projectId) {
           useProjectStore.getState().fetchTasks(projectId);
@@ -105,24 +109,24 @@ const useSyncEvents = () => {
     const onProposalReceived = (data) => {
       window.dispatchEvent(new CustomEvent("proposal:received", { detail: data }));
       if (isClient) {
-        clientStore.fetchDashboard();
-        if (clientStore.fetchProjects) clientStore.fetchProjects();
+        clientStore.fetchDashboard(true);
+        if (clientStore.fetchProjects) clientStore.fetchProjects({}, true);
       }
     };
 
     const onProposalStatus = (data) => {
       window.dispatchEvent(new CustomEvent("proposal:status_changed", { detail: data }));
       useProjectStore.getState().fetchMyProposals();
-      useProjectStore.getState().fetchProjects();
+      useProjectStore.getState().fetchProjects({}, true);
     };
 
     const onDashboardRefresh = () => {
       window.dispatchEvent(new CustomEvent("dashboard:refresh"));
       useSyncStore.getState().triggerRefresh(true);
       if (isClient) {
-        clientStore.fetchDashboard();
+        clientStore.fetchDashboard(true);
       } else {
-        useDashboardStore.getState().fetchSummary();
+        useDashboardStore.getState().fetchSummary(true);
       }
     };
 

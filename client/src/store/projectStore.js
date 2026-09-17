@@ -10,16 +10,16 @@ const useProjectStore = create((set) => ({
   isLoading:      false,
   error:          null,
 
-  fetchProjects: async (params = {}) => {
-    set({ isLoading: true });
+  fetchProjects: async (params = {}, silent = false) => {
+    if (!silent) set({ isLoading: true });
     try {
       const { data } = await api.get("/projects", { params });
       const list = data.data?.data || data.data?.projects || (Array.isArray(data.data) ? data.data : []);
       set({ projects: list });
     } catch (err) {
-      set({ error: err.message });
+      if (!silent) set({ error: err.message });
     } finally {
-      set({ isLoading: false });
+      if (!silent) set({ isLoading: false });
     }
   },
 
