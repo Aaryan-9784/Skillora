@@ -111,10 +111,10 @@ const ClientInvoices  = lazy(() => import("./pages/ClientPortal/Invoices"));
 const ClientProjects  = lazy(() => import("./pages/ClientPortal/Projects"));
 import ClientMessages from "./pages/ClientPortal/Messages";
 const ClientProfile   = lazy(() => import("./pages/ClientPortal/Profile"));
+const AcceptInvite    = lazy(() => import("./pages/ClientPortal/AcceptInvite"));
 
-// Marketplace + Directory
-const MarketplacePage          = lazy(() => import("./pages/Marketplace"));
-const FreelancersDirectoryPage = lazy(() => import("./pages/Freelancers"));
+// Marketplace
+const MarketplacePage = lazy(() => import("./pages/Marketplace"));
 
 const PageLoader = () => <Spinner size="lg" className="min-h-screen" />;
 
@@ -212,6 +212,7 @@ const App = () => {
             <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="/oauth/callback"        element={<OAuthCallback />} />
             <Route path="/auth/callback"         element={<OAuthCallback />} />
+            <Route path="/client/accept-invite"  element={<AcceptInvite />} />
           </Route>
 
           {/* Post-Signup Onboarding */}
