@@ -20,6 +20,7 @@ export const CallProvider = ({ children }) => {
 
   const [localStream, setLocalStream]       = useState(null);
   const [remoteStream, setRemoteStream]     = useState(null);
+  const [screenStream, setScreenStream]     = useState(null);
   const [callState, setCallState]           = useState("idle"); // idle | calling | incoming | connected | ended
   const [activeCallType, setActiveCallType] = useState("video"); // voice | video
   const [incomingCall, setIncomingCall]     = useState(null);   // { callerId, callerName, callerAvatar, offer, callType, projectId }
@@ -103,6 +104,10 @@ export const CallProvider = ({ children }) => {
     }
     if (screenTrackRef.current) {
       screenTrackRef.current.stop();
+      screenTrackRef.current = null;
+    }
+    if (screenStream) {
+      screenStream.getTracks().forEach((t) => t.stop());
     }
     if (peerConnectionRef.current) {
       peerConnectionRef.current.close();
@@ -111,13 +116,14 @@ export const CallProvider = ({ children }) => {
     iceCandidatesQueueRef.current = [];
     setLocalStream(null);
     setRemoteStream(null);
+    setScreenStream(null);
     setCallState("idle");
     setIncomingCall(null);
     setActivePartner(null);
     setIsScreenShare(false);
     setIsMuted(false);
     setIsVideoOff(false);
-  }, [localStream]);
+  }, [localStream, screenStream]);
 
   const processIceQueue = async () => {
     const pc = peerConnectionRef.current;
@@ -314,9 +320,17 @@ export const CallProvider = ({ children }) => {
         }
       };
 
+      if (type === "voice") {
+        try {
+          pc.addTransceiver("video", { direction: "sendrecv" });
+        } catch (e) {
+          console.warn("Could not add video transceiver:", e);
+        }
+      }
+
       const offer = await pc.createOffer({
         offerToReceiveAudio: true,
-        offerToReceiveVideo: type === "video",
+        offerToReceiveVideo: true,
       });
       await pc.setLocalDescription(offer);
 
@@ -327,10 +341,8 @@ export const CallProvider = ({ children }) => {
         callerName: user?.name || "Skillora User",
         callerAvatar: user?.avatar || "",
       });
-
-      toast.loading(`Calling ${partnerName}…`, { id: "call-status" });
     } catch (err) {
-      toast.error(`Media access failed: ${err.message}`, { id: "call-status" });
+      toast.error(`Media access failed: ${err.message}`);
       setCallState("idle");
     }
   };
@@ -340,7 +352,6 @@ export const CallProvider = ({ children }) => {
     const socket = getSocket() || connectSocket();
     if (!incomingCall || !socket) return;
 
-    toast.dismiss("call-status");
     setCallState("connected");
     targetUserIdRef.current = incomingCall.callerId;
 
@@ -368,12 +379,20 @@ export const CallProvider = ({ children }) => {
         }
       };
 
+      if (incomingCall.callType === "voice") {
+        try {
+          pc.addTransceiver("video", { direction: "sendrecv" });
+        } catch (e) {
+          console.warn("Could not add video transceiver:", e);
+        }
+      }
+
       await pc.setRemoteDescription(new RTCSessionDescription(incomingCall.offer));
       await processIceQueue();
 
       const answer = await pc.createAnswer({
         offerToReceiveAudio: true,
-        offerToReceiveVideo: incomingCall.callType === "video",
+        offerToReceiveVideo: true,
       });
       await pc.setLocalDescription(answer);
 
@@ -389,7 +408,6 @@ export const CallProvider = ({ children }) => {
     if (incomingCall && socket) {
       socket.emit("call:reject", { callerId: incomingCall.callerId });
     }
-    toast.dismiss("call-status");
     endCallCleanup();
   };
 
@@ -399,48 +417,133 @@ export const CallProvider = ({ children }) => {
     if (target && socket) {
       socket.emit("call:end", { targetUserId: target, durationSeconds: callDuration });
     }
-    toast.dismiss("call-status");
     endCallCleanup();
   };
 
-  const toggleMute = () => {
+  const toggleMute = useCallback(() => {
     if (localStream) {
-      localStream.getAudioTracks().forEach((t) => (t.enabled = !t.enabled));
-      setIsMuted((prev) => !prev);
+      const audioTracks = localStream.getAudioTracks();
+      if (audioTracks.length > 0) {
+        const nextState = !isMuted;
+        audioTracks.forEach((t) => (t.enabled = !nextState));
+        setIsMuted(nextState);
+        toast(nextState ? "Microphone muted" : "Microphone unmuted", { icon: nextState ? "🔇" : "🎙️" });
+      }
     }
-  };
+  }, [localStream, isMuted]);
 
-  const toggleVideo = () => {
-    if (localStream) {
-      localStream.getVideoTracks().forEach((t) => (t.enabled = !t.enabled));
-      setIsVideoOff((prev) => !prev);
+  const toggleVideo = useCallback(async () => {
+    try {
+      const pc = peerConnectionRef.current;
+      const currentVideoTracks = localStream ? localStream.getVideoTracks() : [];
+
+      if (currentVideoTracks.length === 0) {
+        // Upgrade audio call to video by acquiring camera
+        const videoStream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
+        });
+        const newTrack = videoStream.getVideoTracks()[0];
+        if (!newTrack) return;
+
+        if (localStream) {
+          localStream.addTrack(newTrack);
+        } else {
+          setLocalStream(videoStream);
+        }
+
+        if (pc) {
+          let sender = pc.getSenders().find((s) => s.track?.kind === "video" || s.kind === "video");
+          if (sender) {
+            await sender.replaceTrack(newTrack);
+          } else {
+            pc.addTrack(newTrack, localStream || videoStream);
+          }
+        }
+
+        setIsVideoOff(false);
+        setActiveCallType("video");
+        toast.success("Camera enabled");
+      } else {
+        const nextState = !isVideoOff;
+        currentVideoTracks.forEach((t) => (t.enabled = !nextState));
+        setIsVideoOff(nextState);
+
+        if (pc) {
+          const sender = pc.getSenders().find((s) => s.track?.kind === "video" || s.kind === "video");
+          if (sender) {
+            await sender.replaceTrack(nextState ? null : currentVideoTracks[0]);
+          }
+        }
+        toast(nextState ? "Camera turned off" : "Camera turned on", { icon: nextState ? "📷" : "📹" });
+      }
+    } catch (err) {
+      console.error("Toggle camera error:", err);
+      toast.error("Could not access camera: " + err.message);
     }
-  };
+  }, [localStream, isVideoOff]);
 
-  const toggleScreenShare = async () => {
+  const stopScreenShare = useCallback(async () => {
+    if (screenTrackRef.current) {
+      screenTrackRef.current.stop();
+      screenTrackRef.current = null;
+    }
+    setScreenStream(null);
+
+    const pc = peerConnectionRef.current;
+    if (pc) {
+      const sender = pc.getSenders().find((s) => s.track?.kind === "video" || s.kind === "video");
+      if (sender) {
+        const camTrack = localStream?.getVideoTracks()[0];
+        if (camTrack && !isVideoOff) {
+          await sender.replaceTrack(camTrack).catch(() => {});
+        } else {
+          await sender.replaceTrack(null).catch(() => {});
+        }
+      }
+    }
+
+    setIsScreenShare(false);
+    toast("Screen sharing stopped", { icon: "🖥️" });
+  }, [localStream, isVideoOff]);
+
+  const toggleScreenShare = useCallback(async () => {
     if (!peerConnectionRef.current) return;
     if (!isScreenSharing) {
       try {
-        const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-        const screenTrack = screenStream.getVideoTracks()[0];
+        const displayStream = await navigator.mediaDevices.getDisplayMedia({
+          video: { cursor: "always" },
+          audio: false,
+        });
+        const screenTrack = displayStream.getVideoTracks()[0];
+        if (!screenTrack) return;
         screenTrackRef.current = screenTrack;
+        setScreenStream(displayStream);
 
-        const sender = peerConnectionRef.current.getSenders().find((s) => s.track?.kind === "video");
-        if (sender) sender.replaceTrack(screenTrack);
+        const pc = peerConnectionRef.current;
+        let sender = pc.getSenders().find((s) => s.track?.kind === "video" || s.kind === "video");
+        if (sender) {
+          await sender.replaceTrack(screenTrack);
+        } else {
+          pc.addTrack(screenTrack, displayStream);
+        }
 
-        screenTrack.onended = () => toggleScreenShare();
+        screenTrack.onended = () => {
+          stopScreenShare();
+        };
+
         setIsScreenShare(true);
+        setActiveCallType("video");
+        toast.success("Screen sharing started");
       } catch (e) {
-        console.error("Screen share error:", e);
+        if (e.name !== "NotAllowedError") {
+          console.error("Screen share error:", e);
+          toast.error("Could not share screen: " + e.message);
+        }
       }
     } else {
-      const videoTrack = localStream?.getVideoTracks()[0];
-      const sender = peerConnectionRef.current.getSenders().find((s) => s.track?.kind === "video");
-      if (sender && videoTrack) sender.replaceTrack(videoTrack);
-      screenTrackRef.current?.stop();
-      setIsScreenShare(false);
+      await stopScreenShare();
     }
-  };
+  }, [isScreenSharing, stopScreenShare]);
 
   return (
     <CallContext.Provider
@@ -472,6 +575,7 @@ export const CallProvider = ({ children }) => {
         callType={activeCallType}
         localStream={localStream}
         remoteStream={remoteStream}
+        screenStream={screenStream}
         onEndCall={endCall}
         onAccept={acceptCall}
         onReject={rejectCall}
