@@ -16,11 +16,12 @@ const {
   toggleReaction,
 } = require("../controllers/chat.controller");
 
+router.get("/download-proxy", downloadAttachmentProxy);
+
 router.use(protect);
 
 router.get("/ice-servers", getIceServersConfig);
 router.get("/conversations", getUserConversations);
-router.get("/download-proxy", downloadAttachmentProxy);
 router.get("/project", getProjectConversation);
 router.get("/project/:projectId", getProjectConversation);
 router.get("/direct/:recipientId", getOrCreateDirectConversation);

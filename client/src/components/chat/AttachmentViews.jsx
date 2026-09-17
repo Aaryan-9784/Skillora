@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Play, Pause, Mic, Download, FileText, ExternalLink, AlertCircle } from "lucide-react";
 import toast from "react-hot-toast";
+import api from "../../services/api";
 
 export const getMediaUrl = (url) => {
   if (!url) return "";
@@ -183,44 +184,52 @@ export const downloadFile = async (url, fileName) => {
     return;
   }
 
-  // Try direct fetch blob download for standard URLs
+  // 1. Download via backend proxy using api service (routes to Render backend with auth & proper headers)
   try {
-    const res = await fetch(fullUrl);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const blob = await res.blob();
-    const blobUrl = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = blobUrl;
-    a.download = name;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000);
-  } catch (e) {
-    console.warn("Direct blob download failed, trying server download proxy:", e);
-    // Try backend proxy download
-    try {
-      const proxyUrl = `/api/chat/download-proxy?url=${encodeURIComponent(fullUrl)}&name=${encodeURIComponent(name)}`;
-      const pRes = await fetch(proxyUrl);
-      if (pRes.ok) {
-        const pBlob = await pRes.blob();
-        const pBlobUrl = window.URL.createObjectURL(pBlob);
+    const res = await api.get(`/chat/download-proxy?url=${encodeURIComponent(fullUrl)}&name=${encodeURIComponent(name)}`, {
+      responseType: "blob",
+    });
+
+    if (res.data && res.data.size > 0 && (!res.data.type || !res.data.type.includes("text/html"))) {
+      const blobUrl = window.URL.createObjectURL(res.data);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000);
+      return;
+    }
+  } catch (proxyErr) {
+    console.warn("Backend download proxy failed, trying direct blob fetch:", proxyErr);
+  }
+
+  // 2. Direct fetch fallback (only accept if not HTML)
+  try {
+    const res = await fetch(fullUrl, { mode: "cors" });
+    if (res.ok) {
+      const blob = await res.blob();
+      if (blob.size > 0 && (!blob.type || !blob.type.includes("text/html"))) {
+        const blobUrl = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
-        a.href = pBlobUrl;
-        a.download = name;
+        a.href = blobUrl;
+        a.download = fileName;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        setTimeout(() => window.URL.revokeObjectURL(pBlobUrl), 1000);
+        setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000);
         return;
       }
-    } catch (proxyErr) {
-      console.warn("Proxy download failed:", proxyErr);
     }
-
-    // Fallback: open directly in new window
-    window.open(fullUrl, "_blank", "noopener,noreferrer");
+  } catch (e) {
+    console.warn("Direct blob download failed:", e);
   }
+
+  // 3. Fallback: navigate directly to backend download-proxy endpoint
+  const backendBase = (api.defaults.baseURL || "").replace(/\/api\/?$/, "");
+  const fallbackUrl = `${backendBase}/api/chat/download-proxy?url=${encodeURIComponent(fullUrl)}&name=${encodeURIComponent(fileName)}`;
+  window.open(fallbackUrl, "_blank", "noopener,noreferrer");
 };
 
 export const FileAttachmentCard = ({ att, isMe }) => {
@@ -247,9 +256,7 @@ export const FileAttachmentCard = ({ att, isMe }) => {
 
   const handleOpenPdf = (e) => {
     e.preventDefault();
-    if (fullUrl) {
-      window.open(fullUrl, "_blank", "noopener,noreferrer");
-    }
+    downloadFile(att.url, fileName);
   };
 
   const handleDownload = (e) => {

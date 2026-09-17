@@ -650,6 +650,63 @@ const downloadAttachmentProxy = asyncHandler(async (req, res) => {
 
   const fileName = name || "download";
 
+  // For Cloudinary files, use signed authenticated private download API
+  if (url.includes("cloudinary.com")) {
+    try {
+      const cleanUrl = url.split("?")[0];
+      const match = cleanUrl.match(/\/upload\/(?:v\d+\/)?(.+)$/);
+      if (match && match[1]) {
+        const publicId = match[1];
+        const cloudinary = require("cloudinary").v2;
+
+        // 1. Try private_download_url directly for the original file (e.g. PDF, doc, raw files)
+        try {
+          const privUrl = cloudinary.utils.private_download_url(publicId, "", {
+            resource_type: "raw",
+            type: "upload",
+          });
+          const pResp = await fetch(privUrl);
+          if (pResp.ok) {
+            const ext = fileName.includes(".") ? fileName.split(".").pop().toLowerCase() : "";
+            let contentType = pResp.headers.get("content-type") || "application/octet-stream";
+            if (ext === "pdf") contentType = "application/pdf";
+            else if (ext === "zip") contentType = "application/zip";
+            else if (ext === "docx") contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+            else if (ext === "doc") contentType = "application/msword";
+
+            res.setHeader("Content-Type", contentType);
+            res.setHeader("Content-Disposition", `attachment; filename="${encodeURIComponent(fileName)}"`);
+            const buffer = await pResp.arrayBuffer();
+            return res.send(Buffer.from(buffer));
+          }
+        } catch (privErr) {
+          logger.warn(`private_download_url failed: ${privErr.message}`);
+        }
+
+        // 2. Try download_zip_url as secondary fallback
+        try {
+          const zipUrl = cloudinary.utils.download_zip_url({
+            public_ids: [publicId],
+            resource_type: "raw",
+            type: "upload",
+          });
+          const zResp = await fetch(zipUrl);
+          if (zResp.ok) {
+            res.setHeader("Content-Type", "application/zip");
+            res.setHeader("Content-Disposition", `attachment; filename="${encodeURIComponent(fileName)}.zip"`);
+            const zBuffer = await zResp.arrayBuffer();
+            return res.send(Buffer.from(zBuffer));
+          }
+        } catch (zipErr) {
+          logger.warn(`download_zip_url failed: ${zipErr.message}`);
+        }
+      }
+    } catch (err) {
+      logger.warn(`Cloudinary download proxy failed: ${err.message}`);
+    }
+  }
+
+  // Fallback: direct fetch
   try {
     const resp = await fetch(url);
     if (resp.ok) {
@@ -661,31 +718,6 @@ const downloadAttachmentProxy = asyncHandler(async (req, res) => {
     }
   } catch (e) {
     logger.warn(`Direct fetch in download proxy failed: ${e.message}`);
-  }
-
-  // Fallback for Cloudinary authenticated retrieval
-  if (url.includes("cloudinary.com")) {
-    try {
-      const cleanUrl = url.split("?")[0];
-      const match = cleanUrl.match(/\/upload\/(?:v\d+\/)?(.+)$/);
-      if (match && match[1]) {
-        const publicId = match[1];
-        const cloudinary = require("cloudinary").v2;
-        const zipUrl = cloudinary.utils.download_zip_url({
-          public_ids: [publicId],
-          resource_type: "raw",
-        });
-        const zResp = await fetch(zipUrl);
-        if (zResp.ok) {
-          res.setHeader("Content-Type", "application/zip");
-          res.setHeader("Content-Disposition", `attachment; filename="${encodeURIComponent(fileName)}.zip"`);
-          const zBuffer = await zResp.arrayBuffer();
-          return res.send(Buffer.from(zBuffer));
-        }
-      }
-    } catch (err) {
-      logger.warn(`Cloudinary fallback download failed: ${err.message}`);
-    }
   }
 
   return res.status(404).json({ success: false, message: "File download unavailable" });
