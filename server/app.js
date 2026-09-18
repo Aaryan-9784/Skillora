@@ -90,7 +90,7 @@ if (process.env.NODE_ENV !== "test") {
 app.use("/api", apiLimiter);
 
 // ── Health check ──────────────────────────────────────────
-app.get("/health", (req, res) =>
+app.get(["/health", "/api/health"], (req, res) =>
   res.json({ status: "ok", env: process.env.NODE_ENV, ts: new Date().toISOString() })
 );
 

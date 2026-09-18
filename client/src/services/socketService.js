@@ -18,10 +18,12 @@ export const connectSocket = () => {
   socket = io(import.meta.env.VITE_SERVER_URL || "http://localhost:5000", {
     auth: { token },
     withCredentials: true,
-    transports: ["websocket", "polling"],
+    transports: ["polling", "websocket"],
     reconnection: true,
-    reconnectionAttempts: 10,
+    reconnectionAttempts: Infinity,
     reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    timeout: 20000,
   });
 
   socket.off("connect").on("connect", () => console.log("[socket] connected:", socket.id));

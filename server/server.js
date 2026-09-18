@@ -27,6 +27,9 @@ const start = async () => {
     cron.schedule("0 0 * * *", markOverdueInvoices); // midnight daily
     markOverdueInvoices().catch(() => {});
     startMeetingCron();
+
+    const { startKeepAlive } = require("./jobs/keepAlive.job");
+    startKeepAlive();
   } catch (cronErr) {
     logger.warn(`Cron initialization warning: ${cronErr.message}`);
   }
@@ -91,6 +94,13 @@ const start = async () => {
     logger.error(`Unhandled rejection: ${err.message}`);
     if (err.code !== "ECONNRESET" && err.code !== "EPIPE") {
       // Don't crash server on transient socket resets
+    }
+  });
+
+  process.on("uncaughtException", (err) => {
+    logger.error(`Uncaught exception: ${err.message}\n${err.stack}`);
+    if (err.code === "ECONNRESET" || err.code === "EPIPE") {
+      return; // Ignore transient pipe resets
     }
   });
 };

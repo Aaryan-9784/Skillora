@@ -17,7 +17,8 @@ const initSocket = (httpServer) => {
     },
     pingInterval: 25000,
     pingTimeout:  20000,
-    transports:   ["websocket", "polling"],
+    transports:   ["polling", "websocket"],
+    allowUpgrades: true,
   });
 
   // 🔒 Auth middleware

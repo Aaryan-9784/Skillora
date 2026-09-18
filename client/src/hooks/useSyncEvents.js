@@ -60,6 +60,11 @@ const useSyncEvents = () => {
 
     const onSocketConnect = () => {
       socket.emit("presence:query");
+      fetchUnreadCount();
+      useSyncStore.getState().triggerRefresh(true);
+      if (isClient) {
+        clientStore.fetchDashboard(true);
+      }
     };
 
     // ── Freelancer / shared events ──────────────────────
