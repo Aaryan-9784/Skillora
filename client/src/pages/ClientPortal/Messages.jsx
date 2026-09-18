@@ -524,7 +524,7 @@ const ClientMessages = () => {
           ) : (
             <>
               {/* Header Bar */}
-              <div className="h-16 px-4 lg:px-6 flex items-center justify-between border-b border-slate-800 shrink-0 bg-[#111b21]/90 backdrop-blur-md">
+              <div className="relative z-30 h-16 px-4 lg:px-6 flex items-center justify-between border-b border-slate-800 shrink-0 bg-[#111b21]">
                 
                 {/* User Profile & Status */}
                 <div className="flex items-center gap-3 cursor-pointer group min-w-0">
@@ -610,7 +610,7 @@ const ClientMessages = () => {
                           animate={{ opacity: 1, scale: 1, y: 0 }}
                           exit={{ opacity: 0, scale: 0.95, y: 4 }}
                           transition={{ duration: 0.15 }}
-                          className="absolute right-0 top-11 z-50 w-56 bg-[#182229] border border-slate-700/60 rounded-2xl shadow-2xl p-1.5 backdrop-blur-xl"
+                          className="absolute right-0 top-12 z-50 w-56 bg-[#182229] border border-slate-700/80 rounded-2xl shadow-2xl p-1.5 ring-1 ring-black/40"
                         >
                           <button
                             onClick={() => { setMoreMenuOpen(false); setShowSchedule(true); }}
@@ -652,7 +652,7 @@ const ClientMessages = () => {
               <AnimatePresence>
                 {searchOpen && (
                   <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                    className="px-4 py-2 bg-[#182229] border-b border-slate-800 flex items-center gap-2 overflow-hidden shrink-0">
+                    className="relative z-20 px-4 py-2 bg-[#182229] border-b border-slate-800 flex items-center gap-2 overflow-hidden shrink-0">
                     <Search size={15} className="text-slate-400 shrink-0" />
                     <input
                       type="text"
@@ -672,7 +672,7 @@ const ClientMessages = () => {
               </AnimatePresence>
 
               {/* Messages Container Area */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#0b141a]/40 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+              <div className="relative z-0 flex-1 overflow-y-auto p-4 space-y-4 bg-[#0b141a]/40 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                 {messages.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center p-6">
                     <div className="w-12 h-12 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-3 shadow-lg">
@@ -697,30 +697,31 @@ const ClientMessages = () => {
                     if (isSystemEvent) {
                       const cleanContent = msg.content?.replace(
                         /^Project "(.*)" started\. Connection established!$/,
-                        '🎉 Project workspace activated for "$1". Milestone tracking, task boards, and direct collaboration are now open!'
+                        'Project workspace activated for "$1". Milestone tracking, task boards, and direct collaboration are now open!'
                       );
+                      const displayBody = cleanContent?.replace(/^(?:🎉|✨|🚀)\s*/u, "");
                       return (
                         <motion.div
                           key={msg._id || msg.id}
-                          initial={{ opacity: 0, scale: 0.95 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          className="flex justify-center my-4 w-full px-4"
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="flex justify-center my-3 w-full px-4 select-none"
                         >
-                          <div className="max-w-xl w-full mx-auto p-3.5 rounded-2xl bg-gradient-to-r from-indigo-950/50 via-purple-950/40 to-indigo-950/50 border border-indigo-500/30 shadow-lg backdrop-blur-md flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
-                              <Sparkles size={17} className="text-indigo-300 animate-pulse" />
+                          <div className="max-w-md w-full p-3 rounded-2xl bg-[#141726] border border-indigo-500/25 shadow-lg flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-xl bg-indigo-500/15 border border-indigo-400/25 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
+                              <Sparkles size={15} className="text-indigo-400" />
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between gap-2 mb-0.5">
-                                <span className="text-[10px] font-semibold tracking-wider uppercase text-indigo-300 bg-indigo-500/20 px-2 py-0.5 rounded-full">
+                                <span className="text-[9px] font-bold tracking-wider uppercase text-indigo-300 bg-indigo-500/20 px-1.5 py-0.5 rounded">
                                   System Notice
                                 </span>
                                 <span className="text-[10px] text-slate-400 font-mono shrink-0">
                                   {formatMessageTime(msg.createdAt)}
                                 </span>
                               </div>
-                              <p className="text-xs text-slate-200 leading-relaxed font-medium mt-1">
-                                {cleanContent}
+                              <p className="text-[11px] sm:text-xs text-slate-200 leading-relaxed font-medium">
+                                {displayBody}
                               </p>
                             </div>
                           </div>

@@ -18,7 +18,8 @@ export const connectSocket = () => {
   socket = io(import.meta.env.VITE_SERVER_URL || "http://localhost:5000", {
     auth: { token },
     withCredentials: true,
-    transports: ["polling", "websocket"],
+    transports: ["websocket", "polling"],
+    upgrade: false,
     reconnection: true,
     reconnectionAttempts: Infinity,
     reconnectionDelay: 1000,
