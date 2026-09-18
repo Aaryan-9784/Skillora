@@ -11,14 +11,24 @@ const broadcastProjectEvent = async (projectId, event, data, alsoRefreshDashboar
   if (!projectId) return;
   try {
     const Project = require("../models/Project");
-    const proj = await Project.findById(projectId).select("owner clientUser assignedFreelancer").lean();
+    const User    = require("../models/User");
+    const proj = await Project.findById(projectId).select("owner clientId clientUser assignedFreelancer").lean();
     if (!proj) return;
     const recipients = new Set([
       proj.owner?.toString(),
       proj.clientUser?.toString(),
       proj.assignedFreelancer?.toString(),
     ]);
+    if (!proj.clientUser && proj.clientId) {
+      const clientUserDoc = await User.findOne({ clientRef: proj.clientId, role: "client" }).select("_id").lean();
+      if (clientUserDoc) {
+        recipients.add(clientUserDoc._id.toString());
+      }
+    }
     recipients.delete(undefined);
+    recipients.delete(null);
+    recipients.delete("");
+
     recipients.forEach((userId) => {
       emitToUser(userId, event, data);
       if (alsoRefreshDashboard) {

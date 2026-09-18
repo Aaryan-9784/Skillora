@@ -240,6 +240,16 @@ const deleteMessage = asyncHandler(async (req, res) => {
         conversationId: message.conversationId,
         isDeleted: true,
       });
+      const conv = await Conversation.findById(message.conversationId).select("participants").lean();
+      if (conv?.participants) {
+        conv.participants.forEach((pId) => {
+          io.to(`user:${pId.toString()}`).emit("chat:message_deleted", {
+            messageId: message._id,
+            conversationId: message.conversationId,
+            isDeleted: true,
+          });
+        });
+      }
     }
   } else {
     if (!message.deletedFor.some((id) => id.toString() === userId.toString())) {
@@ -280,6 +290,16 @@ const toggleReaction = asyncHandler(async (req, res) => {
       conversationId: message.conversationId,
       reactions: message.reactions,
     });
+    const conv = await Conversation.findById(message.conversationId).select("participants").lean();
+    if (conv?.participants) {
+      conv.participants.forEach((pId) => {
+        io.to(`user:${pId.toString()}`).emit("chat:message_reaction", {
+          messageId: message._id,
+          conversationId: message.conversationId,
+          reactions: message.reactions,
+        });
+      });
+    }
   }
 
   ApiResponse.success(res, "Reaction updated", { messageId, reactions: message.reactions });
@@ -335,6 +355,9 @@ const sendMessage = asyncHandler(async (req, res) => {
   const io = getIO();
   if (io) {
     io.to(`conversation:${conversationId}`).emit("chat:message_new", { message });
+    conversation.participants.forEach((pId) => {
+      io.to(`user:${pId.toString()}`).emit("chat:message_new", { message });
+    });
   }
 
   conversation.participants.forEach((pId) => {

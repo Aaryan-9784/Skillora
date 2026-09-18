@@ -162,9 +162,10 @@ export const CallProvider = ({ children }) => {
       };
 
       const onAnswered = async ({ answer }) => {
-        if (peerConnectionRef.current) {
+        const pc = peerConnectionRef.current;
+        if (pc && pc.signalingState === "have-local-offer") {
           try {
-            await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(answer));
+            await pc.setRemoteDescription(new RTCSessionDescription(answer));
             await processIceQueue();
             setCallState("connected");
             toast.success("Call connected");
@@ -177,7 +178,7 @@ export const CallProvider = ({ children }) => {
       const onIceCandidate = async ({ candidate }) => {
         if (!candidate) return;
         const pc = peerConnectionRef.current;
-        if (pc && pc.remoteDescription && pc.remoteDescription.type) {
+        if (pc && pc.signalingState !== "closed" && pc.remoteDescription && pc.remoteDescription.type) {
           try {
             await pc.addIceCandidate(new RTCIceCandidate(candidate));
           } catch (e) {
@@ -201,7 +202,7 @@ export const CallProvider = ({ children }) => {
 
       const onRenegotiate = async ({ senderId, offer, callType }) => {
         const pc = peerConnectionRef.current;
-        if (!pc) return;
+        if (!pc || pc.signalingState === "closed") return;
         try {
           if (callType === "video") {
             setActiveCallType("video");
@@ -231,7 +232,7 @@ export const CallProvider = ({ children }) => {
 
       const onRenegotiateAnswer = async ({ answer, callType }) => {
         const pc = peerConnectionRef.current;
-        if (!pc) return;
+        if (!pc || pc.signalingState === "closed") return;
         try {
           if (callType === "video") {
             setActiveCallType("video");
@@ -248,8 +249,18 @@ export const CallProvider = ({ children }) => {
         endCallCleanup();
       };
 
-      const onEnded = () => {
-        toast("Call ended.");
+      const onUnavailable = ({ message }) => {
+        toast.error(message || "User is currently offline.");
+        endCallCleanup();
+      };
+
+      const onBusy = ({ message }) => {
+        toast.error(message || "User is currently on another call.");
+        endCallCleanup();
+      };
+
+      const onEnded = ({ reason } = {}) => {
+        toast(reason ? `Call ended (${reason})` : "Call ended.");
         endCallCleanup();
       };
 
@@ -260,6 +271,8 @@ export const CallProvider = ({ children }) => {
       sock.on("call:renegotiate",         onRenegotiate);
       sock.on("call:renegotiate_answer",  onRenegotiateAnswer);
       sock.on("call:rejected",            onRejected);
+      sock.on("call:unavailable",         onUnavailable);
+      sock.on("call:busy",                onBusy);
       sock.on("call:ended",               onEnded);
 
       return () => {
@@ -270,6 +283,8 @@ export const CallProvider = ({ children }) => {
         sock.off("call:renegotiate",         onRenegotiate);
         sock.off("call:renegotiate_answer",  onRenegotiateAnswer);
         sock.off("call:rejected",            onRejected);
+        sock.off("call:unavailable",         onUnavailable);
+        sock.off("call:busy",                onBusy);
         sock.off("call:ended",               onEnded);
       };
     };

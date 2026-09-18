@@ -167,13 +167,55 @@ const useChatStore = create((set, get) => ({
   appendMessage: (message) => {
     if (!message) return;
     set((state) => {
-      const activeId = state.activeConversation?._id?.toString();
       const msgConvId = (message.conversationId?._id || message.conversationId)?.toString();
-      if (!activeId || activeId !== msgConvId) return state;
       const msgId = message._id?.toString();
+
+      // Update conversations list so latest message shows in the sidebar and moves to the top
+      let found = false;
+      let updatedConversations = state.conversations.map((c) => {
+        if (c._id?.toString() === msgConvId) {
+          found = true;
+          const isCurrentActive = state.activeConversation?._id?.toString() === msgConvId;
+          const currentUnread = c.unreadCount || 0;
+          return {
+            ...c,
+            lastMessage: {
+              text: message.content || (message.type === "voice_note" ? "🎙 Voice Note" : "📎 Attachment"),
+              sender: message.sender,
+              createdAt: message.createdAt || new Date(),
+            },
+            unreadCount: isCurrentActive ? 0 : currentUnread + 1,
+          };
+        }
+        return c;
+      });
+
+      if (!found && message.conversationId && typeof message.conversationId === "object") {
+        // Conversation was populated, append to conversations list if not present
+        updatedConversations = [message.conversationId, ...updatedConversations];
+      }
+
+      // Sort conversations so the one with the newest message is at the top
+      updatedConversations.sort((a, b) => {
+        const timeA = new Date(a.lastMessage?.createdAt || a.updatedAt || 0).getTime();
+        const timeB = new Date(b.lastMessage?.createdAt || b.updatedAt || 0).getTime();
+        return timeB - timeA;
+      });
+
+      const activeId = state.activeConversation?._id?.toString();
+      if (!activeId || activeId !== msgConvId) {
+        return { conversations: updatedConversations };
+      }
+
       const exists = state.messages.some((m) => m._id?.toString() === msgId);
-      if (exists) return state;
-      return { messages: [...state.messages, message] };
+      if (exists) {
+        return { conversations: updatedConversations };
+      }
+
+      return {
+        conversations: updatedConversations,
+        messages: [...state.messages, message],
+      };
     });
   },
 

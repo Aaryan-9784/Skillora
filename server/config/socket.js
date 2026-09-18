@@ -158,10 +158,17 @@ const initSocket = (httpServer) => {
       const strId = id.toString();
       if (userSockets.has(strId)) return strId;
       try {
-        if (strId.match(/^[0-9a-fA-F]{24}$/)) {
-          const u = await User.findOne({
-            $or: [{ _id: strId }, { clientRef: strId }]
-          }).select("_id").lean();
+        const isObjectId = Boolean(strId.match(/^[0-9a-fA-F]{24}$/));
+        const orConditions = [];
+        if (isObjectId) {
+          orConditions.push({ _id: strId });
+          orConditions.push({ clientRef: strId });
+        }
+        if (strId.includes("@")) {
+          orConditions.push({ email: strId.toLowerCase() });
+        }
+        if (orConditions.length > 0) {
+          const u = await User.findOne({ $or: orConditions }).select("_id").lean();
           if (u) return u._id.toString();
         }
       } catch (err) {}
@@ -172,6 +179,33 @@ const initSocket = (httpServer) => {
     socket.on("call:initiate", async ({ targetUserId, offer, callType, projectId, callerName, callerAvatar }) => {
       if (!targetUserId || !offer) return;
       const resolvedTargetId = await resolveUserId(targetUserId);
+
+      // Check if target user has any connected sockets
+      const targetSockets = userSockets.get(resolvedTargetId);
+      if (!targetSockets || targetSockets.size === 0) {
+        socket.emit("call:unavailable", {
+          targetUserId: resolvedTargetId,
+          message: "User is currently offline or unavailable.",
+        });
+        return;
+      }
+
+      // Check if target user is currently in an active call
+      let isBusy = false;
+      for (const call of activeCalls.values()) {
+        if (call.caller === resolvedTargetId || call.receiver === resolvedTargetId) {
+          isBusy = true;
+          break;
+        }
+      }
+      if (isBusy) {
+        socket.emit("call:busy", {
+          targetUserId: resolvedTargetId,
+          message: "User is currently on another call.",
+        });
+        return;
+      }
+
       activeCalls.set(`${userId}:${resolvedTargetId}`, {
         caller: userId,
         receiver: resolvedTargetId,
@@ -301,6 +335,16 @@ const initSocket = (httpServer) => {
         sockets.delete(socket.id);
         if (sockets.size === 0) {
           userSockets.delete(userId);
+
+          // Clean up any ongoing calls for this user and notify partner
+          for (const [key, call] of activeCalls.entries()) {
+            if (call.caller === userId || call.receiver === userId) {
+              const otherUserId = call.caller === userId ? call.receiver : call.caller;
+              io.to(`user:${otherUserId}`).emit("call:ended", { reason: "Partner disconnected" });
+              activeCalls.delete(key);
+            }
+          }
+
           const lastSeen = new Date();
           let clientRef = null;
           let email = null;

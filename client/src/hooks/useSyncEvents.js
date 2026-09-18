@@ -85,9 +85,8 @@ const useSyncEvents = () => {
       window.dispatchEvent(new CustomEvent("invoice:updated", { detail: { invoiceId, status } }));
       if (isClient) {
         clientStore.patchInvoice(invoiceId, { status });
-      } else {
-        useInvoiceStore.getState().fetchInvoices({}, true);
       }
+      useInvoiceStore.getState().fetchInvoices({}, true);
     };
 
     const onProjectUpdated = ({ projectId, status, progress }) => {
@@ -95,19 +94,20 @@ const useSyncEvents = () => {
       if (isClient) {
         clientStore.patchProject(projectId, { status, progress });
         clientStore.fetchDashboard(true);
-      } else {
-        useProjectStore.getState().fetchProjects({}, true);
+      }
+      useProjectStore.getState().fetchProjects({}, true);
+      if (projectId && useProjectStore.getState().currentProject?._id === projectId) {
+        useProjectStore.getState().fetchProjectById(projectId);
       }
     };
 
     const onTaskUpdated = ({ projectId, taskId }) => {
       window.dispatchEvent(new CustomEvent("task:updated", { detail: { projectId, taskId } }));
+      if (projectId) {
+        useProjectStore.getState().fetchTasks(projectId);
+      }
       if (isClient) {
         clientStore.fetchDashboard(true);
-      } else {
-        if (projectId) {
-          useProjectStore.getState().fetchTasks(projectId);
-        }
       }
     };
 
@@ -151,12 +151,15 @@ const useSyncEvents = () => {
       window.dispatchEvent(new CustomEvent("admin:stats_refresh"));
     };
 
-    // ── Client-only events ──────────────────────────────
+    // ── Project messages ───────────────────────────────
     const onMessageNew = ({ projectId, message }) => {
       if (isClient) {
         clientStore.appendMessage(projectId, message);
-        window.dispatchEvent(new CustomEvent("message:new", { detail: { projectId, message } }));
       }
+      if (message) {
+        chatStore.appendMessage(message);
+      }
+      window.dispatchEvent(new CustomEvent("message:new", { detail: { projectId, message } }));
     };
 
     const onMilestoneUpdated = ({ projectId, milestoneId, status }) => {

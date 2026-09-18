@@ -414,6 +414,7 @@ const verifyInvoicePayment = asyncHandler(async (req, res) => {
       invoiceId: invoice._id,
       status:    "paid",
     });
+    emitToUser(invoice.owner, "dashboard:refresh", {});
     broadcast("admin:stats_refresh", { ts: Date.now() });
   } catch (err) { logger.warn(`socket update invoice warning: ${err.message}`); }
 
@@ -617,7 +618,12 @@ const sendProjectMessage = asyncHandler(async (req, res) => {
   });
 
   try {
-    const { emitToUser } = require("../config/socket");
+    const { emitToUser, getIO } = require("../config/socket");
+    const io = getIO();
+    if (io) {
+      io.to(`conversation:${conversation._id}`).emit("chat:message_new", { message });
+    }
+    emitToUser(project.owner, "chat:message_new", { message });
     emitToUser(project.owner, "message:new", {
       projectId: req.params.projectId,
       message,
