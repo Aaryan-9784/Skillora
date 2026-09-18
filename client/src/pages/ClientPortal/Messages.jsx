@@ -673,18 +673,8 @@ const ClientMessages = () => {
 
               {/* Messages Container Area */}
               <div className="relative z-0 flex-1 overflow-y-auto p-4 space-y-4 bg-[#0b141a]/40 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                {messages.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-center p-6">
-                    <div className="w-12 h-12 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-3 shadow-lg">
-                      <MessageSquare size={22} />
-                    </div>
-                    <h3 className="text-sm font-bold text-white mb-1">Project Chat Room Ready</h3>
-                    <p className="text-xs text-slate-400 max-w-sm leading-relaxed">
-                      Send a message, voice note, or schedule a video call with your project team.
-                    </p>
-                  </div>
-                ) : (
-                  messages.map((msg) => {
+                {(() => {
+                  const displayableMessages = messages.filter((msg) => {
                     const isSystemEvent =
                       msg.type === "system_event" ||
                       msg.type === "system" ||
@@ -693,42 +683,24 @@ const ClientMessages = () => {
                         msg.content.includes("Project workspace activated") ||
                         msg.content.startsWith("🎉 Project workspace")
                       ));
+                    return !isSystemEvent;
+                  });
 
-                    if (isSystemEvent) {
-                      const cleanContent = msg.content?.replace(
-                        /^Project "(.*)" started\. Connection established!$/,
-                        'Project workspace activated for "$1". Milestone tracking, task boards, and direct collaboration are now open!'
-                      );
-                      const displayBody = cleanContent?.replace(/^(?:🎉|✨|🚀)\s*/u, "");
-                      return (
-                        <motion.div
-                          key={msg._id || msg.id}
-                          initial={{ opacity: 0, y: 6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="flex justify-center my-3 w-full px-4 select-none"
-                        >
-                          <div className="max-w-md w-full p-3 rounded-2xl bg-[#141726] border border-indigo-500/25 shadow-lg flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-xl bg-indigo-500/15 border border-indigo-400/25 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
-                              <Sparkles size={15} className="text-indigo-400" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between gap-2 mb-0.5">
-                                <span className="text-[9px] font-bold tracking-wider uppercase text-indigo-300 bg-indigo-500/20 px-1.5 py-0.5 rounded">
-                                  System Notice
-                                </span>
-                                <span className="text-[10px] text-slate-400 font-mono shrink-0">
-                                  {formatMessageTime(msg.createdAt)}
-                                </span>
-                              </div>
-                              <p className="text-[11px] sm:text-xs text-slate-200 leading-relaxed font-medium">
-                                {displayBody}
-                              </p>
-                            </div>
-                          </div>
-                        </motion.div>
-                      );
-                    }
+                  if (displayableMessages.length === 0) {
+                    return (
+                      <div className="h-full flex flex-col items-center justify-center text-center p-6">
+                        <div className="w-12 h-12 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-3 shadow-lg">
+                          <MessageSquare size={22} />
+                        </div>
+                        <h3 className="text-sm font-bold text-white mb-1">Project Chat Room Ready</h3>
+                        <p className="text-xs text-slate-400 max-w-sm leading-relaxed">
+                          Send a message, voice note, or schedule a video call with your project team.
+                        </p>
+                      </div>
+                    );
+                  }
 
+                  return displayableMessages.map((msg) => {
                     const isMe = (msg.sender?._id || msg.sender) === user?._id;
                     const hasAttachments = msg.attachments?.length > 0;
                     
@@ -863,8 +835,8 @@ const ClientMessages = () => {
                         </div>
                       </motion.div>
                     );
-                  })
-                )}
+                  });
+                })()}
                 <div ref={messagesEndRef} />
               </div>
 

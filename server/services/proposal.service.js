@@ -338,8 +338,6 @@ const respondToProposal = async (userOrId, proposalId, action) => {
 
     // Establish Chat Conversation connection between Client & Freelancer
     const Conversation = require("../models/Conversation");
-    const Message      = require("../models/Message");
-    const welcomeMsgText = `🎉 Project workspace activated for "${proposal.project.title}". Milestone tracking, task boards, and direct collaboration are now open!`;
 
     let conversation = await Conversation.findOne({ projectId: proposal.project._id });
     if (!conversation) {
@@ -347,11 +345,6 @@ const respondToProposal = async (userOrId, proposalId, action) => {
         type: "project",
         projectId: proposal.project._id,
         participants: [clientUserId, proposal.freelancer],
-        lastMessage: {
-          text: welcomeMsgText,
-          sender: clientUserId,
-          createdAt: new Date(),
-        },
       });
     } else {
       const partSet = new Set(conversation.participants.map((p) => p.toString()));
@@ -359,16 +352,6 @@ const respondToProposal = async (userOrId, proposalId, action) => {
       partSet.add(proposal.freelancer.toString());
       conversation.participants = Array.from(partSet);
       await conversation.save();
-    }
-
-    const existingMsg = await Message.findOne({ conversationId: conversation._id });
-    if (!existingMsg) {
-      await Message.create({
-        conversationId: conversation._id,
-        sender: clientUserId,
-        type: "system_event",
-        content: welcomeMsgText,
-      });
     }
 
     try {
