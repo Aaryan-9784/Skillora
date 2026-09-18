@@ -548,7 +548,7 @@ const getIceServersConfig = asyncHandler(async (req, res) => {
   const meteredDomain = process.env.METERED_DOMAIN || "skillora.metered.live";
   const meteredApiKey = process.env.METERED_API_KEY || "b4a13b28275e341060ea7ddb3e9095ff9672";
 
-  if (meteredDomain && meteredApiKey) {
+  if (meteredDomain) {
     const now = Date.now();
     if (cachedMeteredIce && cachedMeteredExpiresAt > now) {
       return ApiResponse.success(res, "Metered ICE servers (cached)", { iceServers: cachedMeteredIce });
@@ -560,34 +560,36 @@ const getIceServersConfig = asyncHandler(async (req, res) => {
       
       let effectiveApiKey = meteredApiKey;
 
-      // If apiKey is invalid or only secretKey is present, generate a fresh credential with apiKey
-      if (process.env.METERED_SECRET_KEY && (!effectiveApiKey || effectiveApiKey === process.env.METERED_SECRET_KEY)) {
+      // Always generate a fresh, guaranteed-valid temporary credential using secretKey if present
+      if (process.env.METERED_SECRET_KEY) {
         try {
           const createRes = await fetch(`https://${host}/api/v1/turn/credential?secretKey=${encodeURIComponent(process.env.METERED_SECRET_KEY)}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ expiryInSeconds: 86400, label: "skillora" }),
-            signal: AbortSignal.timeout(4000),
+            signal: AbortSignal.timeout(10000),
           });
           if (createRes.ok) {
             const created = await createRes.json();
             if (created?.apiKey) effectiveApiKey = created.apiKey;
           }
-        } catch (e) {}
+        } catch (e) {
+          logger.warn(`[WebRTC] Metered credential creation warning: ${e.message}`);
+        }
       }
 
       const url = `https://${host}/api/v1/turn/credentials?apiKey=${encodeURIComponent(effectiveApiKey)}`;
 
       const response = await fetch(url, {
         method: "GET",
-        signal: AbortSignal.timeout(5000),
+        signal: AbortSignal.timeout(10000),
       });
 
       if (response.ok) {
         const meteredServers = await response.json();
         if (Array.isArray(meteredServers) && meteredServers.length > 0) {
           cachedMeteredIce = meteredServers;
-          cachedMeteredExpiresAt = now + 1000 * 60 * 30; // cache for 30 minutes
+          cachedMeteredExpiresAt = now + 1000 * 60 * 60 * 12; // cache for 12 hours
           logger.info(`[WebRTC] Successfully fetched dynamic Metered TURN credentials from ${host}`);
           return ApiResponse.success(res, "Metered dynamic ICE servers", { iceServers: meteredServers });
         }

@@ -6,7 +6,7 @@ import useInvoiceStore from "./invoiceStore";
 import useClientPortalStore from "./clientPortalStore";
 import useAuthStore from "./authStore";
 
-const MIN_REFRESH_INTERVAL_MS = 4000; // Minimum 4s cooldown between auto refreshes
+const MIN_REFRESH_INTERVAL_MS = 2500; // Responsive 2.5s cooldown between auto refreshes
 
 const useSyncStore = create((set, get) => ({
   lastRefreshedAt: Date.now(),
@@ -57,13 +57,20 @@ const useSyncStore = create((set, get) => ({
         const projStore = useProjectStore.getState();
         const invStore = useInvoiceStore.getState();
 
-        if (pathname === "/dashboard" || pathname === "/") {
+        if (pathname === "/dashboard" || pathname === "/" || pathname.startsWith("/dashboard")) {
           tasks.push(dashStore.fetchSummary(true).catch(() => {}));
         }
 
         if (pathname.startsWith("/projects") || pathname.startsWith("/marketplace")) {
           tasks.push(projStore.fetchProjects({}, true).catch(() => {}));
           tasks.push(projStore.fetchMyProposals().catch(() => {}));
+
+          const projectMatch = pathname.match(/\/projects\/([a-f0-9]{24})/i);
+          if (projectMatch && projectMatch[1]) {
+            const pId = projectMatch[1];
+            tasks.push(projStore.fetchTasks(pId).catch(() => {}));
+            tasks.push(projStore.fetchProjectById(pId).catch(() => {}));
+          }
         }
 
         if (pathname.startsWith("/payments") || pathname.startsWith("/invoices")) {

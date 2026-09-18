@@ -52,7 +52,7 @@ export const getResolvedRTCConfig = async () => {
   // 2. Direct fetch from Metered TURN API (CORS enabled, highly resilient fallback)
   try {
     const res = await fetch(
-      "https://skillora.metered.live/api/v1/turn/credentials?apiKey=b4a13b28275e341060ea7ddb3e9095ff9672"
+      "https://skillora.metered.live/api/v1/turn/credentials?apiKey=f1609f77d3601710203890700dc0914b2422"
     );
     if (res.ok) {
       const meteredServers = await res.json();

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  MessageSquare, Video, Phone, Send, Search, Paperclip, Mic,
+  MessageSquare, Video, Phone, Send, Search, Paperclip, Mic, Sparkles,
   MoreVertical, Calendar, RefreshCw, X, FileText, CheckCheck, Users, Plus, Trash2, Ban, UserX,
   Reply, Copy, Smile, ArrowLeft
 } from "lucide-react";
@@ -685,6 +685,49 @@ const ClientMessages = () => {
                   </div>
                 ) : (
                   messages.map((msg) => {
+                    const isSystemEvent =
+                      msg.type === "system_event" ||
+                      msg.type === "system" ||
+                      (msg.content && (
+                        msg.content.includes("started. Connection established") ||
+                        msg.content.includes("Project workspace activated") ||
+                        msg.content.startsWith("🎉 Project workspace")
+                      ));
+
+                    if (isSystemEvent) {
+                      const cleanContent = msg.content?.replace(
+                        /^Project "(.*)" started\. Connection established!$/,
+                        '🎉 Project workspace activated for "$1". Milestone tracking, task boards, and direct collaboration are now open!'
+                      );
+                      return (
+                        <motion.div
+                          key={msg._id || msg.id}
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          className="flex justify-center my-4 w-full px-4"
+                        >
+                          <div className="max-w-xl w-full mx-auto p-3.5 rounded-2xl bg-gradient-to-r from-indigo-950/50 via-purple-950/40 to-indigo-950/50 border border-indigo-500/30 shadow-lg backdrop-blur-md flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
+                              <Sparkles size={17} className="text-indigo-300 animate-pulse" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-2 mb-0.5">
+                                <span className="text-[10px] font-semibold tracking-wider uppercase text-indigo-300 bg-indigo-500/20 px-2 py-0.5 rounded-full">
+                                  System Notice
+                                </span>
+                                <span className="text-[10px] text-slate-400 font-mono shrink-0">
+                                  {formatMessageTime(msg.createdAt)}
+                                </span>
+                              </div>
+                              <p className="text-xs text-slate-200 leading-relaxed font-medium mt-1">
+                                {cleanContent}
+                              </p>
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    }
+
                     const isMe = (msg.sender?._id || msg.sender) === user?._id;
                     const hasAttachments = msg.attachments?.length > 0;
                     

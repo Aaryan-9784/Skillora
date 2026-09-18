@@ -37,7 +37,11 @@ const postClientProject = async (clientUser, data) => {
  * Freelancer gets all open client projects from the marketplace.
  */
 const getOpenProjects = async (reqQuery = {}) => {
-  const filter = { status: { $in: ["open", "planning"] }, isDeleted: { $ne: true } };
+  let statusFilter = { $in: ["open", "planning", "active", "completed"] };
+  if (reqQuery.status && reqQuery.status !== "all" && reqQuery.status !== "All") {
+    statusFilter = reqQuery.status;
+  }
+  const filter = { status: statusFilter, isDeleted: { $ne: true } };
 
   if (reqQuery.category && reqQuery.category !== "All") {
     filter.category = reqQuery.category;
@@ -95,6 +99,13 @@ const submitProposal = async (freelancerId, projectId, data) => {
     }
   }
 
+  let submittedSkills = [];
+  if (Array.isArray(data.skills) && data.skills.length > 0) {
+    submittedSkills = data.skills;
+  } else if (Array.isArray(project.requiredSkills) && project.requiredSkills.length > 0) {
+    submittedSkills = project.requiredSkills;
+  }
+
   const proposal = await Proposal.create({
     project: projectId,
     freelancer: freelancerId,
@@ -103,6 +114,7 @@ const submitProposal = async (freelancerId, projectId, data) => {
     bidAmount: Number(data.bidAmount) || project.budget || 0,
     currency: data.currency || project.currency || "USD",
     estimatedDays: Number(data.estimatedDays || data.deliveryDays) || 7,
+    skills: submittedSkills,
     attachments: data.attachments || [],
     status: "pending",
   });
@@ -235,10 +247,28 @@ const getProjectProposals = async (userOrId, projectId) => {
 
   const proposals = await Proposal.find({ project: projectId })
     .sort("-createdAt")
-    .populate("freelancer", "name email avatar title bio skills hourlyRate")
+    .populate({
+      path: "freelancer",
+      select: "name email avatar title bio skills hourlyRate",
+      populate: { path: "skills", select: "name category level levelLabel" },
+    })
+    .populate("project", "title requiredSkills category budget currency")
     .lean();
 
-  return proposals;
+  return proposals.map((prop) => {
+    let flSkills = [];
+    if (Array.isArray(prop.skills) && prop.skills.length > 0) {
+      flSkills = prop.skills;
+    } else if (Array.isArray(prop.freelancer?.skills) && prop.freelancer.skills.length > 0) {
+      flSkills = prop.freelancer.skills.map((s) => (typeof s === "object" ? s.name : s)).filter(Boolean);
+    } else if (Array.isArray(project.requiredSkills) && project.requiredSkills.length > 0) {
+      flSkills = project.requiredSkills;
+    }
+    return {
+      ...prop,
+      skills: flSkills,
+    };
+  });
 };
 
 /**
@@ -309,7 +339,7 @@ const respondToProposal = async (userOrId, proposalId, action) => {
     // Establish Chat Conversation connection between Client & Freelancer
     const Conversation = require("../models/Conversation");
     const Message      = require("../models/Message");
-    const welcomeMsgText = `Project "${proposal.project.title}" started. Connection established!`;
+    const welcomeMsgText = `🎉 Project workspace activated for "${proposal.project.title}". Milestone tracking, task boards, and direct collaboration are now open!`;
 
     let conversation = await Conversation.findOne({ projectId: proposal.project._id });
     if (!conversation) {

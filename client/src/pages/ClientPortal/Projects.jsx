@@ -483,16 +483,36 @@ const ProposalsDrawer = ({ project, onClose }) => {
                       {prop.coverLetter}
                     </div>
 
-                    {/* Freelancer Skills */}
-                    {freelancer.skills?.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 mb-4">
-                        {freelancer.skills.map((sk) => (
-                          <span key={sk} className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700/50">
-                            {sk}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                    {/* Freelancer Skills & Competencies */}
+                    {(() => {
+                      const displaySkills = (Array.isArray(prop.skills) && prop.skills.length > 0)
+                        ? prop.skills
+                        : (Array.isArray(freelancer.skills) ? freelancer.skills : []);
+                      if (displaySkills.length === 0) return null;
+
+                      return (
+                        <div className="mb-4">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 mb-1.5 flex items-center gap-1.5">
+                            <Sparkles size={11} className="text-purple-400" />
+                            <span>Freelancer Skills & Competencies</span>
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {displaySkills.map((sk, idx) => {
+                              const name = typeof sk === "object" ? (sk?.name || sk?.title) : String(sk);
+                              if (!name || (name.length === 24 && /^[0-9a-fA-F]+$/.test(name))) return null;
+                              return (
+                                <span
+                                  key={idx}
+                                  className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 shadow-sm"
+                                >
+                                  {name}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     {/* Actions */}
                     <div className="flex items-center justify-between pt-3 border-t border-white/10">

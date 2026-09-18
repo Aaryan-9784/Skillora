@@ -368,6 +368,15 @@ export const CallProvider = ({ children }) => {
       console.log("[WebRTC] ontrack received:", e.track.kind, "id:", e.track.id, "enabled:", e.track.enabled, "muted:", e.track.muted);
       
       const refreshRemoteStream = () => {
+        if (pc && pc.signalingState !== "closed") {
+          const remoteTracks = pc.getReceivers()
+            .map((r) => r.track)
+            .filter((t) => t && t.readyState !== "ended");
+          if (remoteTracks.length > 0) {
+            setRemoteStream(new MediaStream(remoteTracks));
+            return;
+          }
+        }
         const incomingStream = e.streams && e.streams[0] ? e.streams[0] : null;
         if (incomingStream) {
           setRemoteStream(new MediaStream(incomingStream.getTracks()));

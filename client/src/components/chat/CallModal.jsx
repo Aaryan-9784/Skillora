@@ -127,6 +127,10 @@ const CallModal = ({
       vEl.srcObject = remoteStream;
     }
 
+    vEl.onloadedmetadata = () => {
+      vEl.play().catch(() => {});
+    };
+
     if (remoteStream) {
       const playPromise = vEl.play();
       if (playPromise !== undefined) {
@@ -181,7 +185,7 @@ const CallModal = ({
   const hasRemoteVideo = Boolean(
     remoteStream &&
     remoteStream.getVideoTracks().length > 0 &&
-    remoteStream.getVideoTracks().some((t) => t.enabled && t.readyState !== "ended")
+    remoteStream.getVideoTracks().some((t) => t.readyState !== "ended")
   );
 
   const isAnyScreenSharing = isScreenSharing || remoteIsSharingScreen;

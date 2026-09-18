@@ -64,6 +64,13 @@ const SORT_OPTIONS = [
   { id: "budget-low", label: "Lowest Budget" },
 ];
 
+const STATUS_OPTIONS = [
+  { id: "all", label: "All Projects" },
+  { id: "open", label: "Open Bidding" },
+  { id: "active", label: "In Progress" },
+  { id: "completed", label: "Completed" },
+];
+
 const DELIVERY_OPTIONS = [
   { id: "3", label: "3 Days (Express)" },
   { id: "7", label: "7 Days (1 Week)" },
@@ -235,6 +242,83 @@ const CustomSortDropdown = ({ value, onChange }) => {
 };
 
 // ─────────────────────────────────────────────────────────
+// CUSTOM STATUS DROPDOWN (Dark Glass Menu)
+// ─────────────────────────────────────────────────────────
+const CustomStatusDropdown = ({ value, onChange }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useClickOutside(ref, () => setOpen(false), { enabled: open });
+
+  const currentOption = STATUS_OPTIONS.find((o) => o.id === value) || STATUS_OPTIONS[0];
+
+  return (
+    <div className="relative shrink-0" ref={ref}>
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-200 transition-all cursor-pointer select-none"
+        style={{
+          background: "rgba(255,255,255,0.04)",
+          border: open ? "1px solid rgba(99,91,255,0.45)" : "1px solid rgba(255,255,255,0.09)",
+          boxShadow: open ? "0 0 16px rgba(99,91,255,0.25)" : "none",
+        }}
+      >
+        <Layers size={13} className="text-purple-400" />
+        <span>{currentOption.label}</span>
+        <ChevronDown size={13} className={`text-slate-400 transition-transform duration-200 ${open ? "rotate-180 text-indigo-400" : ""}`} />
+      </motion.button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: -6 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: -6 }}
+            transition={{ duration: 0.15 }}
+            className="absolute right-0 top-11 z-30 w-44 rounded-xl overflow-hidden py-1.5"
+            style={{
+              background: "linear-gradient(160deg, rgba(15,23,42,0.98) 0%, rgba(10,16,30,0.98) 100%)",
+              border: "1px solid rgba(255,255,255,0.12)",
+              boxShadow: "0 12px 32px rgba(0,0,0,0.6), 0 0 16px rgba(99,91,255,0.15)",
+              backdropFilter: "blur(20px)",
+            }}
+          >
+            {STATUS_OPTIONS.map((opt) => {
+              const active = opt.id === value;
+              return (
+                <button
+                  type="button"
+                  key={opt.id}
+                  onClick={() => {
+                    onChange(opt.id);
+                    setOpen(false);
+                  }}
+                  className="w-full flex items-center justify-between px-3.5 py-2 text-xs font-semibold text-left transition-colors cursor-pointer"
+                  style={{
+                    color: active ? "#A78BFA" : "#CBD5E1",
+                    background: active ? "rgba(99,91,255,0.15)" : "transparent",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!active) e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!active) e.currentTarget.style.background = "transparent";
+                  }}
+                >
+                  <span>{opt.label}</span>
+                  {active && <Check size={13} className="text-purple-400" />}
+                </button>
+              );
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────
 // CUSTOM DELIVERY DROPDOWN
 // ─────────────────────────────────────────────────────────
 const CustomDeliveryDropdown = ({ value, onChange }) => {
@@ -319,6 +403,7 @@ export default function MarketplacePage() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [sortBy, setSortBy] = useState("latest");
+  const [selectedStatus, setSelectedStatus] = useState("all");
 
   // Project detail modal state
   const [detailProject, setDetailProject] = useState(null);
@@ -396,14 +481,18 @@ export default function MarketplacePage() {
           p.requiredSkills?.some((sk) => sk.toLowerCase().includes(search.toLowerCase()));
         const matchesCategory =
           selectedCategory === "All" || p.category === selectedCategory;
-        return matchesSearch && matchesCategory;
+        const matchesStatus =
+          selectedStatus === "all" ||
+          (selectedStatus === "open" && (p.status === "open" || p.status === "planning")) ||
+          p.status === selectedStatus;
+        return matchesSearch && matchesCategory && matchesStatus;
       })
       .sort((a, b) => {
         if (sortBy === "budget-high") return (b.budget || 0) - (a.budget || 0);
         if (sortBy === "budget-low") return (a.budget || 0) - (b.budget || 0);
         return 0;
       });
-  }, [projects, search, selectedCategory, sortBy]);
+  }, [projects, search, selectedCategory, selectedStatus, sortBy]);
 
   const handleOpenProposal = (project) => {
     setDetailProject(null);
@@ -538,8 +627,9 @@ export default function MarketplacePage() {
             )}
           </div>
 
-          {/* Category Dropdown + Sort Dropdown */}
-          <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
+          {/* Status + Category + Sort Dropdown */}
+          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-between md:justify-end">
+            <CustomStatusDropdown value={selectedStatus} onChange={setSelectedStatus} />
             <CustomCategoryDropdown
               value={selectedCategory}
               onChange={setSelectedCategory}
@@ -619,12 +709,29 @@ export default function MarketplacePage() {
                       style={{ background: "linear-gradient(90deg, transparent, #635BFF, transparent)" }} />
 
                     <div className="space-y-3 relative z-10">
-                      {/* Top Header: Category & Budget */}
+                      {/* Top Header: Category, Status & Budget */}
                       <div className="flex items-start justify-between gap-3">
-                        <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-lg"
-                          style={{ background: "rgba(99,91,255,0.15)", color: "#C4B5FD", border: "1px solid rgba(99,91,255,0.25)" }}>
-                          {project.category || "General"}
-                        </span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-lg"
+                            style={{ background: "rgba(99,91,255,0.15)", color: "#C4B5FD", border: "1px solid rgba(99,91,255,0.25)" }}>
+                            {project.category || "General"}
+                          </span>
+                          {project.status === "active" && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                              In Progress
+                            </span>
+                          )}
+                          {project.status === "completed" && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                              Completed
+                            </span>
+                          )}
+                          {(project.status === "open" || project.status === "planning") && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                              Open
+                            </span>
+                          )}
+                        </div>
                         <div className="text-right shrink-0">
                           <p className="text-base font-black text-emerald-400 leading-none">
                             {formattedBudget}
@@ -707,20 +814,36 @@ export default function MarketplacePage() {
                           <Eye size={12} className="text-purple-400" /> Details
                         </button>
 
-                        <button
-                          disabled={isApplied}
-                          onClick={() => handleOpenProposal(project)}
-                          className="w-full flex items-center justify-center gap-1 py-2 rounded-xl text-xs font-bold text-white transition-all cursor-pointer disabled:opacity-80"
-                          style={{
-                            background: isApplied
-                              ? "rgba(34,197,94,0.15)"
-                              : "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)",
-                            color: isApplied ? "#22C55E" : "#FFFFFF",
-                            border: isApplied ? "1px solid rgba(34,197,94,0.3)" : "none",
-                          }}
-                        >
-                          {isApplied ? "Applied" : "Apply Now"}
-                        </button>
+                        {project.status === "active" ? (
+                          <button
+                            disabled
+                            className="w-full flex items-center justify-center gap-1 py-2 rounded-xl text-xs font-semibold text-amber-300/90 bg-amber-500/10 border border-amber-500/20 cursor-not-allowed select-none"
+                          >
+                            In Progress
+                          </button>
+                        ) : project.status === "completed" ? (
+                          <button
+                            disabled
+                            className="w-full flex items-center justify-center gap-1 py-2 rounded-xl text-xs font-semibold text-cyan-300/90 bg-cyan-500/10 border border-cyan-500/20 cursor-not-allowed select-none"
+                          >
+                            Completed
+                          </button>
+                        ) : (
+                          <button
+                            disabled={isApplied}
+                            onClick={() => handleOpenProposal(project)}
+                            className="w-full flex items-center justify-center gap-1 py-2 rounded-xl text-xs font-bold text-white transition-all cursor-pointer disabled:opacity-80"
+                            style={{
+                              background: isApplied
+                                ? "rgba(34,197,94,0.15)"
+                                : "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)",
+                              color: isApplied ? "#22C55E" : "#FFFFFF",
+                              border: isApplied ? "1px solid rgba(34,197,94,0.3)" : "none",
+                            }}
+                          >
+                            {isApplied ? "Applied" : "Apply Now"}
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
