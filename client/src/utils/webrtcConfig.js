@@ -36,6 +36,9 @@ export const RTC_CONFIG = {
         ]
       : []),
   ],
+  bundlePolicy: "max-bundle",
+  rtcpMuxPolicy: "require",
+  iceTransportPolicy: "all",
   iceCandidatePoolSize: 10,
 };
 

@@ -16,6 +16,20 @@ export const useCall = () => {
   return context;
 };
 
+// ── WhatsApp-grade SDP enhancer: enables Opus stereo, 64kbps HD audio, FEC, DTX ──
+const optimizeSdp = (sdp) => {
+  if (!sdp) return sdp;
+  let s = sdp;
+  s = s.replace(/a=fmtp:(\d+) (.*)/g, (match, pt, params) => {
+    if (params.includes("useinbandfec")) return match;
+    if (s.includes(`a=rtpmap:${pt} opus/48000`)) {
+      return `a=fmtp:${pt} ${params};stereo=1;sprop-stereo=1;useinbandfec=1;usedtx=1;maxaveragebitrate=64000`;
+    }
+    return match;
+  });
+  return s;
+};
+
 export const CallProvider = ({ children }) => {
   const { user, isAuthenticated } = useAuthStore();
 
@@ -36,6 +50,7 @@ export const CallProvider = ({ children }) => {
   const peerConnectionRef     = useRef(null);
   const timerRef              = useRef(null);
   const ringtoneIntervalRef   = useRef(null);
+  const outgoingIntervalRef   = useRef(null);
   const screenTrackRef        = useRef(null);
   const iceCandidatesQueueRef = useRef([]);
   const targetUserIdRef       = useRef(null);
@@ -70,6 +85,42 @@ export const CallProvider = ({ children }) => {
       return null;
     }
   }, []);
+
+  // ── Outgoing Calling Dial Tone Generator (WhatsApp-style 425Hz pulsing dial tone) ──
+  const playOutgoingTone = useCallback(() => {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      if (ctx.state === "suspended") ctx.resume().catch(() => {});
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(425, ctx.currentTime);
+      gain.gain.setValueAtTime(0.06, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.2);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 1.25);
+    } catch (e) {}
+  }, []);
+
+  useEffect(() => {
+    if (callState === "calling") {
+      playOutgoingTone();
+      outgoingIntervalRef.current = setInterval(playOutgoingTone, 2800);
+    } else {
+      if (outgoingIntervalRef.current) {
+        clearInterval(outgoingIntervalRef.current);
+        outgoingIntervalRef.current = null;
+      }
+    }
+    return () => {
+      if (outgoingIntervalRef.current) clearInterval(outgoingIntervalRef.current);
+    };
+  }, [callState, playOutgoingTone]);
 
   // ── Web Audio API Ringtone Generator (100% reliable across all browsers) ──
   const playChime = useCallback(() => {
@@ -147,6 +198,14 @@ export const CallProvider = ({ children }) => {
   }, [callState]);
 
   const endCallCleanup = useCallback(() => {
+    if (outgoingIntervalRef.current) {
+      clearInterval(outgoingIntervalRef.current);
+      outgoingIntervalRef.current = null;
+    }
+    if (ringtoneIntervalRef.current) {
+      clearInterval(ringtoneIntervalRef.current);
+      ringtoneIntervalRef.current = null;
+    }
     if (localStream) {
       localStream.getTracks().forEach((t) => t.stop());
     }
@@ -263,7 +322,11 @@ export const CallProvider = ({ children }) => {
 
         await pc.setRemoteDescription(new RTCSessionDescription(offer));
         await processIceQueue();
-        const answer = await pc.createAnswer();
+        const answer = await pc.createAnswer({
+          offerToReceiveAudio: true,
+          offerToReceiveVideo: true,
+        });
+        answer.sdp = optimizeSdp(answer.sdp);
         await pc.setLocalDescription(answer);
         const s = getSocket();
         if (s) {
@@ -343,8 +406,9 @@ export const CallProvider = ({ children }) => {
       try {
         const vStream = await navigator.mediaDevices.getUserMedia({
           video: {
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
+            width: { ideal: 1280, min: 640 },
+            height: { ideal: 720, min: 480 },
+            frameRate: { ideal: 30, min: 15 },
             facingMode: "user",
           },
         });
@@ -367,13 +431,15 @@ export const CallProvider = ({ children }) => {
       }
     }
 
-    // 2. Acquire Audio
+    // 2. Acquire Audio with Studio/WhatsApp HD constraints
     try {
       const aStream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
+          echoCancellation: { ideal: true },
+          noiseSuppression: { ideal: true },
+          autoGainControl: { ideal: true },
+          channelCount: { ideal: 2 },
+          sampleRate: { ideal: 48000 },
         },
       });
       audioTrack = aStream.getAudioTracks()[0];
@@ -485,7 +551,8 @@ export const CallProvider = ({ children }) => {
         ) {
           try {
             console.warn("[WebRTC] ICE connection dropped, initiating ICE restart…");
-            const offer = await pc.createOffer({ iceRestart: true });
+            const offer = await pc.createOffer({ iceRestart: true, offerToReceiveAudio: true, offerToReceiveVideo: true });
+            offer.sdp = optimizeSdp(offer.sdp);
             await pc.setLocalDescription(offer);
             const target = targetUserIdRef.current;
             const s = getSocket();
@@ -522,7 +589,11 @@ export const CallProvider = ({ children }) => {
         }
       }
 
-      const offer = await pc.createOffer();
+      const offer = await pc.createOffer({
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: true,
+      });
+      offer.sdp = optimizeSdp(offer.sdp);
       await pc.setLocalDescription(offer);
 
       socket.emit("call:initiate", {
@@ -563,7 +634,8 @@ export const CallProvider = ({ children }) => {
         ) {
           try {
             console.warn("[WebRTC] ICE connection dropped on receiver, attempting ICE restart…");
-            const offer = await pc.createOffer({ iceRestart: true });
+            const offer = await pc.createOffer({ iceRestart: true, offerToReceiveAudio: true, offerToReceiveVideo: true });
+            offer.sdp = optimizeSdp(offer.sdp);
             await pc.setLocalDescription(offer);
             const target = targetUserIdRef.current;
             const s = getSocket();
@@ -603,7 +675,11 @@ export const CallProvider = ({ children }) => {
       await pc.setRemoteDescription(new RTCSessionDescription(incomingCall.offer));
       await processIceQueue();
 
-      const answer = await pc.createAnswer();
+      const answer = await pc.createAnswer({
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: true,
+      });
+      answer.sdp = optimizeSdp(answer.sdp);
       await pc.setLocalDescription(answer);
 
       socket.emit("call:answer", { callerId: incomingCall.callerId, answer });

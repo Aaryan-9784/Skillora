@@ -190,6 +190,19 @@ const CallModal = ({
 
   const isAnyScreenSharing = isScreenSharing || remoteIsSharingScreen;
 
+  const handleAccept = () => {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) {
+        const ctx = new AudioCtx();
+        if (ctx.state === "suspended") ctx.resume().catch(() => {});
+      }
+    } catch (e) {}
+    if (typeof onAccept === "function") {
+      onAccept();
+    }
+  };
+
   return (
     <AnimatePresence>
       {/* ── Incoming Call Prompt Screen ── */}
@@ -241,7 +254,7 @@ const CallModal = ({
               {/* Accept Button */}
               <button
                 type="button"
-                onClick={onAccept}
+                onClick={handleAccept}
                 className="flex flex-col items-center gap-2 group cursor-pointer"
                 title="Accept Call"
               >
@@ -264,7 +277,7 @@ const CallModal = ({
           className="fixed inset-0 z-50 bg-black flex flex-col overflow-hidden select-none"
         >
           {/* Audio Element for Remote Sound (kept active in DOM render tree) */}
-          <audio ref={remoteAudioRef} autoPlay className="absolute bottom-0 left-0 w-px h-px pointer-events-none opacity-[0.01]" />
+          <audio ref={remoteAudioRef} autoPlay playsInline className="absolute bottom-0 left-0 w-px h-px pointer-events-none opacity-[0.01]" />
 
           {/* Top Control Bar / Header Overlay */}
           <div className="absolute top-0 left-0 right-0 z-30 px-5 sm:px-8 py-4 flex items-center justify-between bg-gradient-to-b from-black/85 via-black/45 to-transparent pointer-events-auto">
