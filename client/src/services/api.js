@@ -113,29 +113,19 @@ api.interceptors.response.use(
       }
     }
 
-    // ── Auto-retry on cold-start / connection closed (up to 4 retries with progressive backoff) ──
-    const isNetworkOrClosed =
-      (!error.response && (
-        error.message?.includes("Network Error") ||
-        error.code === "ERR_NETWORK" ||
-        error.code === "ECONNABORTED" ||
-        !status
-      )) ||
-      status === 502 ||
-      status === 503;
+    // ── Auto-retry on cold-start / connection closed (up to 2 retries) ──
+    const isNetworkOrClosed = !error.response && (
+      error.message?.includes("Network Error") ||
+      error.code === "ERR_NETWORK" ||
+      error.code === "ECONNABORTED" ||
+      !status
+    );
 
-    if (
-      isNetworkOrClosed &&
-      original &&
-      original._retryOnNetwork !== false &&
-      (original.method?.toLowerCase() === "get" || original._retryOnNetwork === true)
-    ) {
+    if (isNetworkOrClosed && original && (original.method?.toLowerCase() === "get" || original._retryOnNetwork)) {
       original._networkRetryCount = (original._networkRetryCount || 0) + 1;
-      const MAX_RETRIES = 4;
-      const delays = [1500, 3000, 5000, 7000];
-
-      if (original._networkRetryCount <= MAX_RETRIES) {
-        const delay = delays[original._networkRetryCount - 1] || 3000;
+      if (original._networkRetryCount <= 2) {
+        const delay = original._networkRetryCount * 1500;
+        console.warn(`[API] Connection closed or server waking up. Retrying ${original.url} in ${delay}ms (${original._networkRetryCount}/2)...`);
         await new Promise((resolve) => setTimeout(resolve, delay));
         return api(original);
       }
@@ -145,8 +135,8 @@ api.interceptors.response.use(
     if (status !== 401 && status !== 403) {
       if (error.code === "ECONNABORTED" || error.message?.includes("timeout")) {
         console.warn("[API] Request timeout exceeded for:", original?.url);
-      } else if (!error.response || status === 502 || status === 503) {
-        // Cold start or network fluctuation - handled quietly
+      } else if (!error.response) {
+        console.warn("[API] Server unreachable or cold-starting:", original?.url);
       } else {
         const message = error.response?.data?.message || "Something went wrong";
         toast.error(message);
