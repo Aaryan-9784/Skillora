@@ -473,36 +473,30 @@ export const CallProvider = ({ children }) => {
   };
 
   const bindRemoteTracks = (pc) => {
-    pc.ontrack = (e) => {
-      console.log("[WebRTC] ontrack received:", e.track.kind, "id:", e.track.id, "enabled:", e.track.enabled, "muted:", e.track.muted, "streams:", e.streams);
-
-      // Prioritize the incoming live MediaStream provided directly by the WebRTC engine
-      if (e.streams && e.streams[0]) {
-        setRemoteStream(e.streams[0]);
-      } else if (e.track) {
-        setRemoteStream((prev) => {
-          if (prev) {
-            const hasTrack = prev.getTracks().some((t) => t.id === e.track.id);
-            if (!hasTrack) {
-              prev.addTrack(e.track);
-            }
-            return new MediaStream(prev.getTracks());
-          }
-          return new MediaStream([e.track]);
-        });
+    const syncRemoteStream = () => {
+      const tracks = pc.getReceivers().map((r) => r.track).filter(Boolean);
+      if (tracks.length > 0) {
+        setRemoteStream(new MediaStream(tracks));
       }
+    };
+
+    pc.ontrack = (e) => {
+      console.log("[WebRTC] ontrack received:", e.track.kind, "id:", e.track.id, "enabled:", e.track.enabled, "muted:", e.track.muted);
+      syncRemoteStream();
 
       e.track.onunmute = () => {
-        console.log("[WebRTC] Remote track unmuted (media frames arriving):", e.track.kind, e.track.id);
-        if (e.streams && e.streams[0]) {
-          setRemoteStream(new MediaStream(e.streams[0].getTracks()));
-        } else {
-          setRemoteStream((prev) => (prev ? new MediaStream(prev.getTracks()) : null));
-        }
+        console.log("[WebRTC] Remote track unmuted:", e.track.kind, e.track.id);
+        syncRemoteStream();
       };
 
       e.track.onmute = () => {
         console.log("[WebRTC] Remote track muted:", e.track.kind, e.track.id);
+        syncRemoteStream();
+      };
+
+      e.track.onended = () => {
+        console.log("[WebRTC] Remote track ended:", e.track.kind, e.track.id);
+        syncRemoteStream();
       };
     };
   };
