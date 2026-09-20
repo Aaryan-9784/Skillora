@@ -161,19 +161,22 @@ const CallModal = ({
       if (vEl.srcObject !== remoteStream) {
         vEl.srcObject = remoteStream;
       }
-      vEl.onloadedmetadata = () => {
-        vEl.play().catch(() => {});
+      const playVideo = () => {
+        vEl.play().catch((err) => {
+          if (err.name !== "AbortError") {
+            console.warn("[CallModal] Remote video play warning:", err);
+          }
+        });
         if (vEl.videoWidth > 0 && vEl.videoHeight > 0) {
           setIsRemoteVideoLive(true);
         }
       };
-      vEl.play().catch((err) => {
-        if (err.name !== "AbortError") {
-          console.warn("[CallModal] Remote video play warning:", err);
-        }
-      });
+
+      vEl.onloadedmetadata = playVideo;
+      vEl.oncanplay = playVideo;
+      playVideo();
     }
-  }, [remoteStream, callState, callType]);
+  }, [remoteStream, callState, callType, remoteIsSharingScreen, isScreenSharing]);
 
   // Remote audio sync (plays remote sound cleanly)
   useEffect(() => {
@@ -458,6 +461,12 @@ const CallModal = ({
                   autoPlay
                   playsInline
                   muted
+                  onCanPlay={(e) => e.target.play().catch(() => {})}
+                  onLoadedMetadata={(e) => {
+                    e.target.play().catch(() => {});
+                    if (e.target.videoWidth > 0) setIsRemoteVideoLive(true);
+                  }}
+                  onPlaying={() => setIsRemoteVideoLive(true)}
                   className={`w-full h-full transition-opacity duration-300 ${
                     remoteIsSharingScreen || videoFitMode === "contain"
                       ? "object-contain bg-black"

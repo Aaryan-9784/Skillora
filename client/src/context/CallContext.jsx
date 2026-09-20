@@ -302,6 +302,15 @@ export const CallProvider = ({ children }) => {
       } else {
         toast(`${name || "Partner"} stopped sharing their screen`, { icon: "🖥️" });
       }
+
+      // Re-sync remote stream from peer connection to immediately attach camera video
+      const pc = peerConnectionRef.current;
+      if (pc) {
+        const tracks = pc.getReceivers().map((r) => r.track).filter(Boolean);
+        if (tracks.length > 0) {
+          setRemoteStream(new MediaStream(tracks));
+        }
+      }
     };
 
     const onRenegotiate = async ({ senderId, offer, callType }) => {
@@ -769,7 +778,26 @@ export const CallProvider = ({ children }) => {
     if (pc) {
       const sender = pc.getSenders().find((s) => s.track?.kind === "video" || s.kind === "video");
       if (sender) {
-        const camTrack = localStream?.getVideoTracks()[0];
+        let camTrack = localStream?.getVideoTracks()?.find((t) => t.readyState === "live");
+        
+        // If camera track was lost, acquire a fresh webcam track
+        if (!camTrack && !isVideoOff) {
+          try {
+            const vStream = await navigator.mediaDevices.getUserMedia({
+              video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
+            });
+            camTrack = vStream.getVideoTracks()[0];
+            if (localStream) {
+              localStream.addTrack(camTrack);
+              setLocalStream(new MediaStream(localStream.getTracks()));
+            } else {
+              setLocalStream(new MediaStream([camTrack]));
+            }
+          } catch (e) {
+            console.warn("Could not reacquire camera on stop screen share:", e);
+          }
+        }
+
         if (camTrack && !isVideoOff) {
           camTrack.contentHint = "motion";
           await sender.replaceTrack(camTrack).catch(() => {});
