@@ -607,24 +607,24 @@ const CallModal = ({
               <button
                 type="button"
                 onClick={onToggleMute}
-                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer ${
                   isMuted
-                    ? "bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-600/40"
-                    : "bg-white/10 hover:bg-white/20 text-white hover:scale-105 active:scale-95"
+                    ? "bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-600/40 border border-red-400/30 hover:scale-105 active:scale-95 ring-2 ring-red-500/30"
+                    : "bg-white/10 hover:bg-white/20 text-white border border-white/10 hover:scale-105 active:scale-95"
                 }`}
                 title={isMuted ? "Unmute Microphone" : "Mute Microphone"}
               >
                 {isMuted ? <MicOff size={20} /> : <Mic size={20} />}
               </button>
 
-              {/* Video Camera Toggle (On / Off) */}
+              {/* Video Camera Toggle (Turn On / Off) */}
               <button
                 type="button"
                 onClick={onToggleVideo}
-                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer ${
                   hasLocalVideo
-                    ? "bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/40 hover:scale-105 active:scale-95 ring-2 ring-indigo-400/40"
-                    : "bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white"
+                    ? "bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/40 border border-indigo-400/40 ring-2 ring-indigo-400/30 hover:scale-105 active:scale-95"
+                    : "bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white border border-white/10 hover:scale-105 active:scale-95"
                 }`}
                 title={hasLocalVideo ? "Turn Camera Off" : "Turn Camera On"}
               >
