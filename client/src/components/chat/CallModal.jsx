@@ -610,37 +610,37 @@ const CallModal = ({
                 {isMuted ? <MicOff size={20} /> : <Mic size={20} />}
               </button>
 
-              {/* Video Camera Toggle (On / Off) */}
-              <button
-                type="button"
-                onClick={onToggleVideo}
-                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all cursor-pointer ${
-                  isVideoOff || (isVoiceCall && !localStream?.getVideoTracks()?.length)
-                    ? "bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white"
-                    : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/40 hover:scale-105 active:scale-95 ring-2 ring-indigo-400/40"
-                }`}
-                title={isVideoOff ? "Turn Camera On" : "Turn Camera Off"}
-              >
-                {isVideoOff || (isVoiceCall && !localStream?.getVideoTracks()?.length) ? (
-                  <VideoOff size={20} />
-                ) : (
-                  <Video size={20} />
-                )}
-              </button>
+              {/* Video Camera Toggle (Only shown during video calls) */}
+              {!isVoiceCall && (
+                <button
+                  type="button"
+                  onClick={onToggleVideo}
+                  className={`w-12 h-12 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+                    isVideoOff
+                      ? "bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white"
+                      : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/40 hover:scale-105 active:scale-95 ring-2 ring-indigo-400/40"
+                  }`}
+                  title={isVideoOff ? "Turn Camera On" : "Turn Camera Off"}
+                >
+                  {isVideoOff ? <VideoOff size={20} /> : <Video size={20} />}
+                </button>
+              )}
 
-              {/* Screen Share Toggle (Share Screen / Stop Sharing) */}
-              <button
-                type="button"
-                onClick={onToggleScreenShare}
-                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all cursor-pointer ${
-                  isScreenSharing
-                    ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/40 animate-pulse ring-2 ring-emerald-400/40"
-                    : "bg-white/10 hover:bg-white/20 text-white hover:scale-105 active:scale-95"
-                }`}
-                title={isScreenSharing ? "Stop Sharing Screen" : "Share Your Screen"}
-              >
-                <Monitor size={20} />
-              </button>
+              {/* Screen Share Toggle (Only shown during video calls) */}
+              {!isVoiceCall && (
+                <button
+                  type="button"
+                  onClick={onToggleScreenShare}
+                  className={`w-12 h-12 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+                    isScreenSharing
+                      ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/40 animate-pulse ring-2 ring-emerald-400/40"
+                      : "bg-white/10 hover:bg-white/20 text-white hover:scale-105 active:scale-95"
+                  }`}
+                  title={isScreenSharing ? "Stop Sharing Screen" : "Share Your Screen"}
+                >
+                  <Monitor size={20} />
+                </button>
+              )}
 
               {/* End Call Button (Red Hangup) */}
               <button
