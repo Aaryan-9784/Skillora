@@ -257,6 +257,13 @@ const CallModal = ({
       remoteStream.getVideoTracks().some((t) => t.readyState !== "ended" && t.enabled)
     )
   );
+  // Check if local webcam is actively streaming
+  const hasLocalVideo = Boolean(
+    !isVideoOff &&
+    localStream &&
+    localStream.getVideoTracks().length > 0 &&
+    localStream.getVideoTracks().some((t) => t.readyState === "live" && t.enabled)
+  );
   const isVoiceCall = callType === "voice" && !hasRemoteVideo;
   const isAnyScreenSharing = isScreenSharing || remoteIsSharingScreen;
 
@@ -615,17 +622,13 @@ const CallModal = ({
                 type="button"
                 onClick={onToggleVideo}
                 className={`w-12 h-12 rounded-full flex items-center justify-center transition-all cursor-pointer ${
-                  isVideoOff || (isVoiceCall && !localStream?.getVideoTracks()?.length)
-                    ? "bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white"
-                    : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/40 hover:scale-105 active:scale-95 ring-2 ring-indigo-400/40"
+                  hasLocalVideo
+                    ? "bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/40 hover:scale-105 active:scale-95 ring-2 ring-indigo-400/40"
+                    : "bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white"
                 }`}
-                title={isVideoOff ? "Turn Camera On" : "Turn Camera Off"}
+                title={hasLocalVideo ? "Turn Camera Off" : "Turn Camera On"}
               >
-                {isVideoOff || (isVoiceCall && !localStream?.getVideoTracks()?.length) ? (
-                  <VideoOff size={20} />
-                ) : (
-                  <Video size={20} />
-                )}
+                {hasLocalVideo ? <Video size={20} /> : <VideoOff size={20} />}
               </button>
 
               {/* Screen Share Toggle (Share Screen / Stop Sharing) */}

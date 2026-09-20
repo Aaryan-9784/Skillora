@@ -539,6 +539,8 @@ export const CallProvider = ({ children }) => {
     targetUserIdRef.current = targetUserId.toString();
     setActivePartner({ id: targetUserId.toString(), name: partnerName, avatar: partnerAvatar });
     setActiveCallType(type);
+    setIsVideoOff(type === "voice");
+    setIsMuted(false);
     setCallState("calling");
 
     try {
@@ -608,6 +610,9 @@ export const CallProvider = ({ children }) => {
 
     setCallState("connected");
     targetUserIdRef.current = incomingCall.callerId;
+    setActiveCallType(incomingCall.callType || "video");
+    setIsVideoOff(incomingCall.callType === "voice");
+    setIsMuted(false);
 
     try {
       // Acquire media synchronously in user gesture
