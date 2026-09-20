@@ -242,7 +242,7 @@ export const CallProvider = ({ children }) => {
     for (const cand of queued) {
       if (!cand) continue;
       try {
-        await pc.addIceCandidate(cand);
+        await pc.addIceCandidate(new RTCIceCandidate(cand));
       } catch (e) {
         console.warn("[WebRTC] Error processing queued ICE candidate:", e?.message);
       }
@@ -284,7 +284,7 @@ export const CallProvider = ({ children }) => {
       const pc = peerConnectionRef.current;
       if (pc && pc.signalingState !== "closed" && pc.remoteDescription && pc.remoteDescription.type) {
         try {
-          await pc.addIceCandidate(candidate);
+          await pc.addIceCandidate(new RTCIceCandidate(candidate));
         } catch (e) {
           console.warn("Could not immediately add ICE candidate, queueing:", e?.message);
           iceCandidatesQueueRef.current.push(candidate);
@@ -528,25 +528,10 @@ export const CallProvider = ({ children }) => {
       const pc = new RTCPeerConnection(rtcConfig);
       peerConnectionRef.current = pc;
 
-      pc.oniceconnectionstatechange = async () => {
+      pc.oniceconnectionstatechange = () => {
         console.log("[WebRTC] ICE connection state:", pc.iceConnectionState);
-        if (
-          (pc.iceConnectionState === "failed" || pc.iceConnectionState === "disconnected") &&
-          pc.signalingState === "stable"
-        ) {
-          try {
-            console.warn("[WebRTC] ICE connection dropped, initiating ICE restart…");
-            const offer = await pc.createOffer({ iceRestart: true, offerToReceiveAudio: true, offerToReceiveVideo: true });
-            offer.sdp = optimizeSdp(offer.sdp);
-            await pc.setLocalDescription(offer);
-            const target = targetUserIdRef.current;
-            const s = getSocket();
-            if (s && target) {
-              s.emit("call:renegotiate", { targetUserId: target, offer, callType: type });
-            }
-          } catch (e) {
-            console.warn("[WebRTC] ICE restart offer creation failed:", e);
-          }
+        if (pc.iceConnectionState === "connected" || pc.iceConnectionState === "completed") {
+          console.log("[WebRTC] ICE handshake succeeded - live media stream active!");
         }
       };
 
@@ -611,25 +596,10 @@ export const CallProvider = ({ children }) => {
       const pc = new RTCPeerConnection(rtcConfig);
       peerConnectionRef.current = pc;
 
-      pc.oniceconnectionstatechange = async () => {
+      pc.oniceconnectionstatechange = () => {
         console.log("[WebRTC] (Receiver) ICE connection state:", pc.iceConnectionState);
-        if (
-          (pc.iceConnectionState === "failed" || pc.iceConnectionState === "disconnected") &&
-          pc.signalingState === "stable"
-        ) {
-          try {
-            console.warn("[WebRTC] ICE connection dropped on receiver, attempting ICE restart…");
-            const offer = await pc.createOffer({ iceRestart: true, offerToReceiveAudio: true, offerToReceiveVideo: true });
-            offer.sdp = optimizeSdp(offer.sdp);
-            await pc.setLocalDescription(offer);
-            const target = targetUserIdRef.current;
-            const s = getSocket();
-            if (s && target) {
-              s.emit("call:renegotiate", { targetUserId: target, offer, callType: incomingCall.callType });
-            }
-          } catch (e) {
-            console.warn("[WebRTC] ICE restart offer error on receiver:", e);
-          }
+        if (pc.iceConnectionState === "connected" || pc.iceConnectionState === "completed") {
+          console.log("[WebRTC] (Receiver) ICE handshake succeeded - live media stream active!");
         }
       };
 
