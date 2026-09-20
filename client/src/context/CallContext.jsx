@@ -85,8 +85,21 @@ export const CallProvider = ({ children }) => {
   const ringtoneIntervalRef   = useRef(null);
   const outgoingIntervalRef   = useRef(null);
   const screenTrackRef        = useRef(null);
+  const localStreamRef        = useRef(null);
+  const screenStreamRef       = useRef(null);
   const iceCandidatesQueueRef = useRef([]);
   const targetUserIdRef       = useRef(null);
+
+  // Synchronize stream refs
+  const updateLocalStream = (stream) => {
+    localStreamRef.current = stream;
+    setLocalStream(stream);
+  };
+
+  const updateScreenStream = (stream) => {
+    screenStreamRef.current = stream;
+    setScreenStream(stream);
+  };
 
   // ── Synthetic Silent Audio Track (used when physical mic is locked by another app/tab) ──
   const createSilentAudioTrack = useCallback(() => {
@@ -239,18 +252,24 @@ export const CallProvider = ({ children }) => {
       clearInterval(ringtoneIntervalRef.current);
       ringtoneIntervalRef.current = null;
     }
-    if (localStream) {
-      localStream.getTracks().forEach((t) => t.stop());
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((t) => {
+        try { t.stop(); } catch (e) {}
+      });
+      localStreamRef.current = null;
     }
     if (screenTrackRef.current) {
-      screenTrackRef.current.stop();
+      try { screenTrackRef.current.stop(); } catch (e) {}
       screenTrackRef.current = null;
     }
-    if (screenStream) {
-      screenStream.getTracks().forEach((t) => t.stop());
+    if (screenStreamRef.current) {
+      screenStreamRef.current.getTracks().forEach((t) => {
+        try { t.stop(); } catch (e) {}
+      });
+      screenStreamRef.current = null;
     }
     if (peerConnectionRef.current) {
-      peerConnectionRef.current.close();
+      try { peerConnectionRef.current.close(); } catch (e) {}
       peerConnectionRef.current = null;
     }
     iceCandidatesQueueRef.current = [];
@@ -265,7 +284,7 @@ export const CallProvider = ({ children }) => {
     setPresenterName("");
     setIsMuted(false);
     setIsVideoOff(false);
-  }, [localStream, screenStream]);
+  }, []);
 
   const processIceQueue = async () => {
     const pc = peerConnectionRef.current;
@@ -455,6 +474,14 @@ export const CallProvider = ({ children }) => {
 
   // Resilient Media stream acquisition (independently isolates audio & video failures)
   const getMediaStream = async (requestVideo) => {
+    // Release any lingering tracks before requesting fresh hardware handles
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((t) => {
+        try { t.stop(); } catch (e) {}
+      });
+      localStreamRef.current = null;
+    }
+
     let videoTrack = null;
     let audioTrack = null;
 
@@ -498,15 +525,14 @@ export const CallProvider = ({ children }) => {
       }
     }
 
-    // 2. Acquire Audio with Studio AEC constraints (Mono prevents bufferbloat & echo)
+    // 2. Acquire Audio with Studio AEC constraints (using ideal constraints for universal hardware compatibility)
     try {
       const aStream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-          channelCount: 1,
-          sampleRate: 48000,
+          echoCancellation: { ideal: true },
+          noiseSuppression: { ideal: true },
+          autoGainControl: { ideal: true },
+          channelCount: { ideal: 1 },
         },
       });
       audioTrack = aStream.getAudioTracks()[0];
@@ -516,14 +542,19 @@ export const CallProvider = ({ children }) => {
         } catch (e) {}
       }
     } catch (aErr) {
-      console.warn("[Media] Advanced audio constraints failed, attempting basic audio:", aErr?.message);
+      console.warn("[Media] Ideal audio constraints failed, trying basic audio:", aErr?.message);
       try {
         const basicAStream = await navigator.mediaDevices.getUserMedia({ audio: true });
         audioTrack = basicAStream.getAudioTracks()[0];
+        if (audioTrack) {
+          try {
+            audioTrack.contentHint = "speech";
+          } catch (e) {}
+        }
       } catch (basicAErr) {
-        console.warn("[Media] Physical microphone locked/unavailable (NotReadableError). Using fallback silent audio track:", basicAErr?.message);
+        console.warn("[Media] Physical microphone locked/unavailable. Using fallback silent audio track:", basicAErr?.message);
         audioTrack = createSilentAudioTrack();
-        toast("Microphone in use by another app. Connected with muted audio.", { icon: "🎙️", duration: 4500 });
+        toast("Microphone busy or in use by another tab/app.", { icon: "🎙️", duration: 4000 });
       }
     }
 
@@ -541,7 +572,9 @@ export const CallProvider = ({ children }) => {
       }
     }
 
-    return new MediaStream(tracks);
+    const stream = new MediaStream(tracks);
+    localStreamRef.current = stream;
+    return stream;
   };
 
   const bindRemoteTracks = (pc) => {
@@ -596,7 +629,7 @@ export const CallProvider = ({ children }) => {
     try {
       // Synchronously acquire media within user click event context
       const stream = await getMediaStream(type === "video");
-      setLocalStream(stream);
+      updateLocalStream(stream);
 
       const rtcConfig = await getResolvedRTCConfig();
       const pc = new RTCPeerConnection(rtcConfig);
@@ -668,7 +701,7 @@ export const CallProvider = ({ children }) => {
     try {
       // Acquire media synchronously in user gesture
       const stream = await getMediaStream(incomingCall.callType === "video");
-      setLocalStream(stream);
+      updateLocalStream(stream);
 
       const rtcConfig = await getResolvedRTCConfig();
       const pc = new RTCPeerConnection(rtcConfig);
@@ -733,8 +766,8 @@ export const CallProvider = ({ children }) => {
   };
 
   const toggleMute = useCallback(() => {
-    if (localStream) {
-      const audioTracks = localStream.getAudioTracks();
+    if (localStreamRef.current) {
+      const audioTracks = localStreamRef.current.getAudioTracks();
       if (audioTracks.length > 0) {
         const nextState = !isMuted;
         audioTracks.forEach((t) => (t.enabled = !nextState));
@@ -742,12 +775,13 @@ export const CallProvider = ({ children }) => {
         toast(nextState ? "Microphone muted" : "Microphone unmuted", { icon: nextState ? "🔇" : "🎙️" });
       }
     }
-  }, [localStream, isMuted]);
+  }, [isMuted]);
 
   const toggleVideo = useCallback(async () => {
     try {
       const pc = peerConnectionRef.current;
-      const currentVideoTracks = localStream ? localStream.getVideoTracks() : [];
+      const currentStream = localStreamRef.current;
+      const currentVideoTracks = currentStream ? currentStream.getVideoTracks() : [];
       const hasLiveTrack = currentVideoTracks.some((t) => t.readyState === "live");
 
       if (currentVideoTracks.length === 0 || !hasLiveTrack) {
@@ -767,14 +801,14 @@ export const CallProvider = ({ children }) => {
         }
         if (!newTrack) return;
 
-        let updatedStream = localStream;
-        if (localStream) {
-          localStream.addTrack(newTrack);
-          updatedStream = new MediaStream(localStream.getTracks());
-          setLocalStream(updatedStream);
+        let updatedStream = currentStream;
+        if (currentStream) {
+          currentStream.addTrack(newTrack);
+          updatedStream = new MediaStream(currentStream.getTracks());
+          updateLocalStream(updatedStream);
         } else {
           updatedStream = new MediaStream([newTrack]);
-          setLocalStream(updatedStream);
+          updateLocalStream(updatedStream);
         }
 
         if (pc) {
@@ -854,20 +888,20 @@ export const CallProvider = ({ children }) => {
       console.error("Toggle camera error:", err);
       toast.error("Could not access camera: " + err.message);
     }
-  }, [localStream, isVideoOff, incomingCall, activePartner, user]);
+  }, [isVideoOff, incomingCall, activePartner, user]);
 
   const stopScreenShare = useCallback(async () => {
     if (screenTrackRef.current) {
-      screenTrackRef.current.stop();
+      try { screenTrackRef.current.stop(); } catch (e) {}
       screenTrackRef.current = null;
     }
-    setScreenStream(null);
+    updateScreenStream(null);
 
     const pc = peerConnectionRef.current;
     if (pc) {
       const sender = pc.getSenders().find((s) => s.track?.kind === "video" || s.kind === "video");
       if (sender) {
-        let camTrack = localStream?.getVideoTracks()?.find((t) => t.readyState === "live");
+        let camTrack = localStreamRef.current?.getVideoTracks()?.find((t) => t.readyState === "live");
         
         // If camera track was lost, acquire a fresh webcam track
         if (!camTrack && !isVideoOff) {
@@ -877,11 +911,11 @@ export const CallProvider = ({ children }) => {
             });
             camTrack = vStream.getVideoTracks()[0];
             if (camTrack) camTrack.contentHint = "motion";
-            if (localStream) {
-              localStream.addTrack(camTrack);
-              setLocalStream(new MediaStream(localStream.getTracks()));
+            if (localStreamRef.current) {
+              localStreamRef.current.addTrack(camTrack);
+              updateLocalStream(new MediaStream(localStreamRef.current.getTracks()));
             } else {
-              setLocalStream(new MediaStream([camTrack]));
+              updateLocalStream(new MediaStream([camTrack]));
             }
           } catch (e) {
             console.warn("Could not reacquire camera on stop screen share:", e);
@@ -911,7 +945,7 @@ export const CallProvider = ({ children }) => {
     }
 
     toast("Screen sharing stopped", { icon: "🖥️" });
-  }, [localStream, isVideoOff, incomingCall, activePartner]);
+  }, [isVideoOff, incomingCall, activePartner]);
 
   const toggleScreenShare = useCallback(async () => {
     if (!peerConnectionRef.current) return;
@@ -943,7 +977,7 @@ export const CallProvider = ({ children }) => {
         } catch (e) {}
 
         screenTrackRef.current = screenTrack;
-        setScreenStream(displayStream);
+        updateScreenStream(displayStream);
 
         const pc = peerConnectionRef.current;
         let sender = pc.getSenders().find((s) => s.track?.kind === "video" || s.kind === "video");
