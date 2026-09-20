@@ -321,15 +321,9 @@ export const CallProvider = ({ children }) => {
           setActiveCallType("video");
         }
 
-        let videoTransceiver = pc.getTransceivers().find(
-          (t) => t.receiver?.track?.kind === "video" || t.sender?.track?.kind === "video"
-        );
-        if (videoTransceiver && videoTransceiver.direction !== "sendrecv") {
-          videoTransceiver.direction = "sendrecv";
-        }
-
         await pc.setRemoteDescription(new RTCSessionDescription(offer));
         await processIceQueue();
+
         const answer = await pc.createAnswer({
           offerToReceiveAudio: true,
           offerToReceiveVideo: true,
@@ -340,6 +334,12 @@ export const CallProvider = ({ children }) => {
         // Immediately sync remote stream tracks on receiver
         const remoteTracks = pc.getReceivers().map((r) => r.track).filter(Boolean);
         if (remoteTracks.length > 0) {
+          remoteTracks.forEach((t) => {
+            t.onunmute = () => {
+              const fresh = pc.getReceivers().map((r) => r.track).filter(Boolean);
+              setRemoteStream(new MediaStream(fresh));
+            };
+          });
           setRemoteStream(new MediaStream(remoteTracks));
         }
 
@@ -640,14 +640,6 @@ export const CallProvider = ({ children }) => {
           });
         }
       };
-
-      if (incomingCall.callType === "voice") {
-        try {
-          pc.addTransceiver("video", { direction: "recvonly" });
-        } catch (e) {
-          console.warn("Could not add video transceiver:", e);
-        }
-      }
 
       await pc.setRemoteDescription(new RTCSessionDescription(incomingCall.offer));
       await processIceQueue();
