@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   User,
   Radio,
+  Move,
 } from "lucide-react";
 
 const getInitials = (name = "") =>
@@ -44,6 +45,7 @@ const CallModal = ({
   partnerName = "User",
   partnerAvatar = "",
 }) => {
+  const containerRef      = useRef(null);
   const localVideoRef     = useRef(null);
   const remoteVideoRef    = useRef(null);
   const screenVideoRef    = useRef(null);
@@ -337,6 +339,7 @@ const CallModal = ({
       {/* ── Active Fullscreen Call Modal (calling or connected) ── */}
       {(callState === "calling" || callState === "connected") && (
         <motion.div
+          ref={containerRef}
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.98 }}
@@ -515,50 +518,70 @@ const CallModal = ({
               </div>
             )}
 
-            {/* ── Floating Picture-In-Picture (PIP) Window ── */}
-            {/* If local user is screen sharing, PIP shows remote partner's face (Google Meet / Zoom pattern) */}
-            {isScreenSharing ? (
-              <div className="absolute bottom-24 sm:bottom-28 right-4 sm:right-8 w-44 sm:w-64 aspect-video rounded-2xl overflow-hidden border border-white/20 shadow-2xl bg-slate-900 z-20 backdrop-blur-md">
-                {hasRemoteVideo ? (
-                  <video
-                    ref={remotePipVideoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center bg-slate-900 text-slate-400">
-                    <User size={24} className="opacity-60" />
-                    <span className="text-[11px] font-medium mt-1">{partnerName}</span>
+              {/* ── Floating Draggable Picture-In-Picture (PIP) Window ── */}
+              {isScreenSharing ? (
+                <motion.div
+                  drag
+                  dragConstraints={containerRef}
+                  dragElastic={0.08}
+                  dragMomentum={false}
+                  whileDrag={{ scale: 1.05, zIndex: 40 }}
+                  className="absolute bottom-24 sm:bottom-28 right-4 sm:right-8 w-44 sm:w-64 aspect-video rounded-2xl overflow-hidden border border-white/20 shadow-2xl bg-slate-900 z-30 backdrop-blur-md cursor-grab active:cursor-grabbing touch-none select-none group"
+                >
+                  {hasRemoteVideo ? (
+                    <video
+                      ref={remotePipVideoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className="w-full h-full object-cover pointer-events-none"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-slate-900 text-slate-400 pointer-events-none">
+                      <User size={24} className="opacity-60" />
+                      <span className="text-[11px] font-medium mt-1">{partnerName}</span>
+                    </div>
+                  )}
+                  <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/60 backdrop-blur-sm text-[10px] font-bold text-white pointer-events-none">
+                    {partnerName}
                   </div>
-                )}
-                <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/60 backdrop-blur-sm text-[10px] font-bold text-white">
-                  {partnerName}
-                </div>
-              </div>
-            ) : (!isVoiceCall || !isVideoOff || remoteIsSharingScreen) ? (
-              /* If remote peer is sharing or it's a video call, PIP shows local webcam */
-              <div className="absolute bottom-24 sm:bottom-28 right-4 sm:right-8 w-40 sm:w-60 aspect-video rounded-2xl overflow-hidden border border-white/20 shadow-2xl bg-slate-900 z-20 backdrop-blur-md transition-all hover:scale-105">
-                {!isVideoOff && localStream ? (
-                  <video
-                    ref={localVideoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    className="w-full h-full object-cover -scale-x-100"
-                  />
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center bg-slate-900 text-slate-400">
-                    <User size={24} className="opacity-60" />
-                    <span className="text-[11px] font-medium mt-1">Camera Off</span>
+                  {/* Subtle Drag Handle Indicator on Hover */}
+                  <div className="absolute top-2 right-2 p-1 rounded-full bg-black/50 text-white/70 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    <Move size={12} />
                   </div>
-                )}
-                <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/60 backdrop-blur-sm text-[10px] font-bold text-white">
-                  You
-                </div>
-              </div>
-            ) : null}
+                </motion.div>
+              ) : (!isVoiceCall || !isVideoOff || remoteIsSharingScreen) ? (
+                <motion.div
+                  drag
+                  dragConstraints={containerRef}
+                  dragElastic={0.08}
+                  dragMomentum={false}
+                  whileDrag={{ scale: 1.05, zIndex: 40 }}
+                  className="absolute bottom-24 sm:bottom-28 right-4 sm:right-8 w-40 sm:w-60 aspect-video rounded-2xl overflow-hidden border border-white/25 shadow-2xl bg-slate-900 z-30 backdrop-blur-md cursor-grab active:cursor-grabbing touch-none select-none group ring-1 ring-white/10"
+                >
+                  {!isVideoOff && localStream ? (
+                    <video
+                      ref={localVideoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className="w-full h-full object-cover -scale-x-100 pointer-events-none"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-slate-900 text-slate-400 pointer-events-none">
+                      <User size={24} className="opacity-60" />
+                      <span className="text-[11px] font-medium mt-1">Camera Off</span>
+                    </div>
+                  )}
+                  <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/60 backdrop-blur-sm text-[10px] font-bold text-white pointer-events-none">
+                    You
+                  </div>
+                  {/* Subtle Drag Handle Indicator on Hover */}
+                  <div className="absolute top-2 right-2 p-1 rounded-full bg-black/50 text-white/70 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    <Move size={12} />
+                  </div>
+                </motion.div>
+              ) : null}
           </div>
 
           {/* ── Bottom Controls Dock Bar (Images 2 & 3 made properly workable) ── */}
