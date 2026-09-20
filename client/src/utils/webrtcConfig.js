@@ -49,9 +49,16 @@ export const getResolvedRTCConfig = async () => {
   const now = Date.now();
   if (cachedConfig && now - lastFetchTime < 1000 * 60 * 15) return cachedConfig;
 
-  // 1. Try server endpoint first
+  // 1. Try server endpoint with 2.5s quick timeout (skips retry loop if server is cold-starting)
   try {
-    const { data } = await api.get("/chat/ice-servers");
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2500);
+    const { data } = await api.get("/chat/ice-servers", {
+      signal: controller.signal,
+      _retryOnNetwork: false,
+    });
+    clearTimeout(timeoutId);
+
     if (data?.data?.iceServers && Array.isArray(data.data.iceServers) && data.data.iceServers.length > 0) {
       cachedConfig = {
         ...RTC_CONFIG,
@@ -65,14 +72,19 @@ export const getResolvedRTCConfig = async () => {
       return cachedConfig;
     }
   } catch (err) {
-    console.warn("[WebRTC] Backend ICE config fetch warning:", err?.message);
+    // If backend is waking up or cold-starting, seamlessly proceed to direct fallback
   }
 
   // 2. Direct fetch from Metered TURN API (CORS enabled, highly resilient fallback)
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
     const res = await fetch(
-      "https://skillora.metered.live/api/v1/turn/credentials?apiKey=f1609f77d3601710203890700dc0914b2422"
+      "https://skillora.metered.live/api/v1/turn/credentials?apiKey=f1609f77d3601710203890700dc0914b2422",
+      { signal: controller.signal }
     );
+    clearTimeout(timeoutId);
+
     if (res.ok) {
       const meteredServers = await res.json();
       if (Array.isArray(meteredServers) && meteredServers.length > 0) {
@@ -85,13 +97,10 @@ export const getResolvedRTCConfig = async () => {
           iceCandidatePoolSize: 10,
         };
         lastFetchTime = now;
-        console.log("[WebRTC] Loaded active Metered TURN relay endpoints successfully");
         return cachedConfig;
       }
     }
-  } catch (err) {
-    console.warn("[WebRTC] Direct Metered TURN fetch warning:", err?.message);
-  }
+  } catch (err) {}
 
   return RTC_CONFIG;
 };
