@@ -82,27 +82,32 @@ const CallModal = ({
       return;
     }
 
-    const videoTracks = remoteStream.getVideoTracks();
-    if (videoTracks.length === 0) {
-      setIsRemoteVideoLive(false);
-      return;
-    }
-
-    const vTrack = videoTracks[0];
-    const updateLiveState = () => {
-      const isLive = vTrack.readyState === "live" && vTrack.enabled && !vTrack.muted;
+    const checkLive = () => {
+      const videoTracks = remoteStream.getVideoTracks();
+      const isLive = videoTracks.some((t) => t.readyState === "live" && t.enabled && !t.muted);
       setIsRemoteVideoLive(isLive);
     };
 
-    updateLiveState();
-    vTrack.addEventListener("mute", updateLiveState);
-    vTrack.addEventListener("unmute", updateLiveState);
-    vTrack.addEventListener("ended", updateLiveState);
+    checkLive();
+
+    const videoTracks = remoteStream.getVideoTracks();
+    videoTracks.forEach((t) => {
+      t.addEventListener("mute", checkLive);
+      t.addEventListener("unmute", checkLive);
+      t.addEventListener("ended", checkLive);
+    });
+
+    remoteStream.addEventListener("addtrack", checkLive);
+    remoteStream.addEventListener("removetrack", checkLive);
 
     return () => {
-      vTrack.removeEventListener("mute", updateLiveState);
-      vTrack.removeEventListener("unmute", updateLiveState);
-      vTrack.removeEventListener("ended", updateLiveState);
+      videoTracks.forEach((t) => {
+        t.removeEventListener("mute", checkLive);
+        t.removeEventListener("unmute", checkLive);
+        t.removeEventListener("ended", checkLive);
+      });
+      remoteStream.removeEventListener("addtrack", checkLive);
+      remoteStream.removeEventListener("removetrack", checkLive);
     };
   }, [remoteStream]);
 
@@ -134,7 +139,7 @@ const CallModal = ({
     }
   }, [screenStream, isScreenSharing]);
 
-  // Remote PIP video sync (when screen sharing)
+  // Remote PIP video sync (when local user is screen sharing)
   useEffect(() => {
     const vEl = remotePipVideoRef.current;
     if (vEl && remoteStream && isScreenSharing) {
@@ -148,7 +153,7 @@ const CallModal = ({
     }
   }, [remoteStream, isScreenSharing]);
 
-  // Remote video sync (ensures muted property is set so Chrome Autoplay Policy never blocks video frames)
+  // Remote video sync (main stage)
   useEffect(() => {
     const vEl = remoteVideoRef.current;
     if (!vEl) return;
@@ -251,11 +256,10 @@ const CallModal = ({
 
   // Check if remote stream has active video track
   const hasRemoteVideo = Boolean(
-    isRemoteVideoLive || (
-      remoteStream &&
-      remoteStream.getVideoTracks().length > 0 &&
-      remoteStream.getVideoTracks().some((t) => t.readyState !== "ended" && t.enabled)
-    )
+    !remoteIsSharingScreen &&
+    remoteStream &&
+    remoteStream.getVideoTracks().length > 0 &&
+    remoteStream.getVideoTracks().some((t) => t.readyState === "live" && t.enabled && !t.muted)
   );
   // Check if local webcam is actively streaming
   const hasLocalVideo = Boolean(

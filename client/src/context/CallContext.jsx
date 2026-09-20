@@ -54,6 +54,8 @@ export const CallProvider = ({ children }) => {
   const screenTrackRef        = useRef(null);
   const iceCandidatesQueueRef = useRef([]);
   const targetUserIdRef       = useRef(null);
+  const remoteStreamRef       = useRef(null);
+  const wasVideoOffBeforeScreenShareRef = useRef(false);
 
   // ── Synthetic Silent Audio Track (used when physical mic is locked by another app/tab) ──
   const createSilentAudioTrack = useCallback(() => {
@@ -220,6 +222,8 @@ export const CallProvider = ({ children }) => {
       peerConnectionRef.current.close();
       peerConnectionRef.current = null;
     }
+    remoteStreamRef.current = null;
+    wasVideoOffBeforeScreenShareRef.current = false;
     iceCandidatesQueueRef.current = [];
     setLocalStream(null);
     setRemoteStream(null);
@@ -303,13 +307,8 @@ export const CallProvider = ({ children }) => {
         toast(`${name || "Partner"} stopped sharing their screen`, { icon: "🖥️" });
       }
 
-      // Re-sync remote stream from peer connection to immediately attach camera video
-      const pc = peerConnectionRef.current;
-      if (pc) {
-        const tracks = pc.getReceivers().map((r) => r.track).filter(Boolean);
-        if (tracks.length > 0) {
-          setRemoteStream(new MediaStream(tracks));
-        }
+      if (remoteStreamRef.current) {
+        setRemoteStream(new MediaStream(remoteStreamRef.current.getTracks()));
       }
     };
 
@@ -319,6 +318,8 @@ export const CallProvider = ({ children }) => {
       try {
         if (callType === "video") {
           setActiveCallType("video");
+        } else if (callType === "voice") {
+          setActiveCallType("voice");
         }
 
         await pc.setRemoteDescription(new RTCSessionDescription(offer));
@@ -331,23 +332,14 @@ export const CallProvider = ({ children }) => {
         answer.sdp = optimizeSdp(answer.sdp);
         await pc.setLocalDescription(answer);
 
-        // Immediately sync remote stream tracks on receiver
-        const remoteTracks = pc.getReceivers().map((r) => r.track).filter(Boolean);
-        if (remoteTracks.length > 0) {
-          remoteTracks.forEach((t) => {
-            t.onunmute = () => {
-              const fresh = pc.getReceivers().map((r) => r.track).filter(Boolean);
-              setRemoteStream(new MediaStream(fresh));
-            };
-          });
-          setRemoteStream(new MediaStream(remoteTracks));
+        if (remoteStreamRef.current) {
+          setRemoteStream(new MediaStream(remoteStreamRef.current.getTracks()));
         }
 
         const s = getSocket();
         if (s) {
           s.emit("call:renegotiate_answer", { targetUserId: senderId, answer, callType });
         }
-        toast("Call converted to video", { icon: "📹" });
       } catch (err) {
         console.error("Renegotiate error on receiver:", err);
       }
@@ -359,14 +351,14 @@ export const CallProvider = ({ children }) => {
       try {
         if (callType === "video") {
           setActiveCallType("video");
+        } else if (callType === "voice") {
+          setActiveCallType("voice");
         }
         await pc.setRemoteDescription(new RTCSessionDescription(answer));
         await processIceQueue();
 
-        // Immediately sync remote stream tracks on sender
-        const remoteTracks = pc.getReceivers().map((r) => r.track).filter(Boolean);
-        if (remoteTracks.length > 0) {
-          setRemoteStream(new MediaStream(remoteTracks));
+        if (remoteStreamRef.current) {
+          setRemoteStream(new MediaStream(remoteStreamRef.current.getTracks()));
         }
       } catch (err) {
         console.error("Renegotiate answer error on sender:", err);
@@ -495,30 +487,40 @@ export const CallProvider = ({ children }) => {
   };
 
   const bindRemoteTracks = (pc) => {
-    const syncRemoteStream = () => {
-      const tracks = pc.getReceivers().map((r) => r.track).filter(Boolean);
-      if (tracks.length > 0) {
-        setRemoteStream(new MediaStream(tracks));
-      }
-    };
-
     pc.ontrack = (e) => {
       console.log("[WebRTC] ontrack received:", e.track.kind, "id:", e.track.id, "enabled:", e.track.enabled, "muted:", e.track.muted);
-      syncRemoteStream();
+      if (e.streams && e.streams[0]) {
+        remoteStreamRef.current = e.streams[0];
+        setRemoteStream(e.streams[0]);
+      } else {
+        if (!remoteStreamRef.current) {
+          remoteStreamRef.current = new MediaStream();
+        }
+        const currentTracks = remoteStreamRef.current.getTracks();
+        if (!currentTracks.some((t) => t.id === e.track.id)) {
+          const sameKind = currentTracks.filter((t) => t.kind === e.track.kind);
+          sameKind.forEach((t) => remoteStreamRef.current.removeTrack(t));
+          remoteStreamRef.current.addTrack(e.track);
+          setRemoteStream(new MediaStream(remoteStreamRef.current.getTracks()));
+        }
+      }
 
       e.track.onunmute = () => {
-        console.log("[WebRTC] Remote track unmuted:", e.track.kind, e.track.id);
-        syncRemoteStream();
+        if (remoteStreamRef.current) {
+          setRemoteStream(new MediaStream(remoteStreamRef.current.getTracks()));
+        }
       };
 
       e.track.onmute = () => {
-        console.log("[WebRTC] Remote track muted:", e.track.kind, e.track.id);
-        syncRemoteStream();
+        if (remoteStreamRef.current) {
+          setRemoteStream(new MediaStream(remoteStreamRef.current.getTracks()));
+        }
       };
 
       e.track.onended = () => {
-        console.log("[WebRTC] Remote track ended:", e.track.kind, e.track.id);
-        syncRemoteStream();
+        if (remoteStreamRef.current) {
+          setRemoteStream(new MediaStream(remoteStreamRef.current.getTracks()));
+        }
       };
     };
   };
@@ -801,75 +803,101 @@ export const CallProvider = ({ children }) => {
 
   const stopScreenShare = useCallback(async () => {
     if (screenTrackRef.current) {
-      screenTrackRef.current.stop();
+      try { screenTrackRef.current.stop(); } catch (e) {}
       screenTrackRef.current = null;
     }
     setScreenStream(null);
     setIsScreenShare(false);
 
+    const wasVoice = wasVideoOffBeforeScreenShareRef.current;
     const pc = peerConnectionRef.current;
+
     if (pc) {
       const sender = pc.getSenders().find((s) => s.track?.kind === "video" || s.kind === "video");
-      if (sender) {
+
+      if (wasVoice) {
+        // Return to Voice Call mode: keep camera OFF
+        if (sender) {
+          await sender.replaceTrack(null).catch(() => {});
+        }
+        if (localStream) {
+          localStream.getVideoTracks().forEach((t) => {
+            try { t.stop(); } catch (e) {}
+          });
+          const audioTracks = localStream.getAudioTracks();
+          setLocalStream(new MediaStream(audioTracks));
+        }
+        setIsVideoOff(true);
+        setActiveCallType("voice");
+
+        const target = targetUserIdRef.current || incomingCall?.callerId || activePartner?.id;
+        if (target) {
+          try {
+            const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
+            offer.sdp = optimizeSdp(offer.sdp);
+            await pc.setLocalDescription(offer);
+            const s = getSocket();
+            if (s) {
+              s.emit("call:renegotiate", { targetUserId: target, offer, callType: "voice" });
+            }
+          } catch (negErr) {
+            console.warn("Renegotiate on stop screen share voice mode error:", negErr);
+          }
+        }
+        toast("Screen sharing stopped, returned to voice call", { icon: "🎙️" });
+      } else {
+        // Return to Video Call mode: restore camera
         let camTrack = localStream?.getVideoTracks()?.find((t) => t.readyState === "live");
-        
-        // If camera track was lost or not present, acquire a fresh webcam track
         if (!camTrack) {
           try {
             const vStream = await navigator.mediaDevices.getUserMedia({
               video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
             });
             camTrack = vStream.getVideoTracks()[0];
-            if (localStream) {
-              localStream.addTrack(camTrack);
-              setLocalStream(new MediaStream(localStream.getTracks()));
-            } else {
-              setLocalStream(new MediaStream([camTrack]));
-            }
           } catch (e) {
-            console.warn("Could not acquire physical camera on stop screen share, using virtual video:", e?.message);
+            console.warn("Could not acquire physical camera, using virtual video:", e?.message);
             const virtualStream = createVirtualVideoStream(user?.name || "Skillora User");
             camTrack = virtualStream.getVideoTracks()[0];
-            if (localStream) {
-              localStream.addTrack(camTrack);
-              setLocalStream(new MediaStream(localStream.getTracks()));
-            } else {
-              setLocalStream(new MediaStream([camTrack]));
-            }
           }
         }
 
         if (camTrack) {
           camTrack.enabled = true;
           camTrack.contentHint = "motion";
-          await sender.replaceTrack(camTrack).catch(() => {});
-        }
-      }
-
-      setIsVideoOff(false);
-      setActiveCallType("video");
-
-      // Renegotiate with remote peer so video stream resumes immediately on their screen
-      const target = targetUserIdRef.current || incomingCall?.callerId || activePartner?.id;
-      if (target) {
-        try {
-          const offer = await pc.createOffer({
-            offerToReceiveAudio: true,
-            offerToReceiveVideo: true,
-          });
-          offer.sdp = optimizeSdp(offer.sdp);
-          await pc.setLocalDescription(offer);
-          const s = getSocket();
-          if (s) {
-            s.emit("call:renegotiate", {
-              targetUserId: target,
-              offer,
-              callType: "video",
+          if (localStream) {
+            localStream.getVideoTracks().forEach((t) => {
+              if (t !== camTrack) {
+                try { t.stop(); } catch (e) {}
+              }
             });
+            const audioTracks = localStream.getAudioTracks();
+            setLocalStream(new MediaStream([...audioTracks, camTrack]));
+          } else {
+            setLocalStream(new MediaStream([camTrack]));
           }
-        } catch (negErr) {
-          console.warn("Renegotiate on stop screen share error:", negErr);
+          if (sender) {
+            await sender.replaceTrack(camTrack).catch(() => {});
+          }
         }
+
+        setIsVideoOff(false);
+        setActiveCallType("video");
+
+        const target = targetUserIdRef.current || incomingCall?.callerId || activePartner?.id;
+        if (target) {
+          try {
+            const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
+            offer.sdp = optimizeSdp(offer.sdp);
+            await pc.setLocalDescription(offer);
+            const s = getSocket();
+            if (s) {
+              s.emit("call:renegotiate", { targetUserId: target, offer, callType: "video" });
+            }
+          } catch (negErr) {
+            console.warn("Renegotiate on stop screen share video mode error:", negErr);
+          }
+        }
+        toast("Screen sharing stopped, switched to camera", { icon: "📹" });
       }
     }
 
@@ -882,8 +910,6 @@ export const CallProvider = ({ children }) => {
         isSharing: false,
       });
     }
-
-    toast("Screen sharing stopped, switched to camera", { icon: "📹" });
   }, [localStream, incomingCall, activePartner, user]);
 
   const toggleScreenShare = useCallback(async () => {
@@ -894,10 +920,12 @@ export const CallProvider = ({ children }) => {
         return;
       }
 
+      // Remember if user was in voice/video-off mode before screen sharing
+      wasVideoOffBeforeScreenShareRef.current = Boolean(isVideoOff);
+
       try {
         let displayStream = null;
         try {
-          // Mobile & cross-browser compliant constraints (without desktop-only monitor keywords)
           displayStream = await navigator.mediaDevices.getDisplayMedia({
             video: true,
             audio: false,
@@ -910,7 +938,6 @@ export const CallProvider = ({ children }) => {
         const screenTrack = displayStream?.getVideoTracks()[0];
         if (!screenTrack) return;
 
-        // Hint to WebRTC encoder to optimize sharpness for text/details
         try {
           screenTrack.contentHint = "detail";
         } catch (e) {}
@@ -929,7 +956,7 @@ export const CallProvider = ({ children }) => {
           const s = getSocket();
           const target = targetUserIdRef.current || incomingCall?.callerId || activePartner?.id;
           if (s && target) {
-            s.emit("call:renegotiate", { targetUserId: target, offer });
+            s.emit("call:renegotiate", { targetUserId: target, offer, callType: "video" });
           }
         }
 
@@ -961,7 +988,7 @@ export const CallProvider = ({ children }) => {
     } else {
       await stopScreenShare();
     }
-  }, [isScreenSharing, stopScreenShare, user, incomingCall, activePartner]);
+  }, [isScreenSharing, isVideoOff, stopScreenShare, user, incomingCall, activePartner]);
 
   return (
     <CallContext.Provider
