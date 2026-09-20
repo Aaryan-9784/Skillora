@@ -42,7 +42,7 @@ const ClientMessages = () => {
     conversations, fetchUserConversations, setConversation,
     activeConversation, messages, typingUsers, onlinePresence, presenceSynced,
     fetchProjectConversation, fetchConversations, sendMessage,
-    fetchMessages, deleteMessage, toggleReaction,
+    fetchMessages, deleteMessage, deleteConversation, toggleReaction,
     replyingTo, setReplyTo, clearReplyTo, openDirectChat
   } = useChatStore();
 
@@ -56,6 +56,7 @@ const ClientMessages = () => {
   const [moreMenuOpen, setMoreMenuOpen]         = useState(false);
   const [sidebarMenuOpen, setSidebarMenuOpen]   = useState(false);
   const [deleteModalMsg, setDeleteModalMsg]     = useState(null);
+  const [deleteConvModal, setDeleteConvModal]   = useState(null);
   const [isRefreshing, setIsRefreshing]         = useState(false);
 
   const handleRefresh = async () => {
@@ -460,7 +461,7 @@ const ClientMessages = () => {
                         }
                       }
                     }}
-                    className={`w-full p-2.5 rounded-xl flex items-center gap-3 transition-all text-left cursor-pointer ${
+                    className={`w-full p-2.5 rounded-xl flex items-center gap-3 transition-all text-left cursor-pointer group ${
                       isSelected
                         ? "bg-indigo-600/20 border-l-4 border-indigo-500 text-white shadow-md shadow-indigo-500/10"
                         : "hover:bg-white/5 text-slate-300"
@@ -489,11 +490,29 @@ const ClientMessages = () => {
                       </div>
                       <div className="flex items-center justify-between mt-0.5">
                         <p className="text-[11px] text-slate-400 truncate max-w-[140px]">{contact.lastMsg}</p>
-                        {contact.badge && (
-                          <span className="text-[9px] font-extrabold bg-indigo-500 text-white px-1.5 py-0.5 rounded-md shrink-0">
-                            {contact.badge}
-                          </span>
-                        )}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {contact.badge && (
+                            <span className="text-[9px] font-extrabold bg-indigo-500 text-white px-1.5 py-0.5 rounded-md shrink-0">
+                              {contact.badge}
+                            </span>
+                          )}
+                          {(contact.conversationId || contact.conv?._id) && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteConvModal({
+                                  conversationId: contact.conversationId || contact.conv?._id,
+                                  name: contact.name,
+                                });
+                              }}
+                              className="p-1 rounded text-slate-500 hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
+                              title="Remove connection from both sides"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </button>
@@ -641,6 +660,21 @@ const ClientMessages = () => {
                             <RefreshCw size={15} className="text-emerald-400" />
                             <span>Refresh Chat</span>
                           </button>
+                          {activeConversation?._id && (
+                            <button
+                              onClick={() => {
+                                setMoreMenuOpen(false);
+                                setDeleteConvModal({
+                                  conversationId: activeConversation._id,
+                                  name: partner?.name || "this connection",
+                                });
+                              }}
+                              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-red-400 hover:bg-red-500/10 rounded-xl transition-all text-left cursor-pointer"
+                            >
+                              <Trash2 size={15} />
+                              <span>Remove Connection (Both Sides)</span>
+                            </button>
+                          )}
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -1026,6 +1060,68 @@ const ClientMessages = () => {
                 <button
                   type="button"
                   onClick={() => setDeleteModalMsg(null)}
+                  className="w-full py-2 px-4 hover:bg-white/5 text-slate-400 hover:text-white font-medium text-xs rounded-xl transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Remove Connection Modal (Both Sides) ── */}
+      <AnimatePresence>
+        {deleteConvModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs"
+            onClick={() => setDeleteConvModal(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.92, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-sm bg-[#1e293b] border border-red-500/30 rounded-2xl p-5 shadow-2xl space-y-4 text-slate-100"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-red-500/20 border border-red-500/30 flex items-center justify-center text-red-400 shrink-0">
+                  <Trash2 size={20} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-white">Remove Connection?</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    This will remove the conversation with <strong className="text-white">{deleteConvModal.name}</strong> from <span className="text-red-300 font-semibold">both sides</span>.
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-2">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const convId = deleteConvModal.conversationId;
+                    setDeleteConvModal(null);
+                    try {
+                      if (convId) {
+                        await deleteConversation(convId);
+                      }
+                      toast.success("Connection removed from both sides.");
+                    } catch (err) {
+                      toast.error("Failed to remove connection: " + (err.message || "Unknown error"));
+                    }
+                  }}
+                  className="w-full py-2.5 px-4 bg-red-600 hover:bg-red-500 text-white font-semibold text-xs rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-md shadow-red-600/30"
+                >
+                  <Trash2 size={14} /> Remove for Both Sides
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setDeleteConvModal(null)}
                   className="w-full py-2 px-4 hover:bg-white/5 text-slate-400 hover:text-white font-medium text-xs rounded-xl transition-colors cursor-pointer"
                 >
                   Cancel

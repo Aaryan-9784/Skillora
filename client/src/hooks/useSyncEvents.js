@@ -50,6 +50,11 @@ const useSyncEvents = () => {
       chatStore.setTyping(conversationId, "", false);
     };
 
+    const onChatConversationDeleted = ({ conversationId }) => {
+      chatStore.removeConversationFromState(conversationId);
+      toast("Conversation removed", { icon: "🗑️" });
+    };
+
     const onPresenceSync = ({ onlineUserIds }) => {
       chatStore.setOnlinePresenceBatch(onlineUserIds);
     };
@@ -183,6 +188,7 @@ const useSyncEvents = () => {
     socket.on("milestone:updated",         onMilestoneUpdated);
     socket.on("chat:message_new",          onChatMessageNew);
     socket.on("chat:message_deleted",      onChatMessageDeleted);
+    socket.on("chat:conversation_deleted", onChatConversationDeleted);
     socket.on("chat:message_reaction",     onChatMessageReaction);
     socket.on("chat:typing",               onChatTyping);
     socket.on("chat:stop_typing",          onChatStopTyping);
@@ -209,6 +215,7 @@ const useSyncEvents = () => {
       socket.off("milestone:updated",         onMilestoneUpdated);
       socket.off("chat:message_new",          onChatMessageNew);
       socket.off("chat:message_deleted",      onChatMessageDeleted);
+      socket.off("chat:conversation_deleted", onChatConversationDeleted);
       socket.off("chat:message_reaction",     onChatMessageReaction);
       socket.off("chat:typing",               onChatTyping);
       socket.off("chat:stop_typing",          onChatStopTyping);

@@ -748,6 +748,43 @@ const downloadAttachmentProxy = asyncHandler(async (req, res) => {
   return res.status(404).json({ success: false, message: "File download unavailable" });
 });
 
+// Delete conversation and broadcast removal to both participants in real-time
+const deleteConversation = asyncHandler(async (req, res) => {
+  const { conversationId } = req.params;
+  const userId = req.user._id;
+
+  const conversation = await Conversation.findById(conversationId);
+  if (!conversation) throw ApiError.notFound("Conversation not found");
+
+  const isParticipant = conversation.participants.some((p) => p.toString() === userId.toString());
+  if (!isParticipant && req.user.role !== "admin") {
+    throw ApiError.forbidden("Access denied: You can only remove conversations you belong to");
+  }
+
+  // Delete all messages in this conversation
+  await Message.deleteMany({ conversationId });
+
+  // Delete conversation
+  await Conversation.findByIdAndDelete(conversationId);
+
+  // Broadcast real-time socket event to all participants
+  const io = getIO();
+  if (io && Array.isArray(conversation.participants)) {
+    conversation.participants.forEach((pId) => {
+      io.to(`user:${pId.toString()}`).emit("chat:conversation_deleted", {
+        conversationId: conversation._id.toString(),
+        deletedBy: userId.toString(),
+      });
+    });
+    io.to(`conversation:${conversationId}`).emit("chat:conversation_deleted", {
+      conversationId: conversation._id.toString(),
+      deletedBy: userId.toString(),
+    });
+  }
+
+  ApiResponse.success(res, "Conversation removed successfully from both sides", { conversationId });
+});
+
 module.exports = {
   getProjectConversation,
   getUserConversations,
@@ -758,5 +795,6 @@ module.exports = {
   uploadAttachment,
   downloadAttachmentProxy,
   deleteMessage,
+  deleteConversation,
   toggleReaction,
 };

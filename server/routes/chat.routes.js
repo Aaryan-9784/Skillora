@@ -13,6 +13,7 @@ const {
   uploadAttachment,
   downloadAttachmentProxy,
   deleteMessage,
+  deleteConversation,
   toggleReaction,
 } = require("../controllers/chat.controller");
 
@@ -21,6 +22,7 @@ router.get("/ice-servers", getIceServersConfig);
 
 router.use(protect);
 router.get("/conversations", getUserConversations);
+router.delete("/conversations/:conversationId", deleteConversation);
 router.get("/project", getProjectConversation);
 router.get("/project/:projectId", getProjectConversation);
 router.get("/direct/:recipientId", getOrCreateDirectConversation);

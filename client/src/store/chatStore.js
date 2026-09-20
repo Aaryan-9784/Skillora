@@ -240,6 +240,33 @@ const useChatStore = create((set, get) => ({
     }
   },
 
+  deleteConversation: async (conversationId) => {
+    if (!conversationId) return;
+    try {
+      await api.delete(`/chat/conversations/${conversationId}`);
+      get().removeConversationFromState(conversationId);
+    } catch (err) {
+      console.error("Delete conversation error:", err);
+      throw err;
+    }
+  },
+
+  removeConversationFromState: (conversationId) => {
+    if (!conversationId) return;
+    const strId = conversationId.toString();
+    set((state) => {
+      const updatedConvs = state.conversations.filter(
+        (c) => c._id?.toString() !== strId
+      );
+      const isCurrentActive = state.activeConversation?._id?.toString() === strId;
+      return {
+        conversations: updatedConvs,
+        activeConversation: isCurrentActive ? null : state.activeConversation,
+        messages: isCurrentActive ? [] : state.messages,
+      };
+    });
+  },
+
   markMessageDeleted: (messageId) => {
     set((state) => ({
       messages: state.messages.map((m) =>
