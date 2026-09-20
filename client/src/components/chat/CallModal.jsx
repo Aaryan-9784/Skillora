@@ -243,6 +243,8 @@ const CallModal = ({
   if (callState === "idle") return null;
 
   const formatTime = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  const isVoiceCall = callType === "voice";
+
   // Check if remote stream has active video track
   const hasRemoteVideo = Boolean(
     !isVoiceCall &&
