@@ -825,19 +825,32 @@ export const CallProvider = ({ children }) => {
   const toggleScreenShare = useCallback(async () => {
     if (!peerConnectionRef.current) return;
     if (!isScreenSharing) {
+      if (!navigator.mediaDevices || typeof navigator.mediaDevices.getDisplayMedia !== "function") {
+        toast.error("Screen sharing is not supported on this mobile browser or device.");
+        return;
+      }
+
       try {
-        const displayStream = await navigator.mediaDevices.getDisplayMedia({
-          video: {
-            cursor: "always",
-            displaySurface: "monitor",
-          },
-          audio: false,
-        });
-        const screenTrack = displayStream.getVideoTracks()[0];
+        let displayStream = null;
+        try {
+          // Mobile & cross-browser compliant constraints (without desktop-only monitor keywords)
+          displayStream = await navigator.mediaDevices.getDisplayMedia({
+            video: true,
+            audio: false,
+          });
+        } catch (initialErr) {
+          console.warn("[Media] Default display media failed, trying basic fallback:", initialErr?.message);
+          displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        }
+
+        const screenTrack = displayStream?.getVideoTracks()[0];
         if (!screenTrack) return;
 
-        // Hint to WebRTC encoder to optimize sharpness for text/details (Google Meet & Zoom standard)
-        screenTrack.contentHint = "detail";
+        // Hint to WebRTC encoder to optimize sharpness for text/details
+        try {
+          screenTrack.contentHint = "detail";
+        } catch (e) {}
+
         screenTrackRef.current = screenTrack;
         setScreenStream(displayStream);
 
@@ -876,15 +889,15 @@ export const CallProvider = ({ children }) => {
 
         toast.success("Screen sharing started");
       } catch (e) {
-        if (e.name !== "NotAllowedError") {
+        if (e.name !== "NotAllowedError" && e.name !== "AbortError") {
           console.error("Screen share error:", e);
-          toast.error("Could not share screen: " + e.message);
+          toast.error(e.message || "Could not start screen sharing");
         }
       }
     } else {
       await stopScreenShare();
     }
-  }, [isScreenSharing, stopScreenShare, incomingCall, activePartner, user]);
+  }, [isScreenSharing, stopScreenShare, user, incomingCall, activePartner]);
 
   return (
     <CallContext.Provider
