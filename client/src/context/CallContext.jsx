@@ -16,18 +16,51 @@ export const useCall = () => {
   return context;
 };
 
-// ── WhatsApp-grade SDP enhancer: enables Opus stereo, 64kbps HD audio, FEC, DTX ──
+// ── Low-latency WebRTC SDP enhancer: Opus voice tuning (AEC, FEC, DTX) & video bandwidth control ──
 const optimizeSdp = (sdp) => {
   if (!sdp) return sdp;
   let s = sdp;
   s = s.replace(/a=fmtp:(\d+) (.*)/g, (match, pt, params) => {
-    if (params.includes("useinbandfec")) return match;
     if (s.includes(`a=rtpmap:${pt} opus/48000`)) {
-      return `a=fmtp:${pt} ${params};stereo=1;sprop-stereo=1;useinbandfec=1;usedtx=1;maxaveragebitrate=64000`;
+      return `a=fmtp:${pt} minptime=10;useinbandfec=1;usedtx=1;maxaveragebitrate=32000;cbr=0`;
     }
     return match;
   });
+  // Cap max video bandwidth to 1800 kbps to prevent network buffer bloat and packet drops
+  if (!s.includes("b=AS:") && !s.includes("b=TIAS:")) {
+    s = s.replace(/(m=video \d+ [A-Z\/]+ \d+)/g, "$1\r\nb=AS:1800");
+  }
   return s;
+};
+
+const tuneSender = async (sender, isScreenShare = false) => {
+  if (!sender || typeof sender.getParameters !== "function" || typeof sender.setParameters !== "function") return;
+  try {
+    const params = sender.getParameters();
+    if (!params.encodings || params.encodings.length === 0) {
+      params.encodings = [{}];
+    }
+    if (sender.track?.kind === "video") {
+      params.encodings[0].maxBitrate = isScreenShare ? 2500000 : 1500000;
+      params.encodings[0].maxFramerate = 30;
+      params.encodings[0].networkPriority = "high";
+      params.encodings[0].priority = "high";
+      params.degradationPreference = isScreenShare ? "maintain-resolution" : "maintain-framerate";
+    } else if (sender.track?.kind === "audio") {
+      params.encodings[0].maxBitrate = 32000;
+      params.encodings[0].networkPriority = "high";
+      params.encodings[0].priority = "high";
+    }
+    await sender.setParameters(params);
+  } catch (e) {}
+};
+
+const tunePeerConnection = async (pc, isScreenShare = false) => {
+  if (!pc) return;
+  const senders = pc.getSenders();
+  for (const sender of senders) {
+    await tuneSender(sender, isScreenShare);
+  }
 };
 
 export const CallProvider = ({ children }) => {
@@ -330,6 +363,7 @@ export const CallProvider = ({ children }) => {
         });
         answer.sdp = optimizeSdp(answer.sdp);
         await pc.setLocalDescription(answer);
+        await tunePeerConnection(pc, false);
 
         // Immediately sync remote stream tracks on receiver
         const remoteTracks = pc.getReceivers().map((r) => r.track).filter(Boolean);
@@ -362,6 +396,7 @@ export const CallProvider = ({ children }) => {
         }
         await pc.setRemoteDescription(new RTCSessionDescription(answer));
         await processIceQueue();
+        await tunePeerConnection(pc, false);
 
         // Immediately sync remote stream tracks on sender
         const remoteTracks = pc.getReceivers().map((r) => r.track).filter(Boolean);
@@ -428,18 +463,28 @@ export const CallProvider = ({ children }) => {
       try {
         const vStream = await navigator.mediaDevices.getUserMedia({
           video: {
-            width: { ideal: 1280, min: 640 },
-            height: { ideal: 720, min: 480 },
-            frameRate: { ideal: 30, min: 15 },
+            width: { ideal: 1280, max: 1280 },
+            height: { ideal: 720, max: 720 },
+            frameRate: { ideal: 30, max: 30 },
             facingMode: "user",
           },
         });
         videoTrack = vStream.getVideoTracks()[0];
+        if (videoTrack) {
+          try {
+            videoTrack.contentHint = "motion";
+          } catch (e) {}
+        }
       } catch (vErr) {
         console.warn("[Media] High-res video acquisition failed, attempting basic video:", vErr?.message);
         try {
           const basicVStream = await navigator.mediaDevices.getUserMedia({ video: true });
           videoTrack = basicVStream.getVideoTracks()[0];
+          if (videoTrack) {
+            try {
+              videoTrack.contentHint = "motion";
+            } catch (e) {}
+          }
         } catch (basicVErr) {
           console.warn("[Media] Physical camera unavailable/locked, activating live virtual video stream:", basicVErr?.message);
           try {
@@ -453,18 +498,23 @@ export const CallProvider = ({ children }) => {
       }
     }
 
-    // 2. Acquire Audio with Studio/WhatsApp HD constraints
+    // 2. Acquire Audio with Studio AEC constraints (Mono prevents bufferbloat & echo)
     try {
       const aStream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          echoCancellation: { ideal: true },
-          noiseSuppression: { ideal: true },
-          autoGainControl: { ideal: true },
-          channelCount: { ideal: 2 },
-          sampleRate: { ideal: 48000 },
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          channelCount: 1,
+          sampleRate: 48000,
         },
       });
       audioTrack = aStream.getAudioTracks()[0];
+      if (audioTrack) {
+        try {
+          audioTrack.contentHint = "speech";
+        } catch (e) {}
+      }
     } catch (aErr) {
       console.warn("[Media] Advanced audio constraints failed, attempting basic audio:", aErr?.message);
       try {
@@ -565,6 +615,7 @@ export const CallProvider = ({ children }) => {
 
       stream.getTracks().forEach((t) => pc.addTrack(t, stream));
       bindRemoteTracks(pc);
+      await tunePeerConnection(pc, false);
 
       pc.onicecandidate = (e) => {
         if (e.candidate && targetUserIdRef.current) {
@@ -636,6 +687,7 @@ export const CallProvider = ({ children }) => {
 
       stream.getTracks().forEach((t) => pc.addTrack(t, stream));
       bindRemoteTracks(pc);
+      await tunePeerConnection(pc, false);
 
       pc.onicecandidate = (e) => {
         if (e.candidate) {
@@ -703,9 +755,10 @@ export const CallProvider = ({ children }) => {
         let newTrack = null;
         try {
           const videoStream = await navigator.mediaDevices.getUserMedia({
-            video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
+            video: { width: { ideal: 1280, max: 1280 }, height: { ideal: 720, max: 720 }, frameRate: { ideal: 30, max: 30 }, facingMode: "user" },
           });
           newTrack = videoStream.getVideoTracks()[0];
+          if (newTrack) newTrack.contentHint = "motion";
         } catch (camErr) {
           console.warn("Camera busy on toggle, using live virtual video:", camErr?.message);
           const virtualStream = createVirtualVideoStream(user?.name || "Skillora User");
@@ -732,8 +785,10 @@ export const CallProvider = ({ children }) => {
           if (videoTransceiver) {
             videoTransceiver.direction = "sendrecv";
             await videoTransceiver.sender.replaceTrack(newTrack);
+            await tuneSender(videoTransceiver.sender, false);
           } else {
-            pc.addTrack(newTrack, updatedStream);
+            const sender = pc.addTrack(newTrack, updatedStream);
+            await tuneSender(sender, false);
           }
 
           // Trigger WebRTC renegotiation so remote partner immediately receives the video stream!
@@ -770,10 +825,12 @@ export const CallProvider = ({ children }) => {
           let liveTrack = currentVideoTracks.find((t) => t.readyState === "live");
           if (liveTrack) {
             liveTrack.enabled = true;
+            liveTrack.contentHint = "motion";
             if (pc) {
               const sender = pc.getSenders().find((s) => s.track?.kind === "video" || s.kind === "video");
               if (sender) {
                 await sender.replaceTrack(liveTrack);
+                await tuneSender(sender, false);
               }
             }
           }
@@ -816,9 +873,10 @@ export const CallProvider = ({ children }) => {
         if (!camTrack && !isVideoOff) {
           try {
             const vStream = await navigator.mediaDevices.getUserMedia({
-              video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
+              video: { width: { ideal: 1280, max: 1280 }, height: { ideal: 720, max: 720 }, frameRate: { ideal: 30, max: 30 }, facingMode: "user" },
             });
             camTrack = vStream.getVideoTracks()[0];
+            if (camTrack) camTrack.contentHint = "motion";
             if (localStream) {
               localStream.addTrack(camTrack);
               setLocalStream(new MediaStream(localStream.getTracks()));
@@ -833,6 +891,7 @@ export const CallProvider = ({ children }) => {
         if (camTrack && !isVideoOff) {
           camTrack.contentHint = "motion";
           await sender.replaceTrack(camTrack).catch(() => {});
+          await tuneSender(sender, false);
         } else {
           await sender.replaceTrack(null).catch(() => {});
         }
@@ -890,9 +949,12 @@ export const CallProvider = ({ children }) => {
         let sender = pc.getSenders().find((s) => s.track?.kind === "video" || s.kind === "video");
         if (sender) {
           await sender.replaceTrack(screenTrack);
+          await tuneSender(sender, true);
         } else {
           sender = pc.addTrack(screenTrack, displayStream);
+          await tuneSender(sender, true);
           const offer = await pc.createOffer();
+          offer.sdp = optimizeSdp(offer.sdp);
           await pc.setLocalDescription(offer);
           const s = getSocket();
           const target = targetUserIdRef.current || incomingCall?.callerId || activePartner?.id;
