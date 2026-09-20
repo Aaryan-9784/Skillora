@@ -474,45 +474,36 @@ export const CallProvider = ({ children }) => {
 
   const bindRemoteTracks = (pc) => {
     pc.ontrack = (e) => {
-      console.log("[WebRTC] ontrack received:", e.track.kind, "id:", e.track.id, "enabled:", e.track.enabled, "muted:", e.track.muted);
+      console.log("[WebRTC] ontrack received:", e.track.kind, "id:", e.track.id, "enabled:", e.track.enabled, "muted:", e.track.muted, "streams:", e.streams);
 
-      const refreshRemoteStream = () => {
-        if (pc && pc.signalingState !== "closed") {
-          const remoteTracks = pc
-            .getReceivers()
-            .map((r) => r.track)
-            .filter((t) => t && t.readyState !== "ended");
-          if (remoteTracks.length > 0) {
-            setRemoteStream(new MediaStream(remoteTracks));
-            return;
+      // Prioritize the incoming live MediaStream provided directly by the WebRTC engine
+      if (e.streams && e.streams[0]) {
+        setRemoteStream(e.streams[0]);
+      } else if (e.track) {
+        setRemoteStream((prev) => {
+          if (prev) {
+            const hasTrack = prev.getTracks().some((t) => t.id === e.track.id);
+            if (!hasTrack) {
+              prev.addTrack(e.track);
+            }
+            return new MediaStream(prev.getTracks());
           }
-        }
-        const incomingStream = e.streams && e.streams[0] ? e.streams[0] : null;
-        if (incomingStream) {
-          setRemoteStream(new MediaStream(incomingStream.getTracks()));
-        } else if (e.track) {
-          setRemoteStream((prev) => {
-            const currentTracks = prev ? prev.getTracks().filter((t) => t.id !== e.track.id) : [];
-            return new MediaStream([...currentTracks, e.track]);
-          });
-        }
-      };
-
-      refreshRemoteStream();
+          return new MediaStream([e.track]);
+        });
+      }
 
       e.track.onunmute = () => {
-        console.log("[WebRTC] Remote track unmuted (media flowing):", e.track.kind, e.track.id);
-        refreshRemoteStream();
+        console.log("[WebRTC] Remote track unmuted (media frames arriving):", e.track.kind, e.track.id);
+        if (e.streams && e.streams[0]) {
+          setRemoteStream(new MediaStream(e.streams[0].getTracks()));
+        } else {
+          setRemoteStream((prev) => (prev ? new MediaStream(prev.getTracks()) : null));
+        }
       };
 
       e.track.onmute = () => {
         console.log("[WebRTC] Remote track muted:", e.track.kind, e.track.id);
       };
-
-      if (e.streams && e.streams[0]) {
-        e.streams[0].onaddtrack = refreshRemoteStream;
-        e.streams[0].onremovetrack = refreshRemoteStream;
-      }
     };
   };
 

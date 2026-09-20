@@ -123,25 +123,20 @@ const CallModal = ({
     vEl.defaultMuted = true;
     vEl.playsInline = true;
 
-    if (remoteStream && vEl.srcObject !== remoteStream) {
-      vEl.srcObject = remoteStream;
-    }
-
-    vEl.onloadedmetadata = () => {
-      vEl.play().catch(() => {});
-    };
-
     if (remoteStream) {
-      const playPromise = vEl.play();
-      if (playPromise !== undefined) {
-        playPromise.catch((err) => {
-          if (err.name !== "AbortError") {
-            console.warn("[CallModal] Remote video play warning:", err);
-          }
-        });
+      if (vEl.srcObject !== remoteStream) {
+        vEl.srcObject = remoteStream;
       }
+      vEl.onloadedmetadata = () => {
+        vEl.play().catch(() => {});
+      };
+      vEl.play().catch((err) => {
+        if (err.name !== "AbortError") {
+          console.warn("[CallModal] Remote video play warning:", err);
+        }
+      });
     }
-  }, [remoteStream, callState]);
+  }, [remoteStream, callState, callType]);
 
   // Remote audio sync (plays remote sound cleanly)
   useEffect(() => {
@@ -175,6 +170,33 @@ const CallModal = ({
       }
     }
   }, [remoteStream, callState]);
+
+  // Dynamic track listener for incoming video tracks
+  useEffect(() => {
+    if (!remoteStream) return;
+    const handleTrackUpdate = () => {
+      const vEl = remoteVideoRef.current;
+      if (vEl) {
+        vEl.srcObject = remoteStream;
+        vEl.play().catch(() => {});
+      }
+      const aEl = remoteAudioRef.current;
+      if (aEl) {
+        aEl.srcObject = remoteStream;
+        aEl.play().catch(() => {});
+      }
+    };
+
+    remoteStream.addEventListener("addtrack", handleTrackUpdate);
+    remoteStream.addEventListener("removetrack", handleTrackUpdate);
+
+    return () => {
+      if (remoteStream) {
+        remoteStream.removeEventListener("addtrack", handleTrackUpdate);
+        remoteStream.removeEventListener("removetrack", handleTrackUpdate);
+      }
+    };
+  }, [remoteStream]);
 
   if (callState === "idle") return null;
 
