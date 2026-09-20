@@ -319,7 +319,6 @@ export const CallProvider = ({ children }) => {
       try {
         if (callType === "video") {
           setActiveCallType("video");
-          setIsVideoOff(false);
         }
 
         let videoTransceiver = pc.getTransceivers().find(
@@ -337,10 +336,18 @@ export const CallProvider = ({ children }) => {
         });
         answer.sdp = optimizeSdp(answer.sdp);
         await pc.setLocalDescription(answer);
+
+        // Immediately sync remote stream tracks on receiver
+        const remoteTracks = pc.getReceivers().map((r) => r.track).filter(Boolean);
+        if (remoteTracks.length > 0) {
+          setRemoteStream(new MediaStream(remoteTracks));
+        }
+
         const s = getSocket();
         if (s) {
           s.emit("call:renegotiate_answer", { targetUserId: senderId, answer, callType });
         }
+        toast("Call converted to video", { icon: "📹" });
       } catch (err) {
         console.error("Renegotiate error on receiver:", err);
       }
@@ -355,6 +362,12 @@ export const CallProvider = ({ children }) => {
         }
         await pc.setRemoteDescription(new RTCSessionDescription(answer));
         await processIceQueue();
+
+        // Immediately sync remote stream tracks on sender
+        const remoteTracks = pc.getReceivers().map((r) => r.track).filter(Boolean);
+        if (remoteTracks.length > 0) {
+          setRemoteStream(new MediaStream(remoteTracks));
+        }
       } catch (err) {
         console.error("Renegotiate answer error on sender:", err);
       }
@@ -686,9 +699,10 @@ export const CallProvider = ({ children }) => {
     try {
       const pc = peerConnectionRef.current;
       const currentVideoTracks = localStream ? localStream.getVideoTracks() : [];
+      const hasLiveTrack = currentVideoTracks.some((t) => t.readyState === "live");
 
-      if (currentVideoTracks.length === 0) {
-        // Upgrade audio call to video by acquiring camera
+      if (currentVideoTracks.length === 0 || !hasLiveTrack) {
+        // Upgrade audio/voice call to video by acquiring webcam
         let newTrack = null;
         try {
           const videoStream = await navigator.mediaDevices.getUserMedia({
@@ -729,7 +743,11 @@ export const CallProvider = ({ children }) => {
           const target = targetUserIdRef.current || incomingCall?.callerId || activePartner?.id;
           if (target) {
             try {
-              const offer = await pc.createOffer();
+              const offer = await pc.createOffer({
+                offerToReceiveAudio: true,
+                offerToReceiveVideo: true,
+              });
+              offer.sdp = optimizeSdp(offer.sdp);
               await pc.setLocalDescription(offer);
               const s = getSocket();
               if (s) {
@@ -750,16 +768,33 @@ export const CallProvider = ({ children }) => {
         toast.success("Converted to video call");
       } else {
         const nextState = !isVideoOff;
-        currentVideoTracks.forEach((t) => (t.enabled = !nextState));
-        setIsVideoOff(nextState);
-
-        if (pc) {
-          const sender = pc.getSenders().find((s) => s.track?.kind === "video" || s.kind === "video");
-          if (sender) {
-            await sender.replaceTrack(nextState ? null : currentVideoTracks[0]);
+        if (!nextState) {
+          // Turning camera ON
+          let liveTrack = currentVideoTracks.find((t) => t.readyState === "live");
+          if (liveTrack) {
+            liveTrack.enabled = true;
+            if (pc) {
+              const sender = pc.getSenders().find((s) => s.track?.kind === "video" || s.kind === "video");
+              if (sender) {
+                await sender.replaceTrack(liveTrack);
+              }
+            }
           }
+          setIsVideoOff(false);
+          setActiveCallType("video");
+          toast("Camera turned on", { icon: "📹" });
+        } else {
+          // Turning camera OFF
+          currentVideoTracks.forEach((t) => (t.enabled = false));
+          setIsVideoOff(true);
+          if (pc) {
+            const sender = pc.getSenders().find((s) => s.track?.kind === "video" || s.kind === "video");
+            if (sender) {
+              await sender.replaceTrack(null);
+            }
+          }
+          toast("Camera turned off", { icon: "📷" });
         }
-        toast(nextState ? "Camera turned off" : "Camera turned on", { icon: nextState ? "📷" : "📹" });
       }
     } catch (err) {
       console.error("Toggle camera error:", err);
