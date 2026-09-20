@@ -199,7 +199,13 @@ const streamChat = async ({ userId, messages, feature = "chat", projectId, model
 
     // Automatic multi-model failover chain if quota is hit
     const primaryModel = MODEL_NAME(model);
-    const modelCandidates = [primaryModel, "gemini-3.5-flash", "gemini-3.6-flash", "gemini-2.5-flash"];
+    const modelCandidates = [
+      primaryModel,
+      "gemini-1.5-flash",
+      "gemini-1.5-pro",
+      "gemini-2.0-flash",
+      "gemini-2.5-flash",
+    ];
     const uniqueModels = [...new Set(modelCandidates)];
 
     let streamResult = null;

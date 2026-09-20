@@ -10,7 +10,7 @@ const WELCOME = {
 };
 
 const useAiStore = create((set, get) => ({
-  messages:    [],
+  messages:    [WELCOME],
   isStreaming: false,
   error:       null,
   history:     [],
@@ -21,23 +21,23 @@ const useAiStore = create((set, get) => ({
     if (activeUserId) {
       localStorage.removeItem(`skillora_ai_chat_${activeUserId}`);
     }
-    set({ messages: [], error: null });
+    set({ messages: [WELCOME], error: null });
   },
 
   syncUserSession: (userId) => {
     const currentActive = get().activeUserId;
     if (!userId) {
-      set({ activeUserId: null, messages: [], error: null });
+      set({ activeUserId: null, messages: [WELCOME], error: null });
       return;
     }
 
     if (currentActive !== userId) {
-      let userMessages = [];
+      let userMessages = [WELCOME];
       try {
         const stored = localStorage.getItem(`skillora_ai_chat_${userId}`);
         if (stored) {
           const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed)) userMessages = parsed;
+          if (Array.isArray(parsed) && parsed.length > 0) userMessages = parsed;
         }
       } catch (e) {
         /* silent */

@@ -213,6 +213,9 @@ const Dashboard = () => {
           </div>
         </motion.div>
 
+        {/* Dynamic AI workspace insight bar */}
+        <AIInsight text={insight} />
+
         {/* KPI Cards — Instant static render */}
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
           <KPIWidget label="Total Revenue"   value={formatCurrency(s?.revenue?.totalRevenue || 0)} icon={DollarSign}   trendLabel="vs last month" color="brand"   />

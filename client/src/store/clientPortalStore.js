@@ -337,6 +337,7 @@ const useClientPortalStore = create((set, get) => ({
     try {
       const { data } = await svc.initiatePayment(invoiceId);
       const { orderId, amount, currency, keyId, invoiceNumber, freelancerName } = data.data;
+      const desc = freelancerName ? `Invoice ${invoiceNumber} for ${freelancerName}` : `Invoice ${invoiceNumber}`;
 
       return new Promise((resolve, reject) => {
         const options = {
@@ -345,7 +346,7 @@ const useClientPortalStore = create((set, get) => ({
           amount,
           currency,
           name:        "Skillora",
-          description: `Invoice ${invoiceNumber}`,
+          description: desc,
           prefill:     { name: userInfo?.name, email: userInfo?.email },
           theme:       { color: "#635BFF" },
           handler: async (response) => {

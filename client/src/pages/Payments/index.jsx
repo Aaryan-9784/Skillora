@@ -333,25 +333,7 @@ const Payments = () => {
               <p className="text-xs font-semibold">Loading invoice matrix...</p>
             </div>
           ) : invoices.length === 0 ? (
-            <div className="flex flex-col items-center justify-center min-h-[380px] py-16 px-4 text-center space-y-3">
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-1 shadow-lg shadow-indigo-500/10"
-                style={{ background: "rgba(99,91,255,0.12)", border: "1px solid rgba(99,91,255,0.25)" }}>
-                <FileText size={26} style={{ color: "#A78BFA" }} />
-              </div>
-              <h3 className="text-base font-bold text-white">No invoices found</h3>
-              <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
-                Create your first invoice to start getting paid and tracking revenue.
-              </p>
-              <motion.button
-                whileHover={{ scale: 1.04, boxShadow: "0 0 24px rgba(99,91,255,0.4)" }}
-                whileTap={{ scale: 0.96 }}
-                onClick={() => navigate("/payments/new")}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer mt-2"
-                style={{ background: "linear-gradient(135deg, #635BFF 0%, #8B5CF6 100%)", border: "1px solid rgba(255,255,255,0.15)", boxShadow: "0 0 20px rgba(99,91,255,0.35)" }}>
-                <Plus size={15} strokeWidth={2.5} />
-                <span>Create Invoice</span>
-              </motion.button>
-            </div>
+            <EmptyInvoices onNew={() => navigate("/payments/new")} />
           ) : (
             <div className="overflow-x-auto">
               {/* Table Header Row */}
