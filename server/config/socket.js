@@ -175,6 +175,48 @@ const initSocket = (httpServer) => {
       return strId;
     };
 
+    // Helper to clean up active calls for user
+    const removeActiveCalls = (uId, otherId = null) => {
+      if (!uId) return;
+      const sUId = uId.toString();
+      const sOtherId = otherId ? otherId.toString() : null;
+
+      for (const [key, call] of activeCalls.entries()) {
+        if (sOtherId) {
+          if (
+            (call.caller === sUId && call.receiver === sOtherId) ||
+            (call.caller === sOtherId && call.receiver === sUId)
+          ) {
+            activeCalls.delete(key);
+          }
+        } else {
+          if (call.caller === sUId || call.receiver === sUId) {
+            activeCalls.delete(key);
+          }
+        }
+      }
+    };
+
+    // Prune stale/dead calls (where users are no longer online or call hung)
+    const pruneStaleCalls = () => {
+      const now = Date.now();
+      for (const [key, call] of activeCalls.entries()) {
+        const callerOnline = userSockets.has(call.caller) && userSockets.get(call.caller).size > 0;
+        const receiverOnline = userSockets.has(call.receiver) && userSockets.get(call.receiver).size > 0;
+
+        // If either party is no longer connected, call is defunct
+        if (!callerOnline || !receiverOnline) {
+          activeCalls.delete(key);
+          continue;
+        }
+
+        // If unanswered call is older than 60s, clear it
+        if (!call.isAnswered && call.startedAt && now - new Date(call.startedAt).getTime() > 60000) {
+          activeCalls.delete(key);
+        }
+      }
+    };
+
     // 📞 WebRTC Call Signaling (Voice & Video)
     socket.on("call:initiate", async ({ targetUserId, offer, callType, projectId, callerName, callerAvatar }) => {
       if (!targetUserId || !offer) return;
@@ -190,15 +232,31 @@ const initSocket = (httpServer) => {
         return;
       }
 
-      // Check if target user is currently in an active call
-      let isBusy = false;
+      // 1. Prune dead or stale calls first
+      pruneStaleCalls();
+
+      // 2. Clear any prior call records between the SAME caller and receiver
+      removeActiveCalls(userId, resolvedTargetId);
+
+      // 3. Only mark busy if target is in an answered, ongoing call with a DIFFERENT user
+      let isBusyWithOther = false;
       for (const call of activeCalls.values()) {
-        if (call.caller === resolvedTargetId || call.receiver === resolvedTargetId) {
-          isBusy = true;
-          break;
+        if (
+          (call.caller === resolvedTargetId || call.receiver === resolvedTargetId) &&
+          call.caller !== userId &&
+          call.receiver !== userId &&
+          call.isAnswered
+        ) {
+          const cOnline = userSockets.get(call.caller)?.size > 0;
+          const rOnline = userSockets.get(call.receiver)?.size > 0;
+          if (cOnline && rOnline) {
+            isBusyWithOther = true;
+            break;
+          }
         }
       }
-      if (isBusy) {
+
+      if (isBusyWithOther) {
         socket.emit("call:busy", {
           targetUserId: resolvedTargetId,
           message: "User is currently on another call.",
@@ -212,6 +270,7 @@ const initSocket = (httpServer) => {
         type: callType || "video",
         projectId: projectId || undefined,
         startedAt: new Date(),
+        isAnswered: false,
       });
 
       let name = callerName;
@@ -237,6 +296,15 @@ const initSocket = (httpServer) => {
     socket.on("call:answer", async ({ callerId, answer }) => {
       if (!callerId || !answer) return;
       const resolvedCallerId = await resolveUserId(callerId);
+
+      // Mark call as answered in activeCalls
+      const call =
+        activeCalls.get(`${resolvedCallerId}:${userId}`) ||
+        activeCalls.get(`${userId}:${resolvedCallerId}`);
+      if (call) {
+        call.isAnswered = true;
+      }
+
       io.to(`user:${resolvedCallerId}`).emit("call:answered", { answer });
     });
 
@@ -277,10 +345,15 @@ const initSocket = (httpServer) => {
     });
 
     socket.on("call:reject", async ({ callerId }) => {
-      if (callerId) {
-        const resolvedCallerId = await resolveUserId(callerId);
+      const resolvedCallerId = callerId ? await resolveUserId(callerId) : null;
+      if (resolvedCallerId) {
         io.to(`user:${resolvedCallerId}`).emit("call:rejected", { userId });
-        try {
+      }
+
+      removeActiveCalls(userId, resolvedCallerId);
+
+      try {
+        if (resolvedCallerId) {
           const CallLog = require("../models/CallLog");
           await CallLog.create({
             caller: resolvedCallerId,
@@ -291,37 +364,47 @@ const initSocket = (httpServer) => {
             endedAt: new Date(),
             durationSeconds: 0,
           });
-          activeCalls.delete(`${resolvedCallerId}:${userId}`);
-          activeCalls.delete(`${userId}:${resolvedCallerId}`);
-        } catch (e) {
-          logger.warn(`Failed to log rejected call: ${e.message}`);
         }
+      } catch (e) {
+        logger.warn(`Failed to log rejected call: ${e.message}`);
       }
     });
 
     socket.on("call:end", async ({ targetUserId, durationSeconds }) => {
-      if (targetUserId) {
-        const resolvedTargetId = await resolveUserId(targetUserId);
+      const resolvedTargetId = targetUserId ? await resolveUserId(targetUserId) : null;
+      if (resolvedTargetId) {
         io.to(`user:${resolvedTargetId}`).emit("call:ended");
-        try {
+      }
+
+      const callData =
+        (resolvedTargetId ? activeCalls.get(`${userId}:${resolvedTargetId}`) || activeCalls.get(`${resolvedTargetId}:${userId}`) : null) ||
+        null;
+
+      // Always remove from memory first to prevent stuck busy state
+      removeActiveCalls(userId, resolvedTargetId);
+
+      try {
+        if (resolvedTargetId) {
           const CallLog = require("../models/CallLog");
-          const callData = activeCalls.get(`${userId}:${resolvedTargetId}`) || activeCalls.get(`${resolvedTargetId}:${userId}`);
-          const duration = Number(durationSeconds) || (callData ? Math.max(0, Math.round((Date.now() - callData.startedAt.getTime()) / 1000)) : 0);
+          const duration =
+            Number(durationSeconds) ||
+            (callData?.startedAt
+              ? Math.max(0, Math.round((Date.now() - new Date(callData.startedAt).getTime()) / 1000))
+              : 0);
+
           await CallLog.create({
             caller: callData?.caller || userId,
             receiver: callData?.receiver || resolvedTargetId,
             projectId: callData?.projectId || undefined,
             type: callData?.type || "video",
-            status: "answered",
+            status: callData?.isAnswered ? "answered" : "missed",
             startedAt: callData?.startedAt || new Date(),
             endedAt: new Date(),
             durationSeconds: duration,
           });
-          activeCalls.delete(`${userId}:${resolvedTargetId}`);
-          activeCalls.delete(`${resolvedTargetId}:${userId}`);
-        } catch (e) {
-          logger.warn(`Failed to log ended call: ${e.message}`);
         }
+      } catch (e) {
+        logger.warn(`Failed to log ended call: ${e.message}`);
       }
     });
 
@@ -336,7 +419,7 @@ const initSocket = (httpServer) => {
         if (sockets.size === 0) {
           userSockets.delete(userId);
 
-          // Clean up any ongoing calls for this user and notify partner
+          // Clean up all active calls involving this user and inform remote peers
           for (const [key, call] of activeCalls.entries()) {
             if (call.caller === userId || call.receiver === userId) {
               const otherUserId = call.caller === userId ? call.receiver : call.caller;

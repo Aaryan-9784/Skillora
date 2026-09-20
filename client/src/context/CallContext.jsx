@@ -132,6 +132,20 @@ export const CallProvider = ({ children }) => {
     return () => clearInterval(timerRef.current);
   }, [callState]);
 
+  // Outgoing call ringing timeout (auto-hangup after 45s if no answer)
+  useEffect(() => {
+    let timeout = null;
+    if (callState === "calling") {
+      timeout = setTimeout(() => {
+        toast.error("No answer. Call timed out.");
+        endCall();
+      }, 45000);
+    }
+    return () => {
+      if (timeout) clearTimeout(timeout);
+    };
+  }, [callState]);
+
   const endCallCleanup = useCallback(() => {
     if (localStream) {
       localStream.getTracks().forEach((t) => t.stop());
