@@ -40,6 +40,37 @@ export const CallProvider = ({ children }) => {
   const iceCandidatesQueueRef = useRef([]);
   const targetUserIdRef       = useRef(null);
 
+  // ── Synthetic Silent Audio Track (used when physical mic is locked by another app/tab) ──
+  const createSilentAudioTrack = useCallback(() => {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return null;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const dst = ctx.createMediaStreamDestination();
+      const gain = ctx.createGain();
+      gain.gain.value = 0; // Complete silence
+      osc.connect(gain);
+      gain.connect(dst);
+      osc.start();
+      const track = dst.stream.getAudioTracks()[0];
+      if (track) {
+        const origStop = track.stop.bind(track);
+        track.stop = () => {
+          try {
+            osc.stop();
+            ctx.close();
+          } catch (e) {}
+          origStop();
+        };
+      }
+      return track;
+    } catch (e) {
+      console.warn("[WebRTC] Could not create silent audio track fallback:", e);
+      return null;
+    }
+  }, []);
+
   // ── Web Audio API Ringtone Generator (100% reliable across all browsers) ──
   const playChime = useCallback(() => {
     try {
@@ -132,13 +163,15 @@ export const CallProvider = ({ children }) => {
 
   const processIceQueue = async () => {
     const pc = peerConnectionRef.current;
-    if (!pc || !pc.remoteDescription) return;
-    while (iceCandidatesQueueRef.current.length > 0) {
-      const cand = iceCandidatesQueueRef.current.shift();
+    if (!pc || !pc.remoteDescription || !pc.remoteDescription.type) return;
+    const queued = [...iceCandidatesQueueRef.current];
+    iceCandidatesQueueRef.current = [];
+    for (const cand of queued) {
+      if (!cand) continue;
       try {
-        await pc.addIceCandidate(new RTCIceCandidate(cand));
+        await pc.addIceCandidate(cand);
       } catch (e) {
-        console.error("Error processing queued ICE candidate:", e);
+        console.warn("[WebRTC] Error processing queued ICE candidate:", e?.message);
       }
     }
   };
@@ -147,229 +180,226 @@ export const CallProvider = ({ children }) => {
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    let activeSocket = getSocket() || connectSocket();
+    const sock = getSocket() || connectSocket();
+    if (!sock) return;
 
-    const setupListeners = (sock) => {
-      if (!sock) return null;
-
-      const onIncoming = ({ callerId, callerName, callerAvatar, offer, callType, projectId }) => {
-        setIncomingCall({ callerId, callerName, callerAvatar, offer, callType, projectId });
-        setActivePartner({ id: callerId, name: callerName || "User", avatar: callerAvatar || "" });
-        setActiveCallType(callType || "video");
-        targetUserIdRef.current = callerId;
-        setCallState("incoming");
-        toast(`Incoming ${callType === "voice" ? "voice" : "video"} call from ${callerName || "User"}…`, { icon: "📞" });
-      };
-
-      const onAnswered = async ({ answer }) => {
-        const pc = peerConnectionRef.current;
-        if (pc && pc.signalingState === "have-local-offer") {
-          try {
-            await pc.setRemoteDescription(new RTCSessionDescription(answer));
-            await processIceQueue();
-            setCallState("connected");
-            toast.success("Call connected");
-          } catch (e) {
-            console.error("Error setting remote description on answer:", e);
-          }
-        }
-      };
-
-      const onIceCandidate = async ({ candidate }) => {
-        if (!candidate) return;
-        const pc = peerConnectionRef.current;
-        if (pc && pc.signalingState !== "closed" && pc.remoteDescription && pc.remoteDescription.type) {
-          try {
-            await pc.addIceCandidate(new RTCIceCandidate(candidate));
-          } catch (e) {
-            console.warn("Could not immediately add ICE candidate, queueing:", e);
-            iceCandidatesQueueRef.current.push(candidate);
-          }
-        } else {
-          iceCandidatesQueueRef.current.push(candidate);
-        }
-      };
-
-      const onScreenShare = ({ isSharing, presenterName: name }) => {
-        setRemoteIsSharingScreen(Boolean(isSharing));
-        setPresenterName(name || "");
-        if (isSharing) {
-          toast(`${name || "Partner"} started sharing their screen`, { icon: "🖥️" });
-        } else {
-          toast(`${name || "Partner"} stopped sharing their screen`, { icon: "🖥️" });
-        }
-      };
-
-      const onRenegotiate = async ({ senderId, offer, callType }) => {
-        const pc = peerConnectionRef.current;
-        if (!pc || pc.signalingState === "closed") return;
-        try {
-          if (callType === "video") {
-            setActiveCallType("video");
-            setIsVideoOff(true);
-            toast("Partner switched to video", { icon: "📹" });
-          }
-
-          let videoTransceiver = pc.getTransceivers().find(
-            (t) => t.receiver?.track?.kind === "video" || t.sender?.track?.kind === "video"
-          );
-          if (videoTransceiver && videoTransceiver.direction !== "sendrecv") {
-            videoTransceiver.direction = "sendrecv";
-          }
-
-          await pc.setRemoteDescription(new RTCSessionDescription(offer));
-          await processIceQueue();
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
-          const s = getSocket();
-          if (s) {
-            s.emit("call:renegotiate_answer", { targetUserId: senderId, answer, callType });
-          }
-        } catch (err) {
-          console.error("Renegotiate error on receiver:", err);
-        }
-      };
-
-      const onRenegotiateAnswer = async ({ answer, callType }) => {
-        const pc = peerConnectionRef.current;
-        if (!pc || pc.signalingState === "closed") return;
-        try {
-          if (callType === "video") {
-            setActiveCallType("video");
-          }
-          await pc.setRemoteDescription(new RTCSessionDescription(answer));
-          await processIceQueue();
-        } catch (err) {
-          console.error("Renegotiate answer error on sender:", err);
-        }
-      };
-
-      const onRejected = () => {
-        toast.error("Call was declined.");
-        endCallCleanup();
-      };
-
-      const onUnavailable = ({ message }) => {
-        toast.error(message || "User is currently offline.");
-        endCallCleanup();
-      };
-
-      const onBusy = ({ message }) => {
-        toast.error(message || "User is currently on another call.");
-        endCallCleanup();
-      };
-
-      const onEnded = ({ reason } = {}) => {
-        toast(reason ? `Call ended (${reason})` : "Call ended.");
-        endCallCleanup();
-      };
-
-      sock.on("call:incoming",            onIncoming);
-      sock.on("call:answered",            onAnswered);
-      sock.on("call:ice_candidate",       onIceCandidate);
-      sock.on("call:screen_share",        onScreenShare);
-      sock.on("call:renegotiate",         onRenegotiate);
-      sock.on("call:renegotiate_answer",  onRenegotiateAnswer);
-      sock.on("call:rejected",            onRejected);
-      sock.on("call:unavailable",         onUnavailable);
-      sock.on("call:busy",                onBusy);
-      sock.on("call:ended",               onEnded);
-
-      return () => {
-        sock.off("call:incoming",            onIncoming);
-        sock.off("call:answered",            onAnswered);
-        sock.off("call:ice_candidate",       onIceCandidate);
-        sock.off("call:screen_share",        onScreenShare);
-        sock.off("call:renegotiate",         onRenegotiate);
-        sock.off("call:renegotiate_answer",  onRenegotiateAnswer);
-        sock.off("call:rejected",            onRejected);
-        sock.off("call:unavailable",         onUnavailable);
-        sock.off("call:busy",                onBusy);
-        sock.off("call:ended",               onEnded);
-      };
+    const onIncoming = ({ callerId, callerName, callerAvatar, offer, callType, projectId }) => {
+      setIncomingCall({ callerId, callerName, callerAvatar, offer, callType, projectId });
+      setActivePartner({ id: callerId, name: callerName || "User", avatar: callerAvatar || "" });
+      setActiveCallType(callType || "video");
+      targetUserIdRef.current = callerId;
+      setCallState("incoming");
+      toast(`Incoming ${callType === "voice" ? "voice" : "video"} call from ${callerName || "User"}…`, { icon: "📞" });
     };
 
-    let cleanup = setupListeners(activeSocket);
-
-    const checkInterval = setInterval(() => {
-      const currentSocket = getSocket() || connectSocket();
-      if (currentSocket && currentSocket !== activeSocket) {
-        if (cleanup) cleanup();
-        activeSocket = currentSocket;
-        cleanup = setupListeners(activeSocket);
+    const onAnswered = async ({ answer }) => {
+      const pc = peerConnectionRef.current;
+      if (pc && pc.signalingState === "have-local-offer") {
+        try {
+          await pc.setRemoteDescription(new RTCSessionDescription(answer));
+          await processIceQueue();
+          setCallState("connected");
+          toast.success("Call connected");
+        } catch (e) {
+          console.error("Error setting remote description on answer:", e);
+        }
       }
-    }, 1000);
+    };
+
+    const onIceCandidate = async ({ candidate }) => {
+      if (!candidate) return;
+      const pc = peerConnectionRef.current;
+      if (pc && pc.signalingState !== "closed" && pc.remoteDescription && pc.remoteDescription.type) {
+        try {
+          await pc.addIceCandidate(candidate);
+        } catch (e) {
+          console.warn("Could not immediately add ICE candidate, queueing:", e?.message);
+          iceCandidatesQueueRef.current.push(candidate);
+        }
+      } else {
+        iceCandidatesQueueRef.current.push(candidate);
+      }
+    };
+
+    const onScreenShare = ({ isSharing, presenterName: name }) => {
+      setRemoteIsSharingScreen(Boolean(isSharing));
+      setPresenterName(name || "");
+      if (isSharing) {
+        toast(`${name || "Partner"} started sharing their screen`, { icon: "🖥️" });
+      } else {
+        toast(`${name || "Partner"} stopped sharing their screen`, { icon: "🖥️" });
+      }
+    };
+
+    const onRenegotiate = async ({ senderId, offer, callType }) => {
+      const pc = peerConnectionRef.current;
+      if (!pc || pc.signalingState === "closed") return;
+      try {
+        if (callType === "video") {
+          setActiveCallType("video");
+          setIsVideoOff(false);
+        }
+
+        let videoTransceiver = pc.getTransceivers().find(
+          (t) => t.receiver?.track?.kind === "video" || t.sender?.track?.kind === "video"
+        );
+        if (videoTransceiver && videoTransceiver.direction !== "sendrecv") {
+          videoTransceiver.direction = "sendrecv";
+        }
+
+        await pc.setRemoteDescription(new RTCSessionDescription(offer));
+        await processIceQueue();
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        const s = getSocket();
+        if (s) {
+          s.emit("call:renegotiate_answer", { targetUserId: senderId, answer, callType });
+        }
+      } catch (err) {
+        console.error("Renegotiate error on receiver:", err);
+      }
+    };
+
+    const onRenegotiateAnswer = async ({ answer, callType }) => {
+      const pc = peerConnectionRef.current;
+      if (!pc || pc.signalingState === "closed") return;
+      try {
+        if (callType === "video") {
+          setActiveCallType("video");
+        }
+        await pc.setRemoteDescription(new RTCSessionDescription(answer));
+        await processIceQueue();
+      } catch (err) {
+        console.error("Renegotiate answer error on sender:", err);
+      }
+    };
+
+    const onRejected = () => {
+      toast.error("Call was declined.");
+      endCallCleanup();
+    };
+
+    const onUnavailable = ({ message }) => {
+      toast.error(message || "User is currently offline.");
+      endCallCleanup();
+    };
+
+    const onBusy = ({ message }) => {
+      toast.error(message || "User is currently on another call.");
+      endCallCleanup();
+    };
+
+    const onEnded = ({ reason } = {}) => {
+      toast(reason ? `Call ended (${reason})` : "Call ended.");
+      endCallCleanup();
+    };
+
+    sock.on("call:incoming",            onIncoming);
+    sock.on("call:answered",            onAnswered);
+    sock.on("call:ice_candidate",       onIceCandidate);
+    sock.on("call:screen_share",        onScreenShare);
+    sock.on("call:renegotiate",         onRenegotiate);
+    sock.on("call:renegotiate_answer",  onRenegotiateAnswer);
+    sock.on("call:rejected",            onRejected);
+    sock.on("call:unavailable",         onUnavailable);
+    sock.on("call:busy",                onBusy);
+    sock.on("call:ended",               onEnded);
 
     return () => {
-      clearInterval(checkInterval);
-      if (cleanup) cleanup();
+      sock.off("call:incoming",            onIncoming);
+      sock.off("call:answered",            onAnswered);
+      sock.off("call:ice_candidate",       onIceCandidate);
+      sock.off("call:screen_share",        onScreenShare);
+      sock.off("call:renegotiate",         onRenegotiate);
+      sock.off("call:renegotiate_answer",  onRenegotiateAnswer);
+      sock.off("call:rejected",            onRejected);
+      sock.off("call:unavailable",         onUnavailable);
+      sock.off("call:busy",                onBusy);
+      sock.off("call:ended",               onEnded);
     };
   }, [isAuthenticated, endCallCleanup]);
 
-  // Synchronous Media stream request (preserves mobile user gestures)
+  // Resilient Media stream acquisition (independently isolates audio & video failures)
   const getMediaStream = async (requestVideo) => {
+    let videoTrack = null;
+    let audioTrack = null;
+
+    // 1. Acquire Video if requested
+    if (requestVideo) {
+      try {
+        const vStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            facingMode: "user",
+          },
+        });
+        videoTrack = vStream.getVideoTracks()[0];
+      } catch (vErr) {
+        console.warn("[Media] High-res video acquisition failed, attempting basic video:", vErr?.message);
+        try {
+          const basicVStream = await navigator.mediaDevices.getUserMedia({ video: true });
+          videoTrack = basicVStream.getVideoTracks()[0];
+        } catch (basicVErr) {
+          console.warn("[Media] Physical camera unavailable/locked, activating live virtual video stream:", basicVErr?.message);
+          try {
+            const virtualStream = createVirtualVideoStream(user?.name || "Skillora User");
+            videoTrack = virtualStream.getVideoTracks()[0];
+            toast("Camera busy in another window. Live virtual stream active.", { icon: "📹", duration: 4000 });
+          } catch (virtErr) {
+            console.error("[Media] Virtual video creation failed:", virtErr);
+          }
+        }
+      }
+    }
+
+    // 2. Acquire Audio
     try {
-      return await navigator.mediaDevices.getUserMedia({
+      const aStream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
         },
-        video: requestVideo
-          ? {
-              width: { ideal: 1280 },
-              height: { ideal: 720 },
-              facingMode: "user",
-            }
-          : false,
       });
-    } catch (err) {
-      if (requestVideo) {
-        console.warn("Primary constraints failed, falling back to simple video/audio:", err?.message);
-        try {
-          return await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-        } catch (videoErr) {
-          console.warn("Physical camera unavailable, activating live virtual video stream:", videoErr?.name, videoErr?.message);
-          let audioStream = null;
-          try {
-            audioStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-          } catch (aErr) {
-            console.warn("Audio fallback access warning:", aErr?.message);
-          }
-
-          try {
-            const virtualStream = createVirtualVideoStream(user?.name || "Skillora User");
-            const vTrack = virtualStream.getVideoTracks()[0];
-            toast("Camera busy in another tab. Live virtual stream active.", { icon: "📹", duration: 4000 });
-            if (audioStream) {
-              return new MediaStream([...audioStream.getAudioTracks(), vTrack]);
-            }
-            return new MediaStream([vTrack]);
-          } catch (vErr) {
-            console.error("Virtual video stream creation failed:", vErr);
-            if (audioStream) return audioStream;
-          }
-          return await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-        }
-      } else {
-        console.warn("Primary audio constraints failed, falling back to basic audio:", err?.message);
-        try {
-          return await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-        } catch (audioErr) {
-          console.error("Basic audio acquisition failed:", audioErr);
-          throw audioErr;
-        }
+      audioTrack = aStream.getAudioTracks()[0];
+    } catch (aErr) {
+      console.warn("[Media] Advanced audio constraints failed, attempting basic audio:", aErr?.message);
+      try {
+        const basicAStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioTrack = basicAStream.getAudioTracks()[0];
+      } catch (basicAErr) {
+        console.warn("[Media] Physical microphone locked/unavailable (NotReadableError). Using fallback silent audio track:", basicAErr?.message);
+        audioTrack = createSilentAudioTrack();
+        toast("Microphone in use by another app. Connected with muted audio.", { icon: "🎙️", duration: 4500 });
       }
     }
+
+    const tracks = [];
+    if (audioTrack) tracks.push(audioTrack);
+    if (videoTrack) tracks.push(videoTrack);
+
+    // Ensure we always return a valid MediaStream with tracks
+    if (tracks.length === 0) {
+      const silentAudio = createSilentAudioTrack();
+      if (silentAudio) tracks.push(silentAudio);
+      if (requestVideo) {
+        const virt = createVirtualVideoStream(user?.name || "Skillora User");
+        if (virt.getVideoTracks()[0]) tracks.push(virt.getVideoTracks()[0]);
+      }
+    }
+
+    return new MediaStream(tracks);
   };
 
   const bindRemoteTracks = (pc) => {
     pc.ontrack = (e) => {
       console.log("[WebRTC] ontrack received:", e.track.kind, "id:", e.track.id, "enabled:", e.track.enabled, "muted:", e.track.muted);
-      
+
       const refreshRemoteStream = () => {
         if (pc && pc.signalingState !== "closed") {
-          const remoteTracks = pc.getReceivers()
+          const remoteTracks = pc
+            .getReceivers()
             .map((r) => r.track)
             .filter((t) => t && t.readyState !== "ended");
           if (remoteTracks.length > 0) {
@@ -433,11 +463,24 @@ export const CallProvider = ({ children }) => {
       const pc = new RTCPeerConnection(rtcConfig);
       peerConnectionRef.current = pc;
 
-      pc.oniceconnectionstatechange = () => {
+      pc.oniceconnectionstatechange = async () => {
         console.log("[WebRTC] ICE connection state:", pc.iceConnectionState);
-        if (pc.iceConnectionState === "failed" && typeof pc.restartIce === "function") {
-          console.warn("[WebRTC] ICE connection failed, restarting ICE…");
-          pc.restartIce();
+        if (
+          (pc.iceConnectionState === "failed" || pc.iceConnectionState === "disconnected") &&
+          pc.signalingState === "stable"
+        ) {
+          try {
+            console.warn("[WebRTC] ICE connection dropped, initiating ICE restart…");
+            const offer = await pc.createOffer({ iceRestart: true });
+            await pc.setLocalDescription(offer);
+            const target = targetUserIdRef.current;
+            const s = getSocket();
+            if (s && target) {
+              s.emit("call:renegotiate", { targetUserId: target, offer, callType: type });
+            }
+          } catch (e) {
+            console.warn("[WebRTC] ICE restart offer creation failed:", e);
+          }
         }
       };
 
@@ -450,7 +493,10 @@ export const CallProvider = ({ children }) => {
 
       pc.onicecandidate = (e) => {
         if (e.candidate && targetUserIdRef.current) {
-          socket.emit("call:ice_candidate", { targetUserId: targetUserIdRef.current, candidate: e.candidate });
+          socket.emit("call:ice_candidate", {
+            targetUserId: targetUserIdRef.current,
+            candidate: e.candidate.toJSON ? e.candidate.toJSON() : e.candidate,
+          });
         }
       };
 
@@ -495,11 +541,24 @@ export const CallProvider = ({ children }) => {
       const pc = new RTCPeerConnection(rtcConfig);
       peerConnectionRef.current = pc;
 
-      pc.oniceconnectionstatechange = () => {
+      pc.oniceconnectionstatechange = async () => {
         console.log("[WebRTC] (Receiver) ICE connection state:", pc.iceConnectionState);
-        if (pc.iceConnectionState === "failed" && typeof pc.restartIce === "function") {
-          console.warn("[WebRTC] ICE connection failed on receiver, restarting ICE…");
-          pc.restartIce();
+        if (
+          (pc.iceConnectionState === "failed" || pc.iceConnectionState === "disconnected") &&
+          pc.signalingState === "stable"
+        ) {
+          try {
+            console.warn("[WebRTC] ICE connection dropped on receiver, attempting ICE restart…");
+            const offer = await pc.createOffer({ iceRestart: true });
+            await pc.setLocalDescription(offer);
+            const target = targetUserIdRef.current;
+            const s = getSocket();
+            if (s && target) {
+              s.emit("call:renegotiate", { targetUserId: target, offer, callType: incomingCall.callType });
+            }
+          } catch (e) {
+            console.warn("[WebRTC] ICE restart offer error on receiver:", e);
+          }
         }
       };
 
@@ -512,7 +571,10 @@ export const CallProvider = ({ children }) => {
 
       pc.onicecandidate = (e) => {
         if (e.candidate) {
-          socket.emit("call:ice_candidate", { targetUserId: incomingCall.callerId, candidate: e.candidate });
+          socket.emit("call:ice_candidate", {
+            targetUserId: incomingCall.callerId,
+            candidate: e.candidate.toJSON ? e.candidate.toJSON() : e.candidate,
+          });
         }
       };
 

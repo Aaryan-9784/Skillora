@@ -6,8 +6,26 @@ export const RTC_CONFIG = {
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
     { urls: "stun:stun2.l.google.com:19302" },
+    { urls: "stun:stun3.l.google.com:19302" },
+    { urls: "stun:stun4.l.google.com:19302" },
     { urls: "stun:stun.cloudflare.com:3478" },
     { urls: "stun:stun.relay.metered.ca:80" },
+    // Public fallback TURN servers (OpenRelay / Metered)
+    {
+      urls: "turn:standard.relay.metered.ca:80",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+    {
+      urls: "turn:standard.relay.metered.ca:443",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+    {
+      urls: "turn:standard.relay.metered.ca:443?transport=tcp",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
     ...(import.meta.env.VITE_TURN_SERVER_URL
       ? [
           {
@@ -18,7 +36,7 @@ export const RTC_CONFIG = {
         ]
       : []),
   ],
-  iceCandidatePoolSize: 2,
+  iceCandidatePoolSize: 10,
 };
 
 let cachedConfig = null;
@@ -32,18 +50,16 @@ export const getResolvedRTCConfig = async () => {
   try {
     const { data } = await api.get("/chat/ice-servers");
     if (data?.data?.iceServers && Array.isArray(data.data.iceServers) && data.data.iceServers.length > 0) {
-      const hasTurn = data.data.iceServers.some((s) => {
-        const u = Array.isArray(s.urls) ? s.urls.join(" ") : s.urls || "";
-        return u.includes("turn:");
-      });
-      if (hasTurn) {
-        cachedConfig = {
-          ...RTC_CONFIG,
-          iceServers: data.data.iceServers,
-        };
-        lastFetchTime = now;
-        return cachedConfig;
-      }
+      cachedConfig = {
+        ...RTC_CONFIG,
+        iceServers: [
+          ...RTC_CONFIG.iceServers.filter((s) => typeof s.urls === "string" && s.urls.startsWith("stun:")),
+          ...data.data.iceServers,
+        ],
+        iceCandidatePoolSize: 10,
+      };
+      lastFetchTime = now;
+      return cachedConfig;
     }
   } catch (err) {
     console.warn("[WebRTC] Backend ICE config fetch warning:", err?.message);
@@ -60,11 +76,10 @@ export const getResolvedRTCConfig = async () => {
         cachedConfig = {
           ...RTC_CONFIG,
           iceServers: [
-            { urls: "stun:stun.l.google.com:19302" },
-            { urls: "stun:stun1.l.google.com:19302" },
-            { urls: "stun:stun.cloudflare.com:3478" },
+            ...RTC_CONFIG.iceServers.filter((s) => typeof s.urls === "string" && s.urls.startsWith("stun:")),
             ...meteredServers,
           ],
+          iceCandidatePoolSize: 10,
         };
         lastFetchTime = now;
         console.log("[WebRTC] Loaded active Metered TURN relay endpoints successfully");
@@ -77,3 +92,4 @@ export const getResolvedRTCConfig = async () => {
 
   return RTC_CONFIG;
 };
+

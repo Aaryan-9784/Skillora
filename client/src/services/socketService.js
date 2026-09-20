@@ -9,7 +9,7 @@ export const connectSocket = () => {
   if (socket) {
     if (socket.connected) return socket;
     if (token) socket.auth = { token };
-    if (!socket.connecting) {
+    if (!socket.connected && !socket.active) {
       socket.connect();
     }
     return socket;
@@ -19,7 +19,7 @@ export const connectSocket = () => {
     auth: { token },
     withCredentials: true,
     transports: ["websocket", "polling"],
-    upgrade: false,
+    upgrade: true,
     reconnection: true,
     reconnectionAttempts: Infinity,
     reconnectionDelay: 1000,
@@ -27,9 +27,9 @@ export const connectSocket = () => {
     timeout: 20000,
   });
 
-  socket.off("connect").on("connect", () => console.log("[socket] connected:", socket.id));
-  socket.off("disconnect").on("disconnect", (reason) => console.log("[socket] disconnected:", reason));
-  socket.off("connect_error").on("connect_error", (e) => console.warn("[socket] error:", e.message));
+  socket.on("connect", () => console.log("[socket] connected:", socket.id));
+  socket.on("disconnect", (reason) => console.log("[socket] disconnected:", reason));
+  socket.on("connect_error", (e) => console.warn("[socket] error:", e.message));
 
   return socket;
 };
@@ -54,8 +54,9 @@ export const disconnectSocket = () => {
 };
 
 export const getSocket = () => {
-  if (!socket || !socket.connected) {
-    connectSocket();
+  if (!socket) {
+    return connectSocket();
   }
   return socket;
 };
+
