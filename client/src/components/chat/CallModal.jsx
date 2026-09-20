@@ -52,6 +52,7 @@ const CallModal = ({
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [videoFitMode, setVideoFitMode] = useState("cover"); // "cover" | "contain"
+  const [isRemoteVideoLive, setIsRemoteVideoLive] = useState(false);
 
   // Fullscreen toggle handler
   const toggleFullscreen = () => {
@@ -71,6 +72,37 @@ const CallModal = ({
     document.addEventListener("fullscreenchange", handleFsChange);
     return () => document.removeEventListener("fullscreenchange", handleFsChange);
   }, []);
+
+  // Track live status of remote video stream
+  useEffect(() => {
+    if (!remoteStream) {
+      setIsRemoteVideoLive(false);
+      return;
+    }
+
+    const videoTracks = remoteStream.getVideoTracks();
+    if (videoTracks.length === 0) {
+      setIsRemoteVideoLive(false);
+      return;
+    }
+
+    const vTrack = videoTracks[0];
+    const updateLiveState = () => {
+      const isLive = vTrack.readyState === "live" && vTrack.enabled && !vTrack.muted;
+      setIsRemoteVideoLive(isLive);
+    };
+
+    updateLiveState();
+    vTrack.addEventListener("mute", updateLiveState);
+    vTrack.addEventListener("unmute", updateLiveState);
+    vTrack.addEventListener("ended", updateLiveState);
+
+    return () => {
+      vTrack.removeEventListener("mute", updateLiveState);
+      vTrack.removeEventListener("unmute", updateLiveState);
+      vTrack.removeEventListener("ended", updateLiveState);
+    };
+  }, [remoteStream]);
 
   // Local webcam video sync
   useEffect(() => {
@@ -129,6 +161,9 @@ const CallModal = ({
       }
       vEl.onloadedmetadata = () => {
         vEl.play().catch(() => {});
+        if (vEl.videoWidth > 0 && vEl.videoHeight > 0) {
+          setIsRemoteVideoLive(true);
+        }
       };
       vEl.play().catch((err) => {
         if (err.name !== "AbortError") {
@@ -185,6 +220,13 @@ const CallModal = ({
         aEl.srcObject = remoteStream;
         aEl.play().catch(() => {});
       }
+      const videoTracks = remoteStream.getVideoTracks();
+      if (videoTracks.length > 0) {
+        const vt = videoTracks[0];
+        setIsRemoteVideoLive(vt.readyState === "live" && vt.enabled && !vt.muted);
+      } else {
+        setIsRemoteVideoLive(false);
+      }
     };
 
     remoteStream.addEventListener("addtrack", handleTrackUpdate);
@@ -203,13 +245,8 @@ const CallModal = ({
   const formatTime = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
   const isVoiceCall = callType === "voice";
 
-  // Check if remote stream has active video track
-  const hasRemoteVideo = Boolean(
-    remoteStream &&
-    remoteStream.getVideoTracks().length > 0 &&
-    remoteStream.getVideoTracks().some((t) => t.readyState !== "ended")
-  );
-
+  // Check if remote stream has active video track that is unmuted & enabled
+  const hasRemoteVideo = isRemoteVideoLive && !isVoiceCall;
   const isAnyScreenSharing = isScreenSharing || remoteIsSharingScreen;
 
   const handleAccept = () => {
