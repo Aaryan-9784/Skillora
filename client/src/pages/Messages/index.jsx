@@ -754,6 +754,7 @@ const Messages = () => {
               {/* Messages Container Area */}
               <div className="relative z-0 flex-1 overflow-y-auto p-4 space-y-4 bg-[#0b141a]/40 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                 {(() => {
+                  const q = searchQuery.trim().toLowerCase();
                   const displayableMessages = messages.filter((msg) => {
                     const isSystemEvent =
                       msg.type === "system_event" ||
@@ -763,10 +764,29 @@ const Messages = () => {
                         msg.content.includes("Project workspace activated") ||
                         msg.content.startsWith("🎉 Project workspace")
                       ));
-                    return !isSystemEvent;
+                    if (isSystemEvent) return false;
+                    if (!q) return true;
+                    const contentMatch = msg.content && msg.content.toLowerCase().includes(q);
+                    const attachmentMatch = msg.attachments && msg.attachments.some((att) =>
+                      (att.fileName || att.filename || att.fileType || "").toLowerCase().includes(q)
+                    );
+                    return Boolean(contentMatch || attachmentMatch);
                   });
 
                   if (displayableMessages.length === 0) {
+                    if (q) {
+                      return (
+                        <div className="h-full flex flex-col items-center justify-center text-center p-6">
+                          <div className="w-12 h-12 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-3 shadow-lg">
+                            <Search size={22} />
+                          </div>
+                          <h3 className="text-sm font-bold text-white mb-1">No Messages Found</h3>
+                          <p className="text-xs text-slate-400 max-w-sm leading-relaxed">
+                            No messages matching &ldquo;{searchQuery}&rdquo; in this conversation.
+                          </p>
+                        </div>
+                      );
+                    }
                     return (
                       <div className="h-full flex flex-col items-center justify-center text-center p-6">
                         <div className="w-12 h-12 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-3 shadow-lg">
