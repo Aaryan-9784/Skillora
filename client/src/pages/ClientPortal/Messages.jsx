@@ -616,7 +616,7 @@ const ClientMessages = () => {
                   <div className="relative" ref={moreMenuRef}>
                     <button
                       onClick={() => setMoreMenuOpen(prev => !prev)}
-                      className={`p-2.5 rounded-full transition-colors cursor-pointer ${moreMenuOpen ? "bg-white/15 text-white" : "hover:bg-white/10 text-slate-300 hover:text-white"}`}
+                      className={`p-2.5 rounded-full transition-colors cursor-pointer ${moreMenuOpen ? "bg-white/15 text-white shadow-inner" : "hover:bg-white/10 text-slate-300 hover:text-white"}`}
                       title="More options"
                     >
                       <MoreVertical size={18} />
@@ -625,41 +625,68 @@ const ClientMessages = () => {
                     <AnimatePresence>
                       {moreMenuOpen && (
                         <motion.div
-                          initial={{ opacity: 0, scale: 0.95, y: 4 }}
+                          initial={{ opacity: 0, scale: 0.95, y: 6 }}
                           animate={{ opacity: 1, scale: 1, y: 0 }}
-                          exit={{ opacity: 0, scale: 0.95, y: 4 }}
-                          transition={{ duration: 0.15 }}
-                          className="absolute right-0 top-12 z-50 w-56 bg-[#182229] border border-slate-700/80 rounded-2xl shadow-2xl p-1.5 ring-1 ring-black/40"
+                          exit={{ opacity: 0, scale: 0.95, y: 6 }}
+                          transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+                          className="absolute right-0 top-12 z-50 w-64 bg-[#0f172a]/95 border border-slate-700/60 rounded-2xl shadow-2xl p-2 backdrop-blur-2xl ring-1 ring-white/10 overflow-hidden"
                         >
+                          <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 pointer-events-none" />
+
                           <button
                             onClick={() => { setMoreMenuOpen(false); setShowSchedule(true); }}
-                            className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-200 hover:bg-white/10 rounded-xl transition-all text-left cursor-pointer"
+                            className="w-full flex items-center gap-3 px-3 py-2 text-slate-200 hover:bg-white/10 rounded-xl transition-all text-left cursor-pointer group"
                           >
-                            <Calendar size={15} className="text-indigo-400" />
-                            <span>Schedule Meeting</span>
+                            <div className="w-7 h-7 rounded-lg bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform shrink-0">
+                              <Calendar size={14} />
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-xs font-semibold text-slate-200">Schedule Meeting</span>
+                              <span className="text-[10px] text-slate-400 truncate">Book calendar session</span>
+                            </div>
                           </button>
+
                           <button
                             onClick={() => { setMoreMenuOpen(false); setShowVoice(true); }}
-                            className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-200 hover:bg-white/10 rounded-xl transition-all text-left cursor-pointer"
+                            className="w-full flex items-center gap-3 px-3 py-2 text-slate-200 hover:bg-white/10 rounded-xl transition-all text-left cursor-pointer group"
                           >
-                            <Mic size={15} className="text-purple-400" />
-                            <span>Voice Note</span>
+                            <div className="w-7 h-7 rounded-lg bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform shrink-0">
+                              <Mic size={14} />
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-xs font-semibold text-slate-200">Voice Note</span>
+                              <span className="text-[10px] text-slate-400 truncate">Record audio clip</span>
+                            </div>
                           </button>
+
                           <button
                             onClick={() => { setMoreMenuOpen(false); fileInputRef.current?.click(); }}
-                            className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-200 hover:bg-white/10 rounded-xl transition-all text-left cursor-pointer"
+                            className="w-full flex items-center gap-3 px-3 py-2 text-slate-200 hover:bg-white/10 rounded-xl transition-all text-left cursor-pointer group"
                           >
-                            <Paperclip size={15} className="text-cyan-400" />
-                            <span>Share Attachment</span>
+                            <div className="w-7 h-7 rounded-lg bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform shrink-0">
+                              <Paperclip size={14} />
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-xs font-semibold text-slate-200">Share Attachment</span>
+                              <span className="text-[10px] text-slate-400 truncate">Send documents or files</span>
+                            </div>
                           </button>
-                          <div className="h-px bg-white/10 my-1" />
+
+                          <div className="h-px bg-white/10 my-1.5" />
+
                           <button
                             onClick={() => { setMoreMenuOpen(false); fetchProjectConversation(); toast.success("Refreshed messages"); }}
-                            className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-200 hover:bg-white/10 rounded-xl transition-all text-left cursor-pointer"
+                            className="w-full flex items-center gap-3 px-3 py-2 text-slate-200 hover:bg-white/10 rounded-xl transition-all text-left cursor-pointer group"
                           >
-                            <RefreshCw size={15} className="text-emerald-400" />
-                            <span>Refresh Chat</span>
+                            <div className="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform shrink-0">
+                              <RefreshCw size={14} />
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-xs font-semibold text-slate-200">Refresh Chat</span>
+                              <span className="text-[10px] text-slate-400 truncate">Sync recent history</span>
+                            </div>
                           </button>
+
                           {activeConversation?._id && (
                             <button
                               onClick={() => {
@@ -669,10 +696,15 @@ const ClientMessages = () => {
                                   name: partner?.name || "this connection",
                                 });
                               }}
-                              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-red-400 hover:bg-red-500/10 rounded-xl transition-all text-left cursor-pointer"
+                              className="w-full flex items-center gap-3 px-3 py-2 text-red-400 hover:bg-red-500/10 rounded-xl transition-all text-left cursor-pointer group"
                             >
-                              <Trash2 size={15} />
-                              <span>Remove Connection (Both Sides)</span>
+                              <div className="w-7 h-7 rounded-lg bg-red-500/15 border border-red-500/30 flex items-center justify-center text-red-400 group-hover:scale-110 transition-transform shrink-0">
+                                <Trash2 size={14} />
+                              </div>
+                              <div className="flex flex-col min-w-0">
+                                <span className="text-xs font-semibold text-red-400">Remove Connection</span>
+                                <span className="text-[10px] text-red-400/70 truncate">Delete for both sides</span>
+                              </div>
                             </button>
                           )}
                         </motion.div>
@@ -682,25 +714,46 @@ const ClientMessages = () => {
                 </div>
               </div>
 
-              {/* Expandable Search Input Bar */}
+              {/* Expandable Glassmorphic Search Input Bar */}
               <AnimatePresence>
                 {searchOpen && (
-                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                    className="relative z-20 px-4 py-2 bg-[#182229] border-b border-slate-800 flex items-center gap-2 overflow-hidden shrink-0">
-                    <Search size={15} className="text-slate-400 shrink-0" />
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.18 }}
+                    className="relative z-20 px-4 py-2.5 bg-[#0f172a]/95 border-b border-indigo-500/20 backdrop-blur-xl flex items-center gap-3 overflow-hidden shrink-0 shadow-lg"
+                  >
+                    <div className="w-6 h-6 rounded-md bg-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0">
+                      <Search size={13} />
+                    </div>
                     <input
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search in conversation..."
+                      placeholder="Search messages, files, keywords..."
                       autoFocus
                       className="flex-1 bg-transparent text-xs text-white placeholder-slate-400 outline-none"
                     />
-                    {searchQuery && (
-                      <button onClick={() => setSearchQuery("")} className="text-slate-400 hover:text-white p-1 cursor-pointer">
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {searchQuery && (
+                        <button
+                          onClick={() => setSearchQuery("")}
+                          className="px-1.5 py-0.5 rounded text-[11px] text-slate-400 hover:text-white hover:bg-white/10 cursor-pointer"
+                          title="Clear search input"
+                        >
+                          Clear
+                        </button>
+                      )}
+                      <button
+                        onClick={() => { setSearchOpen(false); setSearchQuery(""); }}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-all cursor-pointer flex items-center gap-1"
+                        title="Close search bar (ESC)"
+                      >
                         <X size={14} />
+                        <span className="text-[10px] font-semibold text-slate-500">Close</span>
                       </button>
-                    )}
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
