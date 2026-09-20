@@ -104,29 +104,7 @@ const ClientMessages = () => {
 
   const presence = getContactPresence(partner);
 
-  const dbParticipants = (activeConversation?.participants || [])
-    .filter((p) => {
-      const pId = (p._id || p.id || (typeof p === "string" ? p : "")).toString();
-      const myId = (user?._id || user?.id || "").toString();
-      return pId && myId && pId !== myId;
-    })
-    .map((p) => {
-      const id = (p._id || p.id || (typeof p === "string" ? p : "")).toString();
-      const pres = getContactPresence(p);
-      return {
-        id,
-        name: p.name || p.email || "Freelancer Lead",
-        role: p.role === "freelancer" ? "Freelancer Lead" : "Project Team",
-        avatar: p.avatar || "",
-        isOnline: pres.isOnline,
-        lastSeen: pres.lastSeen,
-        lastMsg: messages.length > 0 ? (messages[messages.length - 1].content || "Sent an attachment") : "Project conversation ready",
-        time: messages.length > 0 ? relativeTime(messages[messages.length - 1].createdAt) : "Just now",
-        badge: "Team",
-      };
-    });
-
-  // Combine conversations from database and activeConversation
+  // Only display real conversations from database
   const contactsMap = new Map();
   (conversations || []).forEach((conv) => {
     const otherPart = (conv.participants || []).find((p) => {
@@ -153,10 +131,6 @@ const ClientMessages = () => {
     }
   });
 
-  (dbParticipants || []).forEach((p) => {
-    if (!contactsMap.has(p.id)) contactsMap.set(p.id, p);
-  });
-
   const contactsList = Array.from(contactsMap.values());
 
   const filteredContacts = contactsList.filter(c =>
@@ -180,8 +154,13 @@ const ClientMessages = () => {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
-    fetchUserConversations().catch(() => {});
-    fetchProjectConversation().catch(() => {});
+    fetchUserConversations().then((convs) => {
+      if (convs && convs.length > 0) {
+        setConversation(convs[0]);
+      } else {
+        setConversation(null);
+      }
+    }).catch(() => {});
     const s = getSocket();
     if (s && s.connected) {
       s.emit("presence:query");

@@ -118,6 +118,10 @@ const getProjectConversation = asyncHandler(async (req, res) => {
   let conversation = targetProjectId ? await Conversation.findOne({ projectId: targetProjectId }) : null;
 
   if (!conversation) {
+    if (projectId === "active" || !projectId) {
+      return ApiResponse.success(res, "No active conversation found", { conversation: null });
+    }
+
     const participants = [req.user._id];
     if (project?.assignedFreelancer) {
       const freelancerId = project.assignedFreelancer._id || project.assignedFreelancer;

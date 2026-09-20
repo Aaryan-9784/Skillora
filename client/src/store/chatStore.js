@@ -47,7 +47,10 @@ const useChatStore = create((set, get) => ({
     try {
       const url = projectId ? `/chat/project/${projectId}` : `/chat/project/active`;
       const { data } = await api.get(url);
-      const conv = data.data.conversation;
+      const conv = data.data?.conversation || null;
+      if (!conv) {
+        return null;
+      }
       const socket = getSocket();
       if (socket && conv?._id) {
         socket.emit("chat:join", { conversationId: conv._id });
@@ -57,6 +60,9 @@ const useChatStore = create((set, get) => ({
         get().syncParticipantsPresence(conv.participants);
       }
       if (conv?._id) get().fetchMessages(conv._id);
+      return conv;
+    } catch {
+      return null;
     } finally {
       set({ loading: false });
     }

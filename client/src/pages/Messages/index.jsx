@@ -107,49 +107,7 @@ const Messages = () => {
 
   const presence = getContactPresence(partner);
 
-  // Participants from active project conversation (e.g. approved proposals / client projects)
-  const convParticipants = (activeConversation?.participants || [])
-    .filter((p) => {
-      const pId = (p._id || p.id || (typeof p === "string" ? p : "")).toString();
-      const myId = (user?._id || user?.id || "").toString();
-      return pId && myId && pId !== myId;
-    })
-    .map((p) => {
-      const id = (p._id || p.id || (typeof p === "string" ? p : "")).toString();
-      const pres = getContactPresence(p);
-      return {
-        id,
-        email: p.email || "",
-        name: p.name || p.email || "Client Contact",
-        role: p.role === "client" ? "Client / Project Owner" : (p.company || "Client"),
-        avatar: p.avatar || "",
-        isOnline: pres.isOnline,
-        lastSeen: pres.lastSeen,
-        lastMsg: messages.length > 0 ? (messages[messages.length - 1].content || "Sent an attachment") : (activeConversation?.lastMessage?.text || "Project conversation ready"),
-        time: messages.length > 0 ? relativeTime(messages[messages.length - 1].createdAt) : relativeTime(activeConversation?.updatedAt),
-        badge: "Client",
-      };
-    });
-
-  // CRM client contacts fallback
-  const crmContacts = (clients || []).map((c) => {
-    const id = (c._id || c.id || "").toString();
-    const pres = getContactPresence(c);
-    return {
-      id,
-      email: c.email || "",
-      name: c.name || c.company || "Client Contact",
-      role: c.company || c.email || "Client",
-      avatar: c.avatar || "",
-      isOnline: pres.isOnline,
-      lastSeen: pres.lastSeen,
-      lastMsg: "Project conversation ready",
-      time: relativeTime(c.updatedAt || c.createdAt),
-      badge: "Client",
-    };
-  });
-
-  // Combine database conversations, active participants, and CRM contacts
+  // Combine only existing database conversations
   const contactsMap = new Map();
 
   (conversations || []).forEach((conv) => {
@@ -178,16 +136,6 @@ const Messages = () => {
     }
   });
 
-  (convParticipants || []).forEach((p) => {
-    if (!contactsMap.has(p.id)) contactsMap.set(p.id, p);
-  });
-
-  (crmContacts || []).forEach((c) => {
-    if (!contactsMap.has(c.id)) {
-      contactsMap.set(c.id, c);
-    }
-  });
-
   const contactsList = Array.from(contactsMap.values());
 
   const filteredContacts = contactsList.filter(c =>
@@ -209,9 +157,15 @@ const Messages = () => {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
-    if (fetchUserConversations) fetchUserConversations().catch(() => {});
-    fetchProjectConversation().catch(() => {});
-    fetchClients().catch(() => {});
+    if (fetchUserConversations) {
+      fetchUserConversations().then((convs) => {
+        if (convs && convs.length > 0) {
+          setConversation(convs[0]);
+        } else {
+          setConversation(null);
+        }
+      }).catch(() => {});
+    }
     const s = getSocket();
     if (s && s.connected) s.emit("presence:query");
   }, []);
