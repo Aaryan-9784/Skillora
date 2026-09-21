@@ -3,37 +3,59 @@
 # ⚡ Skillora
 ### Enterprise-Grade Freelancer Operating System, Client Collaboration Portal & Marketplace
 
-[![Production Status](https://img.shields.io/badge/Status-Production%20Ready-22C55E?style=for-the-badge&logo=rocket&logoColor=white)](https://github.com/Aaryan-9784/Skillora)
+[![Live Frontend App](https://img.shields.io/badge/Live%20App-skillora--gamma.vercel.app-black?style=for-the-badge&logo=vercel&logoColor=white)](https://skillora-gamma.vercel.app)
+[![Live Backend API](https://img.shields.io/badge/Backend%20API-skillora--hyf8.onrender.com-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://skillora-hyf8.onrender.com)
+[![Production Status](https://img.shields.io/badge/Status-Production%20Ready-22C55E?style=for-the-badge&logo=rocket&logoColor=white)](https://skillora-gamma.vercel.app)
 [![Release](https://img.shields.io/badge/Release-v1.0.0-6366F1?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Aaryan-9784/Skillora/releases)
 [![License](https://img.shields.io/badge/License-MIT-3B82F6?style=for-the-badge)](LICENSE)
-[![Node](https://img.shields.io/badge/Node.js-%3E%3D18.0.0-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
-[![React](https://img.shields.io/badge/Frontend-React%2018%20%7C%20Vite%205-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
-[![Express](https://img.shields.io/badge/Backend-Express.js-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/)
-[![MongoDB](https://img.shields.io/badge/Database-MongoDB%208-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
-[![Socket.io](https://img.shields.io/badge/Realtime-Socket.io%20%2B%20WebRTC-010101?style=for-the-badge&logo=socketdotio&logoColor=white)](https://socket.io/)
-[![Gemini AI](https://img.shields.io/badge/AI-Google%20Gemini-FF6B35?style=for-the-badge&logo=googlegemini&logoColor=white)](https://ai.google.dev/)
-[![Razorpay](https://img.shields.io/badge/Payments-Razorpay%20Escrow-0C2340?style=for-the-badge&logo=razorpay&logoColor=white)](https://razorpay.com/)
+
+<br/>
+
+[![React](https://img.shields.io/badge/Frontend-React%2018%20%7C%20Vite%205-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
+[![Express](https://img.shields.io/badge/Backend-Express.js-000000?style=flat-square&logo=express&logoColor=white)](https://expressjs.com/)
+[![MongoDB](https://img.shields.io/badge/Database-MongoDB%208%20Atlas-47A248?style=flat-square&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+[![Socket.io](https://img.shields.io/badge/Realtime-Socket.io%20%2B%20WebRTC-010101?style=flat-square&logo=socketdotio&logoColor=white)](https://socket.io/)
+[![Gemini AI](https://img.shields.io/badge/AI-Google%20Gemini%201.5-FF6B35?style=flat-square&logo=googlegemini&logoColor=white)](https://ai.google.dev/)
+[![Razorpay](https://img.shields.io/badge/Payments-Razorpay%20Escrow-0C2340?style=flat-square&logo=razorpay&logoColor=white)](https://razorpay.com/)
+[![Tailwind CSS](https://img.shields.io/badge/Styling-Tailwind%20CSS%203-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+
+<br/>
 
 <p align="center">
   <b>Skillora</b> is a next-generation SaaS ecosystem that unifies project execution, client lifecycle management, milestone escrow payments, peer-to-peer WebRTC video collaboration, and generative AI copilot assistance into a single, high-performance platform.
 </p>
 
 <p align="center">
+  <a href="https://skillora-gamma.vercel.app" target="_blank"><strong>🚀 Launch Live App</strong></a> •
+  <a href="https://skillora-hyf8.onrender.com/health" target="_blank"><strong>📡 API Health Check</strong></a> •
+  <a href="#-live-deployments--demo"><strong>Live Links</strong></a> •
   <a href="#-quick-start"><strong>Quick Start</strong></a> •
   <a href="#-system-architecture"><strong>Architecture</strong></a> •
   <a href="#-key-features"><strong>Features</strong></a> •
-  <a href="#-security-architecture"><strong>Security</strong></a> •
-  <a href="#-complete-api-reference"><strong>API Reference</strong></a> •
-  <a href="#-production-deployment"><strong>Deployment</strong></a> •
-  <a href="#-contributing"><strong>Contributing</strong></a>
+  <a href="#-complete-api-reference"><strong>API Reference</strong></a>
 </p>
 
 </div>
 
 ---
 
+## 🌐 Live Deployments & Demo
+
+| Service | Host Provider | Direct URL | Status | Description |
+| :--- | :--- | :--- | :---: | :--- |
+| **Frontend Web App** | **Vercel** | [https://skillora-gamma.vercel.app](https://skillora-gamma.vercel.app) | ![Vercel](https://img.shields.io/badge/Ready-22C55E?style=flat-square&logo=vercel&logoColor=white) | Production Single Page Application (React 18 + Vite 5) |
+| **Backend API Gateway** | **Render** | [https://skillora-hyf8.onrender.com](https://skillora-hyf8.onrender.com) | ![Render](https://img.shields.io/badge/Active-22C55E?style=flat-square&logo=render&logoColor=white) | Enterprise Express REST API & Socket.io Real-Time Engine |
+| **API Health Endpoint** | **Render** | [https://skillora-hyf8.onrender.com/health](https://skillora-hyf8.onrender.com/health) | ![Health](https://img.shields.io/badge/200%20OK-22C55E?style=flat-square) | Live telemetry and cluster uptime verification |
+| **Alternate Preview** | **Vercel** | [https://skillora-kjvtvxfrq-aryan-e7c5.vercel.app](https://skillora-kjvtvxfrq-aryan-e7c5.vercel.app) | ![Preview](https://img.shields.io/badge/Preview-6366F1?style=flat-square) | Deployment preview build |
+
+> [!TIP]
+> **Live Demo Walkthrough**: Feel free to register as a **Freelancer** or **Client**, or switch between portals in real-time. Test live task drag-and-drop, generate proposals with Google Gemini AI, test WebRTC video conferencing, or inspect milestone escrow workflows.
+
+---
+
 ## 📑 Table of Contents
 
+- [Live Deployments & Demo](#-live-deployments--demo)
 - [Executive Overview](#-executive-overview)
 - [Key Features](#-key-features)
   - [1. Freelancer OS (`/dashboard`)](#1--freelancer-os-dashboard)
@@ -130,7 +152,7 @@ Traditional freelancer workflows require stitching together disjointed point sol
 
 ```mermaid
 graph TB
-    subgraph ClientLayer["🖥 Client Layer (Vite 5 + React 18)"]
+    subgraph ClientLayer["🖥 Client Layer (Vite 5 + React 18) - Hosted on Vercel"]
         SPA["Single Page App (React 18)"]
         ZStore["Zustand State Stores (13 Stores)"]
         TokenCache["In-Memory Token Cache (tokenStore.js)"]
@@ -138,7 +160,7 @@ graph TB
         SocketClient["Socket.io Client"]
     end
 
-    subgraph GatewayLayer["🛡 Security & Gateway Layer"]
+    subgraph GatewayLayer["🛡 Security & Gateway Layer - Hosted on Render"]
         Helmet["Helmet Security Headers"]
         RateLimit["Rate Limiting (express-rate-limit)"]
         Sanitize["Sanitizers (Mongo Sanitize, XSS Clean)"]
@@ -183,7 +205,7 @@ sequenceDiagram
     autonumber
     actor Freelancer as 💼 Freelancer
     actor Client as 👥 Client
-    participant Server as ⚡ Skillora Server (Socket.io)
+    participant Server as ⚡ Skillora Server (Socket.io on Render)
     participant DB as 🗄 MongoDB Atlas
 
     Freelancer->>Server: Emit 'project:task_update' {taskId, status: 'done'}
@@ -280,6 +302,7 @@ Skillora utilizes 20 relational-modeled MongoDB schemas powered by Mongoose:
 Frontend:  React 18  •  Vite 5  •  Tailwind CSS 3  •  Zustand  •  Framer Motion  •  @dnd-kit  •  Recharts
 Backend:   Node.js   •  Express.js  •  Socket.io 4  •  Passport.js  •  JWT  •  Mongoose 8  •  Joi
 Data/AI:   MongoDB Atlas  •  Redis  •  Google Gemini 1.5  •  Razorpay SDK  •  Cloudinary CDN  •  Nodemailer
+Hosting:   Vercel (Client SPA)  •  Render (Backend Web Service)  •  MongoDB Atlas (Cloud Cluster)
 ```
 
 ### Frontend Dependencies
@@ -368,10 +391,15 @@ npm install
 cp .env.example .env
 ```
 
-3. Verify `client/.env` points to the local backend:
+3. Configure `client/.env`:
 ```env
+# For local backend:
 VITE_SERVER_URL=http://localhost:5000
 VITE_API_URL=/api
+
+# Or point directly to the live deployed backend:
+# VITE_SERVER_URL=https://skillora-hyf8.onrender.com
+# VITE_API_URL=https://skillora-hyf8.onrender.com/api
 ```
 
 4. Start the Vite development server:
@@ -401,8 +429,8 @@ node scripts/createAdmin.js
 # ── Server Configuration ──────────────────────────────────────
 NODE_ENV=development                       # 'development' or 'production'
 PORT=5000                                  # Server listening port
-SERVER_URL=http://localhost:5000           # Public URL of the backend
-CLIENT_URL=http://localhost:5173           # Frontend origin for CORS policy
+SERVER_URL=http://localhost:5000           # Public URL of the backend (e.g. https://skillora-hyf8.onrender.com)
+CLIENT_URL=http://localhost:5173           # Frontend origin for CORS policy (e.g. https://skillora-gamma.vercel.app)
 
 # ── Database ──────────────────────────────────────────────────
 MONGO_URI=mongodb+srv://<user>:<pwd>@<cluster>.mongodb.net/skillora  # MongoDB Atlas connection string
@@ -458,8 +486,8 @@ VITE_SERVER_URL=http://localhost:5000
 VITE_API_URL=/api
 
 # ── Production (Vercel) ───────────────────────────────────────
-# VITE_SERVER_URL=https://skillora-api.onrender.com
-# VITE_API_URL=https://skillora-api.onrender.com/api
+VITE_SERVER_URL=https://skillora-hyf8.onrender.com
+VITE_API_URL=https://skillora-hyf8.onrender.com/api
 ```
 
 ---
@@ -609,34 +637,40 @@ VITE_API_URL=/api
 
 ### Frontend: Vercel
 
-The frontend is optimized for zero-config deployment on [Vercel](https://vercel.com):
+The frontend is deployed live on [Vercel](https://skillora-gamma.vercel.app):
 
-1. Connect your GitHub repository to Vercel.
-2. Configure build settings:
+1. Repository: [`Aaryan-9784/Skillora`](https://github.com/Aaryan-9784/Skillora)
+2. Build Settings:
    - **Framework Preset**: `Vite`
    - **Root Directory**: `client`
    - **Build Command**: `npm run build`
    - **Output Directory**: `dist`
-3. Add Environment Variables:
-   - `VITE_SERVER_URL`: `https://your-skillora-api.onrender.com`
-   - `VITE_API_URL`: `https://your-skillora-api.onrender.com/api`
+3. Environment Variables:
+   - `VITE_SERVER_URL`: `https://skillora-hyf8.onrender.com`
+   - `VITE_API_URL`: `https://skillora-hyf8.onrender.com/api`
 4. The included [`vercel.json`](file:///d:/Projects/Skillora/vercel.json) handles SPA client-side routing rewrites and cache-control headers automatically.
 
 ### Backend: Render / Docker
 
-The backend includes a battle-tested [`render.yaml`](file:///d:/Projects/Skillora/render.yaml) Infrastructure-as-Code blueprint:
+The backend is deployed live on [Render Web Service](https://skillora-hyf8.onrender.com) using [`render.yaml`](file:///d:/Projects/Skillora/render.yaml):
 
-1. Create a new Web Service on [Render](https://render.com) using your repository.
-2. Select **Blueprint** or configure manually:
+1. **Service ID**: `srv-dakm4nnqj5pc73bmdhlg`
+2. **Environment**: `Node`
+3. **Build & Start Commands**:
    - **Root Directory**: `server`
-   - **Runtime**: `Node`
    - **Build Command**: `npm install`
    - **Start Command**: `npm start`
    - **Health Check Path**: `/health`
-3. Populate the required production environment variables matching your MongoDB Atlas, Gemini AI, Razorpay, Cloudinary, and SMTP credentials.
+4. Production Environment Variables:
+   - `CLIENT_URL`: `https://skillora-gamma.vercel.app`
+   - `SERVER_URL`: `https://skillora-hyf8.onrender.com`
+   - Plus your credentials for MongoDB Atlas, Google Gemini, Razorpay, Cloudinary, and SMTP.
 
 ### Production Checklist
 
+- [x] Deployed Frontend on Vercel at [https://skillora-gamma.vercel.app](https://skillora-gamma.vercel.app)
+- [x] Deployed Backend on Render at [https://skillora-hyf8.onrender.com](https://skillora-hyf8.onrender.com)
+- [x] Verified `/health` endpoint returning `200 OK`
 - [ ] Set `NODE_ENV=production` on backend server.
 - [ ] Replace all JWT secrets with cryptographically random 64-character strings.
 - [ ] Enable IP Access List whitelist on MongoDB Atlas cluster.
@@ -717,7 +751,7 @@ npm run preview       # Test production bundle locally
 
 We welcome community contributions! Please follow the enterprise workflow:
 
-1. **Fork the Repository** on GitHub.
+1. **Fork the Repository** on GitHub: [Aaryan-9784/Skillora](https://github.com/Aaryan-9784/Skillora).
 2. **Create a Feature Branch**:
    ```bash
    git checkout -b feat/milestone-escrow-enhancement
@@ -761,5 +795,10 @@ Skillora is distributed under the terms of the **MIT License**. See the [LICENSE
 **Built with precision by [Aaryan](https://github.com/Aaryan-9784)**
 
 <sub>Skillora • The Unified Freelancer Operating System & Client Collaboration Hub</sub>
+
+<p align="center">
+  <a href="https://skillora-gamma.vercel.app"><strong>🌐 Visit Live App</strong></a> •
+  <a href="https://skillora-hyf8.onrender.com"><strong>⚡ Backend API</strong></a>
+</p>
 
 </div>
