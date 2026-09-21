@@ -26,36 +26,55 @@
 </p>
 
 <p align="center">
-  <a href="https://skillora-gamma.vercel.app" target="_blank"><strong>🚀 Launch Live App</strong></a> •
+  <a href="https://skillora-gamma.vercel.app" target="_blank"><strong>🚀 Launch Live Web App</strong></a> •
+  <a href="https://skillora-hyf8.onrender.com" target="_blank"><strong>⚡ Backend API Gateway</strong></a> •
   <a href="https://skillora-hyf8.onrender.com/health" target="_blank"><strong>📡 API Health Check</strong></a> •
-  <a href="#-live-deployments--demo"><strong>Live Links</strong></a> •
-  <a href="#-quick-start"><strong>Quick Start</strong></a> •
   <a href="#-system-architecture"><strong>Architecture</strong></a> •
   <a href="#-key-features"><strong>Features</strong></a> •
-  <a href="#-complete-api-reference"><strong>API Reference</strong></a>
+  <a href="#-complete-api-reference"><strong>API Reference</strong></a> •
+  <a href="#-quick-start--local-setup"><strong>Quick Start</strong></a>
 </p>
 
 </div>
 
 ---
 
-## 🌐 Live Deployments & Demo
+## 🌐 Live Deployments & Cloud Infrastructure
 
-| Service | Host Provider | Direct URL | Status | Description |
+Skillora is fully deployed on production cloud infrastructure with continuous deployment pipelines:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                             LIVE CLOUD SERVICES                             │
+├───────────────────────────────────┬─────────────────────────────────────────┤
+│  🖥 FRONTEND WEB APP (Vercel)     │  ⚙️ BACKEND API GATEWAY (Render)        │
+│  👉 https://skillora-gamma.vercel.app │  👉 https://skillora-hyf8.onrender.com │
+│  • Interactive React 18 UI        │  • Express REST API (20 Route Groups)   │
+│  • Client & Freelancer Portals    │  • Socket.io & WebRTC Signaling Hub     │
+│  • Admin Command Center           │  • Automated Cron Job Schedulers        │
+└───────────────────────────────────┴─────────────────────────────────────────┘
+```
+
+### Deployment Topology Details
+
+| Component | Cloud Host | Production URL | Status | Responsibilities |
 | :--- | :--- | :--- | :---: | :--- |
-| **Frontend Web App** | **Vercel** | [https://skillora-gamma.vercel.app](https://skillora-gamma.vercel.app) | ![Vercel](https://img.shields.io/badge/Ready-22C55E?style=flat-square&logo=vercel&logoColor=white) | Production Single Page Application (React 18 + Vite 5) |
-| **Backend API Gateway** | **Render** | [https://skillora-hyf8.onrender.com](https://skillora-hyf8.onrender.com) | ![Render](https://img.shields.io/badge/Active-22C55E?style=flat-square&logo=render&logoColor=white) | Enterprise Express REST API & Socket.io Real-Time Engine |
-| **API Health Endpoint** | **Render** | [https://skillora-hyf8.onrender.com/health](https://skillora-hyf8.onrender.com/health) | ![Health](https://img.shields.io/badge/200%20OK-22C55E?style=flat-square) | Live telemetry and cluster uptime verification |
-| **Alternate Preview** | **Vercel** | [https://skillora-kjvtvxfrq-aryan-e7c5.vercel.app](https://skillora-kjvtvxfrq-aryan-e7c5.vercel.app) | ![Preview](https://img.shields.io/badge/Preview-6366F1?style=flat-square) | Deployment preview build |
+| **Frontend Web App** | **Vercel** | [https://skillora-gamma.vercel.app](https://skillora-gamma.vercel.app) | ![Vercel](https://img.shields.io/badge/Active-22C55E?style=flat-square&logo=vercel&logoColor=white) | Production Single Page Application (React 18, Vite 5, Tailwind CSS, Zustand) |
+| **Backend API Gateway** | **Render** | [https://skillora-hyf8.onrender.com](https://skillora-hyf8.onrender.com) | ![Render](https://img.shields.io/badge/Active-22C55E?style=flat-square&logo=render&logoColor=white) | Core Node.js/Express server, Authentication, WebSockets & Background Workers |
+| **Health Telemetry** | **Render** | [https://skillora-hyf8.onrender.com/health](https://skillora-hyf8.onrender.com/health) | ![Health](https://img.shields.io/badge/200%20OK-22C55E?style=flat-square) | Real-time service uptime, cluster environment, and timestamp ping |
+| **Deployment Preview** | **Vercel** | [https://skillora-kjvtvxfrq-aryan-e7c5.vercel.app](https://skillora-kjvtvxfrq-aryan-e7c5.vercel.app) | ![Preview](https://img.shields.io/badge/Preview-6366F1?style=flat-square) | Staging build for continuous integration testing |
 
 > [!TIP]
-> **Live Demo Walkthrough**: Feel free to register as a **Freelancer** or **Client**, or switch between portals in real-time. Test live task drag-and-drop, generate proposals with Google Gemini AI, test WebRTC video conferencing, or inspect milestone escrow workflows.
+> **Trying the Live Demo**:
+> 1. Visit the **[Live Web App](https://skillora-gamma.vercel.app)**.
+> 2. Click **Get Started** or **Sign In** to register as either a **Freelancer** or a **Client**.
+> 3. Explore interactive Kanban boards, generate AI project scopes with Gemini, test WebRTC video calling, or test invoice generation with Razorpay escrow flows.
 
 ---
 
 ## 📑 Table of Contents
 
-- [Live Deployments & Demo](#-live-deployments--demo)
+- [Live Deployments & Cloud Infrastructure](#-live-deployments--cloud-infrastructure)
 - [Executive Overview](#-executive-overview)
 - [Key Features](#-key-features)
   - [1. Freelancer OS (`/dashboard`)](#1--freelancer-os-dashboard)
@@ -670,7 +689,7 @@ The backend is deployed live on [Render Web Service](https://skillora-hyf8.onren
 
 - [x] Deployed Frontend on Vercel at [https://skillora-gamma.vercel.app](https://skillora-gamma.vercel.app)
 - [x] Deployed Backend on Render at [https://skillora-hyf8.onrender.com](https://skillora-hyf8.onrender.com)
-- [x] Verified `/health` endpoint returning `200 OK`
+- [x] Verified `/health` and `/` endpoints returning `200 OK`
 - [ ] Set `NODE_ENV=production` on backend server.
 - [ ] Replace all JWT secrets with cryptographically random 64-character strings.
 - [ ] Enable IP Access List whitelist on MongoDB Atlas cluster.
@@ -798,7 +817,7 @@ Skillora is distributed under the terms of the **MIT License**. See the [LICENSE
 
 <p align="center">
   <a href="https://skillora-gamma.vercel.app"><strong>🌐 Visit Live App</strong></a> •
-  <a href="https://skillora-hyf8.onrender.com"><strong>⚡ Backend API</strong></a>
+  <a href="https://skillora-hyf8.onrender.com"><strong>⚡ Backend API Gateway</strong></a>
 </p>
 
 </div>

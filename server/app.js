@@ -89,7 +89,19 @@ if (process.env.NODE_ENV !== "test") {
 // ── Rate limiting ─────────────────────────────────────────
 app.use("/api", apiLimiter);
 
-// ── Health check ──────────────────────────────────────────
+// ── Health check & Root Status ───────────────────────────
+app.get("/", (req, res) =>
+  res.json({
+    success: true,
+    message: "Skillora API Server is running",
+    version: "1.0.0",
+    docs: "https://github.com/Aaryan-9784/Skillora",
+    appUrl: process.env.CLIENT_URL || "https://skillora-gamma.vercel.app",
+    health: "/health",
+    ts: new Date().toISOString(),
+  })
+);
+
 app.get(["/health", "/api/health"], (req, res) =>
   res.json({ status: "ok", env: process.env.NODE_ENV, ts: new Date().toISOString() })
 );
