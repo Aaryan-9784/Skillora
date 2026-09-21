@@ -1,8 +1,8 @@
-# ══════════════════════════════════════════════════════════════
-#  Skillora — .gitignore
-# ══════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════════
+#  SKILLORA — Enterprise-Grade .gitignore
+# ══════════════════════════════════════════════════════════════════════════════
 
-# ── Dependencies ──────────────────────────────────────────────
+# ── Dependencies ─────────────────────────────────────────────────────────────
 node_modules/
 .pnp
 .pnp.*
@@ -13,38 +13,88 @@ node_modules/
 !.yarn/sdks
 !.yarn/versions
 package-lock.json.bak
+pnpm-lock.yaml.bak
+yarn-error.log*
+.pnpm-store/
 
-# ── Build Outputs ─────────────────────────────────────────────
+# ── Build & Distribution Outputs ─────────────────────────────────────────────
 dist/
 dist-ssr/
 build/
-.next/
 out/
+.next/
+.nuxt/
+.vuepress/dist
+.serverless/
+.fusebox/
+.dynamodb/
 *.tsbuildinfo
+tsconfig.tsbuildinfo
 
-# ── Environment Variables (NEVER commit secrets) ─────────────
+# ── Environment & Secrets (NEVER commit secrets to VCS) ─────────────────────
 .env
 .env.*
 !.env.example
+*.env.local
 server/.env
 client/.env
+server/.env.local
+client/.env.local
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+*.p12
+*.p8
+secrets/
+credentials.json
+service-account*.json
 
-# ── Logs ──────────────────────────────────────────────────────
+# ── Logs & Runtime State ─────────────────────────────────────────────────────
 logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
-yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+*.pid
+*.seed
+*.pid.lock
+.node_repl_history
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+node_inspect_*.json
 
-# ── Testing & Coverage ───────────────────────────────────────
+# ── Testing & Code Coverage ──────────────────────────────────────────────────
 coverage/
 .nyc_output/
 *.lcov
 jest-results/
+playwright-report/
+test-results/
+blob-report/
+cypress/videos/
+cypress/screenshots/
+.allure/
+allure-results/
+allure-report/
 
-# ── Video & Media Assets ────────────────────────────────────
+# ── Caching & Bundler Artifacts ──────────────────────────────────────────────
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+.prettiercache
+.vite/
+.turbo/
+.tailwindcache/
+.temp/
+.tmp/
+tmp/
+temp/
+scratch/
+
+# ── Video & Media Assets ─────────────────────────────────────────────────────
 video/
 client/public/videos/*
 !client/public/videos/landing-bg.mp4
@@ -55,23 +105,24 @@ client/public/videos/*
 *.avi
 *.mkv
 
-# ── Uploaded Files & Temp Media ──────────────────────────────
+# ── Uploads & Local User Data ────────────────────────────────────────────────
 uploads/
-tmp/
-temp/
+storage/
+media/
 
-# ── Database Dumps ───────────────────────────────────────────
+# ── Database & Cache Dumps ───────────────────────────────────────────────────
 *.dump
 *.gz
 *.archive
+*.sqlite
+*.sqlite3
+*.db
 dump/
 mongodump/
-
-# ── Redis ─────────────────────────────────────────────────────
 *.rdb
 dump.rdb
 
-# ── OS Files ──────────────────────────────────────────────────
+# ── Operating System Artifacts ───────────────────────────────────────────────
 # macOS
 .DS_Store
 .DS_Store?
@@ -96,24 +147,24 @@ $RECYCLE.BIN/
 .directory
 .Trash-*
 
-# ── Editor & IDE ──────────────────────────────────────────────
-# VSCode
+# ── IDEs & Code Editors ──────────────────────────────────────────────────────
+# VS Code
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
 !.vscode/launch.json
 
-# JetBrains (WebStorm, IntelliJ)
+# JetBrains (WebStorm, IntelliJ IDEA, PhpStorm)
 .idea/
 *.iml
 *.iws
 *.ipr
+out/
 
 # Vim / Neovim
 *.swp
 *.swo
 *.swn
-*~
 Session.vim
 .netrwhist
 tags
@@ -122,34 +173,16 @@ tags
 *.sublime-project
 *.sublime-workspace
 
-# ── Cache & Temp ──────────────────────────────────────────────
-.cache/
-.parcel-cache/
-.eslintcache
-.stylelintcache
-.temp/
-.tmp/
-scratch/
+# Eclipse
+.project
+.classpath
+.settings/
 
-# Vite
-*.local
-
-# Tailwind
-.tailwindcache/
-
-# ── Misc ──────────────────────────────────────────────────────
-*.pid
-*.seed
-*.pid.lock
-.node_repl_history
-report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
-
-# Debug
-node_inspect_*.json
-
-# Sentry
+# ── Sentry & Monitoring ──────────────────────────────────────────────────────
 .sentryclirc
 
-# AI / Gemini agent artifacts
+# ── AI Agent & IDE Workspaces ────────────────────────────────────────────────
 .agents/
 .gemini/
+.system_generated/
+brain/

@@ -1,809 +1,765 @@
 <div align="center">
 
-# ⚡ Skillora — Freelancer OS & Client Portal
+# ⚡ Skillora
+### Enterprise-Grade Freelancer Operating System, Client Collaboration Portal & Marketplace
 
-### *A Production-Grade, Full-Stack Freelancing Ecosystem*
+[![Production Status](https://img.shields.io/badge/Status-Production%20Ready-22C55E?style=for-the-badge&logo=rocket&logoColor=white)](https://github.com/Aaryan-9784/Skillora)
+[![Release](https://img.shields.io/badge/Release-v1.0.0-6366F1?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Aaryan-9784/Skillora/releases)
+[![License](https://img.shields.io/badge/License-MIT-3B82F6?style=for-the-badge)](LICENSE)
+[![Node](https://img.shields.io/badge/Node.js-%3E%3D18.0.0-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![React](https://img.shields.io/badge/Frontend-React%2018%20%7C%20Vite%205-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
+[![Express](https://img.shields.io/badge/Backend-Express.js-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/)
+[![MongoDB](https://img.shields.io/badge/Database-MongoDB%208-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+[![Socket.io](https://img.shields.io/badge/Realtime-Socket.io%20%2B%20WebRTC-010101?style=for-the-badge&logo=socketdotio&logoColor=white)](https://socket.io/)
+[![Gemini AI](https://img.shields.io/badge/AI-Google%20Gemini-FF6B35?style=for-the-badge&logo=googlegemini&logoColor=white)](https://ai.google.dev/)
+[![Razorpay](https://img.shields.io/badge/Payments-Razorpay%20Escrow-0C2340?style=for-the-badge&logo=razorpay&logoColor=white)](https://razorpay.com/)
 
-Manage projects, tasks, clients, invoices, payments, escrow, disputes, proposals, meetings, real-time chat, file uploads, and AI-powered productivity — all in one unified platform.
+<p align="center">
+  <b>Skillora</b> is a next-generation SaaS ecosystem that unifies project execution, client lifecycle management, milestone escrow payments, peer-to-peer WebRTC video collaboration, and generative AI copilot assistance into a single, high-performance platform.
+</p>
 
-<br/>
-
-[![Status](https://img.shields.io/badge/Status-Production%20Ready-22C55E?style=for-the-badge&logo=rocket&logoColor=white)](.)
-[![Frontend](https://img.shields.io/badge/Frontend-React%2018%20%2B%20Vite-61DAFB?style=for-the-badge&logo=react&logoColor=black)](.)
-[![Backend](https://img.shields.io/badge/Backend-Node.js%20%2B%20Express-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](.)
-[![Database](https://img.shields.io/badge/Database-MongoDB%20%2B%20Mongoose-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](.)
-[![AI](https://img.shields.io/badge/AI-Google%20Gemini-FF6B35?style=for-the-badge&logo=googlegemini&logoColor=white)](.)
-[![Payments](https://img.shields.io/badge/Payments-Razorpay-1A67E2?style=for-the-badge&logo=razorpay&logoColor=white)](.)
-[![Realtime](https://img.shields.io/badge/Realtime-Socket.io%20%2B%20WebRTC-10B981?style=for-the-badge&logo=socketdotio&logoColor=white)](.)
-[![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](.)
-
-<br/>
-
-[📖 Overview](#-what-is-skillora) · [🌟 Features](#-key-features) · [🖥 Portals](#-the-3-portals-at-a-glance) · [🏗 Architecture](#-system-architecture) · [🔒 Security](#-security-architecture) · [🗄 Database](#-database-schemas-20-models) · [🛠 Tech Stack](#-tech-stack) · [🚀 Quick Start](#-quick-start) · [🔌 API Reference](#-complete-api-reference) · [📁 Structure](#-project-structure) · [❓ FAQ](#-faq)
+<p align="center">
+  <a href="#-quick-start"><strong>Quick Start</strong></a> •
+  <a href="#-system-architecture"><strong>Architecture</strong></a> •
+  <a href="#-key-features"><strong>Features</strong></a> •
+  <a href="#-security-architecture"><strong>Security</strong></a> •
+  <a href="#-complete-api-reference"><strong>API Reference</strong></a> •
+  <a href="#-production-deployment"><strong>Deployment</strong></a> •
+  <a href="#-contributing"><strong>Contributing</strong></a>
+</p>
 
 </div>
 
 ---
 
-## 📖 What is Skillora?
+## 📑 Table of Contents
 
-**Skillora** is a full-stack freelancing platform that unifies freelancer workflows, client collaboration, marketplace hiring, and admin oversight into a single high-performance application.
+- [Executive Overview](#-executive-overview)
+- [Key Features](#-key-features)
+  - [1. Freelancer OS (`/dashboard`)](#1--freelancer-os-dashboard)
+  - [2. Client Portal (`/client/dashboard`)](#2--client-portal-clientdashboard)
+  - [3. Admin Command Center (`/admin`)](#3--admin-command-center-admin)
+  - [4. Cross-Cutting Capabilities](#4--cross-cutting-capabilities)
+- [System Architecture](#-system-architecture)
+  - [High-Level Topology](#high-level-topology)
+  - [Real-Time Event & WebRTC Signaling Flow](#real-time-event--webrtc-signaling-flow)
+  - [Payment & Escrow State Machine](#payment--escrow-state-machine)
+- [Security & Compliance Posture](#-security--compliance-posture)
+- [Database Topology (20 Schemas)](#-database-topology-20-schemas)
+- [Tech Stack](#-tech-stack)
+- [Quick Start & Local Setup](#-quick-start--local-setup)
+  - [Prerequisites](#prerequisites)
+  - [Step 1: Clone Repository](#step-1--clone-repository)
+  - [Step 2: Backend Setup & Environment](#step-2--backend-setup--environment)
+  - [Step 3: Frontend Setup & Environment](#step-3--frontend-setup--environment)
+  - [Step 4: Seed Default Admin User](#step-4--seed-default-admin-user)
+- [Environment Variables Reference](#-environment-variables-reference)
+- [Complete API Reference](#-complete-api-reference)
+- [Socket.io Real-Time Event Matrix](#-socketio-real-time-event-matrix)
+- [Production Deployment](#-production-deployment)
+  - [Frontend: Vercel](#frontend-vercel)
+  - [Backend: Render / Docker](#backend-render--docker)
+  - [Production Checklist](#production-checklist)
+- [Project Directory Structure](#-project-directory-structure)
+- [Testing & Quality Assurance](#-testing--quality-assurance)
+- [Contributing Guidelines](#-contributing-guidelines)
+- [Security Policy](#-security-policy)
+- [License & Authors](#-license--authors)
 
-Instead of juggling multiple SaaS tools for project tracking, task management, client communication, invoicing, payment processing, and AI assistance — Skillora integrates everything into **one synchronized workspace** with real-time updates across all user roles.
+---
 
-> 💡 **Why Skillora?** — Three role-based portals (Freelancer, Client, Admin), Razorpay-powered payments with escrow protection, WebRTC video meetings, marketplace with proposal workflows, AI-powered productivity tools, and 2FA security — all self-hosted and fully customizable.
+## 💼 Executive Overview
+
+Traditional freelancer workflows require stitching together disjointed point solutions — Trello for tasks, Freshbooks for billing, Slack for client communication, Zoom for calls, Upwork for bidding, and ChatGPT for copywriting. 
+
+**Skillora solves this fragmentation** by delivering an enterprise-ready, three-tier collaborative workspace designed from the ground up for freelancers, high-value clients, and platform operators.
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│                             SKILLORA PLATFORM                            │
+├──────────────────────┬──────────────────────┬────────────────────────────┤
+│   💼 FREELANCER OS   │   👥 CLIENT PORTAL   │   🛡 ADMIN COMMAND CENTER  │
+│  • Kanban Task Engine│  • Milestone Approvals│  • Platform Analytics      │
+│  • AI Project Studio │  • Razorpay Checkout │  • Dispute Arbitration     │
+│  • Invoice Generator │  • Proposal Review   │  • System Audit Logging    │
+│  • Escrow Tracking   │  • Finance Insights  │  • Tenant & User Controls  │
+│  • WebRTC Video Call │  • Real-Time Chat    │  • Dynamic Configuration   │
+└──────────────────────┴──────────────────────┴────────────────────────────┘
+```
 
 ---
 
 ## 🌟 Key Features
 
-### 💼 Freelancer OS
-- **Kanban Task Boards** — Drag-and-drop (`@dnd-kit`) with priority levels, checklists, and position reordering
-- **Project Management** — Budgets, deadlines, milestones, progress tracking, and AI-generated task suggestions
-- **Client CRM** — Contact management, company profiles, billing addresses, and revenue statistics
-- **Invoice Builder** — Sequential numbering (`INV-2026-0001`), line items, tax calculation, status lifecycle (`Draft → Sent → Viewed → Paid → Overdue`), and PDF export
-- **Skill Portfolio Matrix** — Categorized skills with auto-calculated proficiency levels (Beginner → Expert)
-- **AI Studio** — Google Gemini–powered project planning, proposal drafting, pricing suggestions, and productivity insights with SSE streaming
-- **Marketplace** — Post projects for hiring, browse proposals, and accept freelancers
-
-### 👥 Client Portal
-- **Project Oversight** — Real-time completion percentages, task statuses, and milestone tracking
-- **Proposal Management** — Post projects, receive proposals, accept/reject freelancers
-- **Invoice Review & Payments** — View detailed invoices and pay online via Razorpay integration
-- **Milestone Approvals** — Approve deliverables or request changes on milestone submissions
-- **Finance Dashboard** — Spending summaries, revenue analytics, and AI-powered financial insights
-- **Real-Time Messaging** — Project-scoped chat threads with file attachments via Socket.io
-- **CSV Export** — One-click export of projects and invoices data
-
-### 🛡 Admin Command Center
-- **Platform Analytics** — Total users, active projects, processed volume, and real-time activity
-- **User Management** — Search, filter by role, update statuses, assign roles, and export to CSV
-- **Revenue Dashboard** — Revenue charts, summaries, and trend analysis
-- **Dispute Resolution** — Review and resolve platform disputes between freelancers and clients
-- **Platform Configuration** — MongoDB-persisted settings for maintenance mode, registration toggles, and support contacts
-- **Audit Log** — System event tracking for registrations, role changes, and admin actions
-
-### ⚡ Cross-Platform Features
-- **Razorpay Payments** — Order creation, signature verification, and automated invoice status updates
-- **Escrow System** — Deposit, release, and refund funds with project-level escrow tracking
-- **Email Notifications** — Transactional emails via Nodemailer (invoices, invitations, password resets, meeting reminders)
-- **File Uploads** — Cloudinary-backed avatar and project file uploads
-- **WebRTC Video Meetings** — Schedule meetings, video calls with call history logging
-- **Real-Time Sync** — Socket.io bi-directional updates across all active sessions
-- **Two-Factor Auth** — TOTP-based 2FA setup, enable, disable, and login verification
-- **Review System** — User and project-level reviews and ratings
-
----
-
-## 🖥 The 3 Portals at a Glance
-
-```mermaid
-graph TD
-    A["⚡ Skillora Platform"] --> B["💼 Freelancer OS"]
-    A --> C["👥 Client Portal"]
-    A --> D["🛡 Admin Command Center"]
-
-    B --> B1["Projects, Tasks & Kanban Board"]
-    B --> B2["Client CRM & Revenue Analytics"]
-    B --> B3["Line-Item Invoices & PDF Export"]
-    B --> B4["AI Studio — Plans, Proposals, Pricing"]
-    B --> B5["Marketplace & Proposal Bidding"]
-    B --> B6["Escrow & Payment Management"]
-    B --> B7["Video Meetings via WebRTC"]
-
-    C --> C1["Project Overview & Milestone Tracking"]
-    C --> C2["Post Projects & Manage Proposals"]
-    C --> C3["Invoice Review & Razorpay Payments"]
-    C --> C4["Finance Summary & AI Insights"]
-    C --> C5["Real-Time Project Chat"]
-    C --> C6["Notification Center"]
-
-    D --> D1["Platform Stats & Revenue Charts"]
-    D --> D2["User Control & Role Management"]
-    D --> D3["Dispute Resolution Center"]
-    D --> D4["MongoDB Platform Config"]
-    D --> D5["System Audit Log"]
-```
-
 ### 1. 💼 Freelancer OS (`/dashboard`)
-
-| Feature | Details |
-| :--- | :--- |
-| **Kanban Board** | Drag-and-drop tasks with `@dnd-kit`, priority levels, checklists, and column reordering |
-| **Project Management** | CRUD with budgets, deadlines, milestones, progress %, and AI-suggested task breakdowns |
-| **Client CRM** | Contact records, company billing profiles, revenue stats, and portal invitation system |
-| **Invoicing** | Sequential numbering, line-item builder, tax, status lifecycle, send/duplicate/PDF export |
-| **Payments** | Razorpay integration, escrow deposits/releases/refunds, earnings summary |
-| **AI Studio** | Gemini-powered chat, project planning, proposal drafting, pricing, and productivity analysis |
-| **Marketplace** | Browse open projects, submit proposals, and track proposal statuses |
-| **Meetings** | Schedule video meetings, WebRTC calls, and view call history |
-| **Skills** | Categorized skill matrix with proficiency scoring (1–100) |
+- **Interactive Kanban Boards**: Drag-and-drop task workflows powered by `@dnd-kit` with priority weights, sub-task checklists, and position indexing.
+- **Project Lifecycle Tracking**: Real-time progress computation, budget burn-down meters, milestone delivery dates, and deliverable attachments.
+- **Client CRM Engine**: Centralized client registry, billing profiles, total lifetime revenue metrics, and direct client portal onboarding invitations.
+- **Enterprise Invoicing**: Sequential number generator (`INV-YYYY-XXXX`), tax computations, automated balance tracking, status progression (`Draft` → `Sent` → `Viewed` → `Paid` → `Overdue`), and one-click PDF export.
+- **AI Copilot Studio**: SSE-streamed Google Gemini integration providing contextual project scoping, proposal writing, pricing calculators, and productivity telemetry.
+- **Marketplace & Proposal Engine**: Explore open customer tenders, submit competitive bids with custom milestones, and monitor submission statuses.
+- **Integrated Video Conferencing**: Browser-native WebRTC peer-to-peer audio/video conferencing with meeting scheduler and call logs.
+- **Skill Matrix Visualization**: Dynamic competency scoring with automated proficiency tier badges (Beginner, Intermediate, Advanced, Expert).
 
 ### 2. 👥 Client Portal (`/client/dashboard`)
-
-| Feature | Details |
-| :--- | :--- |
-| **Dashboard** | Overview with spending summary, project statuses, and recent activity |
-| **Projects** | Post projects, browse proposals, accept/reject freelancers, and track progress |
-| **Invoices** | View issued invoices, line-item details, and pay via Razorpay |
-| **Milestones** | Approve deliverables or request changes on submissions |
-| **Finance** | Spending analytics, revenue breakdowns, and AI-powered financial insights |
-| **Messages** | Project-scoped real-time chat with file attachments |
-| **Notifications** | Bell notifications with unread counts and mark-all-read |
+- **Executive Project Oversight**: Live view of active milestones, team completion velocity, and pending deliverables.
+- **Marketplace Procurement**: Post job requirements, receive bids from verified freelancers, review candidate profiles, and award contracts.
+- **Frictionless Invoice Checkout**: Instant invoice review with integrated Razorpay payment gateway, automated receipts, and payment history.
+- **Milestone & Escrow Approvals**: Review milestone deliverables, approve payouts directly into freelancer accounts, or submit revision requests.
+- **Financial Intelligence**: Spending dashboards, cost projections, categorized expense graphs, and AI-driven budget optimization advice.
+- **Real-Time Project Messaging**: Scoped project channels with file attachment sharing, emoji reactions, read receipts, and live typing indicators.
 
 ### 3. 🛡 Admin Command Center (`/admin`)
+- **Telemetry & Revenue Analytics**: Platform-wide transaction volumes, escrow deposits, active user trends, and revenue growth charts.
+- **User Governance**: Multi-factor search, role overrides (`admin`, `freelancer`, `client`), account status locks (`active`, `suspended`), and CSV data exports.
+- **Dispute Resolution Engine**: Multi-party dispute investigation with evidence inspection, escrow release overrides, and arbitration logging.
+- **System Configuration**: Hot-reloadable platform flags stored in MongoDB (maintenance mode toggles, registration gatekeepers, global support emails).
+- **Audit Logging**: Immutable system event trail capturing authentication attempts, administrative interventions, and financial state transitions.
 
-| Feature | Details |
-| :--- | :--- |
-| **Analytics** | Platform-wide user counts, project counts, and volume metrics |
-| **Users** | Search/filter by role, update status, modify roles, delete accounts, and CSV export |
-| **Revenue** | Revenue charts, summaries, and trend analysis |
-| **Disputes** | Review, resolve, and manage platform disputes |
-| **Config** | MongoDB-persisted settings: maintenance mode, registration, support contacts |
-| **Activity Log** | Audit trail of all platform events |
+### 4. ⚡ Cross-Cutting Capabilities
+- **Zero-Storage Token Security**: In-memory JWT access token store paired with secure `HttpOnly`, `SameSite=Strict` refresh token rotation.
+- **Two-Factor Authentication (2FA)**: Time-based One-Time Password (TOTP) enforcement via `speakeasy` + `otplib` with QR code provisioning.
+- **Multi-CDN Cloud Storage**: Cloudinary-backed high-speed media delivery for user avatars, project documents, and chat attachments.
+- **Automated Transactional Emails**: SMTP notification pipeline via Nodemailer for invoice distribution, invite tokens, password recovery, and call notifications.
 
 ---
 
 ## 🏗 System Architecture
 
-### High-Level Overview
+### High-Level Topology
 
 ```mermaid
-graph LR
-    subgraph Client["Client Tier"]
-        UI["React 18 + Vite"]
-        Zustand["Zustand State Stores"]
-        TokenStore["In-Memory Token Store"]
-        WebRTC["WebRTC Engine"]
+graph TB
+    subgraph ClientLayer["🖥 Client Layer (Vite 5 + React 18)"]
+        SPA["Single Page App (React 18)"]
+        ZStore["Zustand State Stores (13 Stores)"]
+        TokenCache["In-Memory Token Cache (tokenStore.js)"]
+        WebRTCClient["WebRTC Peer Engine"]
+        SocketClient["Socket.io Client"]
     end
 
-    subgraph Server["Server Tier"]
-        Express["Express.js Server"]
-        Auth["Passport + JWT + 2FA"]
-        Sockets["Socket.io Engine"]
-        Cron["node-cron Schedulers"]
+    subgraph GatewayLayer["🛡 Security & Gateway Layer"]
+        Helmet["Helmet Security Headers"]
+        RateLimit["Rate Limiting (express-rate-limit)"]
+        Sanitize["Sanitizers (Mongo Sanitize, XSS Clean)"]
+        AuthMiddleware["JWT & RBAC Gatekeeper"]
     end
 
-    subgraph Data["Data & Services"]
-        Mongo[("MongoDB (20 Schemas)")]
-        Redis[("Redis Cache & Pub/Sub")]
-        Gemini["Google Gemini AI"]
-        Razorpay["Razorpay Gateway"]
-        Cloudinary["Cloudinary CDN"]
-        Nodemailer["Nodemailer SMTP"]
+    subgraph ServiceLayer["⚙️ Core Application Tier (Node.js + Express)"]
+        Router["Express REST API (20 Route Groups)"]
+        SocketServer["Socket.io Real-Time Hub"]
+        CronEngine["node-cron Automated Schedulers"]
+        AIService["Gemini AI Streaming Engine"]
     end
 
-    UI <-->|"HTTP / REST API"| Express
-    UI <-->|"WebSockets (WSS)"| Sockets
-    UI <-->|"WebRTC (Peer-to-Peer)"| WebRTC
-    Express <--> Mongo
-    Express <--> Redis
-    Express <-->|"SSE Streaming"| Gemini
-    Express <--> Razorpay
-    Express <--> Cloudinary
-    Express <--> Nodemailer
+    subgraph DataLayer["🗄 Storage & External Providers"]
+        MongoDB[("MongoDB 8 Atlas\n(20 Collections)")]
+        RedisCache[("Redis Cache\n& Pub/Sub")]
+        GeminiAPI["Google Gemini 1.5"]
+        RazorpayGateway["Razorpay Payments"]
+        CloudinaryCDN["Cloudinary Media CDN"]
+        NodemailerSMTP["Nodemailer Email Gateway"]
+    end
+
+    SPA -->|"REST Requests"| GatewayLayer
+    SPA <-->|"WebSockets (WSS)"| SocketServer
+    SPA <-->|"P2P Media Stream"| WebRTCClient
+    
+    GatewayLayer --> Router
+    Router --> ServiceLayer
+    
+    ServiceLayer <--> MongoDB
+    ServiceLayer <--> RedisCache
+    ServiceLayer -->|"SSE Stream"| GeminiAPI
+    ServiceLayer -->|"Order Verification"| RazorpayGateway
+    ServiceLayer -->|"Asset Upload"| CloudinaryCDN
+    ServiceLayer -->|"Transactional Mail"| NodemailerSMTP
 ```
 
-### Real-Time Socket.io Event Flow
-
-All 3 portals stay synchronized in real-time via Socket.io event dispatches:
+### Real-Time Event & WebRTC Signaling Flow
 
 ```mermaid
 sequenceDiagram
     autonumber
-    participant F as 💼 Freelancer OS
-    participant S as ⚙️ Server (Socket.io)
-    participant C as 👥 Client Portal
-    participant A as 🛡 Admin Panel
+    actor Freelancer as 💼 Freelancer
+    actor Client as 👥 Client
+    participant Server as ⚡ Skillora Server (Socket.io)
+    participant DB as 🗄 MongoDB Atlas
 
-    F->>S: Updates Project / Issues Invoice
-    S->>C: Emits 'project:updated' / 'invoice:updated'
-    C-->>C: Auto-refetches & patches live state
-    S->>A: Emits 'admin:stats_refresh'
-    A-->>A: Auto-refetches analytics & activity log
+    Freelancer->>Server: Emit 'project:task_update' {taskId, status: 'done'}
+    Server->>DB: Persist Task Mutation & Recalculate Project %
+    Server-->>Client: Broadcast 'project:updated' & 'notification:new'
+    Client->>Client: Zustand Store Auto-patches UI (Zero Reload)
 
-    C->>S: Approves Milestone / Pays Invoice
-    S->>F: Emits 'invoice:updated' / 'dashboard:refresh'
-    F-->>F: Updates revenue chart & invoice state
+    Client->>Server: Emit 'meeting:signal' {type: 'offer', sdp}
+    Server-->>Freelancer: Relay 'meeting:signal' {type: 'offer', sdp}
+    Freelancer->>Server: Emit 'meeting:signal' {type: 'answer', sdp}
+    Server-->>Client: Relay 'meeting:signal' {type: 'answer', sdp}
+    Note over Freelancer,Client: Direct P2P WebRTC Video/Audio Established
+```
 
-    C->>S: Sends Chat Message
-    S->>F: Emits 'message:new' in real-time
-    F-->>F: Renders incoming message instantly
+### Payment & Escrow State Machine
+
+```mermaid
+stateDiagram-v2
+    [*] --> InvoiceDraft: Freelancer Creates Invoice
+    InvoiceDraft --> InvoiceSent: Send to Client
+    InvoiceSent --> PaymentInitiated: Client Clicks Pay (Razorpay Order)
+    PaymentInitiated --> EscrowHeld: Razorpay Signature Verified
+    
+    state EscrowHeld {
+        [*] --> InReview: Milestone Deliverable Submitted
+        InReview --> ChangesRequested: Client Requests Revision
+        ChangesRequested --> InReview: Resubmission
+        InReview --> MilestoneApproved: Client Approves Work
+    }
+
+    MilestoneApproved --> EscrowReleased: Funds Transferred to Freelancer
+    ChangesRequested --> DisputeOpened: Unresolvable Disagreement
+    DisputeOpened --> AdminArbitration: Admin Intervenes
+    AdminArbitration --> EscrowRefunded: Admin Rules in Favor of Client
+    AdminArbitration --> EscrowReleased: Admin Rules in Favor of Freelancer
+
+    EscrowReleased --> [*]: Invoice Status Marked PAID
+    EscrowRefunded --> [*]: Invoice Status Marked REFUNDED
 ```
 
 ---
 
-## 🔒 Security Architecture
+## 🔒 Security & Compliance Posture
 
-| Layer | Implementation |
-| :--- | :--- |
-| **Access Tokens** | JWTs stored strictly in JavaScript memory (`tokenStore.js`) — never in `localStorage` or `sessionStorage` |
-| **Refresh Tokens** | Stored in `HttpOnly`, `SameSite=Strict` secure cookies for silent token rotation |
-| **Two-Factor Auth** | TOTP-based 2FA via `speakeasy` + `otplib` with QR code setup (`qrcode`) |
-| **OAuth 2.0** | Google and GitHub social login via Passport.js strategies |
-| **NoSQL Injection** | All requests sanitized through `express-mongo-sanitize` |
-| **XSS Defense** | Payload sanitization via `xss-clean` middleware |
-| **Rate Limiting** | Dedicated rate limiters on auth routes (`/api/auth/*`) and AI endpoints |
-| **HTTP Headers** | Full Helmet.js suite: CSP, HSTS, X-Frame-Options, referrer policy |
-| **Input Validation** | Request validation using Joi schemas |
-| **Password Hashing** | bcryptjs with salt rounds |
+Skillora implements an end-to-end Zero-Trust security model across the entire stack:
+
+| Dimension | Defense Mechanism | Implementation File |
+| :--- | :--- | :--- |
+| **Token Theft Protection** | Access tokens are stored exclusively in **JavaScript runtime memory**; never saved in `localStorage` or `sessionStorage`. | [`tokenStore.js`](file:///d:/Projects/Skillora/client/src/services/tokenStore.js) |
+| **Silent Session Rotation** | Refresh tokens reside inside encrypted, `HttpOnly`, `SameSite=Strict`, `Secure` cookies. | [`auth.controller.js`](file:///d:/Projects/Skillora/server/controllers/auth.controller.js) |
+| **Multi-Factor Auth (2FA)** | Time-based OTP (TOTP) verification using standard RFC 6238 algorithms with recovery workflows. | [`auth.routes.js`](file:///d:/Projects/Skillora/server/routes/auth.routes.js) |
+| **NoSQL Injection Defense** | Sanitizes user-supplied query operators from MongoDB parameters. | `express-mongo-sanitize` |
+| **Cross-Site Scripting (XSS)** | Sanitizes inbound payloads to strip malicious HTML/JavaScript tags. | `xss-clean` |
+| **Denial of Service (DoS)** | Tiered rate limiters applied to authentication endpoints and AI generation routes. | [`rateLimiter.js`](file:///d:/Projects/Skillora/server/middlewares/rateLimiter.js) |
+| **HTTP Hardening** | Enforces Content Security Policy (CSP), Strict-Transport-Security (HSTS), and Frameguard. | `helmet` |
+| **Schema Validation** | Strict Joi request body validation preventing payload tampering and prototype pollution. | [`validators/`](file:///d:/Projects/Skillora/server/validators) |
 
 ---
 
-## 🗄 Database Schemas (20 Models)
+## 🗄 Database Topology (20 Schemas)
 
-Skillora uses **20 MongoDB Mongoose models** in `server/models/`:
+Skillora utilizes 20 relational-modeled MongoDB schemas powered by Mongoose:
 
-| # | Model | Collection | Purpose |
-| :---: | :--- | :--- | :--- |
-| 1 | **User** | `users` | Authentication, roles (`admin`/`freelancer`/`client`), OAuth IDs, 2FA secrets, avatar |
-| 2 | **Project** | `projects` | Title, budget, deadlines, progress %, task counters, milestones, marketplace visibility |
-| 3 | **Task** | `tasks` | Status (`todo`/`in_progress`/`review`/`done`), priority, Kanban position, checklists |
-| 4 | **Client** | `clients` | Company name, contact, billing address, revenue stats, linked user & portal invitation |
-| 5 | **Invoice** | `invoices` | Sequential numbers (`INV-YYYY-XXXX`), line items, subtotal, tax, status lifecycle |
-| 6 | **Payment** | `payments` | Transaction amount, method, Razorpay order/payment IDs, status, invoice linkage |
-| 7 | **Skill** | `skills` | Title, category, score (1–100), auto-calculated proficiency level |
-| 8 | **Notification** | `notifications` | User notifications with 90-day TTL auto-cleanup index |
-| 9 | **Message** | `messages` | Project chat messages with attachments, reactions, read receipts |
-| 10 | **Conversation** | `conversations` | Chat conversation metadata linking project participants |
-| 11 | **AiLog** | `ailogs` | AI prompt/response logs, token usage, latency metrics, 180-day TTL |
-| 12 | **Counter** | `counters` | Atomic sequential ID generator for invoice numbers |
-| 13 | **Config** | `configs` | Platform settings: maintenance mode, registration, support contacts |
-| 14 | **Proposal** | `proposals` | Marketplace proposals: bid amount, cover letter, status, freelancer linkage |
-| 15 | **Review** | `reviews` | Ratings and reviews for users and projects |
-| 16 | **Submission** | `submissions` | Milestone deliverable submissions with revision tracking |
-| 17 | **Dispute** | `disputes` | Dispute records between parties with resolution status |
-| 18 | **Escrow** | `escrows` | Escrow deposits, releases, and refunds per project |
-| 19 | **Meeting** | `meetings` | Scheduled meetings with project linkage and participant info |
-| 20 | **CallLog** | `calllogs` | WebRTC call history with duration and participant records |
+| # | Model | Collection | Primary Domain & Responsibilities | Key Indexes |
+| :-: | :--- | :--- | :--- | :--- |
+| **01** | `User` | `users` | Identities, bcrypt passwords, roles (`admin`, `freelancer`, `client`), 2FA secrets, avatars | `email`, `role`, `status` |
+| **02** | `Project` | `projects` | Budget, deadlines, status, completion %, milestone lists, marketplace flags | `freelancer`, `client`, `status` |
+| **03** | `Task` | `tasks` | Kanban cards, status (`todo`, `in_progress`, `review`, `done`), priority, position | `project`, `status`, `position` |
+| **04** | `Client` | `clients` | Company records, tax IDs, billing details, portal invite status, lifetime spend | `freelancer`, `email` |
+| **05** | `Invoice` | `invoices` | Sequential numbering (`INV-YYYY-XXXX`), line items, subtotal, tax, status, PDF | `invoiceNumber`, `project`, `client` |
+| **06** | `Payment` | `payments` | Razorpay payment/order IDs, transaction signatures, settlement status | `invoice`, `transactionId`, `status` |
+| **07** | `Skill` | `skills` | Skill taxonomy, user proficiency scores (1–100), categorization | `user`, `category` |
+| **08** | `Notification` | `notifications` | In-app alerts, read states, entity hyperlinks with 90-day automatic TTL | `recipient`, `isRead`, `createdAt (TTL)` |
+| **09** | `Message` | `messages` | Chat messages, Cloudinary attachment links, reactions, read receipts | `conversation`, `sender`, `createdAt` |
+| **10** | `Conversation` | `conversations` | Project-scoped messaging threads linking participants | `project`, `participants` |
+| **11** | `AiLog` | `ailogs` | Prompt/response telemetry, token usage, latency logs with 180-day TTL | `user`, `action`, `createdAt (TTL)` |
+| **12** | `Counter` | `counters` | Atomic sequential generator for unique invoice numbers | `_id`, `seq` |
+| **13** | `Config` | `configs` | Platform-wide operational flags (maintenance, registrations, support contact) | `key` |
+| **14** | `Proposal` | `proposals` | Marketplace bids, cover letters, proposed rates, review statuses | `project`, `freelancer`, `status` |
+| **15** | `Review` | `reviews` | Star ratings, feedback testimonials for users and completed projects | `targetUser`, `project`, `rating` |
+| **16** | `Submission` | `submissions` | Milestone deliverables, file attachments, approval notes, revision cycles | `project`, `milestoneId`, `status` |
+| **17** | `Dispute` | `disputes` | Contract conflict cases, dispute claims, mediator rulings | `project`, `initiator`, `status` |
+| **18** | `Escrow` | `escrows` | Escrow account balances, deposit locks, release and refund audits | `project`, `client`, `status` |
+| **19** | `Meeting` | `meetings` | Scheduled appointments, agenda topics, attendee references | `project`, `host`, `scheduledAt` |
+| **20** | `CallLog` | `calllogs` | WebRTC session durations, call status, connection timestamps | `caller`, `receiver`, `startedAt` |
 
 ---
 
 ## 🛠 Tech Stack
 
-### Frontend
+### Core Technologies
 
-| Technology | Purpose |
-| :--- | :--- |
-| React 18 | UI library with hooks and functional components |
-| Vite 5 | Lightning-fast build tool and dev server |
-| Tailwind CSS v3 | Utility-first CSS framework |
-| Zustand | Lightweight state management (13 stores) |
-| Framer Motion | Animations and page transitions |
-| @dnd-kit | Drag-and-drop Kanban board |
-| Recharts | Data visualization and charts |
-| React Router v6 | Client-side routing |
-| Socket.io Client | Real-time WebSocket communication |
-| Axios | HTTP client with interceptors and token refresh |
-| Lucide React | Icon library |
-| React Hot Toast | Toast notifications |
-| date-fns | Date formatting utilities |
+```
+Frontend:  React 18  •  Vite 5  •  Tailwind CSS 3  •  Zustand  •  Framer Motion  •  @dnd-kit  •  Recharts
+Backend:   Node.js   •  Express.js  •  Socket.io 4  •  Passport.js  •  JWT  •  Mongoose 8  •  Joi
+Data/AI:   MongoDB Atlas  •  Redis  •  Google Gemini 1.5  •  Razorpay SDK  •  Cloudinary CDN  •  Nodemailer
+```
 
-### Backend
+### Frontend Dependencies
 
-| Technology | Purpose |
-| :--- | :--- |
-| Node.js | JavaScript runtime |
-| Express.js | Web framework and REST API |
-| Socket.io | Real-time bi-directional events |
-| Passport.js | OAuth 2.0 (Google, GitHub) |
-| JWT (jsonwebtoken) | Access and refresh token authentication |
-| Mongoose | MongoDB ODM (20 schemas) |
-| Razorpay SDK | Payment order creation and verification |
-| @google/generative-ai | Gemini AI integration with SSE streaming |
-| Cloudinary | Image/file upload CDN |
-| Nodemailer | Transactional email delivery |
-| ioredis | Redis client for caching and pub/sub |
-| Joi | Request validation schemas |
-| Multer | File upload middleware |
-| Helmet | HTTP security headers |
-| express-rate-limit | API rate limiting |
-| express-mongo-sanitize | NoSQL injection prevention |
-| xss-clean | XSS attack prevention |
-| bcryptjs | Password hashing |
-| speakeasy + otplib | TOTP 2FA generation and verification |
-| qrcode | QR code generation for 2FA setup |
-| node-cron | Scheduled background tasks |
-| Winston | Structured logging |
-| Morgan | HTTP request logging |
+| Package | Version | Architectural Responsibility |
+| :--- | :--- | :--- |
+| `react` / `react-dom` | `^18.2.0` | Component view layer with concurrent rendering |
+| `vite` | `^5.0.8` | Next-generation frontend tooling and HMR dev server |
+| `tailwindcss` | `^3.4.0` | Design system tokens and responsive utility styling |
+| `zustand` | `^4.4.7` | High-performance, lightweight state stores (13 global stores) |
+| `framer-motion` | `^11.0.3` | Fluid UI transitions, modal animations, and layout morphing |
+| `@dnd-kit/core` & `sortable` | `^6.1.0` / `^8.0.0` | Accessible drag-and-drop Kanban task orchestration |
+| `recharts` | `^2.10.3` | Responsive analytics, earnings charts, and revenue visualizations |
+| `socket.io-client` | `^4.8.3` | Bi-directional WebSocket communication client |
+| `axios` | `^1.6.2` | REST client configured with automatic JWT refresh interceptors |
+| `lucide-react` | `^0.303.0` | Consistent iconography suite |
+
+### Backend Dependencies
+
+| Package | Version | Architectural Responsibility |
+| :--- | :--- | :--- |
+| `express` | `^4.18.2` | Scalable Node.js HTTP web application server |
+| `mongoose` | `^8.0.3` | Schema validation and MongoDB Object Data Modeling (ODM) |
+| `socket.io` | `^4.6.2` | Real-time WebSocket server and room broadcast coordinator |
+| `@google/generative-ai` | `^0.3.1` | Google Gemini 1.5 Flash client with SSE streaming |
+| `razorpay` | `^2.9.2` | Commercial payment processing and webhook signature verification |
+| `jsonwebtoken` / `bcryptjs` | `^9.0.2` / `^2.4.3` | Stateless token issuance, cryptographic verification, and password hashing |
+| `speakeasy` / `otplib` / `qrcode` | `^2.0.0` / `^13.4.1` | RFC 6238 TOTP two-factor authentication setup and verification |
+| `passport` & OAuth strategies | `^0.7.0` | Federated social authentication (Google & GitHub OAuth 2.0) |
+| `cloudinary` & `multer-storage-cloudinary`| `^1.41.3` | Cloud CDN storage for media uploads and asset pipelines |
+| `nodemailer` | `^6.9.9` | Enterprise SMTP transactional email transport |
+| `ioredis` | `^5.3.2` | In-memory Redis caching layer and pub/sub message broker |
+| `helmet` / `rate-limit` / `mongo-sanitize` | `^7.1.0` | HTTP security headers, DoS throttling, and injection sanitization |
+| `winston` / `morgan` | `^3.11.0` / `^1.10.0` | Structured multi-transport application logging and HTTP tracing |
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start & Local Setup
 
 ### Prerequisites
 
-- **Node.js** v18.0.0+
-- **MongoDB** (local or [MongoDB Atlas](https://www.mongodb.com/atlas))
-- **Redis** *(optional — for caching & pub/sub)*
-- **Git**
+Ensure you have the following installed locally:
+- **Node.js**: `v18.0.0` or higher ([Download](https://nodejs.org/))
+- **npm**: `v9.0.0` or higher
+- **MongoDB**: Local MongoDB instance or active [MongoDB Atlas URI](https://www.mongodb.com/atlas)
+- **Git**: Distributed version control
 
-### Step 1 — Clone the Repository
+### Step 1: Clone Repository
 
 ```bash
 git clone https://github.com/Aaryan-9784/Skillora.git
 cd Skillora
 ```
 
-### Step 2 — Backend Setup
+### Step 2: Backend Setup & Environment
 
+1. Navigate to the backend directory and install dependencies:
 ```bash
 cd server
 npm install
 ```
 
-Create `server/.env` by copying the example and filling in your credentials:
-
+2. Generate your local environment configuration:
 ```bash
 cp .env.example .env
 ```
 
-<details>
-<summary><b>📋 Full Environment Variables Reference</b></summary>
-<br/>
+3. Configure your `.env` variables (see [Environment Variables Reference](#-environment-variables-reference)).
 
-```env
-# ── Server ──────────────────────────────────────────────────
-NODE_ENV=development
-PORT=5000
-SERVER_URL=http://localhost:5000
-CLIENT_URL=http://localhost:5173
-
-# ── MongoDB ─────────────────────────────────────────────────
-MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<dbname>
-
-# ── JWT Security ────────────────────────────────────────────
-JWT_ACCESS_SECRET=your_jwt_access_secret_here        # Min 32 random chars
-JWT_REFRESH_SECRET=your_jwt_refresh_secret_here      # Min 32 random chars
-JWT_ACCESS_EXPIRES=2h
-JWT_REFRESH_EXPIRES=30d
-
-# ── Google OAuth ────────────────────────────────────────────
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-
-# ── GitHub OAuth ────────────────────────────────────────────
-GITHUB_CLIENT_ID=your_github_client_id
-GITHUB_CLIENT_SECRET=your_github_client_secret
-
-# ── Google Gemini AI ────────────────────────────────────────
-GEMINI_API_KEY=your_gemini_api_key_here
-GEMINI_MODEL=gemini-1.5-flash
-
-# ── Razorpay Payments ──────────────────────────────────────
-RAZORPAY_KEY_ID=your_razorpay_key_id
-RAZORPAY_KEY_SECRET=your_razorpay_key_secret
-
-# ── Redis (Optional) ───────────────────────────────────────
-REDIS_URL=
-
-# ── Cloudinary (File Uploads) ──────────────────────────────
-CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
-CLOUDINARY_API_KEY=your_cloudinary_api_key
-CLOUDINARY_API_SECRET=your_cloudinary_api_secret
-
-# ── Email (Nodemailer) ─────────────────────────────────────
-EMAIL_SERVICE=gmail
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_SECURE=false
-EMAIL_USER=your_email@gmail.com
-EMAIL_PASS=your_email_app_password
-EMAIL_FROM=your_email@gmail.com
-EMAIL_FROM_NAME=Skillora
-
-# ── Default Admin ──────────────────────────────────────────
-ADMIN_EMAIL=admin@example.com
-ADMIN_PASSWORD=change_this_admin_password
-```
-
-</details>
-
-Start the backend:
-
+4. Start the backend development server:
 ```bash
 npm run dev
-# ✅ Server running at http://localhost:5000
+# 🚀 Server listening on http://localhost:5000
 ```
 
-### Step 3 — Frontend Setup
+### Step 3: Frontend Setup & Environment
 
-Open a **new terminal**:
-
+1. In a **new terminal tab**, navigate to the client directory:
 ```bash
 cd client
 npm install
 ```
 
-Create `client/.env`:
-
-```env
-VITE_API_URL=/api
-VITE_SERVER_URL=http://localhost:5000
+2. Generate your client environment configuration:
+```bash
+cp .env.example .env
 ```
 
-Start the frontend:
+3. Verify `client/.env` points to the local backend:
+```env
+VITE_SERVER_URL=http://localhost:5000
+VITE_API_URL=/api
+```
 
+4. Start the Vite development server:
 ```bash
 npm run dev
-# ✅ Client running at http://localhost:5173
+# ⚡ Client running at http://localhost:5173
 ```
 
-Open **http://localhost:5173** in your browser 🚀
+5. Open your browser and navigate to **`http://localhost:5173`**.
+
+### Step 4: Seed Default Admin User
+
+To provision an initial administrator account for the Command Center:
+
+```bash
+cd server
+node scripts/createAdmin.js
+```
+
+---
+
+## ⚙️ Environment Variables Reference
+
+### Backend (`server/.env`)
+
+```ini
+# ── Server Configuration ──────────────────────────────────────
+NODE_ENV=development                       # 'development' or 'production'
+PORT=5000                                  # Server listening port
+SERVER_URL=http://localhost:5000           # Public URL of the backend
+CLIENT_URL=http://localhost:5173           # Frontend origin for CORS policy
+
+# ── Database ──────────────────────────────────────────────────
+MONGO_URI=mongodb+srv://<user>:<pwd>@<cluster>.mongodb.net/skillora  # MongoDB Atlas connection string
+
+# ── Authentication & Security ─────────────────────────────────
+JWT_ACCESS_SECRET=super_secure_access_secret_min_32_chars       # Access token secret
+JWT_REFRESH_SECRET=super_secure_refresh_secret_min_32_chars     # Refresh token secret
+JWT_ACCESS_EXPIRES=2h                                           # Access token TTL
+JWT_REFRESH_EXPIRES=30d                                         # Refresh token cookie TTL
+
+# ── Social OAuth (Passport.js) ────────────────────────────────
+GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GITHUB_CLIENT_ID=your_github_client_id
+GITHUB_CLIENT_SECRET=your_github_client_secret
+
+# ── AI Integration ────────────────────────────────────────────
+GEMINI_API_KEY=AIzaSy...your_gemini_api_key                     # Google Gemini AI API key
+GEMINI_MODEL=gemini-1.5-flash                                  # Target LLM model
+
+# ── Payments & Escrow ─────────────────────────────────────────
+RAZORPAY_KEY_ID=rzp_test_...                                    # Razorpay API key
+RAZORPAY_KEY_SECRET=your_razorpay_secret                        # Razorpay secret
+
+# ── Media & CDN Storage ───────────────────────────────────────
+CLOUDINARY_CLOUD_NAME=your_cloudinary_name
+CLOUDINARY_API_KEY=your_cloudinary_api_key
+CLOUDINARY_API_SECRET=your_cloudinary_api_secret
+
+# ── Email Delivery (SMTP) ─────────────────────────────────────
+EMAIL_SERVICE=gmail
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_SECURE=false
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASS=your_app_specific_password
+EMAIL_FROM=notifications@skillora.com
+EMAIL_FROM_NAME=Skillora
+
+# ── Cache & Performance (Optional) ────────────────────────────
+REDIS_URL=redis://localhost:6379                                # Optional Redis instance
+
+# ── Default Admin Seed ────────────────────────────────────────
+ADMIN_EMAIL=admin@skillora.com
+ADMIN_PASSWORD=change_this_secure_password
+```
+
+### Frontend (`client/.env`)
+
+```ini
+# ── Local Development ─────────────────────────────────────────
+VITE_SERVER_URL=http://localhost:5000
+VITE_API_URL=/api
+
+# ── Production (Vercel) ───────────────────────────────────────
+# VITE_SERVER_URL=https://skillora-api.onrender.com
+# VITE_API_URL=https://skillora-api.onrender.com/api
+```
 
 ---
 
 ## 🔌 Complete API Reference
 
-### 🔑 Authentication (`/api/auth`)
+### 🔑 Authentication & Identity (`/api/auth`)
 
-| Method | Endpoint | Description | Auth |
+| Method | Endpoint | Description | Access Level |
 | :--- | :--- | :--- | :---: |
-| `POST` | `/api/auth/register` | Register a new user (freelancer or client) | ❌ |
-| `POST` | `/api/auth/login` | Authenticate and receive refresh token cookie | ❌ |
-| `POST` | `/api/auth/refresh` | Issue new access token via refresh cookie | ❌ |
-| `POST` | `/api/auth/logout` | Logout and clear authentication cookie | 🔒 |
-| `POST` | `/api/auth/logout-all` | Invalidate all active sessions | 🔒 |
-| `GET` | `/api/auth/me` | Get currently authenticated user | 🔒 |
-| `POST` | `/api/auth/forgot-password` | Send password reset email | ❌ |
-| `POST` | `/api/auth/reset-password/:token` | Reset password with token | ❌ |
-| `POST` | `/api/auth/2fa/setup` | Generate 2FA secret and QR code | 🔒 |
-| `POST` | `/api/auth/2fa/enable` | Enable 2FA after TOTP verification | 🔒 |
-| `POST` | `/api/auth/2fa/disable` | Disable 2FA | 🔒 |
-| `POST` | `/api/auth/2fa/verify-login` | Verify 2FA token during login | ❌ |
-| `GET` | `/api/auth/google` | Initiate Google OAuth 2.0 flow | ❌ |
-| `GET` | `/api/auth/github` | Initiate GitHub OAuth 2.0 flow | ❌ |
+| `POST` | `/api/auth/register` | Register new account (Freelancer / Client) | Public |
+| `POST` | `/api/auth/login` | Authenticate credentials; sets refresh cookie | Public |
+| `POST` | `/api/auth/refresh` | Issue fresh in-memory access token | Public (Cookie) |
+| `POST` | `/api/auth/logout` | Revoke session and clear refresh cookie | Authenticated |
+| `POST` | `/api/auth/logout-all` | Invalidate all active user sessions | Authenticated |
+| `GET` | `/api/auth/me` | Fetch profile of currently authenticated user | Authenticated |
+| `POST` | `/api/auth/forgot-password` | Request password reset token via email | Public |
+| `POST` | `/api/auth/reset-password/:token`| Set new password using reset token | Public |
+| `POST` | `/api/auth/2fa/setup` | Generate TOTP secret and QR code | Authenticated |
+| `POST` | `/api/auth/2fa/enable` | Confirm OTP code and enable 2FA | Authenticated |
+| `POST` | `/api/auth/2fa/disable` | Disable 2FA with current token verification | Authenticated |
+| `POST` | `/api/auth/2fa/verify-login` | Verify TOTP code during two-step login | Public |
+| `GET` | `/api/auth/google` | Trigger Google OAuth 2.0 redirection | Public |
+| `GET` | `/api/auth/github` | Trigger GitHub OAuth 2.0 redirection | Public |
 
-### 📂 Projects (`/api/projects`)
+### 📂 Projects & Kanban Tasks (`/api/projects`)
 
-| Method | Endpoint | Description | Auth |
+| Method | Endpoint | Description | Access Level |
 | :--- | :--- | :--- | :---: |
-| `GET` | `/api/projects` | List user's projects | 🔒 |
-| `POST` | `/api/projects` | Create a new project | 🔒 |
-| `GET` | `/api/projects/stats` | Get project statistics | 🔒 |
-| `GET` | `/api/projects/:id` | Get project details | 🔒 |
-| `PATCH` | `/api/projects/:id` | Update project | 🔒 |
-| `DELETE` | `/api/projects/:id` | Delete project | 🔒 |
-| `GET` | `/api/projects/:id/tasks` | Get tasks for a project | 🔒 |
-| `POST` | `/api/projects/:id/tasks/reorder` | Reorder tasks (Kanban) | 🔒 |
-| `GET` | `/api/projects/:id/ai-tasks` | AI-generated task suggestions | 🔒 |
-| `POST` | `/api/projects/tasks` | Create a task | 🔒 |
-| `PATCH` | `/api/projects/tasks/:id` | Update a task | 🔒 |
-| `DELETE` | `/api/projects/tasks/:id` | Delete a task | 🔒 |
+| `GET` | `/api/projects` | List projects owned by current user | Authenticated |
+| `POST` | `/api/projects` | Create new project entity | Authenticated |
+| `GET` | `/api/projects/stats` | Compute aggregate project status statistics | Authenticated |
+| `GET` | `/api/projects/explore` | Browse marketplace open projects | Authenticated |
+| `GET` | `/api/projects/:id` | Fetch full project details and milestones | Authenticated |
+| `PATCH` | `/api/projects/:id` | Update project parameters, deadline, budget | Authenticated |
+| `DELETE` | `/api/projects/:id` | Soft/hard delete project entity | Authenticated |
+| `GET` | `/api/projects/:id/tasks` | Retrieve all Kanban tasks for project | Authenticated |
+| `POST` | `/api/projects/tasks` | Create new Kanban task card | Authenticated |
+| `PATCH` | `/api/projects/tasks/:id` | Update task status, title, checklists | Authenticated |
+| `DELETE` | `/api/projects/tasks/:id` | Remove task card | Authenticated |
+| `POST` | `/api/projects/:id/tasks/reorder`| Bulk update task column/row positions | Authenticated |
+| `GET` | `/api/projects/:id/ai-tasks`| Auto-generate task breakdown with Gemini | Authenticated |
 
-### 🏪 Marketplace & Proposals (`/api/projects`)
+### 💰 Invoicing & Revenue (`/api/invoices`)
 
-| Method | Endpoint | Description | Auth |
+| Method | Endpoint | Description | Access Level |
 | :--- | :--- | :--- | :---: |
-| `GET` | `/api/projects/explore` | Browse open marketplace projects | 🔒 |
-| `POST` | `/api/projects/:projectId/proposals` | Submit a proposal | 🔒 |
-| `GET` | `/api/projects/proposals/my` | Get freelancer's own proposals | 🔒 |
+| `GET` | `/api/invoices` | List invoices with filter and pagination | Authenticated |
+| `POST` | `/api/invoices` | Create sequential invoice with line items | Authenticated |
+| `GET` | `/api/invoices/analytics` | Retrieve revenue charts & growth metrics | Authenticated |
+| `GET` | `/api/invoices/outstanding` | Calculate total unpaid receivable balance | Authenticated |
+| `GET` | `/api/invoices/:id` | Fetch full invoice breakdown | Authenticated |
+| `PATCH` | `/api/invoices/:id` | Update invoice metadata and items | Authenticated |
+| `DELETE` | `/api/invoices/:id` | Remove draft invoice | Authenticated |
+| `PATCH` | `/api/invoices/:id/status` | Advance invoice state (`Sent`, `Paid`, etc.)| Authenticated |
+| `POST` | `/api/invoices/:id/send` | Transmit invoice PDF to client via email | Authenticated |
+| `POST` | `/api/invoices/:id/duplicate` | Clone existing invoice into new draft | Authenticated |
 
-### 💰 Invoices (`/api/invoices`)
+### 💳 Payments & Escrow Ledger (`/api/payments` & `/api/escrow`)
 
-| Method | Endpoint | Description | Auth |
+| Method | Endpoint | Description | Access Level |
 | :--- | :--- | :--- | :---: |
-| `GET` | `/api/invoices` | List invoices | 🔒 |
-| `POST` | `/api/invoices` | Create invoice | 🔒 |
-| `GET` | `/api/invoices/analytics` | Revenue analytics | 🔒 |
-| `GET` | `/api/invoices/outstanding` | Outstanding balance | 🔒 |
-| `GET` | `/api/invoices/:id` | Get invoice details | 🔒 |
-| `PATCH` | `/api/invoices/:id` | Update invoice | 🔒 |
-| `DELETE` | `/api/invoices/:id` | Delete invoice | 🔒 |
-| `PATCH` | `/api/invoices/:id/status` | Update invoice status | 🔒 |
-| `POST` | `/api/invoices/:id/send` | Send invoice to client | 🔒 |
-| `POST` | `/api/invoices/:id/duplicate` | Duplicate an invoice | 🔒 |
+| `POST` | `/api/payments/razorpay/create-order`| Create Razorpay payment order instance | Authenticated |
+| `POST` | `/api/payments/razorpay/verify` | Verify cryptographic payment signature | Authenticated |
+| `GET` | `/api/payments/earnings` | Aggregate net revenue and payouts | Authenticated |
+| `GET` | `/api/payments` | List historical transaction records | Authenticated |
+| `POST` | `/api/escrow/deposit` | Lock funds into project escrow account | Authenticated |
+| `POST` | `/api/escrow/:id/release` | Disburse escrow funds to freelancer | Authenticated |
+| `POST` | `/api/escrow/:id/refund` | Return escrow balance to client | Authenticated |
+| `GET` | `/api/escrow/project/:projectId` | Inspect escrow ledger for project | Authenticated |
 
-### 💳 Payments (`/api/payments`)
+### 👥 Client CRM & Client Portal (`/api/clients` & `/api/client-portal`)
 
-| Method | Endpoint | Description | Auth |
+| Method | Endpoint | Description | Access Level |
 | :--- | :--- | :--- | :---: |
-| `POST` | `/api/payments/razorpay/create-order` | Create Razorpay payment order | 🔒 |
-| `POST` | `/api/payments/razorpay/verify` | Verify Razorpay payment signature | 🔒 |
-| `GET` | `/api/payments/earnings` | Get earnings summary | 🔒 |
-| `GET` | `/api/payments` | List payments | 🔒 |
-| `POST` | `/api/payments` | Record a payment | 🔒 |
-| `GET` | `/api/payments/:id` | Get payment details | 🔒 |
-| `PATCH` | `/api/payments/:id` | Update payment | 🔒 |
+| `GET` | `/api/clients` | List clients linked to freelancer | Authenticated |
+| `POST` | `/api/clients` | Create new client profile record | Authenticated |
+| `GET` | `/api/clients/revenue-stats` | Compute revenue distribution per client | Authenticated |
+| `POST` | `/api/clients/:id/invite` | Send client portal onboarding invitation | Freelancer |
+| `POST` | `/api/client-portal/login` | Direct client authentication endpoint | Public |
+| `POST` | `/api/client-portal/accept-invite` | Activate portal account via token | Public |
+| `GET` | `/api/client-portal/finance-summary`| Client spending and budget overview | Client |
+| `GET` | `/api/client-portal/ai-insights` | AI recommendations on expenditure | Client |
+| `POST` | `/api/client-portal/invoices/:id/pay`| Trigger Razorpay payment for invoice | Client |
+| `POST` | `/api/client-portal/projects/:id/milestones/:mId/approve`| Approve deliverable & release escrow | Client |
+| `POST` | `/api/client-portal/projects/:id/milestones/:mId/request-changes`| Reject deliverable with revision note | Client |
 
-### 🔐 Escrow (`/api/escrow`)
+### 🤖 Generative AI Studio (`/api/ai`)
 
-| Method | Endpoint | Description | Auth |
+| Method | Endpoint | Description | Access Level |
 | :--- | :--- | :--- | :---: |
-| `POST` | `/api/escrow/deposit` | Deposit funds into escrow | 🔒 |
-| `POST` | `/api/escrow/:escrowId/release` | Release escrow to freelancer | 🔒 |
-| `POST` | `/api/escrow/:escrowId/refund` | Refund escrow to client | 🔒 |
-| `GET` | `/api/escrow/project/:projectId` | Get project escrow details | 🔒 |
+| `POST` | `/api/ai/chat` | Contextual assistant with SSE streaming | Authenticated |
+| `POST` | `/api/ai/project-plan` | Generate full project scope & milestones | Authenticated |
+| `POST` | `/api/ai/proposal` | Draft winning proposal bids | Authenticated |
+| `GET` | `/api/ai/productivity` | Analyze work velocity and focus metrics | Authenticated |
+| `POST` | `/api/ai/pricing` | Recommended project pricing model | Authenticated |
+| `GET` | `/api/ai/history` | Retrieve past AI prompt sessions | Authenticated |
+| `POST` | `/api/ai/feedback/:logId` | Log quality feedback for AI tuning | Authenticated |
 
-### 👥 Clients (`/api/clients`)
+### 🛡 Platform Administration (`/api/admin`)
 
-| Method | Endpoint | Description | Auth |
+| Method | Endpoint | Description | Access Level |
 | :--- | :--- | :--- | :---: |
-| `GET` | `/api/clients` | List freelancer's clients | 🔒 |
-| `POST` | `/api/clients` | Create a client | 🔒 |
-| `GET` | `/api/clients/revenue-stats` | Get client revenue stats | 🔒 |
-| `GET` | `/api/clients/:id` | Get client details | 🔒 |
-| `PATCH` | `/api/clients/:id` | Update client | 🔒 |
-| `DELETE` | `/api/clients/:id` | Delete client | 🔒 |
-| `POST` | `/api/clients/:id/invite` | Invite client to portal | 🔒 Freelancer |
+| `GET` | `/api/admin/stats` | Platform-wide KPIs, revenue, user counts | Admin |
+| `GET` | `/api/admin/users` | User management with filters & search | Admin |
+| `PATCH` | `/api/admin/users/:id` | Update user roles and status | Admin |
+| `DELETE` | `/api/admin/users/:id` | Delete or deactivate user account | Admin |
+| `GET` | `/api/admin/revenue` | High-resolution platform revenue charts | Admin |
+| `GET` | `/api/admin/config` | Read runtime MongoDB system parameters | Admin |
+| `PATCH` | `/api/admin/config` | Update maintenance mode, limits, emails | Admin |
+| `GET` | `/api/admin/activity` | Stream system-wide audit activity logs | Admin |
 
-### 🌐 Client Portal (`/api/client-portal`)
+### 💬 Chat, Meetings & Disputes
 
-| Method | Endpoint | Description | Auth |
-| :--- | :--- | :--- | :---: |
-| `POST` | `/api/client-portal/login` | Client portal login | ❌ |
-| `POST` | `/api/client-portal/accept-invite` | Accept portal invitation | ❌ |
-| `GET` | `/api/client-portal/me` | Get portal session | 🔒 Client |
-| `GET` | `/api/client-portal/profile` | Get client profile | 🔒 Client |
-| `PATCH` | `/api/client-portal/profile` | Update client profile | 🔒 Client |
-| `GET` | `/api/client-portal/finance-summary` | Finance overview | 🔒 Client |
-| `GET` | `/api/client-portal/revenue-analytics` | Revenue analytics | 🔒 Client |
-| `GET` | `/api/client-portal/ai-insights` | AI financial insights | 🔒 Client |
-| `GET` | `/api/client-portal/projects` | List client's projects | 🔒 Client |
-| `POST` | `/api/client-portal/projects` | Post a new project | 🔒 Client |
-| `DELETE` | `/api/client-portal/projects/:id` | Delete a project | 🔒 Client |
-| `GET` | `/api/client-portal/projects/:projectId/proposals` | View proposals | 🔒 Client |
-| `PATCH` | `/api/client-portal/proposals/:proposalId/respond` | Accept/reject proposal | 🔒 Client |
-| `GET` | `/api/client-portal/invoices` | List invoices | 🔒 Client |
-| `GET` | `/api/client-portal/invoices/:id` | Invoice details | 🔒 Client |
-| `POST` | `/api/client-portal/invoices/:id/pay` | Initiate Razorpay payment | 🔒 Client |
-| `POST` | `/api/client-portal/invoices/:id/pay/verify` | Verify payment | 🔒 Client |
-| `POST` | `/api/client-portal/projects/:id/milestones/:milestoneId/approve` | Approve milestone | 🔒 Client |
-| `POST` | `/api/client-portal/projects/:id/milestones/:milestoneId/request-changes` | Request changes | 🔒 Client |
-| `GET` | `/api/client-portal/messages/:projectId` | Get project messages | 🔒 Client |
-| `POST` | `/api/client-portal/messages/:projectId` | Send message | 🔒 Client |
-| `GET` | `/api/client-portal/activity` | Client activity log | 🔒 Client |
-| `GET` | `/api/client-portal/notifications` | Get notifications | 🔒 Client |
-| `GET` | `/api/client-portal/notifications/unread-count` | Unread count | 🔒 Client |
-| `PATCH` | `/api/client-portal/notifications/read-all` | Mark all read | 🔒 Client |
-| `PATCH` | `/api/client-portal/notifications/:id/read` | Mark one read | 🔒 Client |
-
-### 🛡 Admin (`/api/admin`)
-
-| Method | Endpoint | Description | Auth |
-| :--- | :--- | :--- | :---: |
-| `GET` | `/api/admin/stats` | Platform analytics | 🔒 Admin |
-| `GET` | `/api/admin/users` | List/search/filter users | 🔒 Admin |
-| `PATCH` | `/api/admin/users/:id` | Update user status/role | 🔒 Admin |
-| `DELETE` | `/api/admin/users/:id` | Delete user account | 🔒 Admin |
-| `GET` | `/api/admin/revenue` | Revenue chart data | 🔒 Admin |
-| `GET` | `/api/admin/revenue/summary` | Revenue summary | 🔒 Admin |
-| `GET` | `/api/admin/config` | Get platform configuration | 🔒 Admin |
-| `PATCH` | `/api/admin/config` | Update platform settings | 🔒 Admin |
-| `GET` | `/api/admin/activity` | Platform activity logs | 🔒 Admin |
-
-### 🤖 AI Studio (`/api/ai`)
-
-| Method | Endpoint | Description | Auth |
-| :--- | :--- | :--- | :---: |
-| `POST` | `/api/ai/chat` | Gemini chat with SSE streaming | 🔒 |
-| `POST` | `/api/ai/project-plan` | Generate project breakdown | 🔒 |
-| `POST` | `/api/ai/proposal` | Draft a proposal | 🔒 |
-| `GET` | `/api/ai/productivity` | Productivity analysis | 🔒 |
-| `POST` | `/api/ai/pricing` | Pricing suggestions | 🔒 |
-| `GET` | `/api/ai/history` | AI conversation history | 🔒 |
-| `POST` | `/api/ai/feedback/:logId` | Rate AI response | 🔒 |
-
-### 💬 Chat (`/api/chat`)
-
-| Method | Endpoint | Description | Auth |
-| :--- | :--- | :--- | :---: |
-| `GET` | `/api/chat/project` | Get project conversation | 🔒 |
-| `GET` | `/api/chat/project/:projectId` | Get specific project conversation | 🔒 |
-| `GET` | `/api/chat/conversations/:conversationId/messages` | Get messages | 🔒 |
-| `POST` | `/api/chat/conversations/:conversationId/messages` | Send message | 🔒 |
-| `DELETE` | `/api/chat/messages/:messageId` | Delete message | 🔒 |
-| `POST` | `/api/chat/messages/:messageId/react` | Toggle reaction | 🔒 |
-| `POST` | `/api/chat/upload` | Upload chat attachment | 🔒 |
-
-### ⚖️ Disputes (`/api/disputes`)
-
-| Method | Endpoint | Description | Auth |
-| :--- | :--- | :--- | :---: |
-| `POST` | `/api/disputes` | Create a dispute | 🔒 |
-| `GET` | `/api/disputes` | List all disputes | 🔒 Admin |
-| `PATCH` | `/api/disputes/:disputeId/resolve` | Resolve dispute | 🔒 Admin |
-
-### 📋 Submissions (`/api/submissions`)
-
-| Method | Endpoint | Description | Auth |
-| :--- | :--- | :--- | :---: |
-| `POST` | `/api/submissions` | Create submission | 🔒 |
-| `PATCH` | `/api/submissions/:submissionId/revision` | Request revision | 🔒 |
-| `PATCH` | `/api/submissions/:submissionId/approve` | Approve submission | 🔒 |
-| `GET` | `/api/submissions/project/:projectId` | Get project submissions | 🔒 |
-
-### ⭐ Reviews (`/api/reviews`)
-
-| Method | Endpoint | Description | Auth |
-| :--- | :--- | :--- | :---: |
-| `POST` | `/api/reviews` | Create review | 🔒 |
-| `GET` | `/api/reviews/user/:userId` | Get user reviews | ❌ |
-| `GET` | `/api/reviews/project/:projectId` | Get project reviews | ❌ |
-
-### 📹 Meetings (`/api/meetings`)
-
-| Method | Endpoint | Description | Auth |
-| :--- | :--- | :--- | :---: |
-| `POST` | `/api/meetings/schedule` | Schedule a meeting | 🔒 |
-| `GET` | `/api/meetings/project/:projectId` | Get project meetings | 🔒 |
-| `GET` | `/api/meetings/calls/history` | Call history | 🔒 |
-
-### 🔧 Other Endpoints
-
-| Method | Endpoint | Description | Auth |
-| :--- | :--- | :--- | :---: |
-| `GET` | `/api/dashboard` | Freelancer dashboard summary | 🔒 |
-| `GET` | `/api/billing` | Billing info | 🔒 |
-| `GET` | `/api/users/freelancers` | List freelancers | ❌ |
-| `GET` | `/api/users/:id` | Get user by ID | ❌ |
-| `GET` | `/api/users/profile` | Get own profile | 🔒 |
-| `PATCH` | `/api/users/profile` | Update profile | 🔒 |
-| `PATCH` | `/api/users/change-password` | Change password | 🔒 |
-| `POST` | `/api/upload/avatar` | Upload avatar to Cloudinary | 🔒 |
-| `POST` | `/api/upload/file` | Upload project file | 🔒 |
-| `GET` | `/api/skills` | List skills | 🔒 |
-| `POST` | `/api/skills` | Create skill | 🔒 |
-| `GET` | `/api/skills/by-category` | Skills grouped by category | 🔒 |
-| `PATCH` | `/api/skills/:id` | Update skill | 🔒 |
-| `DELETE` | `/api/skills/:id` | Delete skill | 🔒 |
-| `GET` | `/api/notifications` | Get notifications | 🔒 |
-| `GET` | `/api/notifications/unread` | Get unread count | 🔒 |
-| `PATCH` | `/api/notifications/read-all` | Mark all as read | 🔒 |
-| `PATCH` | `/api/notifications/:id/read` | Mark notification read | 🔒 |
-| `DELETE` | `/api/notifications/:id` | Delete notification | 🔒 |
+| Route Group | Endpoints Summary | Access Level |
+| :--- | :--- | :---: |
+| **`/api/chat`** | Thread retrieval, message dispatch, attachment uploads, reactions, deletion | Authenticated |
+| **`/api/meetings`** | Meeting scheduler, room tokens, WebRTC session history logging | Authenticated |
+| **`/api/disputes`** | Dispute creation, evidence submission, admin arbitration | Auth / Admin |
+| **`/api/submissions`**| Deliverable uploads, revision workflows, milestone status checks | Authenticated |
+| **`/api/reviews`** | Rating submission, public testimonial aggregation | Auth / Public |
+| **`/api/skills`** | Technical skill registry, proficiency calculation | Authenticated |
+| **`/api/notifications`**| In-app notification queue, mark-read, clear-all | Authenticated |
+| **`/api/upload`** | Cloudinary CDN image/document upload pipeline | Authenticated |
 
 ---
 
-## 📁 Project Structure
+## ⚡ Socket.io Real-Time Event Matrix
+
+| Event Name | Direction | Payload Structure | Architectural Effect |
+| :--- | :---: | :--- | :--- |
+| `join_project` | Client → Server | `{ projectId: string }` | Joins client socket to scoped project room |
+| `leave_project` | Client → Server | `{ projectId: string }` | Unsubscribes client socket from project room |
+| `message:send` | Client → Server | `{ conversationId, content, attachments }` | Dispatches new chat message to participants |
+| `message:new` | Server → Client | `{ message: MessageDocument }` | Delivers incoming message instantly |
+| `typing:start` | Client → Server | `{ conversationId, user }` | Broadcasts typing indicator to thread |
+| `typing:stop` | Client → Server | `{ conversationId, user }` | Clears typing indicator from thread |
+| `project:updated` | Server → Client | `{ projectId, type, updatedFields }` | Triggers reactive UI state invalidation |
+| `invoice:updated` | Server → Client | `{ invoiceId, status, paymentData }` | Refreshes invoice lifecycle state |
+| `notification:new` | Server → Client | `{ notification: NotificationDoc }` | Displays live toast & updates badge counter |
+| `meeting:signal` | Bidirectional | `{ to, from, signal: { type, sdp/candidate } }`| Coordinates WebRTC P2P ICE handshake |
+| `admin:stats_refresh`| Server → Client | `{ timestamp: number }` | Real-time trigger for admin dashboard metrics |
+
+---
+
+## 🚢 Production Deployment
+
+### Frontend: Vercel
+
+The frontend is optimized for zero-config deployment on [Vercel](https://vercel.com):
+
+1. Connect your GitHub repository to Vercel.
+2. Configure build settings:
+   - **Framework Preset**: `Vite`
+   - **Root Directory**: `client`
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `dist`
+3. Add Environment Variables:
+   - `VITE_SERVER_URL`: `https://your-skillora-api.onrender.com`
+   - `VITE_API_URL`: `https://your-skillora-api.onrender.com/api`
+4. The included [`vercel.json`](file:///d:/Projects/Skillora/vercel.json) handles SPA client-side routing rewrites and cache-control headers automatically.
+
+### Backend: Render / Docker
+
+The backend includes a battle-tested [`render.yaml`](file:///d:/Projects/Skillora/render.yaml) Infrastructure-as-Code blueprint:
+
+1. Create a new Web Service on [Render](https://render.com) using your repository.
+2. Select **Blueprint** or configure manually:
+   - **Root Directory**: `server`
+   - **Runtime**: `Node`
+   - **Build Command**: `npm install`
+   - **Start Command**: `npm start`
+   - **Health Check Path**: `/health`
+3. Populate the required production environment variables matching your MongoDB Atlas, Gemini AI, Razorpay, Cloudinary, and SMTP credentials.
+
+### Production Checklist
+
+- [ ] Set `NODE_ENV=production` on backend server.
+- [ ] Replace all JWT secrets with cryptographically random 64-character strings.
+- [ ] Enable IP Access List whitelist on MongoDB Atlas cluster.
+- [ ] Configure production Razorpay Webhook endpoints and live API keys.
+- [ ] Ensure `CLIENT_URL` matches your production frontend Vercel domain to enforce strict CORS.
+- [ ] Provision dedicated Redis instance for multi-instance socket clustering and rate-limit persistence.
+
+---
+
+## 📁 Project Directory Structure
 
 ```
 Skillora/
-├── client/                            # React 18 + Vite Frontend
-│   ├── public/                        # Static assets & favicon
+├── .github/                           # CI/CD workflows and issue templates
+├── client/                            # React 18 + Vite 5 Frontend Application
+│   ├── public/                        # Static public assets, favicon, media
 │   └── src/
-│       ├── App.jsx                    # Root component with route definitions
-│       ├── main.jsx                   # Application entry point
+│       ├── App.jsx                    # Root application component & route map
+│       ├── main.jsx                   # React DOM bootstrapping
 │       ├── components/
-│       │   ├── admin/                 # Admin-specific UI components
-│       │   ├── ai/                    # AI floating widget, chat studio
-│       │   ├── chat/                  # Real-time chat components
-│       │   ├── common/                # ProtectedRoute, AdminRoute, ClientRoute
-│       │   ├── dashboard/             # Stat cards, revenue charts, activity feeds
-│       │   ├── projects/              # Kanban board (@dnd-kit), project cards
-│       │   └── ui/                    # Modals, buttons, badges, command palette
-│       ├── hooks/
-│       │   ├── useAuth.js             # Authentication hook
-│       │   ├── useClickOutside.js     # Click outside detector
-│       │   ├── useCommandPalette.js   # ⌘K command palette
-│       │   ├── useConfirm.js          # Confirmation dialogs
-│       │   ├── useDebounce.js         # Input debouncing
-│       │   ├── useFetch.js            # Data fetching hook
-│       │   ├── useSocket.js           # Socket.io connection
-│       │   ├── useSyncEvents.js       # Real-time event synchronization
-│       │   └── useWebRTC.js           # WebRTC video call hook
-│       ├── layouts/
-│       │   ├── AdminLayout.jsx        # Admin portal layout
-│       │   ├── ClientLayout.jsx       # Client portal layout
-│       │   ├── DashboardLayout.jsx    # Freelancer dashboard layout
-│       │   └── MainLayout.jsx         # Public pages layout
-│       ├── pages/
-│       │   ├── AI/                    # Dedicated AI Chat Studio
-│       │   ├── Admin/                 # Admin: Overview, Users, Revenue, Config, Logs
-│       │   ├── Auth/                  # Login, Register, Password Reset, OAuth
-│       │   ├── ClientPortal/          # Client Dashboard, Projects, Invoices, Chat
-│       │   ├── Clients/               # Client CRM list & detail views
-│       │   ├── Dashboard/             # Freelancer main overview
-│       │   ├── Freelancers/           # Freelancer profiles & marketplace
-│       │   ├── Landing/               # Public product landing page
-│       │   ├── Marketplace/           # Browse projects & submit proposals
-│       │   ├── Messages/              # Real-time messaging center
-│       │   ├── Payments/              # Invoices, payments & Razorpay
-│       │   ├── Profile/               # User profile & settings
-│       │   ├── Projects/              # Project list & detail views
-│       │   ├── Skills/                # Technical skill matrix
-│       │   └── Tasks/                 # Kanban board view
-│       ├── services/
-│       │   ├── api.js                 # Axios instance with interceptors
-│       │   ├── adminService.js        # Admin API calls
-│       │   ├── authService.js         # Auth API calls
-│       │   ├── clientPortalService.js # Client portal API calls
-│       │   ├── marketplaceService.js  # Marketplace API calls
-│       │   ├── razorpayService.js     # Razorpay payment integration
-│       │   ├── socketService.js       # Socket.io client setup
-│       │   └── tokenStore.js          # In-memory JWT token store
-│       ├── store/                     # 13 Zustand state stores
-│       ├── styles/                    # Global CSS and Tailwind config
-│       └── utils/
-│           ├── constants.js           # App-wide constants
-│           ├── helpers.js             # Formatters (currency, dates)
-│           ├── planConstants.js       # Plan tier definitions
-│           └── webrtcConfig.js        # WebRTC ICE server config
+│       │   ├── admin/                 # Admin Command Center components
+│       │   ├── ai/                    # Gemini AI studio floating widget & panels
+│       │   ├── chat/                  # Real-time chat & file attachment UI
+│       │   ├── common/                # ProtectedRoute, AdminRoute, RoleGuards
+│       │   ├── dashboard/             # Stat cards, revenue graphs, activity feeds
+│       │   ├── projects/              # Kanban board (@dnd-kit), task cards
+│       │   └── ui/                    # Design system components, modals, badges
+│       ├── hooks/                     # Custom React hooks (useAuth, useSocket, etc.)
+│       ├── layouts/                   # Role-based shell layouts (Freelancer, Client, Admin)
+│       ├── pages/                     # Routed page views (20+ views across 3 portals)
+│       ├── services/                  # Axios HTTP client, WebSocket & WebRTC services
+│       ├── store/                     # Zustand state management (13 domain stores)
+│       ├── styles/                    # Global Tailwind CSS and typography tokens
+│       └── utils/                     # Formatting helpers, constants, ICE server config
 │
-├── server/                            # Node.js + Express Backend
-│   ├── server.js                      # HTTP + Socket.io server bootstrap
-│   ├── app.js                         # Express app config & middleware
-│   ├── config/
-│   │   ├── db.js                      # MongoDB connection with retry logic
-│   │   ├── env.js                     # Environment variable validation
-│   │   ├── oauth.js                   # OAuth configuration
-│   │   ├── passport.js                # Passport strategies (Google, GitHub)
-│   │   ├── plans.js                   # Subscription plan definitions
-│   │   ├── redis.js                   # Redis client configuration
-│   │   └── socket.js                  # Socket.io server configuration
-│   ├── controllers/                   # 21 route controllers
-│   ├── middlewares/
-│   │   ├── auth.middleware.js         # JWT verification, role guards
-│   │   ├── error.middleware.js        # Global error handler
-│   │   ├── planGate.js                # Plan-based feature gating
-│   │   ├── rateLimiter.js             # Rate limiting (auth, AI)
-│   │   └── upload.js                  # Multer + Cloudinary config
-│   ├── models/                        # 20 Mongoose schemas
-│   ├── routes/                        # 20 route modules
-│   ├── services/                      # 17 business logic services
+├── server/                            # Node.js + Express Enterprise Backend API
+│   ├── server.js                      # HTTP & Socket.io server bootstrap
+│   ├── app.js                         # Express middleware pipeline configuration
+│   ├── config/                        # DB connection, Passport OAuth, Redis, Socket config
+│   ├── controllers/                   # 21 route controllers with business logic
+│   ├── middlewares/                   # JWT verification, RBAC guards, rate limiters, sanitizers
+│   ├── models/                        # 20 Mongoose schemas with indexes and hooks
+│   ├── routes/                        # 20 Express route modules
+│   ├── scripts/                       # Database seeding and admin provisioning scripts
+│   ├── services/                      # Business logic domain services (AI, Payment, Mail)
 │   ├── utils/                         # ApiError, ApiResponse, asyncHandler, logger
-│   └── validators/                    # Joi validation schemas
+│   └── validators/                    # Joi request validation schemas
 │
-├── docs/                              # Documentation
-│   └── CHAT_APP_IMPLEMENTATION.md     # Chat feature documentation
-├── video/                             # Demo videos
-│   ├── Landing Page Video.mp4
-│   └── Signup & Login Page Video.mp4
-└── README.md
+├── docs/                              # Feature architecture and design documentation
+├── .gitignore                         # Enterprise-grade VCS ignore specifications
+├── render.yaml                        # Render Cloud deployment blueprint
+├── vercel.json                        # Vercel SPA routing and cache header config
+└── README.md                          # Project documentation
 ```
 
 ---
 
-## ❓ FAQ
+## 🧪 Testing & Quality Assurance
 
-<details>
-<summary><b>What payment gateway does Skillora use?</b></summary>
-<br/>
-Skillora integrates with <b>Razorpay</b> for payment processing. The system supports order creation, payment signature verification, and automatic invoice status updates. An escrow system provides additional fund protection for both freelancers and clients.
-</details>
+Skillora enforces strict code quality and linting standards:
 
-<details>
-<summary><b>How does real-time sync work across different user roles?</b></summary>
-<br/>
-Skillora uses <b>Socket.io</b> to broadcast scoped event payloads when data mutations occur. Custom hooks (<code>useSyncEvents.js</code>) intercept server broadcasts and seamlessly update UI state across Freelancer, Client, and Admin sessions without page refreshes.
-</details>
+```bash
+# ── Backend Testing & Linting ─────────────────────────────────
+cd server
+npm run lint          # Execute ESLint static analysis
+npm test              # Run Jest unit & integration test suites
 
-<details>
-<summary><b>How are access tokens securely stored?</b></summary>
-<br/>
-Access tokens are kept <b>strictly in JavaScript memory</b> within <code>tokenStore.js</code>. Refresh tokens are stored in secure, <code>HttpOnly</code>, <code>SameSite=Strict</code> cookies. Tokens are never stored in <code>localStorage</code> or <code>sessionStorage</code>, making the app immune to XSS token theft.
-</details>
-
-<details>
-<summary><b>Does Skillora support Two-Factor Authentication?</b></summary>
-<br/>
-Yes! Skillora implements <b>TOTP-based 2FA</b> using <code>speakeasy</code> and <code>otplib</code>. Users can scan a QR code with any authenticator app (Google Authenticator, Authy, etc.), then enable 2FA for an additional security layer on every login.
-</details>
-
-<details>
-<summary><b>Can clients hire freelancers through the platform?</b></summary>
-<br/>
-Yes. Skillora includes a full <b>marketplace system</b>. Clients can post projects, freelancers can browse open projects and submit proposals with bid amounts and cover letters, and clients can accept or reject proposals — all within the platform.
-</details>
-
-<details>
-<summary><b>What file upload options are available?</b></summary>
-<br/>
-Skillora uses <b>Cloudinary</b> for all file storage — including user avatars, project files, and chat attachments. Files are processed through Multer middleware and uploaded to Cloudinary's CDN for fast, reliable delivery.
-</details>
+# ── Frontend Quality & Preview ────────────────────────────────
+cd client
+npm run lint          # Run ESLint across React components
+npm run build         # Validate production build compilation
+npm run preview       # Test production bundle locally
+```
 
 ---
 
-## 📜 License
+## 🤝 Contributing Guidelines
 
-Distributed under the **MIT License**. See `LICENSE` for more information.
+We welcome community contributions! Please follow the enterprise workflow:
+
+1. **Fork the Repository** on GitHub.
+2. **Create a Feature Branch**:
+   ```bash
+   git checkout -b feat/milestone-escrow-enhancement
+   ```
+3. **Adhere to Conventional Commits**:
+   - `feat: add escrow auto-release timer`
+   - `fix: resolve socket reconnection race condition`
+   - `docs: update API reference for client portal`
+   - `refactor: optimize Kanban task reordering complexity`
+4. **Ensure All Checks Pass**: Run `npm run lint` across both `client` and `server`.
+5. **Open a Pull Request** with a detailed summary of changes and visual proof.
 
 ---
+
+## 🛡 Security Policy
+
+### Reporting Vulnerabilities
+
+If you discover a security vulnerability within Skillora, please **do NOT create a public GitHub issue**. Instead, send a detailed disclosure report to:
+
+📧 **`security@skillora.com`** or reach out directly to the repository maintainers.
+
+Include:
+- Type of issue (e.g., XSS, CSRF, Token leakage, Insecure Direct Object Reference)
+- Step-by-step reproduction instructions
+- Proof of Concept (PoC) or sample payload
+- Potential impact assessment
+
+We are committed to resolving critical security issues within **48 hours**.
+
+---
+
+## 📜 License & Authors
+
+Skillora is distributed under the terms of the **MIT License**. See the [LICENSE](LICENSE) file for complete details.
+
+<br/>
 
 <div align="center">
 
-**Built with ❤️ by [Aaryan](https://github.com/Aaryan-9784)**
+**Built with precision by [Aaryan](https://github.com/Aaryan-9784)**
 
-**Skillora — The Complete Freelancing Ecosystem ⚡**
+<sub>Skillora • The Unified Freelancer Operating System & Client Collaboration Hub</sub>
 
 </div>
